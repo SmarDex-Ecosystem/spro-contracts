@@ -1,0 +1,26 @@
+[profile.default]
+solc_version = '0.8.16'
+fs_permissions = [{ access = "read", path = "./deployments/latest.json"}]
+gas_reports = ["PWNSimpleLoan"]
+
+
+[rpc_endpoints]
+# Mainnets
+mainnet = "${ETHEREUM_URL}"
+polygon = "${POLYGON_URL}"
+arbitrum = "${ARBITRUM_URL}"
+optimism = "${OPTIMISM_URL}"
+base = "${BASE_URL}"
+cronos = "${CRONOS_URL}"
+mantle = "${MANTLE_URL}"
+bsc = "${BSC_URL}"
+
+# Testnets
+sepolia = "${SEPOLIA_URL}"
+goerli = "${GOERLI_URL}"
+base_goerli = "${BASE_GOERLI_URL}"
+cronos_testnet = "${CRONOS_TESTNET_URL}"
+mantle_testnet = "${MANTLE_TESTNET_URL}"
+
+tenderly = "${TENDERLY_URL}"
+local = "${LOCAL_URL}"
