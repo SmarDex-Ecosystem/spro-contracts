@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity 0.8.16;
 
-import { Test } from "forge-std/Test.sol";
+import {Test} from "forge-std/src/Test.sol";
 
-import { PWNHub } from "pwn/hub/PWNHub.sol";
-
+import {PWNHub} from "pwn/hub/PWNHub.sol";
 
 abstract contract PWNHubTest is Test {
-
     bytes32 internal constant TAGS_SLOT = bytes32(uint256(2)); // `tags` mapping position
 
     PWNHub hub;
@@ -22,26 +20,16 @@ abstract contract PWNHubTest is Test {
         hub = new PWNHub();
     }
 
-
     function _addressTagSlot(address _address, bytes32 _tag) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            _tag,
-            keccak256(abi.encode(
-                _address,
-                TAGS_SLOT
-            ))
-        ));
+        return keccak256(abi.encode(_tag, keccak256(abi.encode(_address, TAGS_SLOT))));
     }
-
 }
-
 
 /*----------------------------------------------------------*|
 |*  # CONSTRUCTOR                                           *|
 |*----------------------------------------------------------*/
 
 contract PWNHub_Constructor_Test is PWNHubTest {
-
     function test_shouldSetHubOwner() external {
         address otherOwner = address(0x4321);
 
@@ -50,16 +38,13 @@ contract PWNHub_Constructor_Test is PWNHubTest {
 
         assertTrue(hub.owner() == otherOwner);
     }
-
 }
-
 
 /*----------------------------------------------------------*|
 |*  # SET TAG                                               *|
 |*----------------------------------------------------------*/
 
 contract PWNHub_SetTag_Test is PWNHubTest {
-
     function test_shouldFail_whenCallerIsNotOwner() external {
         address other = address(0x123);
 
@@ -72,27 +57,17 @@ contract PWNHub_SetTag_Test is PWNHubTest {
         vm.prank(owner);
         hub.setTag(addr, tag, true);
 
-        bytes32 hasTagValue = vm.load(
-            address(hub),
-            _addressTagSlot(addr, tag)
-        );
+        bytes32 hasTagValue = vm.load(address(hub), _addressTagSlot(addr, tag));
         assertTrue(uint256(hasTagValue) == 1);
     }
 
     function test_shouldRemoveTagFromAddress() external {
-        vm.store(
-            address(hub),
-            _addressTagSlot(addr, tag),
-            bytes32(uint256(1))
-        );
+        vm.store(address(hub), _addressTagSlot(addr, tag), bytes32(uint256(1)));
 
         vm.prank(owner);
         hub.setTag(addr, tag, false);
 
-        bytes32 hasTagValue = vm.load(
-            address(hub),
-            _addressTagSlot(addr, tag)
-        );
+        bytes32 hasTagValue = vm.load(address(hub), _addressTagSlot(addr, tag));
         assertTrue(uint256(hasTagValue) == 0);
     }
 
@@ -103,16 +78,13 @@ contract PWNHub_SetTag_Test is PWNHubTest {
         vm.prank(owner);
         hub.setTag(addr, tag, true);
     }
-
 }
-
 
 /*----------------------------------------------------------*|
 |*  # SET TAGS                                              *|
 |*----------------------------------------------------------*/
 
 contract PWNHub_SetTags_Test is PWNHubTest {
-
     address[] addrs;
     bytes32[] tags;
 
@@ -155,31 +127,21 @@ contract PWNHub_SetTags_Test is PWNHubTest {
         hub.setTags(addrs, tags, true);
 
         for (uint256 i; i < tags.length; ++i) {
-            bytes32 hasTagValue = vm.load(
-                address(hub),
-                _addressTagSlot(addrs[i], tags[i])
-            );
+            bytes32 hasTagValue = vm.load(address(hub), _addressTagSlot(addrs[i], tags[i]));
             assertTrue(uint256(hasTagValue) == 1);
         }
     }
 
     function test_shouldRemoveTagsFromAddress() external {
         for (uint256 i; i < tags.length; ++i) {
-            vm.store(
-                address(hub),
-                _addressTagSlot(addrs[i], tags[i]),
-                bytes32(uint256(1))
-            );
+            vm.store(address(hub), _addressTagSlot(addrs[i], tags[i]), bytes32(uint256(1)));
         }
 
         vm.prank(owner);
         hub.setTags(addrs, tags, false);
 
         for (uint256 i; i < tags.length; ++i) {
-            bytes32 hasTagValue = vm.load(
-                address(hub),
-                _addressTagSlot(addrs[i], tags[i])
-            );
+            bytes32 hasTagValue = vm.load(address(hub), _addressTagSlot(addrs[i], tags[i]));
             assertTrue(uint256(hasTagValue) == 0);
         }
     }
@@ -193,34 +155,22 @@ contract PWNHub_SetTags_Test is PWNHubTest {
         vm.prank(owner);
         hub.setTags(addrs, tags, true);
     }
-
 }
-
 
 /*----------------------------------------------------------*|
 |*  # HAS TAG                                               *|
 |*----------------------------------------------------------*/
 
 contract PWNHub_HasTag_Test is PWNHubTest {
-
     function test_shouldReturnFalse_whenAddressDoesNotHaveTag() external {
-        vm.store(
-            address(hub),
-            _addressTagSlot(addr, tag),
-            bytes32(uint256(0))
-        );
+        vm.store(address(hub), _addressTagSlot(addr, tag), bytes32(uint256(0)));
 
         assertFalse(hub.hasTag(addr, tag));
     }
 
     function test_shouldReturnTrue_whenAddressDoesHaveTag() external {
-        vm.store(
-            address(hub),
-            _addressTagSlot(addr, tag),
-            bytes32(uint256(1))
-        );
+        vm.store(address(hub), _addressTagSlot(addr, tag), bytes32(uint256(1)));
 
         assertTrue(hub.hasTag(addr, tag));
     }
-
 }

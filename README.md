@@ -1,39 +1,107 @@
-# PWN Protocol
+# SmarDex fork of PWN Protocol
 
-PWN is a protocol that enables peer-to-peer (P2P) loans using arbitrary collateral. Our smart contracts support ERC20, ERC721, and ERC1155 standards, making it versatile and adaptable to a wide range of use cases.
+PWN is a protocol that enables peer-to-peer (P2P) loans using arbitrary collateral. PWN smart contracts support ERC20, ERC721, and ERC1155 standards, making it versatile and adaptable to a wide range of use cases.
 
-## About
+Key changes made in this fork include:
 
-In the world of decentralized finance, PWN stands out with its unique approach to P2P loans. By allowing users to leverage different types of collateral, we provide flexibility and convenience that's unmatched in the industry.
+- Fees are now taken in the SDEX token, no modification is made to the loan/borrow amount.
+- Thresholds added to the partial lending feature which does not allow a lender to match with less than 5% of the requested borrow amount.
+- Domain separators updated to ensure no permit reuse with the base PWN protocol is possible.
+- A `Sink` trivial contract is prepared to serve as a token burn address.
 
-## Developer Documentation
+## Change Details
 
-For developers interested in integrating with or building on top of PWN, we provide comprehensive documentation. You can find in-depth information about our smart contracts and their usage in the [PWN Developer Docs](https://dev-docs.pwn.xyz/).
+### Setting fees
+
+Fees are controlled from the `SDConfig` contract, by the contract owner.
+
+A user must have made an SDEX approval of the appropriate amount to the `SDSimpleLoan` contract prior to transacting.
+
+The fixed fee for listed tokens, `listedFee`, and the fixed fee for unlisted tokens, `unlistedFee`, are both in terms of units of SDEX tokens. For example to charge a 1 SDEX fee for unlisted tokens, the owner calls `setUnlistedFee` with an input value of `1000000000000000000` (1e18 units).
+
+A token is implicitly unlisted if a `tokenFactors` value is not set for it.
+
+The variable component of the fee is contained in two quantities, the `variableFactor` conversion quantity, and the `tokenFactors` token-specific quantity. Both of these quantities use 18 decimal precision (1e18 = 1).
+
+The example given in the specification is that if a user wants to borrow 250 ETH, the factor of ETH is 4000, the
+VariableFactor is 0.00001 and FixFeeListed = 5 we will have
+𝑇𝑜𝑡𝑎𝑙 𝑓𝑒𝑒𝑠 = 𝐹𝑖𝑥𝐹𝑒𝑒𝐿𝑖𝑠𝑡𝑒𝑑 + 𝑉𝑎𝑟𝑖𝑎𝑏𝑙𝑒𝐹𝑎𝑐𝑡𝑜𝑟 ∗ 𝑡𝑜𝑘𝑒𝑛𝐹𝑎𝑐𝑡𝑜𝑟 ∗ 𝑞𝑢𝑎𝑛𝑡𝑖𝑡𝑦
+𝑇𝑜𝑡𝑎𝑙 𝑓𝑒𝑒𝑠 = 5 + 0.00001 ∗ 4000 ∗ 250 = 15
+
+The parameters for this works out as follows:
+
+```
+listedFee = 5000000000000000000                 // 5 SDEX
+variableFactor = 10000000000000                 // 0.00001 * 10**18
+ETH borrow amount = 250000000000000000000       // 250 ETH
+tokenFactors[WETH] = 4000000000000000000000     // 4000 * 10**18
+
+RESULT: 5000000000000000000 + 10000000000000 * 250000000000000000000 * 4000000000000000000000 / 1e36
+        = 5000000000000000000 + 10000000000000000000
+        = 15000000000000000000 // 15 SDEX
+```
+
+An alternative example using USDC (6 decimals):
+
+```
+listedFee = 5000000000000000000                         // 5 SDEX
+variableFactor = 10000000000000                         // 0.00001 * 10**18
+USDC borrow amount = 1000000000000                      // 1 million USDC
+tokenFactors[WETH] = 1000000000000000000000000000000    // 1 * 10**30
+
+RESULT: 5000000000000000000 + 10000000000000 * 1000000000000 * 1e30 / 1e36
+        = 5000000000000000000 + 10000000000000000000
+        = 15000000000000000000 // 15 SDEX
+```
+
+In this case, the desired token factor of 1, which wad-formats to 1e18, is multiplied by 1e12 to account for the decimal difference between USDC and ETH. If a token was used which had more than 18 decimals, the token factor would have to be adjusted down in a similar fashion.
 
 ## Deployment
 
-| Name                               | Address                                    | Chain                   |
-|------------------------------------|--------------------------------------------|-------------------------|
-| Config                             | 0xd52a2898d61636bB3eEF0d145f05352FF543bdCC | [Ethereum](https://etherscan.io/address/0xd52a2898d61636bB3eEF0d145f05352FF543bdCC) [Polygon](https://polygonscan.com/address/0xd52a2898d61636bB3eEF0d145f05352FF543bdCC) [Arbitrum](https://arbiscan.io/address/0xd52a2898d61636bB3eEF0d145f05352FF543bdCC) [Optimism](https://optimistic.etherscan.io/address/0xd52a2898d61636bB3eEF0d145f05352FF543bdCC) [Base](https://basescan.org/address/0xd52a2898d61636bB3eEF0d145f05352FF543bdCC) [Cronos](https://cronoscan.com/address/0xd52a2898d61636bB3eEF0d145f05352FF543bdCC) [BSC](https://bscscan.com/address/0xd52a2898d61636bB3eEF0d145f05352FF543bdCC) [Sepolia](https://sepolia.etherscan.io/address/0xd52a2898d61636bB3eEF0d145f05352FF543bdCC) |
-| Hub                                | 0x37807A2F031b3B44081F4b21500E5D70EbaDAdd5 | [Ethereum](https://etherscan.io/address/0x37807A2F031b3B44081F4b21500E5D70EbaDAdd5) [Polygon](https://polygonscan.com/address/0x37807A2F031b3B44081F4b21500E5D70EbaDAdd5) [Arbitrum](https://arbiscan.io/address/0x37807A2F031b3B44081F4b21500E5D70EbaDAdd5) [Optimism](https://optimistic.etherscan.io/address/0x37807A2F031b3B44081F4b21500E5D70EbaDAdd5) [Base](https://basescan.org/address/0x37807A2F031b3B44081F4b21500E5D70EbaDAdd5) [Cronos](https://cronoscan.com/address/0x37807A2F031b3B44081F4b21500E5D70EbaDAdd5) [BSC](https://bscscan.com/address/0x37807A2F031b3B44081F4b21500E5D70EbaDAdd5) [Sepolia](https://sepolia.etherscan.io/address/0x37807A2F031b3B44081F4b21500E5D70EbaDAdd5) |
-| LOAN Token                         | 0x4440C069272cC34b80C7B11bEE657D0349Ba9C23 | [Ethereum](https://etherscan.io/address/0x4440C069272cC34b80C7B11bEE657D0349Ba9C23) [Polygon](https://polygonscan.com/address/0x4440C069272cC34b80C7B11bEE657D0349Ba9C23) [Arbitrum](https://arbiscan.io/address/0x4440C069272cC34b80C7B11bEE657D0349Ba9C23) [Optimism](https://optimistic.etherscan.io/address/0x4440C069272cC34b80C7B11bEE657D0349Ba9C23) [Base](https://basescan.org/address/0x4440C069272cC34b80C7B11bEE657D0349Ba9C23) [Cronos](https://cronoscan.com/address/0x4440C069272cC34b80C7B11bEE657D0349Ba9C23) [BSC](https://bscscan.com/address/0x4440C069272cC34b80C7B11bEE657D0349Ba9C23) [Sepolia](https://sepolia.etherscan.io/address/0x4440C069272cC34b80C7B11bEE657D0349Ba9C23) |
-| Revoked Nonce                      | 0x972204fF33348ee6889B2d0A3967dB67d7b08e4c | [Ethereum](https://etherscan.io/address/0x972204fF33348ee6889B2d0A3967dB67d7b08e4c) [Polygon](https://polygonscan.com/address/0x972204fF33348ee6889B2d0A3967dB67d7b08e4c) [Arbitrum](https://arbiscan.io/address/0x972204fF33348ee6889B2d0A3967dB67d7b08e4c) [Optimism](https://optimistic.etherscan.io/address/0x972204fF33348ee6889B2d0A3967dB67d7b08e4c) [Base](https://basescan.org/address/0x972204fF33348ee6889B2d0A3967dB67d7b08e4c) [Cronos](https://cronoscan.com/address/0x972204fF33348ee6889B2d0A3967dB67d7b08e4c) [BSC](https://bscscan.com/address/0x972204fF33348ee6889B2d0A3967dB67d7b08e4c) [Sepolia](https://sepolia.etherscan.io/address/0x972204fF33348ee6889B2d0A3967dB67d7b08e4c) |
-| Simple Loan                        | 0x9A93AE395F09C6F350E3306aec592763c517072e | [Ethereum](https://etherscan.io/address/0x9A93AE395F09C6F350E3306aec592763c517072e) [Polygon](https://polygonscan.com/address/0x9A93AE395F09C6F350E3306aec592763c517072e) [Arbitrum](https://arbiscan.io/address/0x9A93AE395F09C6F350E3306aec592763c517072e) [Optimism](https://optimistic.etherscan.io/address/0x9A93AE395F09C6F350E3306aec592763c517072e) [Base](https://basescan.org/address/0x9A93AE395F09C6F350E3306aec592763c517072e) [Cronos](https://cronoscan.com/address/0x9A93AE395F09C6F350E3306aec592763c517072e) [BSC](https://bscscan.com/address/0x9A93AE395F09C6F350E3306aec592763c517072e) [Sepolia](https://sepolia.etherscan.io/address/0x9A93AE395F09C6F350E3306aec592763c517072e) |
-| Simple Loan Simple Proposal        | 0xEb3e6B9B51911175F3a121b5Efb46Fa354520f41 | [Ethereum](https://etherscan.io/address/0xEb3e6B9B51911175F3a121b5Efb46Fa354520f41) [Polygon](https://polygonscan.com/address/0xEb3e6B9B51911175F3a121b5Efb46Fa354520f41) [Arbitrum](https://arbiscan.io/address/0xEb3e6B9B51911175F3a121b5Efb46Fa354520f41) [Optimism](https://optimistic.etherscan.io/address/0xEb3e6B9B51911175F3a121b5Efb46Fa354520f41) [Base](https://basescan.org/address/0xEb3e6B9B51911175F3a121b5Efb46Fa354520f41) [Cronos](https://cronoscan.com/address/0xEb3e6B9B51911175F3a121b5Efb46Fa354520f41) [BSC](https://bscscan.com/address/0xEb3e6B9B51911175F3a121b5Efb46Fa354520f41) [Sepolia](https://sepolia.etherscan.io/address/0xEb3e6B9B51911175F3a121b5Efb46Fa354520f41) |
-| Simple Loan List Proposal          | 0x0E6cE603d328de0D357D624F10f3f448855fFBDC | [Ethereum](https://etherscan.io/address/0x0E6cE603d328de0D357D624F10f3f448855fFBDC) [Polygon](https://polygonscan.com/address/0x0E6cE603d328de0D357D624F10f3f448855fFBDC) [Arbitrum](https://arbiscan.io/address/0x0E6cE603d328de0D357D624F10f3f448855fFBDC) [Optimism](https://optimistic.etherscan.io/address/0x0E6cE603d328de0D357D624F10f3f448855fFBDC) [Base](https://basescan.org/address/0x0E6cE603d328de0D357D624F10f3f448855fFBDC) [Cronos](https://cronoscan.com/address/0x0E6cE603d328de0D357D624F10f3f448855fFBDC) [BSC](https://bscscan.com/address/0x0E6cE603d328de0D357D624F10f3f448855fFBDC) [Sepolia](https://sepolia.etherscan.io/address/0x0E6cE603d328de0D357D624F10f3f448855fFBDC) |
-| Simple Loan Fungible Proposal      | 0x0618504Fa17888ec36AC5D46A4A0Ed59436Fb77E | [Ethereum](https://etherscan.io/address/0x0618504Fa17888ec36AC5D46A4A0Ed59436Fb77E) [Polygon](https://polygonscan.com/address/0x0618504Fa17888ec36AC5D46A4A0Ed59436Fb77E) [Arbitrum](https://arbiscan.io/address/0x0618504Fa17888ec36AC5D46A4A0Ed59436Fb77E) [Optimism](https://optimistic.etherscan.io/address/0x0618504Fa17888ec36AC5D46A4A0Ed59436Fb77E) [Base](https://basescan.org/address/0x0618504Fa17888ec36AC5D46A4A0Ed59436Fb77E) [Cronos](https://cronoscan.com/address/0x0618504Fa17888ec36AC5D46A4A0Ed59436Fb77E) [BSC](https://bscscan.com/address/0x0618504Fa17888ec36AC5D46A4A0Ed59436Fb77E) [Sepolia](https://sepolia.etherscan.io/address/0x0618504Fa17888ec36AC5D46A4A0Ed59436Fb77E) |
-| Simple Loan Dutch Auction Proposal | 0x807eb2A61B2d0193b0696436BeFFcFE4d6D520CB | [Ethereum](https://etherscan.io/address/0x807eb2A61B2d0193b0696436BeFFcFE4d6D520CB) [Polygon](https://polygonscan.com/address/0x807eb2A61B2d0193b0696436BeFFcFE4d6D520CB) [Arbitrum](https://arbiscan.io/address/0x807eb2A61B2d0193b0696436BeFFcFE4d6D520CB) [Optimism](https://optimistic.etherscan.io/address/0x807eb2A61B2d0193b0696436BeFFcFE4d6D520CB) [Base](https://basescan.org/address/0x807eb2A61B2d0193b0696436BeFFcFE4d6D520CB) [Cronos](https://cronoscan.com/address/0x807eb2A61B2d0193b0696436BeFFcFE4d6D520CB) [BSC](https://bscscan.com/address/0x807eb2A61B2d0193b0696436BeFFcFE4d6D520CB) [Sepolia](https://sepolia.etherscan.io/address/0x807eb2A61B2d0193b0696436BeFFcFE4d6D520CB) |
+Deployed addresses are read to and written from `deployments/sdLatest.json`. Deployment takes place in the following steps:
 
-The addresses listed in the table above are the same on all deployed chains. This means that regardless of the blockchain network you are using, such as Ethereum or Arbitrum, the addresses for the PWN smart contracts remain consistent. This provides a seamless experience for developers and users who want to interact with the PWN protocol across different blockchain ecosystems.
+1. Populate the configuration parameters. The initial fee and factor settings must be set in `SD.s.sol`. To prepare for deployment, the following fields must be set in the desired chain in `sdLatest.json`. The rest are contracts which will be deployed as part of the protocol deployment step.
+   1. `proxyAdmin` - proxy admin address
+   2. `protocolAdmin`- protocol admin address
+   3. `sdex` - SDEX token on the chain
+2. Deploy the deployer contract.
+3. Execute the deployment script.
+4. Protocol admin accepts ownership of the SDHub and SDConfig contracts.
+5. Protocol admin sets Hub tags.
+   1. SimpleLoan receives ACTIVE_LOAN, NONCE_MANAGER
+   2. SimpleLoanSimpleProposal receives LOAN_PROPOSAL, NONCE_MANAGER
+   3. View the `SDSetTags.s.sol` script file for example call.
 
-## Contributing
+```sh
+# Deploy the deployer
+$ forge script script/SDDeployer.s.sol:Deploy -vvvvv --sig "deployDeployer()" --rpc-url $<target_chain> --private-key $PRIVATE_KEY --broadcast
 
-We welcome contributions from the community. If you're a developer interested in contributing to PWN, please see our developer docs for more information.
+# Then, run the following to deploy the protocol:
+$ forge script script/SD.s.sol:Deploy -vvvvv --sig "deployProtocol()" --rpc-url $<target_chain> --private-key $PRIVATE_KEY --broadcast
+```
 
-## PWN is Hiring!
+### Local deployment
 
-We're always looking for talented individuals to join our team. If you're passionate about decentralized finance and want to contribute to the future of P2P lending, check out our job postings [here](https://www.notion.so/PWN-is-hiring-f5a49899369045e39f41fc7e4c7b5633).
+To deploy a test copy locally:
 
-## Contact
+```sh
+# Start local node
+$ anvil
 
-If you have any questions or suggestions, feel free to reach out to us. We're always happy to hear from our users.
+# In different terminal
+$ forge script script/SDDeployer.s.sol:Deploy -vvvvv --sig "deployDeployer()" --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY --broadcast
+$ forge script script/SDDeployer.s.sol:Deploy -vvvvv --sig "deploySDEX()" --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY --broadcast
+
+# Then, run the following to deploy the protocol:
+$ forge script script/SD.s.sol:Deploy -vvvvv --sig "deployProtocol()" --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY --broadcast
+
+# Accept the ownership transfer (adjust if private key is not set as local admin)
+$ cast send <address> "acceptOwnership()" --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY
+
+# Set tags via utility script
+$ forge script script/SDSetTags.s.sol:SDSetTags -vvvvv --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY --broadcast
+```
+
+## PWN Developer Documentation
+
+You can find in-depth information about the base smart contracts and their usage in the [PWN Developer Docs](https://dev-docs.pwn.xyz/).

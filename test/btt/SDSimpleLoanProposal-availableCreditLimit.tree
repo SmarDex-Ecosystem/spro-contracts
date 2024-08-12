@@ -1,0 +1,13 @@
+.
+├── when availableCreditLimit == 0:
+│   └── the nonce of the proposer should be revoked
+└── when availableCreditLimit != 0:
+    ├── given when the credit used + credit amount exceeds the limit:
+    │   └── it should revert
+    └── given when the credit used + credit amount is less than, or equal to, the limit:
+        ├── given when the credit amount is less than the minimum percentage amount:
+        │   └── it should revert
+        └── given when the credit amount is greater than, or equal to, the minimum percentage amount:
+            ├── the credit used should be incremented by the credit amount
+            └── given when the credit used is greater than the upper credit limit threshold:
+                └── the nonce of the proposer should be revoked

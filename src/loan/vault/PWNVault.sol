@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity 0.8.16;
 
-import { MultiToken } from "MultiToken/MultiToken.sol";
+import {MultiToken} from "MultiToken/MultiToken.sol";
 
-import { IERC20Permit } from "openzeppelin/token/ERC20/extensions/IERC20Permit.sol";
-import { IERC721Receiver } from "openzeppelin/token/ERC721/IERC721Receiver.sol";
-import { IERC1155Receiver, IERC165 } from "openzeppelin/token/ERC1155/IERC1155Receiver.sol";
+import {IERC20Permit} from "openzeppelin/token/ERC20/extensions/IERC20Permit.sol";
+import {IERC721Receiver} from "openzeppelin/token/ERC721/IERC721Receiver.sol";
+import {IERC1155Receiver, IERC165} from "openzeppelin/token/ERC1155/IERC1155Receiver.sol";
 
-import { IPoolAdapter } from "pwn/interfaces/IPoolAdapter.sol";
-import { Permit } from "pwn/loan/vault/Permit.sol";
-
+import {IPoolAdapter} from "pwn/interfaces/IPoolAdapter.sol";
+import {Permit} from "pwn/loan/vault/Permit.sol";
 
 /**
  * @title PWN Vault
@@ -41,13 +40,14 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
     /**
      * @notice Emitted when asset is withdrawn from a pool to an `owner` address.
      */
-    event PoolWithdraw(MultiToken.Asset asset, address indexed poolAdapter, address indexed pool, address indexed owner);
+    event PoolWithdraw(
+        MultiToken.Asset asset, address indexed poolAdapter, address indexed pool, address indexed owner
+    );
 
     /**
      * @notice Emitted when asset is supplied to a pool from a vault.
      */
     event PoolSupply(MultiToken.Asset asset, address indexed poolAdapter, address indexed pool, address indexed owner);
-
 
     /*----------------------------------------------------------*|
     |*  # ERRORS DEFINITIONS                                    *|
@@ -62,7 +62,6 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
      * @notice Thrown when an asset transfer is incomplete.
      */
     error IncompleteTransfer();
-
 
     /*----------------------------------------------------------*|
     |*  # TRANSFER FUNCTIONS                                    *|
@@ -122,7 +121,9 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
      * @param pool An address of a pool.
      * @param owner An address on which behalf the assets are withdrawn.
      */
-    function _withdrawFromPool(MultiToken.Asset memory asset, IPoolAdapter poolAdapter, address pool, address owner) internal {
+    function _withdrawFromPool(MultiToken.Asset memory asset, IPoolAdapter poolAdapter, address pool, address owner)
+        internal
+    {
         uint256 originalBalance = asset.balanceOf(owner);
 
         poolAdapter.withdraw(pool, owner, asset.assetAddress, asset.amount);
@@ -140,7 +141,9 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
      * @param pool An address of a pool.
      * @param owner An address on which behalf the asset is supplied.
      */
-    function _supplyToPool(MultiToken.Asset memory asset, IPoolAdapter poolAdapter, address pool, address owner) internal {
+    function _supplyToPool(MultiToken.Asset memory asset, IPoolAdapter poolAdapter, address pool, address owner)
+        internal
+    {
         uint256 originalBalance = asset.balanceOf(address(this));
 
         asset.transferAssetFrom(address(this), address(poolAdapter));
@@ -167,7 +170,6 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
         }
     }
 
-
     /*----------------------------------------------------------*|
     |*  # PERMIT                                                *|
     |*----------------------------------------------------------*/
@@ -193,7 +195,6 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
         }
     }
 
-
     /*----------------------------------------------------------*|
     |*  # ERC721/1155 RECEIVED HOOKS                            *|
     |*----------------------------------------------------------*/
@@ -207,14 +208,13 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
      *
      * @return `IERC721Receiver.onERC721Received.selector` if transfer is allowed
      */
-    function onERC721Received(
-        address operator,
-        address /*from*/,
-        uint256 /*tokenId*/,
-        bytes calldata /*data*/
-    ) override external view returns (bytes4) {
-        if (operator != address(this))
-            revert UnsupportedTransferFunction();
+    function onERC721Received(address operator, address, /*from*/ uint256, /*tokenId*/ bytes calldata /*data*/ )
+        external
+        view
+        override
+        returns (bytes4)
+    {
+        if (operator != address(this)) revert UnsupportedTransferFunction();
 
         return IERC721Receiver.onERC721Received.selector;
     }
@@ -229,13 +229,12 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
      */
     function onERC1155Received(
         address operator,
-        address /*from*/,
-        uint256 /*id*/,
-        uint256 /*value*/,
+        address, /*from*/
+        uint256, /*id*/
+        uint256, /*value*/
         bytes calldata /*data*/
-    ) override external view returns (bytes4) {
-        if (operator != address(this))
-            revert UnsupportedTransferFunction();
+    ) external view override returns (bytes4) {
+        if (operator != address(this)) revert UnsupportedTransferFunction();
 
         return IERC1155Receiver.onERC1155Received.selector;
     }
@@ -249,15 +248,14 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
      * @return `bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))` if transfer is allowed
      */
     function onERC1155BatchReceived(
-        address /*operator*/,
-        address /*from*/,
-        uint256[] calldata /*ids*/,
-        uint256[] calldata /*values*/,
+        address, /*operator*/
+        address, /*from*/
+        uint256[] calldata, /*ids*/
+        uint256[] calldata, /*values*/
         bytes calldata /*data*/
-    ) override external pure returns (bytes4) {
+    ) external pure override returns (bytes4) {
         revert UnsupportedTransferFunction();
     }
-
 
     /*----------------------------------------------------------*|
     |*  # SUPPORTED INTERFACES                                  *|
@@ -272,10 +270,7 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
      * This function call must use less than 30 000 gas.
      */
     function supportsInterface(bytes4 interfaceId) external pure virtual override returns (bool) {
-        return
-            interfaceId == type(IERC165).interfaceId ||
-            interfaceId == type(IERC721Receiver).interfaceId ||
-            interfaceId == type(IERC1155Receiver).interfaceId;
+        return interfaceId == type(IERC165).interfaceId || interfaceId == type(IERC721Receiver).interfaceId
+            || interfaceId == type(IERC1155Receiver).interfaceId;
     }
-
 }

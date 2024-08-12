@@ -16,9 +16,7 @@ interface GnosisSafeLike {
     ) external payable returns (bool success);
 }
 
-
 library GnosisSafeUtils {
-
     function execTransaction(GnosisSafeLike safe, address to, bytes memory data) internal returns (bool) {
         uint256 ownerValue = uint256(uint160(msg.sender));
         return safe.execTransaction({
@@ -34,5 +32,4 @@ library GnosisSafeUtils {
             signatures: abi.encodePacked(ownerValue, bytes32(0), uint8(1))
         });
     }
-
 }

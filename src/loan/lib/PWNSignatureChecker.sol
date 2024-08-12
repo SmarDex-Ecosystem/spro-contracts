@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity 0.8.16;
 
-import { ECDSA } from "openzeppelin/utils/cryptography/ECDSA.sol";
-import { IERC1271 } from "openzeppelin/interfaces/IERC1271.sol";
-
+import {ECDSA} from "openzeppelin/utils/cryptography/ECDSA.sol";
+import {IERC1271} from "openzeppelin/interfaces/IERC1271.sol";
 
 /**
  * @title PWN Signature Checker
@@ -11,7 +10,6 @@ import { IERC1271 } from "openzeppelin/interfaces/IERC1271.sol";
  * @dev This library is a modification of an Open-Zeppelin `SignatureChecker` library extended by a support for EIP-2098 compact signatures.
  */
 library PWNSignatureChecker {
-
     string internal constant VERSION = "1.0";
 
     /**
@@ -33,20 +31,13 @@ library PWNSignatureChecker {
      *                  Signature can be standard (65 bytes) or compact (64 bytes) defined by EIP-2098.
      * @return True if a signature is valid.
      */
-    function isValidSignatureNow(
-        address signer,
-        bytes32 hash,
-        bytes memory signature
-    ) internal view returns (bool) {
+    function isValidSignatureNow(address signer, bytes32 hash, bytes memory signature) internal view returns (bool) {
         // Check that signature is valid for contract account
         if (signer.code.length > 0) {
-            (bool success, bytes memory result) = signer.staticcall(
-                abi.encodeWithSelector(IERC1271.isValidSignature.selector, hash, signature)
-            );
-            return
-                success &&
-                result.length == 32 &&
-                abi.decode(result, (bytes32)) == bytes32(IERC1271.isValidSignature.selector);
+            (bool success, bytes memory result) =
+                signer.staticcall(abi.encodeWithSelector(IERC1271.isValidSignature.selector, hash, signature));
+            return success && result.length == 32
+                && abi.decode(result, (bytes32)) == bytes32(IERC1271.isValidSignature.selector);
         }
         // Check that signature is valid for EOA
         else {
@@ -74,11 +65,10 @@ library PWNSignatureChecker {
                 s = vs & bytes32(0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
                 v = uint8((uint256(vs) >> 255) + 27);
             } else {
-                revert InvalidSignatureLength({ length: signature.length });
+                revert InvalidSignatureLength({length: signature.length});
             }
 
             return signer == ECDSA.recover(hash, v, r, s);
         }
     }
-
 }
