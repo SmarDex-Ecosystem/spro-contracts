@@ -5,6 +5,12 @@ PWN is a protocol that enables peer-to-peer (P2P) loans using arbitrary collater
 Key changes made in this fork include:
 
 - Fees are now taken in the SDEX token, no modification is made to the loan/borrow amount.
+- Offchain proposal creation is disabled.
+- Creating a borrow proposal requires transfer of the collateral to the vault.
+- Lenders may no longer create lending proposals, but must match a borrow proposal which has been made onchain.
+- Multiple lenders may partially lend against an ERC-20 or fungible ERC-1155 borrow request, up to a total specified borrow amount.
+- ERC-721 tokens may not be partially lent against.
+- Removed loan refinance, loan extension features.
 - Thresholds added to the partial lending feature which does not allow a lender to match with less than 5% of the requested borrow amount.
 - Domain separators updated to ensure no permit reuse with the base PWN protocol is possible.
 - A `Sink` trivial contract is prepared to serve as a token burn address.
@@ -100,6 +106,14 @@ $ cast send <address> "acceptOwnership()" --rpc-url $LOCAL_URL --private-key $PR
 
 # Set tags via utility script
 $ forge script script/SDSetTags.s.sol:SDSetTags -vvvvv --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY --broadcast
+```
+
+## Development
+
+Note: Coverage must be run using the `--ir-minimum` flag to avoid stack-too-deep errors with the coverage tool. Example:
+
+```sh
+forge coverage --report lcov --ir-minimum
 ```
 
 ## PWN Developer Documentation

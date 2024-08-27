@@ -1,0 +1,12 @@
+cancelProposal.t.sol
+├── when the proposal data cannot be decoded
+│   └── it should revert
+└── when the proposal data can be decoded
+    ├── when the caller is not a loan contract
+    │   └── it should revert
+    └── when the caller is a loan contract
+        ├── it should return the proposer
+        ├── it should return the withdrawable collateral
+        ├── it should delete, or zero, the withdrawable collateral
+        └── given a usable nonce
+            └── it should revoke the nonce

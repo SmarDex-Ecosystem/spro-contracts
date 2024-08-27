@@ -10,6 +10,8 @@ import {IERC1155Receiver, IERC165} from "openzeppelin/token/ERC1155/IERC1155Rece
 import {IPoolAdapter} from "pwn/interfaces/IPoolAdapter.sol";
 import {Permit} from "pwn/loan/vault/Permit.sol";
 
+import {SDTransfer} from "pwn/loan/lib/SDTransfer.sol";
+
 /**
  * @title PWN Vault
  * @notice Base contract for transferring and managing collateral and loan assets in PWN protocol.
@@ -17,6 +19,7 @@ import {Permit} from "pwn/loan/vault/Permit.sol";
  */
 abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
     using MultiToken for MultiToken.Asset;
+    using SDTransfer for MultiToken.Asset;
 
     /*----------------------------------------------------------*|
     |*  # EVENTS DEFINITIONS                                    *|
@@ -58,11 +61,6 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
      */
     error UnsupportedTransferFunction();
 
-    /**
-     * @notice Thrown when an asset transfer is incomplete.
-     */
-    error IncompleteTransfer();
-
     /*----------------------------------------------------------*|
     |*  # TRANSFER FUNCTIONS                                    *|
     |*----------------------------------------------------------*/
@@ -77,7 +75,7 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
         uint256 originalBalance = asset.balanceOf(address(this));
 
         asset.transferAssetFrom(origin, address(this));
-        _checkTransfer(asset, originalBalance, address(this), true);
+        asset.checkTransfer(originalBalance, address(this), true);
 
         emit VaultPull(asset, origin);
     }
@@ -92,7 +90,7 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
         uint256 originalBalance = asset.balanceOf(beneficiary);
 
         asset.safeTransferAssetFrom(address(this), beneficiary);
-        _checkTransfer(asset, originalBalance, beneficiary, true);
+        asset.checkTransfer(originalBalance, beneficiary, true);
 
         emit VaultPush(asset, beneficiary);
     }
@@ -108,7 +106,7 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
         uint256 originalBalance = asset.balanceOf(beneficiary);
 
         asset.safeTransferAssetFrom(origin, beneficiary);
-        _checkTransfer(asset, originalBalance, beneficiary, true);
+        asset.checkTransfer(originalBalance, beneficiary, true);
 
         emit VaultPushFrom(asset, origin, beneficiary);
     }
@@ -127,7 +125,7 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
         uint256 originalBalance = asset.balanceOf(owner);
 
         poolAdapter.withdraw(pool, owner, asset.assetAddress, asset.amount);
-        _checkTransfer(asset, originalBalance, owner, true);
+        asset.checkTransfer(originalBalance, owner, true);
 
         emit PoolWithdraw(asset, address(poolAdapter), pool, owner);
     }
@@ -148,26 +146,11 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
 
         asset.transferAssetFrom(address(this), address(poolAdapter));
         poolAdapter.supply(pool, owner, asset.assetAddress, asset.amount);
-        _checkTransfer(asset, originalBalance, address(this), false);
+        asset.checkTransfer(originalBalance, address(this), false);
 
         // Note: Assuming pool will revert supply transaction if it fails.
 
         emit PoolSupply(asset, address(poolAdapter), pool, owner);
-    }
-
-    function _checkTransfer(
-        MultiToken.Asset memory asset,
-        uint256 originalBalance,
-        address checkedAddress,
-        bool checkIncreasingBalance
-    ) private view {
-        uint256 expectedBalance = checkIncreasingBalance
-            ? originalBalance + asset.getTransferAmount()
-            : originalBalance - asset.getTransferAmount();
-
-        if (expectedBalance != asset.balanceOf(checkedAddress)) {
-            revert IncompleteTransfer();
-        }
     }
 
     /*----------------------------------------------------------*|

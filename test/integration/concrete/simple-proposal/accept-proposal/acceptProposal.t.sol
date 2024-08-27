@@ -1,0 +1,616 @@
+// SPDX-License-Identifier: GPL-3.0-only
+pragma solidity 0.8.16;
+
+import {
+    MultiToken,
+    MultiTokenCategoryRegistry,
+    SDBaseIntegrationTest,
+    SDConfig,
+    IPWNDeployer,
+    PWNHub,
+    PWNHubTags,
+    SDSimpleLoan,
+    SDSimpleLoanSimpleProposal,
+    PWNLOAN,
+    PWNRevokedNonce
+} from "test/integration/SDBaseIntegrationTest.t.sol";
+
+import {SDSimpleLoanProposal} from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
+import {Expired, AddressMissingHubTag} from "pwn/PWNErrors.sol";
+
+contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SDBaseIntegrationTest {
+    function test_RevertWhen_DataCannotBeDecoded() external {
+        bytes memory badData = abi.encode("cannot be decoded");
+
+        vm.expectRevert();
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, badData);
+
+        bytes memory baseProposalData = abi.encode(
+            SDSimpleLoanProposal.ProposalBase({
+                collateralAddress: address(t20),
+                collateralId: 0,
+                checkCollateralStateFingerprint: false,
+                collateralStateFingerprint: bytes32(0),
+                availableCreditLimit: CREDIT_LIMIT,
+                expiration: uint40(block.timestamp + 5 days),
+                proposer: borrower,
+                nonceSpace: 0,
+                nonce: 0,
+                loanContract: address(deployment.simpleLoan)
+            })
+        );
+
+        vm.expectRevert();
+        deployment.simpleLoanSimpleProposal.makeProposal(baseProposalData);
+    }
+
+    modifier whenProposalDataDecodes() {
+        _;
+    }
+
+    function test_RevertWhen_CallerNotLoanContract() external whenProposalDataDecodes {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SDSimpleLoanProposal.CallerNotLoanContract.selector, address(this), proposal.loanContract
+            )
+        );
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
+    }
+
+    modifier loanContractIsCaller() {
+        _;
+    }
+
+    function test_RevertWhen_NoActiveLoanTag() external whenProposalDataDecodes loanContractIsCaller {
+        // Remove ACTIVE_LOAN tag for loan contract
+        address[] memory addrs = new address[](1);
+        addrs[0] = address(deployment.simpleLoan);
+        bytes32[] memory tags = new bytes32[](1);
+        tags[0] = PWNHubTags.ACTIVE_LOAN;
+
+        vm.prank(deployment.protocolAdmin);
+        deployment.hub.setTags(addrs, tags, false);
+
+        vm.prank(proposal.loanContract);
+        vm.expectRevert(abi.encodeWithSelector(AddressMissingHubTag.selector, proposal.loanContract, tags[0]));
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
+    }
+
+    modifier loanContractHasHubTag() {
+        _;
+    }
+
+    function test_RevertWhen_ProposalNotMade()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+    {
+        vm.prank(proposal.loanContract);
+        vm.expectRevert(SDSimpleLoanProposal.ProposalNotMade.selector);
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
+    }
+
+    modifier whenProposalMade() {
+        _;
+    }
+
+    function test_RevertWhen_AcceptorIsProposer()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+        whenProposalMade
+    {
+        _createERC20Proposal();
+
+        vm.prank(proposal.loanContract);
+        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanProposal.AcceptorIsProposer.selector, borrower));
+        deployment.simpleLoanSimpleProposal.acceptProposal(borrower, CREDIT_AMOUNT, abi.encode(proposal));
+    }
+
+    modifier whenAcceptorNotProposer() {
+        _;
+    }
+
+    function test_RevertWhen_ProposalExpired()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+        whenProposalMade
+        whenAcceptorNotProposer
+    {
+        _createERC20Proposal();
+
+        vm.warp(proposal.expiration);
+
+        vm.prank(proposal.loanContract);
+        vm.expectRevert(abi.encodeWithSelector(Expired.selector, block.timestamp, proposal.expiration));
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
+    }
+
+    modifier whenProposalNotExpired() {
+        _;
+    }
+
+    function test_RevertWhen_NonceNotUsable()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+        whenProposalMade
+        whenAcceptorNotProposer
+        whenProposalNotExpired
+    {
+        _createERC20Proposal();
+
+        vm.prank(proposal.proposer);
+        deployment.simpleLoanSimpleProposal.revokeNonce(proposal.nonceSpace, proposal.nonce);
+
+        vm.prank(proposal.loanContract);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                PWNRevokedNonce.NonceNotUsable.selector, borrower, proposal.nonceSpace, proposal.nonce
+            )
+        );
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
+    }
+
+    modifier whenNonceUsable() {
+        _;
+    }
+
+    function test_RevertWhen_ZeroCreditLimit()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+        whenProposalMade
+        whenAcceptorNotProposer
+        whenProposalNotExpired
+        whenNonceUsable
+    {
+        proposal.availableCreditLimit = 0;
+        _createERC20Proposal();
+
+        vm.prank(proposal.loanContract);
+        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanProposal.AvailableCreditLimitZero.selector));
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
+    }
+
+    modifier whenCreditLimitGtZero() {
+        _;
+    }
+
+    function test_RevertWhen_CreditUsedAndAmountGtLimit()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+        whenProposalMade
+        whenAcceptorNotProposer
+        whenProposalNotExpired
+        whenNonceUsable
+        whenCreditLimitGtZero
+    {
+        bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
+        uint256 creditUsedValue = 55e18;
+
+        vm.store(
+            address(deployment.simpleLoanSimpleProposal),
+            keccak256(abi.encode(proposalHash, SLOT_CREDIT_USED)),
+            bytes32(creditUsedValue)
+        );
+
+        _createERC20Proposal();
+
+        vm.prank(proposal.loanContract);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SDSimpleLoanProposal.AvailableCreditLimitExceeded.selector,
+                creditUsedValue + CREDIT_AMOUNT,
+                CREDIT_LIMIT
+            )
+        );
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
+    }
+
+    modifier whenCreditUsedAndAmountBelowLimit() {
+        _;
+    }
+
+    function test_RevertWhen_CreditAmountBelowMinimum()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+        whenProposalMade
+        whenAcceptorNotProposer
+        whenProposalNotExpired
+        whenNonceUsable
+        whenCreditLimitGtZero
+        whenCreditUsedAndAmountBelowLimit
+    {
+        _createERC20Proposal();
+
+        vm.prank(proposal.loanContract);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SDSimpleLoanProposal.CreditAmountTooSmall.selector, 1, (proposal.availableCreditLimit * 500) / 1e4
+            )
+        );
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, 1, abi.encode(proposal));
+    }
+
+    modifier whenCreditAmountAboveMinimum() {
+        _;
+    }
+
+    function test_AcceptProposal_IncrementCreditUsed()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+        whenProposalMade
+        whenAcceptorNotProposer
+        whenProposalNotExpired
+        whenNonceUsable
+        whenCreditLimitGtZero
+        whenCreditUsedAndAmountBelowLimit
+        whenCreditAmountAboveMinimum
+    {
+        _createERC20Proposal();
+
+        bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
+        bytes32 slot = keccak256(abi.encode(proposalHash, SLOT_CREDIT_USED));
+
+        uint256 creditUsed = uint256(vm.load(address(deployment.simpleLoanSimpleProposal), slot));
+        assertEq(creditUsed, 0, "credit used before accept proposal");
+
+        vm.prank(proposal.loanContract);
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
+
+        creditUsed = uint256(vm.load(address(deployment.simpleLoanSimpleProposal), slot));
+        assertEq(creditUsed, CREDIT_AMOUNT, "credit used after accept proposal");
+    }
+
+    function test_AcceptProposal_CreditUsedAboveThreshold()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+        whenProposalMade
+        whenAcceptorNotProposer
+        whenProposalNotExpired
+        whenNonceUsable
+        whenCreditLimitGtZero
+        whenCreditUsedAndAmountBelowLimit
+        whenCreditAmountAboveMinimum
+    {
+        _createERC20Proposal();
+
+        vm.prank(proposal.loanContract);
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, (CREDIT_LIMIT * 9501) / 1e4, abi.encode(proposal));
+
+        assertEq(
+            deployment.revokedNonce.isNonceUsable(borrower, proposal.nonceSpace, proposal.nonce),
+            false,
+            "nonce should not be usable"
+        );
+    }
+
+    modifier whenNoFingerprintChecks() {
+        _;
+    }
+
+    function test_AcceptProposal_LoanTermsCorrectness()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+        whenProposalMade
+        whenAcceptorNotProposer
+        whenProposalNotExpired
+        whenNonceUsable
+        whenCreditLimitGtZero
+        whenCreditUsedAndAmountBelowLimit
+        whenCreditAmountAboveMinimum
+        whenNoFingerprintChecks
+    {
+        _createERC20Proposal();
+
+        vm.prank(proposal.loanContract);
+        (, SDSimpleLoan.Terms memory loanTerms) =
+            deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
+
+        uint256 collateralUsed = (CREDIT_AMOUNT * COLLATERAL_AMOUNT) / CREDIT_LIMIT;
+        assertEq(loanTerms.collateral.amount, collateralUsed, "collateral amount != collateralUsed");
+        assertEq(loanTerms.credit.amount, CREDIT_AMOUNT, "credit amount incorrect");
+    }
+
+    modifier whenERC20Collateral() {
+        _;
+    }
+
+    modifier whenERC721Collateral() {
+        _;
+    }
+
+    modifier whenFungibleERC1155Collateral() {
+        _;
+    }
+
+    modifier whenNonFungibleERC1155Collateral() {
+        _;
+    }
+
+    function test_AcceptProposal_Partial_ERC20()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+        whenProposalMade
+        whenAcceptorNotProposer
+        whenProposalNotExpired
+        whenNonceUsable
+        whenCreditLimitGtZero
+        whenCreditUsedAndAmountBelowLimit
+        whenCreditAmountAboveMinimum
+        whenNoFingerprintChecks
+        whenERC20Collateral
+    {
+        _createERC20Proposal();
+
+        bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
+        bytes32 slot = keccak256(abi.encode(proposalHash, SLOT_WITHDRAWABLE_COLLATERAL));
+        bytes32 wc = vm.load(address(deployment.simpleLoanSimpleProposal), slot);
+        assertEq(
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            proposal.collateralAmount,
+            "withdrawableCollateral: collateral amount not set"
+        );
+
+        vm.prank(proposal.loanContract);
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
+
+        wc = vm.load(address(deployment.simpleLoanSimpleProposal), slot);
+        assertEq(
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            proposal.collateralAmount - ((CREDIT_AMOUNT * COLLATERAL_AMOUNT) / CREDIT_LIMIT),
+            "withdrawableCollateral: collateral amount decremented correctly"
+        );
+    }
+
+    function test_AcceptProposal_Complete_ERC20()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+        whenProposalMade
+        whenAcceptorNotProposer
+        whenProposalNotExpired
+        whenNonceUsable
+        whenCreditLimitGtZero
+        whenCreditUsedAndAmountBelowLimit
+        whenCreditAmountAboveMinimum
+        whenNoFingerprintChecks
+        whenERC20Collateral
+    {
+        _createERC20Proposal();
+
+        bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
+        bytes32 slot = keccak256(abi.encode(proposalHash, SLOT_WITHDRAWABLE_COLLATERAL));
+        assertEq(
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            proposal.collateralAmount,
+            "withdrawableCollateral: collateral amount not set"
+        );
+
+        vm.prank(proposal.loanContract);
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
+
+        assertEq(
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            0,
+            "withdrawableCollateral: collateral amount decremented correctly"
+        );
+    }
+
+    function test_RevertWhen_CreditAmountLtLimit_ERC721()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+        whenProposalMade
+        whenAcceptorNotProposer
+        whenProposalNotExpired
+        whenNonceUsable
+        whenCreditLimitGtZero
+        whenCreditUsedAndAmountBelowLimit
+        whenCreditAmountAboveMinimum
+        whenNoFingerprintChecks
+        whenERC721Collateral
+    {
+        _createERC721Proposal();
+
+        vm.prank(proposal.loanContract);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SDSimpleLoanSimpleProposal.OnlyCompleteLendingForNFTs.selector, CREDIT_LIMIT - 1, CREDIT_LIMIT
+            )
+        );
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT - 1, abi.encode(proposal));
+    }
+
+    modifier whenCreditAmountEqualsLimit() {
+        _;
+    }
+
+    function test_AcceptProposal_ERC721()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+        whenProposalMade
+        whenAcceptorNotProposer
+        whenProposalNotExpired
+        whenNonceUsable
+        whenCreditLimitGtZero
+        whenCreditUsedAndAmountBelowLimit
+        whenCreditAmountAboveMinimum
+        whenNoFingerprintChecks
+        whenERC721Collateral
+        whenCreditAmountEqualsLimit
+    {
+        _createERC721Proposal();
+
+        bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
+        bytes32 slot = keccak256(abi.encode(proposalHash, SLOT_WITHDRAWABLE_COLLATERAL));
+        assertEq(
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            0,
+            "withdrawableCollateral: collateral amount not set"
+        );
+
+        vm.prank(proposal.loanContract);
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
+
+        assertEq(
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            type(uint256).max,
+            "withdrawableCollateral: collateral amount incorrect"
+        );
+    }
+
+    function test_AcceptProposal_Partial_ERC1155()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+        whenProposalMade
+        whenAcceptorNotProposer
+        whenProposalNotExpired
+        whenNonceUsable
+        whenCreditLimitGtZero
+        whenCreditUsedAndAmountBelowLimit
+        whenCreditAmountAboveMinimum
+        whenNoFingerprintChecks
+        whenFungibleERC1155Collateral
+    {
+        _createFungibleERC1155Proposal();
+
+        bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
+        bytes32 slot = keccak256(abi.encode(proposalHash, SLOT_WITHDRAWABLE_COLLATERAL));
+        assertEq(
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            COLLATERAL_AMOUNT,
+            "withdrawableCollateral: collateral amount not set"
+        );
+
+        vm.prank(proposal.loanContract);
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
+
+        assertEq(
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            COLLATERAL_AMOUNT - ((CREDIT_AMOUNT * COLLATERAL_AMOUNT) / CREDIT_LIMIT),
+            "withdrawableCollateral: collateral amount incorrect"
+        );
+    }
+
+    function test_AcceptProposal_Complete_FungibleERC1155()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+        whenProposalMade
+        whenAcceptorNotProposer
+        whenProposalNotExpired
+        whenNonceUsable
+        whenCreditLimitGtZero
+        whenCreditUsedAndAmountBelowLimit
+        whenCreditAmountAboveMinimum
+        whenNoFingerprintChecks
+        whenFungibleERC1155Collateral
+    {
+        _createFungibleERC1155Proposal();
+
+        bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
+        bytes32 slot = keccak256(abi.encode(proposalHash, SLOT_WITHDRAWABLE_COLLATERAL));
+        assertEq(
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            COLLATERAL_AMOUNT,
+            "withdrawableCollateral: collateral amount not set"
+        );
+
+        vm.prank(proposal.loanContract);
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
+
+        assertEq(
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            0,
+            "withdrawableCollateral: collateral amount incorrect"
+        );
+    }
+
+    function test_RevertWhen_CreditAmountLtLimit_ERC1155()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+        whenProposalMade
+        whenAcceptorNotProposer
+        whenProposalNotExpired
+        whenNonceUsable
+        whenCreditLimitGtZero
+        whenCreditUsedAndAmountBelowLimit
+        whenCreditAmountAboveMinimum
+        whenNoFingerprintChecks
+        whenNonFungibleERC1155Collateral
+    {
+        _createNonFungibleERC1155Proposal();
+
+        vm.prank(proposal.loanContract);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SDSimpleLoanSimpleProposal.OnlyCompleteLendingForNFTs.selector, CREDIT_LIMIT - 1, CREDIT_LIMIT
+            )
+        );
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT - 1, abi.encode(proposal));
+    }
+
+    function test_AcceptProposal_Complete_NonFungibleERC1155()
+        external
+        whenProposalDataDecodes
+        loanContractIsCaller
+        loanContractHasHubTag
+        whenProposalMade
+        whenAcceptorNotProposer
+        whenProposalNotExpired
+        whenNonceUsable
+        whenCreditLimitGtZero
+        whenCreditUsedAndAmountBelowLimit
+        whenCreditAmountAboveMinimum
+        whenNoFingerprintChecks
+        whenNonFungibleERC1155Collateral
+    {
+        _createNonFungibleERC1155Proposal();
+
+        bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
+        bytes32 slot = keccak256(abi.encode(proposalHash, SLOT_WITHDRAWABLE_COLLATERAL));
+        assertEq(
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            1,
+            "withdrawableCollateral: collateral amount not set"
+        );
+
+        vm.prank(proposal.loanContract);
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
+
+        assertEq(
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            0,
+            "withdrawableCollateral: collateral amount incorrect"
+        );
+    }
+}

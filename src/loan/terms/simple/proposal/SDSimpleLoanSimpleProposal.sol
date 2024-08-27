@@ -5,19 +5,23 @@ import {MultiToken} from "MultiToken/MultiToken.sol";
 
 import {SDSimpleLoan} from "pwn/loan/terms/simple/loan/SDSimpleLoan.sol";
 import {SDSimpleLoanProposal} from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
+import {SDTransfer} from "pwn/loan/lib/SDTransfer.sol";
 
 /**
  * @title PWN Simple Loan Simple Proposal
  * @notice Contract for creating and accepting simple loan proposals.
  */
 contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
+    using MultiToken for MultiToken.Asset;
+    using SDTransfer for MultiToken.Asset;
+
     string public constant VERSION = "1.0";
 
     /**
      * @dev EIP-712 simple proposal struct type hash.
      */
     bytes32 public constant PROPOSAL_TYPEHASH = keccak256(
-        "Proposal(uint8 collateralCategory,address collateralAddress,uint256 collateralId,uint256 collateralAmount,bool checkCollateralStateFingerprint,bytes32 collateralStateFingerprint,address creditAddress,uint256 creditAmount,uint256 availableCreditLimit,uint256 fixedInterestAmount,uint40 accruingInterestAPR,uint32 duration,uint40 expiration,address allowedAcceptor,address proposer,bytes32 proposerSpecHash,bool isOffer,uint256 refinancingLoanId,uint256 nonceSpace,uint256 nonce,address loanContract)"
+        "Proposal(uint8 collateralCategory,address collateralAddress,uint256 collateralId,uint256 collateralAmount,bool checkCollateralStateFingerprint,bytes32 collateralStateFingerprint,address creditAddress,uint256 availableCreditLimit,uint256 fixedInterestAmount,uint40 accruingInterestAPR,uint32 duration,uint40 expiration,address proposer,bytes32 proposerSpecHash,uint256 nonceSpace,uint256 nonce,address loanContract)"
     );
 
     /**
@@ -29,17 +33,13 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
      * @param checkCollateralStateFingerprint If true, the collateral state fingerprint will be checked during proposal acceptance.
      * @param collateralStateFingerprint Fingerprint of a collateral state defined by ERC5646.
      * @param creditAddress Address of an asset which is lended to a borrower.
-     * @param creditAmount Amount of tokens which is proposed as a loan to a borrower.
      * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can be borrowed using the proposal. If non-zero, proposal can be accepted more than once, until the credit limit is reached.
      * @param fixedInterestAmount Fixed interest amount in credit tokens. It is the minimum amount of interest which has to be paid by a borrower.
      * @param accruingInterestAPR Accruing interest APR with 2 decimals.
      * @param duration Loan duration in seconds.
      * @param expiration Proposal expiration timestamp in seconds.
-     * @param allowedAcceptor Address that is allowed to accept proposal. If the address is zero address, anybody can accept the proposal.
      * @param proposer Address of a proposal signer. If `isOffer` is true, the proposer is the lender. If `isOffer` is false, the proposer is the borrower.
      * @param proposerSpecHash Hash of a proposer specific data, which must be provided during a loan creation.
-     * @param isOffer If true, the proposal is an offer. If false, the proposal is a request.
-     * @param refinancingLoanId Id of a loan which is refinanced by this proposal. If the id is 0 and `isOffer` is true, the proposal can refinance any loan.
      * @param nonceSpace Nonce space of a proposal nonce. All nonces in the same space can be revoked at once.
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make again proposal, which was once revoked. Can be used to create a group of proposals, where accepting one proposal will make other proposals in the group revoked.
      * @param loanContract Address of a loan contract that will create a loan from the proposal.
@@ -52,26 +52,33 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
         bool checkCollateralStateFingerprint;
         bytes32 collateralStateFingerprint;
         address creditAddress;
-        uint256 creditAmount;
         uint256 availableCreditLimit;
         uint256 fixedInterestAmount;
         uint24 accruingInterestAPR;
         uint32 duration;
         uint40 expiration;
-        address allowedAcceptor;
         address proposer;
         bytes32 proposerSpecHash;
-        bool isOffer;
-        uint256 refinancingLoanId;
         uint256 nonceSpace;
         uint256 nonce;
         address loanContract;
     }
 
     /**
+     * @dev Mapping of proposals to the borrower's withdrawable collateral tokens
+     *      (proposal hash => amount of collateral tokens)
+     */
+    mapping(bytes32 => MultiToken.Asset) public withdrawableCollateral;
+
+    /**
      * @notice Emitted when a proposal is made via an on-chain transaction.
      */
     event ProposalMade(bytes32 indexed proposalHash, address indexed proposer, Proposal proposal);
+
+    /**
+     * @notice Thrown when a partial loan is attempted for NFT collateral.
+     */
+    error OnlyCompleteLendingForNFTs(uint256 creditAmount, uint256 availableCreditLimit);
 
     constructor(address _hub, address _revokedNonce, address _config)
         SDSimpleLoanProposal(_hub, _revokedNonce, _config, "SDSimpleLoanSimpleProposal", VERSION)
@@ -87,23 +94,11 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
     }
 
     /**
-     * @notice Make an on-chain proposal.
-     * @dev Function will mark a proposal hash as proposed.
-     * @param proposal Proposal struct containing all needed proposal data.
-     * @return proposalHash Proposal hash.
-     */
-    function makeProposal(Proposal calldata proposal) external returns (bytes32 proposalHash) {
-        proposalHash = getProposalHash(proposal);
-        _makeProposal(proposalHash, proposal.proposer);
-        emit ProposalMade(proposalHash, proposal.proposer, proposal);
-    }
-
-    /**
      * @notice Encode proposal data.
      * @param proposal Proposal struct to be encoded.
      * @return Encoded proposal data.
      */
-    function encodeProposalData(Proposal memory proposal) external pure returns (bytes memory) {
+    function encodeProposalData(Proposal memory proposal) public pure returns (bytes memory) {
         return abi.encode(proposal);
     }
 
@@ -117,15 +112,63 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
     }
 
     /**
+     * @notice Getter for credit used and credit remaining for a proposal.
+     * @param proposal Proposal struct.
+     * @return used Credit used for the proposal.
+     * @return remaining Credit remaining for the proposal.
+     */
+    function getProposalCreditStatus(Proposal calldata proposal)
+        external
+        view
+        returns (uint256 used, uint256 remaining)
+    {
+        bytes32 proposalHash = getProposalHash(proposal);
+        if (proposalsMade[proposalHash]) {
+            used = creditUsed[proposalHash];
+            remaining = proposal.availableCreditLimit - used;
+        } else {
+            revert ProposalNotMade();
+        }
+    }
+
+    /**
      * @inheritdoc SDSimpleLoanProposal
      */
-    function acceptProposal(
-        address acceptor,
-        uint256 refinancingLoanId,
-        bytes calldata proposalData,
-        bytes32[] calldata proposalInclusionProof,
-        bytes calldata signature
-    ) external override returns (bytes32 proposalHash, SDSimpleLoan.Terms memory loanTerms) {
+    function makeProposal(bytes calldata proposalData)
+        external
+        override
+        returns (address proposer, MultiToken.Asset memory collateral, address creditAddress, uint256 creditLimit)
+    {
+        // Decode proposal data
+        Proposal memory proposal = decodeProposalData(proposalData);
+
+        // Make proposal hash
+        bytes32 proposalHash = _getProposalHash(PROPOSAL_TYPEHASH, abi.encode(proposal));
+
+        // Try to make proposal
+        _makeProposal(proposalHash, proposal.loanContract);
+
+        collateral = MultiToken.Asset({
+            category: proposal.collateralCategory,
+            assetAddress: proposal.collateralAddress,
+            id: proposal.collateralId,
+            amount: proposal.collateralAmount
+        });
+        withdrawableCollateral[proposalHash] = collateral;
+        creditAddress = proposal.creditAddress;
+        creditLimit = proposal.availableCreditLimit;
+
+        emit ProposalMade(proposalHash, proposer = proposal.proposer, proposal);
+    }
+
+    /**
+     * @inheritdoc SDSimpleLoanProposal
+     */
+    function acceptProposal(address acceptor, uint256 creditAmount, bytes calldata proposalData)
+        external
+        override
+        returns (bytes32 proposalHash, SDSimpleLoan.Terms memory loanTerms)
+    {
         // Decode proposal data
         Proposal memory proposal = decodeProposalData(proposalData);
 
@@ -135,22 +178,16 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
         // Try to accept proposal
         _acceptProposal(
             acceptor,
-            refinancingLoanId,
+            creditAmount,
             proposalHash,
-            proposalInclusionProof,
-            signature,
             ProposalBase({
                 collateralAddress: proposal.collateralAddress,
                 collateralId: proposal.collateralId,
                 checkCollateralStateFingerprint: proposal.checkCollateralStateFingerprint,
                 collateralStateFingerprint: proposal.collateralStateFingerprint,
-                creditAmount: proposal.creditAmount,
                 availableCreditLimit: proposal.availableCreditLimit,
                 expiration: proposal.expiration,
-                allowedAcceptor: proposal.allowedAcceptor,
                 proposer: proposal.proposer,
-                isOffer: proposal.isOffer,
-                refinancingLoanId: proposal.refinancingLoanId,
                 nonceSpace: proposal.nonceSpace,
                 nonce: proposal.nonce,
                 loanContract: proposal.loanContract
@@ -158,21 +195,78 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
         );
 
         // Create loan terms object
+        uint256 collateralUsed_ = (creditAmount * proposal.collateralAmount) / proposal.availableCreditLimit;
+
         loanTerms = SDSimpleLoan.Terms({
-            lender: proposal.isOffer ? proposal.proposer : acceptor,
-            borrower: proposal.isOffer ? acceptor : proposal.proposer,
+            lender: acceptor,
+            borrower: proposal.proposer,
             duration: proposal.duration,
             collateral: MultiToken.Asset({
                 category: proposal.collateralCategory,
                 assetAddress: proposal.collateralAddress,
                 id: proposal.collateralId,
-                amount: proposal.collateralAmount
+                amount: collateralUsed_
             }),
-            credit: MultiToken.ERC20({assetAddress: proposal.creditAddress, amount: proposal.creditAmount}),
+            credit: MultiToken.ERC20({assetAddress: proposal.creditAddress, amount: creditAmount}),
             fixedInterestAmount: proposal.fixedInterestAmount,
             accruingInterestAPR: proposal.accruingInterestAPR,
-            lenderSpecHash: proposal.isOffer ? proposal.proposerSpecHash : bytes32(0),
-            borrowerSpecHash: proposal.isOffer ? bytes32(0) : proposal.proposerSpecHash
+            lenderSpecHash: bytes32(0),
+            borrowerSpecHash: proposal.proposerSpecHash
         });
+
+        if (proposal.collateralCategory == MultiToken.Category.ERC20) {
+            withdrawableCollateral[proposalHash].amount -= collateralUsed_;
+        } else if (proposal.collateralCategory == MultiToken.Category.ERC721) {
+            _verifyCompleteLoan(creditAmount, proposal.availableCreditLimit);
+
+            withdrawableCollateral[proposalHash].amount = type(uint256).max; // requirement: has to be non-zero
+        } else if (proposal.collateralCategory == MultiToken.Category.ERC1155) {
+            if (proposal.collateralAmount == 1) {
+                _verifyCompleteLoan(creditAmount, proposal.availableCreditLimit);
+            }
+
+            withdrawableCollateral[proposalHash].amount -= collateralUsed_;
+        }
+    }
+
+    function _verifyCompleteLoan(uint256 _creditAmount, uint256 _availableCreditLimit) internal pure {
+        if (_creditAmount != _availableCreditLimit) {
+            revert OnlyCompleteLendingForNFTs(_creditAmount, _availableCreditLimit);
+        }
+    }
+
+    /**
+     * @notice Cancels a proposal and resets withdrawable collateral.
+     * @dev Revokes the nonce if still usable and block.timestamp is < proposal expiration.
+     * @param proposalData Encoded proposal data.
+     * @return proposer Address of the borrower/proposer.
+     * @return collateral Collateral token/s as a MultiToken.Asset struct.
+     */
+    function cancelProposal(bytes calldata proposalData)
+        external
+        override
+        returns (address proposer, MultiToken.Asset memory collateral)
+    {
+        // Decode proposal data
+        Proposal memory proposal = decodeProposalData(proposalData);
+
+        // Caller must be valid loan contract
+        if (msg.sender != proposal.loanContract) {
+            revert CallerNotLoanContract({caller: msg.sender, loanContract: proposal.loanContract});
+        }
+
+        // Make proposal hash
+        bytes32 proposalHash = _getProposalHash(PROPOSAL_TYPEHASH, abi.encode(proposal));
+
+        proposer = proposal.proposer;
+        collateral = withdrawableCollateral[proposalHash];
+        delete withdrawableCollateral[proposalHash];
+
+        // Revokes nonce if nonce is still usable
+        if (block.timestamp < proposal.expiration) {
+            if (revokedNonce.isNonceUsable(proposal.proposer, proposal.nonceSpace, proposal.nonce)) {
+                revokedNonce.revokeNonce(proposal.proposer, proposal.nonceSpace, proposal.nonce);
+            }
+        }
     }
 }

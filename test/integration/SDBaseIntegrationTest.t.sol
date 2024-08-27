@@ -8,6 +8,7 @@ import {Permit} from "pwn/loan/vault/Permit.sol";
 import {T20} from "test/helper/T20.sol";
 import {T721} from "test/helper/T721.sol";
 import {T1155} from "test/helper/T1155.sol";
+import {Events} from "test/utils/Events.sol";
 import {
     SDDeploymentTest,
     SDConfig,
@@ -21,7 +22,7 @@ import {
     MultiTokenCategoryRegistry
 } from "test/SDDeploymentTest.t.sol";
 
-abstract contract SDBaseIntegrationTest is SDDeploymentTest {
+abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
     T20 t20;
     T721 t721;
     T1155 t1155;
@@ -31,13 +32,21 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     address lender = vm.addr(lenderPK);
     uint256 borrowerPK = uint256(888);
     address borrower = vm.addr(borrowerPK);
-    SDSimpleLoanSimpleProposal.Proposal simpleProposal;
+    SDSimpleLoanSimpleProposal.Proposal proposal;
 
     // Constants
     uint256 public constant COLLATERAL_ID = 42;
-    uint256 public constant COLLATERAL_AMOUNT = 10e18;
-    uint256 public constant CREDIT_AMOUNT = 100e18;
+    uint256 public constant COLLATERAL_AMOUNT = 10_000e18;
+    uint256 public constant INITIAL_CREDIT_BALANCE = 1000e18;
+    uint256 public constant CREDIT_AMOUNT = 60e18;
+    uint256 public constant CREDIT_LIMIT = 100e18;
     uint256 public constant FIXED_INTEREST_AMOUNT = 5e18;
+
+    uint256 public constant SLOT_PROPOSALS_MADE = 0;
+    uint256 public constant SLOT_CREDIT_USED = 1;
+    uint256 public constant SLOT_WITHDRAWABLE_COLLATERAL = 2;
+
+    uint256 public constant INITIAL_SDEX_BALANCE = 1_000_000e18;
 
     function setUp() public override {
         super.setUp();
@@ -48,156 +57,165 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         t1155 = new T1155();
         credit = new T20();
 
-        // Default offer
-        simpleProposal = SDSimpleLoanSimpleProposal.Proposal({
-            collateralCategory: MultiToken.Category.ERC1155,
-            collateralAddress: address(t1155),
-            collateralId: COLLATERAL_ID,
+        proposal = SDSimpleLoanSimpleProposal.Proposal({
+            collateralCategory: MultiToken.Category.ERC20,
+            collateralAddress: address(t20),
+            collateralId: 0,
             collateralAmount: COLLATERAL_AMOUNT,
             checkCollateralStateFingerprint: false,
             collateralStateFingerprint: bytes32(0),
             creditAddress: address(credit),
-            creditAmount: CREDIT_AMOUNT,
-            availableCreditLimit: 0,
+            availableCreditLimit: CREDIT_LIMIT,
             fixedInterestAmount: FIXED_INTEREST_AMOUNT,
             accruingInterestAPR: 0,
             duration: 3600,
             expiration: uint40(block.timestamp + 7 days),
-            allowedAcceptor: borrower,
-            proposer: lender,
-            proposerSpecHash: deployment.simpleLoan.getLenderSpecHash(SDSimpleLoan.LenderSpec(lender)),
-            isOffer: true,
-            refinancingLoanId: 0,
+            proposer: borrower,
+            proposerSpecHash: keccak256(abi.encode(borrower)),
             nonceSpace: 0,
             nonce: 0,
             loanContract: address(deployment.simpleLoan)
         });
-    }
 
-    function _sign(uint256 pk, bytes32 digest) internal pure returns (bytes memory) {
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
-        return abi.encodePacked(r, s, v);
-    }
-
-    // Create from proposal
-
-    function _createERC20Loan() internal returns (uint256) {
-        // Proposal
-        simpleProposal.collateralCategory = MultiToken.Category.ERC20;
-        simpleProposal.collateralAddress = address(t20);
-        simpleProposal.collateralId = 0;
-        simpleProposal.collateralAmount = COLLATERAL_AMOUNT;
-
-        // Mint initial state
-        t20.mint(borrower, 10e18);
-
-        // Approve collateral
+        // Mint and approve SDEX
+        deployment.sdex.mint(lender, INITIAL_SDEX_BALANCE);
+        vm.prank(lender);
+        deployment.sdex.approve(address(deployment.simpleLoan), type(uint256).max);
+        deployment.sdex.mint(borrower, INITIAL_SDEX_BALANCE);
         vm.prank(borrower);
-        t20.approve(address(deployment.simpleLoan), 10e18);
+        deployment.sdex.approve(address(deployment.simpleLoan), type(uint256).max);
 
-        // Create LOAN
-        return _createLoan(simpleProposal, "");
+        // Add labels
+        vm.label(lender, "lender");
+        vm.label(borrower, "borrower");
+        vm.label(address(credit), "credit");
+        vm.label(address(t20), "t20");
+        vm.label(address(t721), "t721");
+        vm.label(address(t1155), "t1155");
     }
 
-    function _createERC721Loan() internal returns (uint256) {
-        // Proposal
-        simpleProposal.collateralCategory = MultiToken.Category.ERC721;
-        simpleProposal.collateralAddress = address(t721);
-        simpleProposal.collateralId = COLLATERAL_ID;
-        simpleProposal.collateralAmount = 0;
+    // Make the proposal
+    function _createERC20Proposal() internal returns (SDSimpleLoan.ProposalSpec memory proposalSpec) {
+        // Mint initial state & approve collateral
+        t20.mint(borrower, proposal.collateralAmount);
+        vm.prank(borrower);
+        t20.approve(address(deployment.simpleLoan), proposal.collateralAmount);
 
-        // Mint initial state
+        // Create the proposal
+        proposalSpec = _buildProposalSpec(proposal);
+
+        vm.prank(borrower);
+        deployment.simpleLoan.createProposal(proposalSpec);
+    }
+
+    function _createERC721Proposal() internal returns (SDSimpleLoan.ProposalSpec memory proposalSpec) {
+        // Adjust base proposal
+        proposal.collateralCategory = MultiToken.Category.ERC721;
+        proposal.collateralAddress = address(t721);
+        proposal.collateralId = COLLATERAL_ID;
+        proposal.collateralAmount = 0;
+
+        // Mint initial state & approve collateral
         t721.mint(borrower, COLLATERAL_ID);
-
-        // Approve collateral
         vm.prank(borrower);
         t721.approve(address(deployment.simpleLoan), COLLATERAL_ID);
 
-        // Create LOAN
-        return _createLoan(simpleProposal, "");
+        // Create the proposal
+        proposalSpec = _buildProposalSpec(proposal);
+
+        vm.prank(borrower);
+        deployment.simpleLoan.createProposal(proposalSpec);
     }
 
-    function _createERC1155Loan() internal returns (uint256) {
-        return _createERC1155LoanFailing("");
-    }
+    function _createFungibleERC1155Proposal() internal returns (SDSimpleLoan.ProposalSpec memory proposalSpec) {
+        // Adjust base proposal
+        proposal.collateralCategory = MultiToken.Category.ERC1155;
+        proposal.collateralAddress = address(t1155);
+        proposal.collateralId = COLLATERAL_ID;
+        proposal.collateralAmount = COLLATERAL_AMOUNT;
 
-    function _createERC1155LoanFailing(bytes memory revertData) internal returns (uint256) {
-        // Offer
-        simpleProposal.collateralCategory = MultiToken.Category.ERC1155;
-        simpleProposal.collateralAddress = address(t1155);
-        simpleProposal.collateralId = COLLATERAL_ID;
-        simpleProposal.collateralAmount = COLLATERAL_AMOUNT;
-
-        // Mint initial state
+        // Mint initial state & approve collateral
         t1155.mint(borrower, COLLATERAL_ID, COLLATERAL_AMOUNT);
-
-        // Approve collateral
         vm.prank(borrower);
         t1155.setApprovalForAll(address(deployment.simpleLoan), true);
 
-        // Create LOAN
-        return _createLoan(simpleProposal, revertData);
+        // Create the proposal
+        proposalSpec = _buildProposalSpec(proposal);
+
+        vm.prank(borrower);
+        deployment.simpleLoan.createProposal(proposalSpec);
     }
 
-    function _createLoan(SDSimpleLoanSimpleProposal.Proposal memory _proposal, bytes memory revertData)
-        private
-        returns (uint256)
+    function _createNonFungibleERC1155Proposal() internal returns (SDSimpleLoan.ProposalSpec memory proposalSpec) {
+        // Adjust base proposal
+        proposal.collateralCategory = MultiToken.Category.ERC1155;
+        proposal.collateralAddress = address(t1155);
+        proposal.collateralId = COLLATERAL_ID;
+        proposal.collateralAmount = 1;
+
+        // Mint initial state & approve collateral
+        t1155.mint(borrower, COLLATERAL_ID, 1);
+        vm.prank(borrower);
+        t1155.setApprovalForAll(address(deployment.simpleLoan), true);
+
+        // Create the proposal
+        proposalSpec = _buildProposalSpec(proposal);
+
+        vm.prank(borrower);
+        deployment.simpleLoan.createProposal(proposalSpec);
+    }
+
+    function _createLoan(SDSimpleLoan.ProposalSpec memory proposalSpec, bytes memory revertData)
+        internal
+        returns (uint256 loanId)
     {
-        // Sign proposal
-        bytes memory signature = _sign(lenderPK, deployment.simpleLoanSimpleProposal.getProposalHash(_proposal));
-
-        // Mint initial state
-        credit.mint(lender, CREDIT_AMOUNT);
-
-        // Approve loan asset
+        // Mint initial state & approve credit
+        credit.mint(lender, INITIAL_CREDIT_BALANCE);
         vm.prank(lender);
-        credit.approve(address(deployment.simpleLoan), CREDIT_AMOUNT);
-
-        // Mint and Approve sdex
-        deployment.sdex.mint(lender, type(uint256).max);
-        vm.prank(lender);
-        deployment.sdex.approve(address(deployment.simpleLoan), type(uint256).max);
-
-        // Proposal data (need for vm.prank to work properly when creating a loan)
-        bytes memory proposalData = deployment.simpleLoanSimpleProposal.encodeProposalData(_proposal);
+        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
 
         // Create LOAN
         if (keccak256(revertData) != keccak256("")) {
             vm.expectRevert(revertData);
         }
-        vm.prank(borrower);
-        return deployment.simpleLoan.createLOAN({
-            proposalSpec: SDSimpleLoan.ProposalSpec({
-                proposalContract: address(deployment.simpleLoanSimpleProposal),
-                proposalData: proposalData,
-                proposalInclusionProof: new bytes32[](0),
-                signature: signature
-            }),
-            lenderSpec: SDSimpleLoan.LenderSpec({sourceOfFunds: lender}),
-            callerSpec: SDSimpleLoan.CallerSpec({refinancingLoanId: 0, revokeNonce: false, nonce: 0, permitData: ""}),
-            extra: ""
-        });
-    }
 
-    // Repay
-
-    function _repayLoan(uint256 loanId) internal {
-        _repayLoanFailing(loanId, "");
-    }
-
-    function _repayLoanFailing(uint256 loanId, bytes memory revertData) internal {
-        // Get the yield by farming 100000% APR food tokens
-        credit.mint(borrower, FIXED_INTEREST_AMOUNT);
-
-        // Approve loan asset
-        vm.prank(borrower);
-        credit.approve(address(deployment.simpleLoan), CREDIT_AMOUNT + FIXED_INTEREST_AMOUNT);
-
-        // Repay loan
-        if (keccak256(revertData) != keccak256("")) {
-            vm.expectRevert(revertData);
+        vm.prank(lender);
+        if (
+            proposal.collateralCategory == MultiToken.Category.ERC721
+                || (proposal.collateralCategory == MultiToken.Category.ERC1155 && proposal.collateralAmount == 1)
+        ) {
+            return deployment.simpleLoan.createLOAN({
+                proposalSpec: proposalSpec,
+                lenderSpec: _buildLenderSpec(true),
+                extra: ""
+            });
+        } else {
+            return deployment.simpleLoan.createLOAN({
+                proposalSpec: proposalSpec,
+                lenderSpec: _buildLenderSpec(false),
+                extra: ""
+            });
         }
-        vm.prank(borrower);
-        deployment.simpleLoan.repayLOAN({loanId: loanId, permitData: ""});
+    }
+
+    function _cancelProposal(SDSimpleLoanSimpleProposal.Proposal memory _proposal) internal {
+        deployment.simpleLoan.cancelProposal(_buildProposalSpec(_proposal));
+    }
+
+    function _buildLenderSpec(bool complete) internal view returns (SDSimpleLoan.LenderSpec memory lenderSpec) {
+        lenderSpec = complete
+            ? SDSimpleLoan.LenderSpec({sourceOfFunds: lender, creditAmount: CREDIT_LIMIT, permitData: ""})
+            : SDSimpleLoan.LenderSpec({sourceOfFunds: lender, creditAmount: CREDIT_AMOUNT, permitData: ""});
+    }
+
+    function _buildProposalSpec(SDSimpleLoanSimpleProposal.Proposal memory _proposal)
+        internal
+        view
+        returns (SDSimpleLoan.ProposalSpec memory proposalSpec)
+    {
+        return SDSimpleLoan.ProposalSpec({
+            proposalContract: address(deployment.simpleLoanSimpleProposal),
+            proposalData: abi.encode(_proposal)
+        });
     }
 }

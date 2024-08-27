@@ -10,7 +10,8 @@ import {
     IERC1155Receiver,
     PWNVault,
     IPoolAdapter,
-    Permit
+    Permit,
+    SDTransfer
 } from "pwn/loan/vault/PWNVault.sol";
 
 import {DummyPoolAdapter} from "test/helper/DummyPoolAdapter.sol";
@@ -96,7 +97,7 @@ contract PWNVault_Pull_Test is PWNVaultTest {
     function test_shouldFail_whenIncompleteTransaction() external {
         vm.mockCall(token, abi.encodeWithSignature("ownerOf(uint256)"), abi.encode(alice));
 
-        vm.expectRevert(abi.encodeWithSelector(PWNVault.IncompleteTransfer.selector));
+        vm.expectRevert(abi.encodeWithSelector(SDTransfer.IncompleteTransfer.selector));
         MultiToken.Asset memory asset = MultiToken.Asset(MultiToken.Category.ERC721, token, 42, 0);
         vault.pull(asset, alice);
     }
@@ -135,7 +136,7 @@ contract PWNVault_Push_Test is PWNVaultTest {
     function test_shouldFail_whenIncompleteTransaction() external {
         vm.mockCall(token, abi.encodeWithSignature("ownerOf(uint256)"), abi.encode(address(vault)));
 
-        vm.expectRevert(abi.encodeWithSelector(PWNVault.IncompleteTransfer.selector));
+        vm.expectRevert(abi.encodeWithSelector(SDTransfer.IncompleteTransfer.selector));
         MultiToken.Asset memory asset = MultiToken.Asset(MultiToken.Category.ERC721, token, 42, 0);
         vault.push(asset, alice);
     }
@@ -174,7 +175,7 @@ contract PWNVault_PushFrom_Test is PWNVaultTest {
     function test_shouldFail_whenIncompleteTransaction() external {
         vm.mockCall(token, abi.encodeWithSignature("ownerOf(uint256)"), abi.encode(alice));
 
-        vm.expectRevert(abi.encodeWithSelector(PWNVault.IncompleteTransfer.selector));
+        vm.expectRevert(abi.encodeWithSelector(SDTransfer.IncompleteTransfer.selector));
         MultiToken.Asset memory asset = MultiToken.Asset(MultiToken.Category.ERC721, token, 42, 0);
         vault.pushFrom(asset, alice, bob);
     }
@@ -226,7 +227,7 @@ contract PWNVault_WithdrawFromPool_Test is PWNVaultTest {
     function test_shouldFail_whenIncompleteTransaction() external {
         vm.mockCall(asset.assetAddress, abi.encodeWithSignature("balanceOf(address)", alice), abi.encode(asset.amount));
 
-        vm.expectRevert(abi.encodeWithSelector(PWNVault.IncompleteTransfer.selector));
+        vm.expectRevert(abi.encodeWithSelector(SDTransfer.IncompleteTransfer.selector));
         vault.withdrawFromPool(asset, poolAdapter, pool, alice);
     }
 
@@ -279,7 +280,7 @@ contract PWNVault_SupplyToPool_Test is PWNVaultTest {
             asset.assetAddress, abi.encodeWithSignature("balanceOf(address)", address(vault)), abi.encode(asset.amount)
         );
 
-        vm.expectRevert(abi.encodeWithSelector(PWNVault.IncompleteTransfer.selector));
+        vm.expectRevert(abi.encodeWithSelector(SDTransfer.IncompleteTransfer.selector));
         vault.supplyToPool(asset, poolAdapter, pool, alice);
     }
 

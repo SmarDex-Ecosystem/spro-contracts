@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity 0.8.16;
 
-import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
+import {MultiToken} from "MultiToken/MultiToken.sol";
 import {ERC165Checker} from "openzeppelin/utils/introspection/ERC165Checker.sol";
 import {Math} from "openzeppelin/utils/math/Math.sol";
 
@@ -9,7 +9,6 @@ import {SDConfig, IStateFingerprintComputer} from "pwn/config/SDConfig.sol";
 import {PWNHub} from "pwn/hub/PWNHub.sol";
 import {PWNHubTags} from "pwn/hub/PWNHubTags.sol";
 import {IERC5646} from "pwn/interfaces/IERC5646.sol";
-import {PWNSignatureChecker} from "pwn/loan/lib/PWNSignatureChecker.sol";
 import {SDSimpleLoan} from "pwn/loan/terms/simple/loan/SDSimpleLoan.sol";
 import {PWNRevokedNonce} from "pwn/nonce/PWNRevokedNonce.sol";
 import {Expired, AddressMissingHubTag} from "pwn/PWNErrors.sol";
@@ -24,7 +23,6 @@ abstract contract SDSimpleLoanProposal {
     |*----------------------------------------------------------*/
 
     bytes32 public immutable DOMAIN_SEPARATOR;
-    bytes32 public immutable MULTIPROPOSAL_DOMAIN_SEPARATOR;
 
     PWNHub public immutable hub;
     PWNRevokedNonce public immutable revokedNonce;
@@ -32,25 +30,16 @@ abstract contract SDSimpleLoanProposal {
 
     uint256 public constant MINIMUM_PERCENTAGE_POSITION = 500; // In basis points, 100% == 1e4.
     uint256 public constant THRESHOLD_PERCENTAGE_POSITION = 9500; // In basis points, 100% == 1e4.
-
-    bytes32 public constant MULTIPROPOSAL_TYPEHASH = keccak256("Multiproposal(bytes32 multiproposalMerkleRoot)");
-
-    struct Multiproposal {
-        bytes32 multiproposalMerkleRoot;
-    }
+    uint256 internal constant PERCENTAGE = 1e4;
 
     struct ProposalBase {
         address collateralAddress;
         uint256 collateralId;
         bool checkCollateralStateFingerprint;
         bytes32 collateralStateFingerprint;
-        uint256 creditAmount;
         uint256 availableCreditLimit;
         uint40 expiration;
-        address allowedAcceptor;
         address proposer;
-        bool isOffer;
-        uint256 refinancingLoanId;
         uint256 nonceSpace;
         uint256 nonce;
         address loanContract;
@@ -58,7 +47,6 @@ abstract contract SDSimpleLoanProposal {
 
     /**
      * @dev Mapping of proposals made via on-chain transactions.
-     *      Could be used by contract wallets instead of EIP-1271.
      *      (proposal hash => is made)
      */
     mapping(bytes32 => bool) public proposalsMade;
@@ -99,10 +87,8 @@ abstract contract SDSimpleLoanProposal {
     error AcceptorIsProposer(address addr);
 
     /**
-     * @notice Thrown when provided refinance loan id cannot be used.
+     * @notice Thrown when credit amount is below the minimum amount for the proposal.
      */
-    error InvalidRefinancingLoanId(uint256 refinancingLoanId);
-
     error CreditAmountTooSmall(uint256 amount, uint256 minimum);
 
     /**
@@ -111,9 +97,24 @@ abstract contract SDSimpleLoanProposal {
     error AvailableCreditLimitExceeded(uint256 used, uint256 limit);
 
     /**
+     * @notice Thrown when a proposal would exceed the available credit limit.
+     */
+    error AvailableCreditLimitZero();
+
+    /**
      * @notice Thrown when caller is not allowed to accept a proposal.
      */
     error CallerNotAllowedAcceptor(address current, address allowed);
+
+    /**
+     * @notice Thrown when the proposal already exists.
+     */
+    error ProposalAlreadyExists();
+
+    /**
+     * @notice Thrown when the proposal has not been made.
+     */
+    error ProposalNotMade();
 
     /*----------------------------------------------------------*|
     |*  # CONSTRUCTOR                                           *|
@@ -133,29 +134,11 @@ abstract contract SDSimpleLoanProposal {
                 address(this)
             )
         );
-
-        MULTIPROPOSAL_DOMAIN_SEPARATOR =
-            keccak256(abi.encode(keccak256("EIP712Domain(string name)"), keccak256("SDMultiproposal")));
     }
 
     /*----------------------------------------------------------*|
     |*  # EXTERNALS                                             *|
     |*----------------------------------------------------------*/
-
-    /**
-     * @notice Get a multiproposal hash according to EIP-712.
-     * @param multiproposal Multiproposal struct.
-     * @return Multiproposal hash.
-     */
-    function getMultiproposalHash(Multiproposal memory multiproposal) public view returns (bytes32) {
-        return keccak256(
-            abi.encodePacked(
-                hex"1901",
-                MULTIPROPOSAL_DOMAIN_SEPARATOR,
-                keccak256(abi.encodePacked(MULTIPROPOSAL_TYPEHASH, abi.encode(multiproposal)))
-            )
-        );
-    }
 
     /**
      * @notice Helper function for revoking a proposal nonce on behalf of a caller.
@@ -170,19 +153,41 @@ abstract contract SDSimpleLoanProposal {
      * @notice Accept a proposal and create new loan terms.
      * @dev Function can be called only by a loan contract with appropriate PWN Hub tag.
      * @param acceptor Address of a proposal acceptor.
-     * @param refinancingLoanId Id of a loan to be refinanced. 0 if creating a new loan.
+     * @param creditAmount Amount of credit to lend.
      * @param proposalData Encoded proposal data with signature.
-     * @param proposalInclusionProof Multiproposal inclusion proof. Empty if single proposal.
      * @return proposalHash Proposal hash.
      * @return loanTerms Loan terms.
      */
-    function acceptProposal(
-        address acceptor,
-        uint256 refinancingLoanId,
-        bytes calldata proposalData,
-        bytes32[] calldata proposalInclusionProof,
-        bytes calldata signature
-    ) external virtual returns (bytes32 proposalHash, SDSimpleLoan.Terms memory loanTerms);
+    function acceptProposal(address acceptor, uint256 creditAmount, bytes calldata proposalData)
+        external
+        virtual
+        returns (bytes32 proposalHash, SDSimpleLoan.Terms memory loanTerms);
+
+    /**
+     * @notice Make an on-chain proposal.
+     * @dev Function will mark a proposal hash as proposed.
+     * @param proposalData Encoded proposal data.
+     * @return proposer Address of the borrower/proposer
+     * @return collateral Collateral token as a MultiToken.Asset struct.
+     * @return creditAddress Address of the credit token.
+     * @return creditLimit Credit limit.
+     */
+    function makeProposal(bytes calldata proposalData)
+        external
+        virtual
+        returns (address proposer, MultiToken.Asset memory collateral, address creditAddress, uint256 creditLimit);
+
+    /**
+     * @notice Cancel a proposal and withdraw unused collateral.
+     * @dev Function can be called only by a loan contract with appropriate PWN Hub tag.
+     * @param proposalData Encoded proposal data.
+     * @return proposer Address of the borrower/proposer.
+     * @return collateral Collateral token as a MultiToken.Asset struct.
+     */
+    function cancelProposal(bytes calldata proposalData)
+        external
+        virtual
+        returns (address proposer, MultiToken.Asset memory collateral);
 
     /*----------------------------------------------------------*|
     |*  # INTERNALS                                             *|
@@ -205,12 +210,14 @@ abstract contract SDSimpleLoanProposal {
      * @notice Make an on-chain proposal.
      * @dev Function will mark a proposal hash as proposed.
      * @param proposalHash Proposal hash.
-     * @param proposer Address of a proposal proposer.
+     * @param loanContract Address of the loan contract for the proposal.
      */
-    function _makeProposal(bytes32 proposalHash, address proposer) internal {
-        if (msg.sender != proposer) {
-            revert CallerIsNotStatedProposer({addr: proposer});
+    function _makeProposal(bytes32 proposalHash, address loanContract) internal {
+        if (msg.sender != loanContract) {
+            revert CallerNotLoanContract({caller: msg.sender, loanContract: loanContract});
         }
+
+        if (proposalsMade[proposalHash]) revert ProposalAlreadyExists();
 
         proposalsMade[proposalHash] = true;
     }
@@ -218,20 +225,12 @@ abstract contract SDSimpleLoanProposal {
     /**
      * @notice Try to accept proposal base.
      * @param acceptor Address of a proposal acceptor.
-     * @param refinancingLoanId Refinancing loan ID.
      * @param proposalHash Proposal hash.
-     * @param proposalInclusionProof Multiproposal inclusion proof. Empty if single proposal.
-     * @param signature Signature of a proposal.
      * @param proposal Proposal base struct.
      */
-    function _acceptProposal(
-        address acceptor,
-        uint256 refinancingLoanId,
-        bytes32 proposalHash,
-        bytes32[] calldata proposalInclusionProof,
-        bytes calldata signature,
-        ProposalBase memory proposal
-    ) internal {
+    function _acceptProposal(address acceptor, uint256 creditAmount, bytes32 proposalHash, ProposalBase memory proposal)
+        internal
+    {
         // Check loan contract
         if (msg.sender != proposal.loanContract) {
             revert CallerNotLoanContract({caller: msg.sender, loanContract: proposal.loanContract});
@@ -240,45 +239,12 @@ abstract contract SDSimpleLoanProposal {
             revert AddressMissingHubTag({addr: proposal.loanContract, tag: PWNHubTags.ACTIVE_LOAN});
         }
 
-        // Check proposal signature or that it was made on-chain
-        if (proposalInclusionProof.length == 0) {
-            // Single proposal signature
-            if (!proposalsMade[proposalHash]) {
-                if (!PWNSignatureChecker.isValidSignatureNow(proposal.proposer, proposalHash, signature)) {
-                    revert PWNSignatureChecker.InvalidSignature({signer: proposal.proposer, digest: proposalHash});
-                }
-            }
-        } else {
-            // Multiproposal signature
-            bytes32 multiproposalHash = getMultiproposalHash(
-                Multiproposal({
-                    multiproposalMerkleRoot: MerkleProof.processProofCalldata({
-                        proof: proposalInclusionProof,
-                        leaf: proposalHash
-                    })
-                })
-            );
-            if (!PWNSignatureChecker.isValidSignatureNow(proposal.proposer, multiproposalHash, signature)) {
-                revert PWNSignatureChecker.InvalidSignature({signer: proposal.proposer, digest: multiproposalHash});
-            }
-        }
+        // Check that the proposal was made on-chain
+        if (!proposalsMade[proposalHash]) revert ProposalNotMade();
 
         // Check proposer is not acceptor
         if (proposal.proposer == acceptor) {
             revert AcceptorIsProposer({addr: acceptor});
-        }
-
-        // Check refinancing proposal
-        if (refinancingLoanId == 0) {
-            if (proposal.refinancingLoanId != 0) {
-                revert InvalidRefinancingLoanId({refinancingLoanId: proposal.refinancingLoanId});
-            }
-        } else {
-            if (refinancingLoanId != proposal.refinancingLoanId) {
-                if (proposal.refinancingLoanId != 0 || !proposal.isOffer) {
-                    revert InvalidRefinancingLoanId({refinancingLoanId: proposal.refinancingLoanId});
-                }
-            }
         }
 
         // Check proposal is not expired
@@ -295,36 +261,31 @@ abstract contract SDSimpleLoanProposal {
             });
         }
 
-        // Check propsal is accepted by an allowed address
-        if (proposal.allowedAcceptor != address(0) && acceptor != proposal.allowedAcceptor) {
-            revert CallerNotAllowedAcceptor({current: acceptor, allowed: proposal.allowedAcceptor});
-        }
-
         if (proposal.availableCreditLimit == 0) {
-            // Revoke nonce if credit limit is 0, proposal can be accepted only once
-            revokedNonce.revokeNonce(proposal.proposer, proposal.nonceSpace, proposal.nonce);
-        } else if (creditUsed[proposalHash] + proposal.creditAmount <= proposal.availableCreditLimit) {
-            uint256 minCreditAmount = Math.mulDiv(proposal.availableCreditLimit, MINIMUM_PERCENTAGE_POSITION, 1e4);
+            revert AvailableCreditLimitZero();
+        } else if (creditUsed[proposalHash] + creditAmount <= proposal.availableCreditLimit) {
+            uint256 minCreditAmount =
+                Math.mulDiv(proposal.availableCreditLimit, MINIMUM_PERCENTAGE_POSITION, PERCENTAGE);
 
-            if (proposal.creditAmount >= minCreditAmount) {
+            if (creditAmount >= minCreditAmount) {
                 // Increase used credit if credit limit is not exceeded
-                creditUsed[proposalHash] += proposal.creditAmount;
+                creditUsed[proposalHash] += creditAmount;
 
                 // Revoke nonce if credit used is greater than 95% of the credit limit.
                 // Minimum credit amount can never be satisfied then.
                 if (
                     creditUsed[proposalHash]
-                        > Math.mulDiv(proposal.availableCreditLimit, THRESHOLD_PERCENTAGE_POSITION, 1e4)
+                        > Math.mulDiv(proposal.availableCreditLimit, THRESHOLD_PERCENTAGE_POSITION, PERCENTAGE)
                 ) {
                     revokedNonce.revokeNonce(proposal.proposer, proposal.nonceSpace, proposal.nonce);
                 }
             } else {
-                revert CreditAmountTooSmall({amount: proposal.creditAmount, minimum: minCreditAmount});
+                revert CreditAmountTooSmall({amount: creditAmount, minimum: minCreditAmount});
             }
         } else {
             // Revert if credit limit is exceeded
             revert AvailableCreditLimitExceeded({
-                used: creditUsed[proposalHash] + proposal.creditAmount,
+                used: creditUsed[proposalHash] + creditAmount,
                 limit: proposal.availableCreditLimit
             });
         }
