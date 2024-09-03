@@ -69,6 +69,19 @@ contract SDConfig is Ownable2Step, Initializable {
      */
     mapping(address => address) private _poolAdapterRegistry;
 
+    /**
+     * @notice Minimum percentage of a proposal's availableCreditLimit which can be used in partial lending.
+     */
+    uint16 public minimumPartialPositionPercentage;
+
+    /**
+     * @notice Maximum percentage of a proposal's availableCreditLimit which can be used in partial lending.
+     */
+    uint16 public maximumPartialPositionPercentage;
+
+    /// @dev Percentage denominator (10_000 = 100%)
+    uint256 internal constant PERCENTAGE = 1e4;
+
     /*----------------------------------------------------------*|
     |*  # EVENTS DEFINITIONS                                    *|
     |*----------------------------------------------------------*/
@@ -136,6 +149,16 @@ contract SDConfig is Ownable2Step, Initializable {
      * @notice Thrown when trying to set a LOAN token metadata uri for zero address loan contract.
      */
     error ZeroLoanContract();
+
+    /**
+     * @notice Thrown when trying to set a minimum percentage value higher than `PERCENTAGE`.
+     */
+    error ExcessivePercentageValue(uint16 percentage);
+
+    /**
+     * @notice Thrown when trying to set a threshold value higher than `MAX_THRESHOLD`.
+     */
+    error ThresholdsOutOfOrder();
 
     /*----------------------------------------------------------*|
     |*  # CONSTRUCTOR                                           *|
@@ -257,6 +280,30 @@ contract SDConfig is Ownable2Step, Initializable {
     function _setListedToken(address _token, uint256 _factor) private {
         tokenFactors[_token] = _factor;
         emit ListedTokenUpdated(_token, _factor);
+    }
+
+    /*----------------------------------------------------------*|
+    |*  # PARTIAL LENDING THRESHOLDS                            *|
+    |*----------------------------------------------------------*/
+
+    /**
+     * @notice Set minimum percentage of a proposal's availableCreditLimit which can be used in partial lending.
+     * @param percentage New minimum percentage value.
+     */
+    function setMinimumPartialPositionPercentage(uint16 percentage) external onlyOwner {
+        if (percentage > PERCENTAGE) revert ExcessivePercentageValue(percentage);
+        if (percentage > maximumPartialPositionPercentage) revert ThresholdsOutOfOrder();
+        minimumPartialPositionPercentage = percentage;
+    }
+
+    /**
+     * @notice Set maximum percentage of a proposal's availableCreditLimit which can be used in partial lending.
+     * @param percentage New maximum percentage value.
+     */
+    function setMaximumPartialPositionPercentage(uint16 percentage) external onlyOwner {
+        if (percentage > PERCENTAGE) revert ExcessivePercentageValue(percentage);
+        if (percentage < minimumPartialPositionPercentage) revert ThresholdsOutOfOrder();
+        maximumPartialPositionPercentage = percentage;
     }
 
     /*----------------------------------------------------------*|

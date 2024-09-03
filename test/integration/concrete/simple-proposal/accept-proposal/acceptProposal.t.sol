@@ -291,12 +291,19 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         _createERC20Proposal();
 
         vm.prank(proposal.loanContract);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SDSimpleLoanProposal.CreditAmountLeavesTooLittle.selector,
+                (CREDIT_LIMIT * 9501) / 1e4,
+                DEFAULT_MAX_THRESHOLD * CREDIT_LIMIT / 1e4
+            )
+        );
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, (CREDIT_LIMIT * 9501) / 1e4, abi.encode(proposal));
 
         assertEq(
             deployment.revokedNonce.isNonceUsable(borrower, proposal.nonceSpace, proposal.nonce),
-            false,
-            "nonce should not be usable"
+            true,
+            "nonce should still be usable"
         );
     }
 
@@ -437,7 +444,9 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         vm.prank(proposal.loanContract);
         vm.expectRevert(
             abi.encodeWithSelector(
-                SDSimpleLoanSimpleProposal.OnlyCompleteLendingForNFTs.selector, CREDIT_LIMIT - 1, CREDIT_LIMIT
+                SDSimpleLoanProposal.CreditAmountLeavesTooLittle.selector,
+                CREDIT_LIMIT - 1,
+                DEFAULT_MAX_THRESHOLD * CREDIT_LIMIT / 1e4
             )
         );
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT - 1, abi.encode(proposal));
@@ -573,7 +582,9 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         vm.prank(proposal.loanContract);
         vm.expectRevert(
             abi.encodeWithSelector(
-                SDSimpleLoanSimpleProposal.OnlyCompleteLendingForNFTs.selector, CREDIT_LIMIT - 1, CREDIT_LIMIT
+                SDSimpleLoanProposal.CreditAmountLeavesTooLittle.selector,
+                CREDIT_LIMIT - 1,
+                DEFAULT_MAX_THRESHOLD * CREDIT_LIMIT / 1e4
             )
         );
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT - 1, abi.encode(proposal));

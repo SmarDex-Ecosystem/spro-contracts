@@ -6,9 +6,11 @@ import {MultiToken} from "MultiToken/MultiToken.sol";
 import {SDSimpleLoan} from "pwn/loan/terms/simple/loan/SDSimpleLoan.sol";
 import {SDSimpleLoanProposal} from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
 import {SDTransfer} from "pwn/loan/lib/SDTransfer.sol";
+import {PWNHubTags} from "pwn/hub/PWNHubTags.sol";
+import {AddressMissingHubTag} from "pwn/PWNErrors.sol";
 
 /**
- * @title PWN Simple Loan Simple Proposal
+ * @title SD Simple Loan Simple Proposal
  * @notice Contract for creating and accepting simple loan proposals.
  */
 contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
@@ -217,19 +219,24 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
         if (proposal.collateralCategory == MultiToken.Category.ERC20) {
             withdrawableCollateral[proposalHash].amount -= collateralUsed_;
         } else if (proposal.collateralCategory == MultiToken.Category.ERC721) {
-            _verifyCompleteLoan(creditAmount, proposal.availableCreditLimit);
+            _checkCompleteLoan(creditAmount, proposal.availableCreditLimit);
 
             withdrawableCollateral[proposalHash].amount = type(uint256).max; // requirement: has to be non-zero
         } else if (proposal.collateralCategory == MultiToken.Category.ERC1155) {
             if (proposal.collateralAmount == 1) {
-                _verifyCompleteLoan(creditAmount, proposal.availableCreditLimit);
+                _checkCompleteLoan(creditAmount, proposal.availableCreditLimit);
             }
 
             withdrawableCollateral[proposalHash].amount -= collateralUsed_;
         }
     }
 
-    function _verifyCompleteLoan(uint256 _creditAmount, uint256 _availableCreditLimit) internal pure {
+    /**
+     * @notice Checks for a complete loan with credit amount equal to available credit limit
+     * @param _creditAmount Credit amount of the proposal.
+     * @param _availableCreditLimit Available credit limit of the proposal.
+     */
+    function _checkCompleteLoan(uint256 _creditAmount, uint256 _availableCreditLimit) internal pure {
         if (_creditAmount != _availableCreditLimit) {
             revert OnlyCompleteLendingForNFTs(_creditAmount, _availableCreditLimit);
         }
@@ -253,6 +260,9 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
         // Caller must be valid loan contract
         if (msg.sender != proposal.loanContract) {
             revert CallerNotLoanContract({caller: msg.sender, loanContract: proposal.loanContract});
+        }
+        if (!hub.hasTag(proposal.loanContract, PWNHubTags.ACTIVE_LOAN)) {
+            revert AddressMissingHubTag({addr: proposal.loanContract, tag: PWNHubTags.ACTIVE_LOAN});
         }
 
         // Make proposal hash

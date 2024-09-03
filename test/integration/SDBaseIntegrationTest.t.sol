@@ -2,8 +2,8 @@
 pragma solidity 0.8.16;
 
 import {MultiToken} from "MultiToken/MultiToken.sol";
-
 import {Permit} from "pwn/loan/vault/Permit.sol";
+import {SigUtils} from "test/utils/SigUtils.sol";
 
 import {T20} from "test/helper/T20.sol";
 import {T721} from "test/helper/T721.sol";
@@ -33,6 +33,13 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
     uint256 borrowerPK = uint256(888);
     address borrower = vm.addr(borrowerPK);
     SDSimpleLoanSimpleProposal.Proposal proposal;
+    Permit permit;
+
+    // Additional lenders
+    address alice;
+    uint256 aliceKey;
+    address bob;
+    address charlee;
 
     // Constants
     uint256 public constant COLLATERAL_ID = 42;
@@ -48,7 +55,10 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
 
     uint256 public constant INITIAL_SDEX_BALANCE = 1_000_000e18;
 
-    function setUp() public override {
+    uint16 public constant DEFAULT_MIN_THRESHOLD = 500;
+    uint16 public constant DEFAULT_MAX_THRESHOLD = 9500;
+
+    function setUp() public override virtual {
         super.setUp();
 
         // Deploy tokens
@@ -57,6 +67,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
         t1155 = new T1155();
         credit = new T20();
 
+        // Deploy protocol contracts
         proposal = SDSimpleLoanSimpleProposal.Proposal({
             collateralCategory: MultiToken.Category.ERC20,
             collateralAddress: address(t20),
@@ -68,7 +79,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
             availableCreditLimit: CREDIT_LIMIT,
             fixedInterestAmount: FIXED_INTEREST_AMOUNT,
             accruingInterestAPR: 0,
-            duration: 3600,
+            duration: 5 days,
             expiration: uint40(block.timestamp + 7 days),
             proposer: borrower,
             proposerSpecHash: keccak256(abi.encode(borrower)),
@@ -85,6 +96,12 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
         vm.prank(borrower);
         deployment.sdex.approve(address(deployment.simpleLoan), type(uint256).max);
 
+        // Set thresholds in config
+        vm.startPrank(deployment.protocolAdmin);
+        SDConfig(deployment.config).setMaximumPartialPositionPercentage(DEFAULT_MAX_THRESHOLD);
+        SDConfig(deployment.config).setMinimumPartialPositionPercentage(DEFAULT_MIN_THRESHOLD);
+        vm.stopPrank();
+
         // Add labels
         vm.label(lender, "lender");
         vm.label(borrower, "borrower");
@@ -92,6 +109,14 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
         vm.label(address(t20), "t20");
         vm.label(address(t721), "t721");
         vm.label(address(t1155), "t1155");
+
+        // Setup & label new lender addresses
+        (alice, aliceKey) = makeAddrAndKey("alice");
+        vm.label(alice, "alice");
+        bob = makeAddr("bob");
+        vm.label(bob, "bob");
+        charlee = makeAddr("charlee");
+        vm.label(charlee, "charlee");
     }
 
     // Make the proposal

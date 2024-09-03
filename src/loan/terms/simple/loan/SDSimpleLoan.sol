@@ -236,6 +236,11 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
      */
     error InvalidMultiTokenAsset(uint8 category, address addr, uint256 id, uint256 amount);
 
+    /**
+     * @notice Thrown when the loan credit address is different than the expected credit address.
+     */
+    error DifferentCreditAddress(address loanCreditAddress, address expectedCreditAddress);
+
     /*----------------------------------------------------------*|
     |*  # CONSTRUCTOR                                           *|
     |*----------------------------------------------------------*/
@@ -533,6 +538,63 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     }
 
     /**
+     * @notice Repay running loans.
+     * @dev Any address can repay a running loan, but a collateral will be transferred to a borrower address associated with the loan.
+     *      If the LOAN token holder is the same as the original lender, the repayment credit asset will be
+     *      transferred to the LOAN token holder directly. Otherwise it will transfer the repayment credit asset to
+     *      a vault, waiting on a LOAN token holder to claim it. The function assumes a prior token approval to a contract address
+     *      or a signed permit.
+     * @param loanIds Id array of loans that are being repaid.
+     * @param creditAddress Expected credit address for all loan ids.
+     * @param permitData Callers credit permit data.
+     */
+    function repayMultipleLOANs(uint256[] calldata loanIds, address creditAddress, bytes calldata permitData)
+        external
+    {
+        uint256 totalRepaymentAmount;
+
+        for (uint256 i; i < loanIds.length; ++i) {
+            uint256 loanId = loanIds[i];
+            LOAN storage loan = LOANs[loanId];
+
+            // Checks: loan can be repaid & credit address is the same for all loanIds
+            _checkLoanCanBeRepaid(loan.status, loan.defaultTimestamp);
+            _checkLoanCreditAddress(loan.creditAddress, creditAddress);
+
+            // Update loan to repaid state
+            _updateRepaidLoan(loanId);
+
+            // Increment the total repayment amount
+            totalRepaymentAmount += loanRepaymentAmount(loanId);
+        }
+
+        // Execute permit for the caller
+        if (permitData.length > 0) {
+            Permit memory permit = abi.decode(permitData, (Permit));
+            _checkPermit(msg.sender, creditAddress, permit);
+            _tryPermit(permit);
+        }
+        // Transfer the repaid credit to the vault
+        _pull(creditAddress.ERC20(totalRepaymentAmount), msg.sender);
+
+        for (uint256 i; i < loanIds.length; ++i) {
+            uint256 loanId = loanIds[i];
+            LOAN storage loan = LOANs[loanId];
+
+            // Transfer collateral back to the borrower
+            _push(loan.collateral, loan.borrower);
+
+            // Try to repay directly (for each loanId)
+            try this.tryClaimRepaidLOAN(loanId, loanRepaymentAmount(loanId), loanToken.ownerOf(loanId)) {}
+            catch {
+                // Note: Safe transfer or supply to a pool can fail. In that case leave the LOAN token in repaid state and
+                // wait for the LOAN token owner to claim the repaid credit. Otherwise lender would be able to prevent
+                // borrower from repaying the loan.
+            }
+        }
+    }
+
+    /**
      * @notice Check if the loan can be repaid.
      * @dev The function will revert if the loan cannot be repaid.
      * @param status Loan status.
@@ -546,6 +608,17 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         // Check that loan is not defaulted
         if (defaultTimestamp <= block.timestamp) {
             revert LoanDefaulted(defaultTimestamp);
+        }
+    }
+
+    /**
+     * @notice Check that the loan credit address matches the expected credit address
+     * @param loanCreditAddress Loan credit address.
+     * @param expectedCreditAddress Expected credit address.
+     */
+    function _checkLoanCreditAddress(address loanCreditAddress, address expectedCreditAddress) private pure {
+        if (loanCreditAddress != expectedCreditAddress) {
+            revert DifferentCreditAddress(loanCreditAddress, expectedCreditAddress);
         }
     }
 
@@ -589,6 +662,30 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     }
 
     /**
+     * @notice Calculates the loan repayment amount with fixed and accrued interest for a set of loan ids.
+     * @dev Intended to be used to build permit data or credit token approvals
+     * @param loanIds Array of loan ids.
+     * @param creditAddress Expected credit address for all loan ids.
+     * @return amount
+     */
+    function totalLoanRepaymentAmount(uint256[] calldata loanIds, address creditAddress)
+        external
+        view
+        returns (uint256 amount)
+    {
+        for (uint256 i; i < loanIds.length; ++i) {
+            uint256 loanId = loanIds[i];
+            LOAN storage loan = LOANs[loanId];
+            _checkLoanCreditAddress(loan.creditAddress, creditAddress);
+            // Check non-existent loan
+            if (loan.status == 0) return 0;
+
+            // Add loan principal with accrued interest
+            amount += loan.principalAmount + _loanAccruedInterest(loan);
+        }
+    }
+
+    /**
      * @notice Calculate the loan accrued interest.
      * @param loan Loan data struct.
      * @return Accrued interest amount.
@@ -613,7 +710,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
      *      Claim will transfer the repaid credit or collateral to a LOAN token holder address and burn the LOAN token.
      * @param loanId Id of a loan that is being claimed.
      */
-    function claimLOAN(uint256 loanId) external {
+    function claimLOAN(uint256 loanId) public {
         LOAN storage loan = LOANs[loanId];
 
         // Check that caller is LOAN token holder
@@ -634,6 +731,19 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         // Loan is in wrong state
         else {
             revert LoanRunning();
+        }
+    }
+
+    /**
+     * @notice Claims multiple repaid or defaulted loans.
+     * @dev Only a LOAN token holder can claim a repaid or defaulted loan.
+     *      Claim will transfer the repaid credit or collateral to a LOAN token holder address and burn the LOAN token.
+     * @param loanIds Array of ids of loans that are being claimed.
+     */
+    function claimMultipleLOANs(uint256[] calldata loanIds) external {
+        uint256 l = loanIds.length;
+        for (uint256 i; i < l; ++i) {
+            claimLOAN(loanIds[i]);
         }
     }
 

@@ -14,7 +14,7 @@ import {PWNRevokedNonce} from "pwn/nonce/PWNRevokedNonce.sol";
 import {Expired, AddressMissingHubTag} from "pwn/PWNErrors.sol";
 
 /**
- * @title PWN Simple Loan Proposal Base Contract
+ * @title SD Simple Loan Proposal Base Contract
  * @notice Base contract of loan proposals that builds a simple loan terms.
  */
 abstract contract SDSimpleLoanProposal {
@@ -28,8 +28,6 @@ abstract contract SDSimpleLoanProposal {
     PWNRevokedNonce public immutable revokedNonce;
     SDConfig public immutable config;
 
-    uint256 public constant MINIMUM_PERCENTAGE_POSITION = 500; // In basis points, 100% == 1e4.
-    uint256 public constant THRESHOLD_PERCENTAGE_POSITION = 9500; // In basis points, 100% == 1e4.
     uint256 internal constant PERCENTAGE = 1e4;
 
     struct ProposalBase {
@@ -90,6 +88,11 @@ abstract contract SDSimpleLoanProposal {
      * @notice Thrown when credit amount is below the minimum amount for the proposal.
      */
     error CreditAmountTooSmall(uint256 amount, uint256 minimum);
+
+    /**
+     * @notice Thrown when credit amount is above the maximum amount for the proposal, but not 100% of available
+     */
+    error CreditAmountLeavesTooLittle(uint256 amount, uint256 maximum);
 
     /**
      * @notice Thrown when a proposal would exceed the available credit limit.
@@ -216,6 +219,9 @@ abstract contract SDSimpleLoanProposal {
         if (msg.sender != loanContract) {
             revert CallerNotLoanContract({caller: msg.sender, loanContract: loanContract});
         }
+        if (!hub.hasTag(loanContract, PWNHubTags.ACTIVE_LOAN)) {
+            revert AddressMissingHubTag({addr: loanContract, tag: PWNHubTags.ACTIVE_LOAN});
+        }
 
         if (proposalsMade[proposalHash]) revert ProposalAlreadyExists();
 
@@ -263,32 +269,29 @@ abstract contract SDSimpleLoanProposal {
 
         if (proposal.availableCreditLimit == 0) {
             revert AvailableCreditLimitZero();
-        } else if (creditUsed[proposalHash] + creditAmount <= proposal.availableCreditLimit) {
+        } else if (creditUsed[proposalHash] + creditAmount < proposal.availableCreditLimit) {
+            // Credit may only be between min and max amounts if it is not exact
             uint256 minCreditAmount =
-                Math.mulDiv(proposal.availableCreditLimit, MINIMUM_PERCENTAGE_POSITION, PERCENTAGE);
-
-            if (creditAmount >= minCreditAmount) {
-                // Increase used credit if credit limit is not exceeded
-                creditUsed[proposalHash] += creditAmount;
-
-                // Revoke nonce if credit used is greater than 95% of the credit limit.
-                // Minimum credit amount can never be satisfied then.
-                if (
-                    creditUsed[proposalHash]
-                        > Math.mulDiv(proposal.availableCreditLimit, THRESHOLD_PERCENTAGE_POSITION, PERCENTAGE)
-                ) {
-                    revokedNonce.revokeNonce(proposal.proposer, proposal.nonceSpace, proposal.nonce);
-                }
-            } else {
+                Math.mulDiv(proposal.availableCreditLimit, config.minimumPartialPositionPercentage(), PERCENTAGE);
+            if (creditAmount < minCreditAmount) {
                 revert CreditAmountTooSmall({amount: creditAmount, minimum: minCreditAmount});
             }
-        } else {
-            // Revert if credit limit is exceeded
+
+            uint256 maxCreditAmount =
+                Math.mulDiv(proposal.availableCreditLimit, config.maximumPartialPositionPercentage(), PERCENTAGE);
+            if (creditAmount > maxCreditAmount) {
+                revert CreditAmountLeavesTooLittle({amount: creditAmount, maximum: maxCreditAmount});
+            }
+        } else if (creditUsed[proposalHash] + creditAmount > proposal.availableCreditLimit) {
+            // Revert, credit limit is exceeded
             revert AvailableCreditLimitExceeded({
                 used: creditUsed[proposalHash] + creditAmount,
                 limit: proposal.availableCreditLimit
             });
         }
+
+        // Apply increase if credit amount checks pass
+        creditUsed[proposalHash] += creditAmount;
 
         // Check collateral state fingerprint if needed
         if (proposal.checkCollateralStateFingerprint) {
