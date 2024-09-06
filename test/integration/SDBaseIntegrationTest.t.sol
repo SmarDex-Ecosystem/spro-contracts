@@ -4,7 +4,10 @@ pragma solidity 0.8.16;
 import {MultiToken} from "MultiToken/MultiToken.sol";
 import {Permit} from "pwn/loan/vault/Permit.sol";
 import {SigUtils} from "test/utils/SigUtils.sol";
-
+import {CreditPermit} from "test/helper/CreditPermit.sol";
+import {DummyPoolAdapter} from "test/helper/DummyPoolAdapter.sol";
+import {IERC165} from "openzeppelin/utils/introspection/IERC165.sol";
+import {IERC5646} from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
 import {T20} from "test/helper/T20.sol";
 import {T721} from "test/helper/T721.sol";
 import {T1155} from "test/helper/T1155.sol";
@@ -35,11 +38,21 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
     SDSimpleLoanSimpleProposal.Proposal proposal;
     Permit permit;
 
+    address public stateFingerprintComputer = makeAddr("stateFingerprintComputer");
+    bytes32 public collateralStateFingerprint = keccak256("some state fingerprint");
+
     // Additional lenders
     address alice;
     uint256 aliceKey;
     address bob;
     address charlee;
+
+    // permit
+    CreditPermit creditPermit;
+    SigUtils sigUtils;
+
+    // pool adapter
+    DummyPoolAdapter poolAdapter;
 
     // Constants
     uint256 public constant COLLATERAL_ID = 42;
@@ -58,7 +71,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
     uint16 public constant DEFAULT_MIN_THRESHOLD = 500;
     uint16 public constant DEFAULT_MAX_THRESHOLD = 9500;
 
-    function setUp() public override virtual {
+    function setUp() public virtual override {
         super.setUp();
 
         // Deploy tokens
@@ -66,6 +79,14 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
         t721 = new T721();
         t1155 = new T1155();
         credit = new T20();
+
+        // Permit
+        creditPermit = new CreditPermit();
+        sigUtils = new SigUtils(creditPermit.DOMAIN_SEPARATOR());
+
+        // Pool adapter
+        poolAdapter = new DummyPoolAdapter();
+        vm.label(address(poolAdapter), "poolAdapter");
 
         // Deploy protocol contracts
         proposal = SDSimpleLoanSimpleProposal.Proposal({
@@ -117,6 +138,18 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
         vm.label(bob, "bob");
         charlee = makeAddr("charlee");
         vm.label(charlee, "charlee");
+
+        // Mock state fingerprint calls
+        vm.mockCall(
+            address(deployment.config),
+            abi.encodeWithSignature("getStateFingerprintComputer(address)"),
+            abi.encode(stateFingerprintComputer)
+        );
+        vm.mockCall(
+            stateFingerprintComputer,
+            abi.encodeWithSignature("computeStateFingerprint(address,uint256)"),
+            abi.encode(collateralStateFingerprint)
+        );
     }
 
     // Make the proposal
@@ -242,5 +275,15 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
             proposalContract: address(deployment.simpleLoanSimpleProposal),
             proposalData: abi.encode(_proposal)
         });
+    }
+
+    function _mockERC5646Support(address asset, bool result) internal {
+        _mockERC165Call(asset, type(IERC165).interfaceId, true);
+        _mockERC165Call(asset, hex"ffffffff", false);
+        _mockERC165Call(asset, type(IERC5646).interfaceId, result);
+    }
+
+    function _mockERC165Call(address asset, bytes4 interfaceId, bool result) internal {
+        vm.mockCall(asset, abi.encodeWithSignature("supportsInterface(bytes4)", interfaceId), abi.encode(result));
     }
 }

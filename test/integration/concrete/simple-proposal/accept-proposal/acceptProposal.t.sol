@@ -378,6 +378,11 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
             "withdrawableCollateral: collateral amount not set"
         );
 
+        vm.expectCall({
+            callee: address(deployment.config),
+            data: abi.encodeWithSignature("getStateFingerprintComputer(address)"),
+            count: 0
+        });
         vm.prank(proposal.loanContract);
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
 
@@ -414,6 +419,11 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
             "withdrawableCollateral: collateral amount not set"
         );
 
+        vm.expectCall({
+            callee: address(deployment.config),
+            data: abi.encodeWithSignature("getStateFingerprintComputer(address)"),
+            count: 0
+        });
         vm.prank(proposal.loanContract);
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
 
@@ -482,6 +492,11 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
             "withdrawableCollateral: collateral amount not set"
         );
 
+        vm.expectCall({
+            callee: address(deployment.config),
+            data: abi.encodeWithSignature("getStateFingerprintComputer(address)"),
+            count: 0
+        });
         vm.prank(proposal.loanContract);
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
 
@@ -517,6 +532,11 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
             "withdrawableCollateral: collateral amount not set"
         );
 
+        vm.expectCall({
+            callee: address(deployment.config),
+            data: abi.encodeWithSignature("getStateFingerprintComputer(address)"),
+            count: 0
+        });
         vm.prank(proposal.loanContract);
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
 
@@ -552,6 +572,11 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
             "withdrawableCollateral: collateral amount not set"
         );
 
+        vm.expectCall({
+            callee: address(deployment.config),
+            data: abi.encodeWithSignature("getStateFingerprintComputer(address)"),
+            count: 0
+        });
         vm.prank(proposal.loanContract);
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
 
@@ -615,6 +640,11 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
             "withdrawableCollateral: collateral amount not set"
         );
 
+        vm.expectCall({
+            callee: address(deployment.config),
+            data: abi.encodeWithSignature("getStateFingerprintComputer(address)"),
+            count: 0
+        });
         vm.prank(proposal.loanContract);
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
 
@@ -623,5 +653,170 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
             0,
             "withdrawableCollateral: collateral amount incorrect"
         );
+    }
+
+    modifier whenValidInputsAndCallers() {
+        _;
+    }
+
+    modifier whenStateFingerprintChecks() {
+        _;
+    }
+
+    function test_shouldPass_whenComputerReturnsMatchingFingerprint()
+        external
+        whenValidInputsAndCallers
+        whenStateFingerprintChecks
+    {
+        proposal.checkCollateralStateFingerprint = true;
+        proposal.collateralStateFingerprint = collateralStateFingerprint;
+
+        _createERC20Proposal();
+
+        bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
+        bytes32 slot = keccak256(abi.encode(proposalHash, SLOT_WITHDRAWABLE_COLLATERAL));
+        assertEq(
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            proposal.collateralAmount,
+            "withdrawableCollateral: collateral amount not set"
+        );
+
+        vm.expectCall(
+            address(deployment.config),
+            abi.encodeWithSignature("getStateFingerprintComputer(address)", proposal.collateralAddress)
+        );
+        vm.prank(proposal.loanContract);
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
+
+        assertEq(
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            0,
+            "withdrawableCollateral: collateral amount decremented correctly"
+        );
+    }
+
+    function testFuzz_shouldFail_whenComputerReturnsDifferentStateFingerprint(bytes32 stateFp)
+        external
+        whenValidInputsAndCallers
+        whenStateFingerprintChecks
+    {
+        proposal.checkCollateralStateFingerprint = true;
+        proposal.collateralStateFingerprint = collateralStateFingerprint;
+        _createERC20Proposal();
+
+        vm.assume(stateFp != collateralStateFingerprint);
+        vm.mockCall(
+            stateFingerprintComputer,
+            abi.encodeWithSignature(
+                "computeStateFingerprint(address,uint256)", proposal.collateralAddress, proposal.collateralId
+            ),
+            abi.encode(stateFp)
+        );
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SDSimpleLoanProposal.InvalidCollateralStateFingerprint.selector, stateFp, collateralStateFingerprint
+            )
+        );
+
+        vm.prank(proposal.loanContract);
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
+    }
+
+    function test_shouldFail_whenNoComputerRegistered_whenAssetDoesNotImplementERC165()
+        external
+        whenValidInputsAndCallers
+        whenStateFingerprintChecks
+    {
+        proposal.checkCollateralStateFingerprint = true;
+        proposal.collateralStateFingerprint = collateralStateFingerprint;
+        _createERC20Proposal();
+
+        vm.mockCall(
+            address(deployment.config),
+            abi.encodeWithSignature("getStateFingerprintComputer(address)"),
+            abi.encode(address(0))
+        );
+        vm.mockCallRevert(
+            proposal.collateralAddress,
+            abi.encodeWithSignature("supportsInterface(bytes4)"),
+            abi.encode("not implementing ERC165")
+        );
+
+        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanProposal.MissingStateFingerprintComputer.selector));
+        vm.prank(proposal.loanContract);
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
+    }
+
+    function test_shouldFail_whenNoComputerRegistered_whenAssetDoesNotImplementERC5646()
+        external
+        whenValidInputsAndCallers
+        whenStateFingerprintChecks
+    {
+        proposal.checkCollateralStateFingerprint = true;
+        proposal.collateralStateFingerprint = collateralStateFingerprint;
+        _createERC20Proposal();
+
+        vm.mockCall(
+            address(deployment.config),
+            abi.encodeWithSignature("getStateFingerprintComputer(address)"),
+            abi.encode(address(0))
+        );
+        _mockERC5646Support(proposal.collateralAddress, false);
+
+        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanProposal.MissingStateFingerprintComputer.selector));
+        vm.prank(proposal.loanContract);
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
+    }
+
+    function testFuzz_shouldFail_whenAssetImplementsERC5646_whenComputerReturnsDifferentStateFingerprint(
+        bytes32 stateFp
+    ) external whenValidInputsAndCallers whenStateFingerprintChecks {
+        vm.assume(stateFp != collateralStateFingerprint);
+
+        proposal.checkCollateralStateFingerprint = true;
+        proposal.collateralStateFingerprint = collateralStateFingerprint;
+        _createERC20Proposal();
+
+        vm.mockCall(
+            address(deployment.config),
+            abi.encodeWithSignature("getStateFingerprintComputer(address)"),
+            abi.encode(address(0))
+        );
+        _mockERC5646Support(proposal.collateralAddress, true);
+        vm.mockCall(
+            proposal.collateralAddress, abi.encodeWithSignature("getStateFingerprint(uint256)"), abi.encode(stateFp)
+        );
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SDSimpleLoanProposal.InvalidCollateralStateFingerprint.selector, stateFp, collateralStateFingerprint
+            )
+        );
+        vm.prank(proposal.loanContract);
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
+    }
+
+    function test_shouldPass_whenAssetImplementsERC5646_whenReturnsMatchingFingerprint()
+        external
+        whenValidInputsAndCallers
+        whenStateFingerprintChecks
+    {
+        proposal.checkCollateralStateFingerprint = true;
+        proposal.collateralStateFingerprint = collateralStateFingerprint;
+        _createERC20Proposal();
+
+        vm.mockCall(
+            address(deployment.config),
+            abi.encodeWithSignature("getStateFingerprintComputer(address)"),
+            abi.encode(address(0))
+        );
+        _mockERC5646Support(proposal.collateralAddress, true);
+        vm.mockCall(
+            proposal.collateralAddress,
+            abi.encodeWithSignature("getStateFingerprint(uint256)"),
+            abi.encode(collateralStateFingerprint)
+        );
+        vm.prank(proposal.loanContract);
+        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
     }
 }

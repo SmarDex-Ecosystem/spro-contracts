@@ -14,7 +14,7 @@ import {
     PWNLOAN,
     PWNRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
-
+import {AddressMissingHubTag} from "pwn/PWNErrors.sol";
 import {SDSimpleLoanProposal} from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
 
 contract CancelProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SDBaseIntegrationTest {
@@ -60,7 +60,22 @@ contract CancelProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         _;
     }
 
-    function test_CancelProposal() external whenProposalDataDecodes loanContractIsCaller {
+    function test_RevertWhen_LoanContractNotActiveLoanTag() external whenProposalDataDecodes loanContractIsCaller {
+        vm.prank(deployment.hub.owner());
+        deployment.hub.setTag(proposal.loanContract, PWNHubTags.ACTIVE_LOAN, false);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(AddressMissingHubTag.selector, proposal.loanContract, PWNHubTags.ACTIVE_LOAN)
+        );
+        vm.prank(proposal.loanContract);
+        deployment.simpleLoanSimpleProposal.cancelProposal(abi.encode(proposal));
+    }
+
+    modifier loanContractHasActiveLoanTag() {
+        _;
+    }
+
+    function test_CancelProposal() external whenProposalDataDecodes loanContractIsCaller loanContractHasActiveLoanTag {
         _createERC20Proposal();
 
         vm.prank(proposal.loanContract);

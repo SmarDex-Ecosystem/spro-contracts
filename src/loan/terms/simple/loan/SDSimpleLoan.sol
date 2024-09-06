@@ -407,7 +407,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
      * @param creditAddress Address of a credit to be used.
      * @param permit Permit to be checked.
      */
-    function _checkPermit(address caller, address creditAddress, Permit memory permit) private pure {
+    function _checkPermit(address caller, address creditAddress, Permit memory permit) internal pure {
         if (permit.asset != address(0)) {
             if (permit.owner != caller) {
                 revert InvalidPermitOwner({current: permit.owner, expected: caller});
@@ -481,7 +481,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         MultiToken.Asset memory credit,
         Terms memory loanTerms,
         LenderSpec calldata lenderSpec
-    ) private {
+    ) internal {
         IPoolAdapter poolAdapter = config.getPoolAdapter(lenderSpec.sourceOfFunds);
         if (address(poolAdapter) == address(0)) {
             revert InvalidSourceOfFunds({sourceOfFunds: lenderSpec.sourceOfFunds});
@@ -600,7 +600,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
      * @param status Loan status.
      * @param defaultTimestamp Loan default timestamp.
      */
-    function _checkLoanCanBeRepaid(uint8 status, uint40 defaultTimestamp) private view {
+    function _checkLoanCanBeRepaid(uint8 status, uint40 defaultTimestamp) internal view {
         // Check that loan exists and is not from a different loan contract
         if (status == 0) revert NonExistingLoan();
         // Check that loan is running
@@ -616,7 +616,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
      * @param loanCreditAddress Loan credit address.
      * @param expectedCreditAddress Expected credit address.
      */
-    function _checkLoanCreditAddress(address loanCreditAddress, address expectedCreditAddress) private pure {
+    function _checkLoanCreditAddress(address loanCreditAddress, address expectedCreditAddress) internal pure {
         if (loanCreditAddress != expectedCreditAddress) {
             revert DifferentCreditAddress(loanCreditAddress, expectedCreditAddress);
         }

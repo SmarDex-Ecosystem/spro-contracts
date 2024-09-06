@@ -16,6 +16,7 @@ import {
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 
 import {SDSimpleLoanProposal} from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
+import {AddressMissingHubTag} from "pwn/PWNErrors.sol";
 
 contract MakeProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SDBaseIntegrationTest {
     function test_RevertWhen_DataCannotBeDecoded() external {
@@ -60,7 +61,22 @@ contract MakeProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SD
         _;
     }
 
-    function test_makeProposal() external whenProposalDataDecodes loanContractIsCaller {
+    function test_RevertWhen_LoanContractNotActiveLoanTag() external whenProposalDataDecodes loanContractIsCaller {
+        vm.prank(deployment.hub.owner());
+        deployment.hub.setTag(proposal.loanContract, PWNHubTags.ACTIVE_LOAN, false);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(AddressMissingHubTag.selector, proposal.loanContract, PWNHubTags.ACTIVE_LOAN)
+        );
+        vm.prank(proposal.loanContract);
+        deployment.simpleLoanSimpleProposal.makeProposal(abi.encode(proposal));
+    }
+
+    modifier loanContractHasActiveLoanTag() {
+        _;
+    }
+
+    function test_makeProposal() external whenProposalDataDecodes loanContractIsCaller loanContractHasActiveLoanTag {
         bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
 
         // Emit event
