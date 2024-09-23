@@ -10,9 +10,9 @@ import {AddressMissingHubTag} from "pwn/PWNErrors.sol";
  * @notice Contract holding revoked nonces.
  */
 contract PWNRevokedNonce {
-    /*----------------------------------------------------------*|
-    |*  # VARIABLES & CONSTANTS DEFINITIONS                     *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                VARIABLES & CONSTANTS DEFINITIONS             */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Access tag that needs to be assigned to a caller in PWN Hub
@@ -37,9 +37,9 @@ contract PWNRevokedNonce {
      */
     mapping(address => uint256) private _nonceSpace;
 
-    /*----------------------------------------------------------*|
-    |*  # EVENTS DEFINITIONS                                    *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      EVENTS DEFINITIONS                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Emitted when a nonce is revoked.
@@ -51,9 +51,9 @@ contract PWNRevokedNonce {
      */
     event NonceSpaceRevoked(address indexed owner, uint256 indexed nonceSpace);
 
-    /*----------------------------------------------------------*|
-    |*  # ERRORS DEFINITIONS                                    *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      ERRORS DEFINITIONS                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Thrown when trying to revoke a nonce that is already revoked.
@@ -66,9 +66,9 @@ contract PWNRevokedNonce {
      */
     error NonceNotUsable(address addr, uint256 nonceSpace, uint256 nonce);
 
-    /*----------------------------------------------------------*|
-    |*  # MODIFIERS                                             *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          MODIFIERS                           */
+    /* ------------------------------------------------------------ */
 
     modifier onlyWithHubTag() {
         if (!hub.hasTag(msg.sender, accessTag)) {
@@ -77,18 +77,18 @@ contract PWNRevokedNonce {
         _;
     }
 
-    /*----------------------------------------------------------*|
-    |*  # CONSTRUCTOR                                           *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          CONSTRUCTOR                         */
+    /* ------------------------------------------------------------ */
 
     constructor(address _hub, bytes32 _accessTag) {
         accessTag = _accessTag;
         hub = PWNHub(_hub);
     }
 
-    /*----------------------------------------------------------*|
-    |*  # NONCE                                                 *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                              NONCE                           */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Revoke callers nonce in the current nonce space.
@@ -175,9 +175,9 @@ contract PWNRevokedNonce {
         return !_revokedNonce[owner][nonceSpace][nonce];
     }
 
-    /*----------------------------------------------------------*|
-    |*  # NONCE SPACE                                           *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          NONCE SPACE                         */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Revoke all nonces in the current nonce space and increment nonce space.

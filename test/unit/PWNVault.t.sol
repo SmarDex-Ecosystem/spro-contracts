@@ -76,9 +76,9 @@ abstract contract PWNVaultTest is Test {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # PULL                                                  *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  PULL                                                     */
+/* ------------------------------------------------------------ */
 
 contract PWNVault_Pull_Test is PWNVaultTest {
     function test_shouldCallTransferFrom_fromOrigin_toVault() external {
@@ -116,9 +116,9 @@ contract PWNVault_Pull_Test is PWNVaultTest {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # PUSH                                                  *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  PUSH                                                     */
+/* ------------------------------------------------------------ */
 
 contract PWNVault_Push_Test is PWNVaultTest {
     function test_shouldCallSafeTransferFrom_fromVault_toBeneficiary() external {
@@ -153,9 +153,9 @@ contract PWNVault_Push_Test is PWNVaultTest {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # PUSH FROM                                             *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  PUSH FROM                                                */
+/* ------------------------------------------------------------ */
 
 contract PWNVault_PushFrom_Test is PWNVaultTest {
     function test_shouldCallSafeTransferFrom_fromOrigin_toBeneficiary() external {
@@ -194,9 +194,9 @@ contract PWNVault_PushFrom_Test is PWNVaultTest {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # WITHDRAW FROM POOL                                    *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  WITHDRAW FROM POOL                                       */
+/* ------------------------------------------------------------ */
 
 contract PWNVault_WithdrawFromPool_Test is PWNVaultTest {
     using MultiToken for address;
@@ -239,9 +239,9 @@ contract PWNVault_WithdrawFromPool_Test is PWNVaultTest {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # SUPPLY TO POOL                                        *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  SUPPLY TO POOL                                           */
+/* ------------------------------------------------------------ */
 
 contract PWNVault_SupplyToPool_Test is PWNVaultTest {
     using MultiToken for address;
@@ -292,9 +292,9 @@ contract PWNVault_SupplyToPool_Test is PWNVaultTest {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # TRY PERMIT                                            *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  TRY PERMIT                                               */
+/* ------------------------------------------------------------ */
 
 contract PWNVault_TryPermit_Test is PWNVaultTest {
     Permit permit;
@@ -352,9 +352,9 @@ contract PWNVault_TryPermit_Test is PWNVaultTest {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # ERC721/1155 RECEIVED HOOKS                            *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  ERC721/1155 RECEIVED HOOKS                               */
+/* ------------------------------------------------------------ */
 
 contract PWNVault_ReceivedHooks_Test is PWNVaultTest {
     function test_shouldReturnCorrectValue_whenOperatorIsVault_onERC721Received() external view {
@@ -388,9 +388,9 @@ contract PWNVault_ReceivedHooks_Test is PWNVaultTest {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # SUPPORTS INTERFACE                                    *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  SUPPORTS INTERFACE                                       */
+/* ------------------------------------------------------------ */
 
 contract PWNVault_SupportsInterface_Test is PWNVaultTest {
     function test_shouldReturnTrue_whenIERC165() external view {

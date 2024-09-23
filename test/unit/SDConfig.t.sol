@@ -11,16 +11,15 @@ abstract contract SDConfigTest is Test {
     bytes32 internal constant OWNER_SLOT = bytes32(uint256(0)); // `_owner` property position
     bytes32 internal constant PENDING_OWNER_SLOT = bytes32(uint256(1)); // `_pendingOwner` property position
     bytes32 internal constant INITIALIZED_SLOT = bytes32(uint256(1)); // `_initialized` property position
-    bytes32 internal constant FEE_SLOT = bytes32(uint256(1)); // `fee` property position
-    bytes32 internal constant SDEX_SLOT = bytes32(uint256(2));
-    bytes32 internal constant SINK_SLOT = bytes32(uint256(3));
-    bytes32 internal constant UNLISTED_FEE_SLOT = bytes32(uint256(4));
-    bytes32 internal constant LISTED_FEE_SLOT = bytes32(uint256(5));
-    bytes32 internal constant VARIABLE_FACTOR_SLOT = bytes32(uint256(6));
-    bytes32 internal constant TOKEN_FACTORS_SLOT = bytes32(uint256(7));
-    bytes32 internal constant LOAN_METADATA_URI_SLOT = bytes32(uint256(8)); // `loanMetadataUri` mapping position
-    bytes32 internal constant SFC_REGISTRY_SLOT = bytes32(uint256(9)); // `_sfComputerRegistry` mapping position
-    bytes32 internal constant POOL_ADAPTER_REGISTRY_SLOT = bytes32(uint256(10)); // `_poolAdapterRegistry` mapping position
+    bytes32 internal constant PARTIAL_POSITION_PERCENTAGE_SLOT = bytes32(uint256(1));
+    uint256 internal constant PARTIAL_POSITION_PERCENTAGE_OFFSET = 176; // == 22 * 8
+    bytes32 internal constant UNLISTED_FEE_SLOT = bytes32(uint256(2));
+    bytes32 internal constant LISTED_FEE_SLOT = bytes32(uint256(3));
+    bytes32 internal constant VARIABLE_FACTOR_SLOT = bytes32(uint256(4));
+    bytes32 internal constant TOKEN_FACTORS_SLOT = bytes32(uint256(5));
+    bytes32 internal constant LOAN_METADATA_URI_SLOT = bytes32(uint256(6)); // `loanMetadataUri` mapping position
+    bytes32 internal constant SFC_REGISTRY_SLOT = bytes32(uint256(7)); // `_sfComputerRegistry` mapping position
+    bytes32 internal constant POOL_ADAPTER_REGISTRY_SLOT = bytes32(uint256(8)); // `_poolAdapterRegistry` mapping position
 
     SDConfig config;
     address owner = makeAddr("owner");
@@ -28,24 +27,20 @@ abstract contract SDConfigTest is Test {
     address sink = makeAddr("sink");
     address creditToken = makeAddr("creditToken");
 
-    event ListedFeeUpdated(uint256 oldFee, uint256 newFee);
-    event UnlistedFeeUpdated(uint256 oldFee, uint256 newFee);
+    event FixFeeListedUpdated(uint256 oldFee, uint256 newFee);
+    event FixFeeUnlistedUpdated(uint256 oldFee, uint256 newFee);
     event VariableFactorUpdated(uint256 oldFactor, uint256 newFactor);
-    event SDEXInitialized(address sdex);
-    event SinkInitialized(address sink);
     event ListedTokenUpdated(address token, uint256 factor);
     event LOANMetadataUriUpdated(address indexed loanContract, string newUri);
     event DefaultLOANMetadataUriUpdated(string newUri);
 
     function setUp() public virtual {
-        config = new SDConfig();
+        config = new SDConfig(sdex);
     }
 
     function _initialize() internal {
         // initialize variables
         vm.store(address(config), OWNER_SLOT, bytes32(uint256(uint160(owner))));
-        vm.store(address(config), SDEX_SLOT, bytes32(uint256(uint160(sdex))));
-        vm.store(address(config), SINK_SLOT, bytes32(uint256(uint160(sink))));
     }
 
     function _mockSupportsToken(address computer, address token, bool result) internal {
@@ -53,23 +48,20 @@ abstract contract SDConfigTest is Test {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # CONSTRUCTOR                                           *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  CONSTRUCTOR                                              */
+/* ------------------------------------------------------------ */
 
 contract SDConfig_Constructor_Test is SDConfigTest {
-    function test_shouldInitializeWithZeroValues() external view {
+    function test_shouldInitializeWithCorrectValues() external view {
         bytes32 ownerValue = vm.load(address(config), OWNER_SLOT);
         assertEq(address(uint160(uint256(ownerValue))), address(0));
 
         bytes32 initializedSlotValue = vm.load(address(config), INITIALIZED_SLOT);
         assertEq(uint16(uint256((initializedSlotValue << 88) >> 248)), 255); // disable initializers
 
-        bytes32 sdexValue = vm.load(address(config), SDEX_SLOT);
-        assertEq(address(uint160(uint256(sdexValue))), address(0));
-
-        bytes32 sinkValue = vm.load(address(config), SINK_SLOT);
-        assertEq(address(uint160(uint256(sinkValue))), address(0));
+        bytes32 partialPositionValue = vm.load(address(config), PARTIAL_POSITION_PERCENTAGE_SLOT);
+        assertEq(uint16(uint256(partialPositionValue >> PARTIAL_POSITION_PERCENTAGE_OFFSET)), 0);
 
         bytes32 unlistedFeeValue = vm.load(address(config), UNLISTED_FEE_SLOT);
         assertEq(uint256(unlistedFeeValue), 0);
@@ -79,17 +71,22 @@ contract SDConfig_Constructor_Test is SDConfigTest {
 
         bytes32 variableFactorValue = vm.load(address(config), VARIABLE_FACTOR_SLOT);
         assertEq(uint256(variableFactorValue), 0);
+
+        // SDEX token address should be initialised in constructor
+        assertEq(sdex, config.SDEX());
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # INITIALIZE                                            *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  INITIALIZE                                               */
+/* ------------------------------------------------------------ */
 
 contract SDConfig_Initialize_Test is SDConfigTest {
-    uint256 unlistedFee = 500e18;
-    uint256 listedFee = 30e18;
+    uint256 fixFeeUnlisted = 500e18;
+    uint256 fixFeeListed = 30e18;
     uint256 variableFactor = 1e13;
+    uint16 partialPositionPercentage = 900;
+    uint16 PERCENTAGE = 1e4;
 
     function setUp() public override {
         super.setUp();
@@ -99,53 +96,48 @@ contract SDConfig_Initialize_Test is SDConfigTest {
     }
 
     function test_shouldSetValues() external {
-        config.initialize(owner, sdex, sink, unlistedFee, listedFee, variableFactor);
+        config.initialize(owner, fixFeeUnlisted, fixFeeListed, variableFactor, partialPositionPercentage);
 
         bytes32 ownerValue = vm.load(address(config), OWNER_SLOT);
         assertEq(address(uint160(uint256(ownerValue))), owner);
 
-        bytes32 sdexValue = vm.load(address(config), SDEX_SLOT);
-        assertEq(address(uint160(uint256(sdexValue))), sdex);
-
-        bytes32 sinkValue = vm.load(address(config), SINK_SLOT);
-        assertEq(address(uint160(uint256(sinkValue))), sink);
+        bytes32 partialPositionValue = vm.load(address(config), PARTIAL_POSITION_PERCENTAGE_SLOT);
+        assertEq(uint16(uint256(partialPositionValue >> PARTIAL_POSITION_PERCENTAGE_OFFSET)), partialPositionPercentage);
 
         bytes32 unlistedFeeValue = vm.load(address(config), UNLISTED_FEE_SLOT);
-        assertEq(uint256(unlistedFeeValue), unlistedFee);
+        assertEq(uint256(unlistedFeeValue), fixFeeUnlisted);
 
         bytes32 listedFeeValue = vm.load(address(config), LISTED_FEE_SLOT);
-        assertEq(uint256(listedFeeValue), listedFee);
+        assertEq(uint256(listedFeeValue), fixFeeListed);
 
         bytes32 variableFactorValue = vm.load(address(config), VARIABLE_FACTOR_SLOT);
         assertEq(uint256(variableFactorValue), variableFactor);
     }
 
     function test_shouldFail_whenCalledSecondTime() external {
-        config.initialize(owner, sdex, sink, unlistedFee, listedFee, variableFactor);
+        config.initialize(owner, fixFeeUnlisted, fixFeeListed, variableFactor, partialPositionPercentage);
 
         vm.expectRevert("Initializable: contract is already initialized");
-        config.initialize(owner, sdex, sink, unlistedFee, listedFee, variableFactor);
+        config.initialize(owner, fixFeeUnlisted, fixFeeListed, variableFactor, partialPositionPercentage);
     }
 
     function test_shouldFail_whenOwnerIsZeroAddress() external {
         vm.expectRevert("Owner is zero address");
-        config.initialize(address(0), sdex, sink, unlistedFee, listedFee, variableFactor);
+        config.initialize(address(0), fixFeeUnlisted, fixFeeListed, variableFactor, partialPositionPercentage);
     }
 
-    function test_shouldFail_whenSDEXIsZeroAddress() external {
-        vm.expectRevert(abi.encodeWithSelector(SDConfig.ZeroAddress.selector));
-        config.initialize(owner, address(0), sink, unlistedFee, listedFee, variableFactor);
-    }
+    function test_shouldFail_whenPartialPositionPercentageIsInvalid() external {
+        vm.expectRevert("Partial percentage position value is invalid");
+        config.initialize(owner, fixFeeUnlisted, fixFeeListed, variableFactor, 0);
 
-    function test_shouldFail_whenSinkIsZeroAddress() external {
-        vm.expectRevert(abi.encodeWithSelector(SDConfig.ZeroAddress.selector));
-        config.initialize(owner, sdex, address(0), unlistedFee, listedFee, variableFactor);
+        vm.expectRevert("Partial percentage position value is invalid");
+        config.initialize(owner, fixFeeUnlisted, fixFeeListed, variableFactor, PERCENTAGE + 1);
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # SET UNLISTED FEE                                      *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  SET FIX FEE UNLISTED                                     */
+/* ------------------------------------------------------------ */
 
 contract SDConfig_SetUnlistedFee_Test is SDConfigTest {
     uint256 fee = 90e18;
@@ -158,29 +150,29 @@ contract SDConfig_SetUnlistedFee_Test is SDConfigTest {
 
     function test_shouldFail_whenCallerIsNotOwner() external {
         vm.expectRevert("Ownable: caller is not the owner");
-        config.setUnlistedFee(fee);
+        config.setFixFeeUnlisted(fee);
     }
 
     function test_shouldSetFeeValue() external {
         vm.prank(owner);
-        config.setUnlistedFee(fee);
+        config.setFixFeeUnlisted(fee);
 
         bytes32 unlistedFeeValue = vm.load(address(config), UNLISTED_FEE_SLOT);
         assertEq(uint256(unlistedFeeValue), fee);
     }
 
     function test_shouldEmitEvent_FeeUpdated() external {
-        vm.expectEmit(true, true, false, false);
-        emit UnlistedFeeUpdated(0, fee);
+        vm.expectEmit(true, true, true, true);
+        emit FixFeeUnlistedUpdated(0, fee);
 
         vm.prank(owner);
-        config.setUnlistedFee(fee);
+        config.setFixFeeUnlisted(fee);
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # SET LISTED FEE                                      *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  SET FIX FEE LISTED                                       */
+/* ------------------------------------------------------------ */
 
 contract SDConfig_SetListedFee_Test is SDConfigTest {
     uint256 fee = 90e18;
@@ -193,12 +185,12 @@ contract SDConfig_SetListedFee_Test is SDConfigTest {
 
     function test_shouldFail_whenCallerIsNotOwner() external {
         vm.expectRevert("Ownable: caller is not the owner");
-        config.setListedFee(fee);
+        config.setFixFeeListed(fee);
     }
 
     function test_shouldSetFeeValue() external {
         vm.prank(owner);
-        config.setListedFee(fee);
+        config.setFixFeeListed(fee);
 
         bytes32 listedFeeValue = vm.load(address(config), LISTED_FEE_SLOT);
         assertEq(uint256(listedFeeValue), fee);
@@ -206,16 +198,16 @@ contract SDConfig_SetListedFee_Test is SDConfigTest {
 
     function test_shouldEmitEvent_FeeUpdated() external {
         vm.expectEmit(true, true, false, false);
-        emit ListedFeeUpdated(0, fee);
+        emit FixFeeListedUpdated(0, fee);
 
         vm.prank(owner);
-        config.setListedFee(fee);
+        config.setFixFeeListed(fee);
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # SET LISTED TOKEN                                      *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  SET LISTED TOKEN                                         */
+/* ------------------------------------------------------------ */
 
 contract SDConfig_SetListedToken_Test is SDConfigTest {
     uint256 factor = 1e14;
@@ -263,14 +255,13 @@ contract SDConfig_SetListedToken_Test is SDConfigTest {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # PARTIAL LENDING THRESHOLDS                            *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  PARTIAL LENDING THRESHOLDS                               */
+/* ------------------------------------------------------------ */
 
 contract SDConfig_PartialLendingThresholds_Test is SDConfigTest {
     uint16 internal constant PERCENTAGE = 1e4;
-    uint16 internal constant DEFAULT_MIN_THRESHOLD = 500;
-    uint16 internal constant DEFAULT_MAX_THRESHOLD = 9500;
+    uint16 internal constant DEFAULT_THRESHOLD = 500;
 
     function setUp() public override {
         super.setUp();
@@ -278,17 +269,20 @@ contract SDConfig_PartialLendingThresholds_Test is SDConfigTest {
         _initialize();
 
         vm.startPrank(owner);
-        config.setMaximumPartialPositionPercentage(DEFAULT_MAX_THRESHOLD);
-        config.setMinimumPartialPositionPercentage(DEFAULT_MIN_THRESHOLD);
+        config.setPartialPositionPercentage(DEFAULT_THRESHOLD);
         vm.stopPrank();
     }
 
     function test_shouldFail_whenCallerIsNotOwner() external {
         vm.expectRevert("Ownable: caller is not the owner");
-        config.setMinimumPartialPositionPercentage(2000);
+        config.setPartialPositionPercentage(2000);
+    }
 
-        vm.expectRevert("Ownable: caller is not the owner");
-        config.setMaximumPartialPositionPercentage(9500);
+    function test_shouldFail_whenZeroPercentage() external {
+        vm.startPrank(owner);
+
+        vm.expectRevert(SDConfig.ZeroPercentageValue.selector);
+        config.setPartialPositionPercentage(0);
     }
 
     function testFuzz_shouldFail_ExcessivePercentage(uint16 percentage) external {
@@ -296,28 +290,13 @@ contract SDConfig_PartialLendingThresholds_Test is SDConfigTest {
         vm.startPrank(owner);
 
         vm.expectRevert(abi.encodeWithSelector(SDConfig.ExcessivePercentageValue.selector, percentage));
-        config.setMinimumPartialPositionPercentage(percentage);
-
-        vm.expectRevert(abi.encodeWithSelector(SDConfig.ExcessivePercentageValue.selector, percentage));
-        config.setMaximumPartialPositionPercentage(percentage);
-    }
-
-    function test_shouldFail_setMinimumAboveMaximum() external {
-        vm.startPrank(owner);
-        vm.expectRevert(SDConfig.ThresholdsOutOfOrder.selector);
-        config.setMinimumPartialPositionPercentage(DEFAULT_MAX_THRESHOLD + 1);
-    }
-
-    function test_shouldFail_setMaximumBelowMinimum() external {
-        vm.startPrank(owner);
-        vm.expectRevert(SDConfig.ThresholdsOutOfOrder.selector);
-        config.setMaximumPartialPositionPercentage(DEFAULT_MIN_THRESHOLD - 1);
+        config.setPartialPositionPercentage(percentage);
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # SET LOAN METADATA URI                                 *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  SET LOAN METADATA URI                                    */
+/* ------------------------------------------------------------ */
 
 contract SDConfig_SetLOANMetadataUri_Test is SDConfigTest {
     string tokenUri = "test.token.uri";
@@ -366,9 +345,9 @@ contract SDConfig_SetLOANMetadataUri_Test is SDConfigTest {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # SET DEFAULT LOAN METADATA URI                         *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  SET DEFAULT LOAN METADATA URI                            */
+/* ------------------------------------------------------------ */
 
 contract SDConfig_SetDefaultLOANMetadataUri_Test is SDConfigTest {
     string tokenUri = "test.token.uri";
@@ -407,9 +386,9 @@ contract SDConfig_SetDefaultLOANMetadataUri_Test is SDConfigTest {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # LOAN METADATA URI                                     *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  LOAN METADATA URI                                        */
+/* ------------------------------------------------------------ */
 
 contract SDConfig_LoanMetadataUri_Test is SDConfigTest {
     function setUp() public override {
@@ -442,9 +421,9 @@ contract SDConfig_LoanMetadataUri_Test is SDConfigTest {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # GET STATE FINGERPRINT COMPUTER                        *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  GET STATE FINGERPRINT COMPUTER                           */
+/* ------------------------------------------------------------ */
 
 contract SDConfig_GetStateFingerprintComputer_Test is SDConfigTest {
     function setUp() public override {
@@ -461,9 +440,9 @@ contract SDConfig_GetStateFingerprintComputer_Test is SDConfigTest {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # REGISTER STATE FINGERPRINT COMPUTER                   *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  REGISTER STATE FINGERPRINT COMPUTER                      */
+/* ------------------------------------------------------------ */
 
 contract SDConfig_RegisterStateFingerprintComputer_Test is SDConfigTest {
     function setUp() public override {
@@ -511,9 +490,9 @@ contract SDConfig_RegisterStateFingerprintComputer_Test is SDConfigTest {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # GET POOL ADAPTER                                      *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  GET POOL ADAPTER                                         */
+/* ------------------------------------------------------------ */
 
 contract SDConfig_GetPoolAdapter_Test is SDConfigTest {
     function setUp() public override {
@@ -530,9 +509,9 @@ contract SDConfig_GetPoolAdapter_Test is SDConfigTest {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # REGISTER POOL ADAPTER                                 *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  REGISTER POOL ADAPTER                                    */
+/* ------------------------------------------------------------ */
 
 contract SDConfig_RegisterPoolAdapter_Test is SDConfigTest {
     function setUp() public override {

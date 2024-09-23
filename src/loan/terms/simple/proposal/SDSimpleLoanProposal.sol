@@ -18,9 +18,9 @@ import {Expired, AddressMissingHubTag} from "pwn/PWNErrors.sol";
  * @notice Base contract of loan proposals that builds a simple loan terms.
  */
 abstract contract SDSimpleLoanProposal {
-    /*----------------------------------------------------------*|
-    |*  # VARIABLES & CONSTANTS DEFINITIONS                     *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*              VARIABLES & CONSTANTS DEFINITIONS               */
+    /* ------------------------------------------------------------ */
 
     bytes32 public immutable DOMAIN_SEPARATOR;
 
@@ -55,9 +55,9 @@ abstract contract SDSimpleLoanProposal {
      */
     mapping(bytes32 => uint256) public creditUsed;
 
-    /*----------------------------------------------------------*|
-    |*  # ERRORS DEFINITIONS                                    *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      ERRORS DEFINITIONS                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Thrown when a caller is missing a required hub tag.
@@ -100,7 +100,7 @@ abstract contract SDSimpleLoanProposal {
     error AvailableCreditLimitExceeded(uint256 used, uint256 limit);
 
     /**
-     * @notice Thrown when a proposal would exceed the available credit limit.
+     * @notice Thrown when a proposal has an available credit limit of zero.
      */
     error AvailableCreditLimitZero();
 
@@ -119,9 +119,9 @@ abstract contract SDSimpleLoanProposal {
      */
     error ProposalNotMade();
 
-    /*----------------------------------------------------------*|
-    |*  # CONSTRUCTOR                                           *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          CONSTRUCTOR                         */
+    /* ------------------------------------------------------------ */
 
     constructor(address _hub, address _revokedNonce, address _config, string memory name, string memory version) {
         hub = PWNHub(_hub);
@@ -139,9 +139,9 @@ abstract contract SDSimpleLoanProposal {
         );
     }
 
-    /*----------------------------------------------------------*|
-    |*  # EXTERNALS                                             *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          EXTERNALS                           */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Helper function for revoking a proposal nonce on behalf of a caller.
@@ -192,9 +192,9 @@ abstract contract SDSimpleLoanProposal {
         virtual
         returns (address proposer, MultiToken.Asset memory collateral);
 
-    /*----------------------------------------------------------*|
-    |*  # INTERNALS                                             *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          INTERNALS                           */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Get a proposal hash according to EIP-712.
@@ -272,13 +272,14 @@ abstract contract SDSimpleLoanProposal {
         } else if (creditUsed[proposalHash] + creditAmount < proposal.availableCreditLimit) {
             // Credit may only be between min and max amounts if it is not exact
             uint256 minCreditAmount =
-                Math.mulDiv(proposal.availableCreditLimit, config.minimumPartialPositionPercentage(), PERCENTAGE);
+                Math.mulDiv(proposal.availableCreditLimit, config.partialPositionPercentage(), PERCENTAGE);
             if (creditAmount < minCreditAmount) {
                 revert CreditAmountTooSmall({amount: creditAmount, minimum: minCreditAmount});
             }
 
-            uint256 maxCreditAmount =
-                Math.mulDiv(proposal.availableCreditLimit, config.maximumPartialPositionPercentage(), PERCENTAGE);
+            uint256 maxCreditAmount = Math.mulDiv(
+                proposal.availableCreditLimit, (PERCENTAGE - config.partialPositionPercentage()), PERCENTAGE
+            );
             if (creditAmount > maxCreditAmount) {
                 revert CreditAmountLeavesTooLittle({amount: creditAmount, maximum: maxCreditAmount});
             }

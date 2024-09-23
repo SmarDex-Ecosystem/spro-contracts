@@ -9,17 +9,17 @@ library SDListedFee {
 
     /**
      * @notice Compute list fee amount.
-     * @param fixedFee Fixed fee value in units of fee token (basis 1e18)
+     * @param fixFeeListed Fixed fee value in units of fee token (basis 1e18)
      * @param variableFactor Variable factor (basis 1e18)
      * @param tokenFactor Listed credit token factor (basis 1e18)
      * @param loanAmount Amount of an asset used as a loan credit.
      * @return feeAmount Amount of SDEX that represents a protocol fee.
      */
-    function calculate(uint256 fixedFee, uint256 variableFactor, uint256 tokenFactor, uint256 loanAmount)
+    function calculate(uint256 fixFeeListed, uint256 variableFactor, uint256 tokenFactor, uint256 loanAmount)
         internal
         pure
         returns (uint256 feeAmount)
     {
-        feeAmount = fixedFee + Math.mulDiv((variableFactor * tokenFactor) / WAD, loanAmount, WAD);
+        feeAmount = fixFeeListed + Math.mulDiv((variableFactor * tokenFactor) / WAD, loanAmount, WAD);
     }
 }

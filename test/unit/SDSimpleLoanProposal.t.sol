@@ -62,13 +62,3 @@ contract SDSimpleLoanProposalTest is Test {
         assertEq(s.DOMAIN_SEPARATOR(), ds);
     }
 }
-
-//DOMAIN_SEPARATOR = keccak256(
-//            abi.encode(
-//                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-//                keccak256(abi.encodePacked(name)),
-//                keccak256(abi.encodePacked(version)),
-//                block.chainid,
-//                address(this)
-//            )
-//        );

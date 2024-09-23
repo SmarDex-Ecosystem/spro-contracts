@@ -16,7 +16,6 @@ import {
     PWNHubTags,
     SDSimpleLoan,
     SDSimpleLoanSimpleProposal,
-    SDSink,
     PWNLOAN,
     PWNRevokedNonce,
     MultiTokenCategoryRegistry
@@ -29,10 +28,6 @@ library SDContractDeployerParams {
     /*//////////////////////////////////////////////////////////////////////////
                                      SALT
     //////////////////////////////////////////////////////////////////////////*/
-
-    // Utility
-
-    bytes32 internal constant SINK = keccak256("SDSink");
 
     // Singletons
     bytes32 internal constant CONFIG = keccak256("SDConfig");
@@ -55,6 +50,7 @@ library SDContractDeployerParams {
     uint256 internal constant UNLISTED_FEE = 50e18;
     uint256 internal constant LISTED_FEE = 30e18;
     uint256 internal constant VARIABLE_FACTOR = 1e16;
+    uint16 internal constant PARTIAL_POSITION_PERCENTAGE = 500;
 }
 
 contract Deploy is ScriptUtils, SDDeployments {
@@ -86,7 +82,7 @@ contract Deploy is ScriptUtils, SDDeployments {
     // Local:
     // forge script script/SD.s.sol:Deploy --sig "deployProtocol()" --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY --broadcast
 
-    /// @dev Expecting to have deployer, proxyAdmin, protocolAdmin, sdex and sink
+    /// @dev Expecting to have deployer, proxyAdmin, protocolAdmin and sdex
     /// addresses set in the `deployments/sdlatest.json`.
     function deployProtocol() external {
         _loadDeployedAddresses();
@@ -100,10 +96,6 @@ contract Deploy is ScriptUtils, SDDeployments {
 
         vm.startBroadcast();
         // Deploy protocol
-
-        // - Token Sink
-
-        deployment.sink = SDSink(_deploy({salt: SDContractDeployerParams.SINK, bytecode: type(SDSink).creationCode}));
 
         // - Config
 
@@ -119,8 +111,10 @@ contract Deploy is ScriptUtils, SDDeployments {
                 )
             })
         );
-        address configSingleton =
-            _deploy({salt: SDContractDeployerParams.CONFIG, bytecode: type(SDConfig).creationCode});
+        address configSingleton = _deploy({
+            salt: SDContractDeployerParams.CONFIG,
+            bytecode: abi.encodePacked(type(SDConfig).creationCode, abi.encode(deployment.sdex))
+        });
         vm.stopBroadcast();
 
         vm.startBroadcast(pk);
@@ -129,11 +123,10 @@ contract Deploy is ScriptUtils, SDDeployments {
             abi.encodeWithSelector(
                 SDConfig.initialize.selector,
                 deployment.protocolAdmin,
-                deployment.sdex,
-                deployment.sink,
                 SDContractDeployerParams.UNLISTED_FEE,
                 SDContractDeployerParams.LISTED_FEE,
-                SDContractDeployerParams.VARIABLE_FACTOR
+                SDContractDeployerParams.VARIABLE_FACTOR,
+                SDContractDeployerParams.PARTIAL_POSITION_PERCENTAGE
             )
         );
         ITransparentUpgradeableProxy(address(deployment.config)).changeAdmin(deployment.proxyAdmin);
@@ -220,7 +213,6 @@ contract Deploy is ScriptUtils, SDDeployments {
         console2.log("SDSimpleLoanSimpleProposal:", address(deployment.simpleLoanSimpleProposal));
 
         // Writes deployment addresses to deployments JSON - @note currently points to sdLatest.json
-        _writeDeploymentAddress(address(deployment.sink), ".sink");
         _writeDeploymentAddress(address(deployment.categoryRegistry), ".categoryRegistry");
         _writeDeploymentAddress(configSingleton, ".configSingleton");
         _writeDeploymentAddress(address(deployment.config), ".config");

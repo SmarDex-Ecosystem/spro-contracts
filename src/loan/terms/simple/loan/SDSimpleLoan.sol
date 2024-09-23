@@ -32,9 +32,9 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
 
     string public constant VERSION = "1.0";
 
-    /*----------------------------------------------------------*|
-    |*  # VARIABLES & CONSTANTS DEFINITIONS                     *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*  VARIABLES & CONSTANTS DEFINITIONS                        */
+    /* ------------------------------------------------------------ */
 
     uint32 public constant MIN_LOAN_DURATION = 10 minutes;
     uint40 public constant MAX_ACCRUING_INTEREST_APR = 16e6; // 160,000 APR (with 2 decimals)
@@ -145,9 +145,9 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
      */
     mapping(uint256 => LOAN) private LOANs;
 
-    /*----------------------------------------------------------*|
-    |*  # EVENTS DEFINITIONS                                    *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      EVENTS DEFINITIONS                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Emitted when a new loan in created.
@@ -171,9 +171,9 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
      */
     event LOANClaimed(uint256 indexed loanId, bool indexed defaulted);
 
-    /*----------------------------------------------------------*|
-    |*  # ERRORS DEFINITIONS                                    *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      ERRORS DEFINITIONS                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Thrown when a caller is not a stated proposer.
@@ -241,9 +241,9 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
      */
     error DifferentCreditAddress(address loanCreditAddress, address expectedCreditAddress);
 
-    /*----------------------------------------------------------*|
-    |*  # CONSTRUCTOR                                           *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          CONSTRUCTOR                         */
+    /* ------------------------------------------------------------ */
 
     constructor(address _hub, address _loanToken, address _config, address _revokedNonce, address _categoryRegistry) {
         hub = PWNHub(_hub);
@@ -253,9 +253,9 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         categoryRegistry = IMultiTokenCategoryRegistry(_categoryRegistry);
     }
 
-    /*----------------------------------------------------------*|
-    |*  # LENDER SPEC                                           *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      LENDER SPEC                             */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Get hash of a lender specification.
@@ -266,9 +266,9 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         return keccak256(abi.encode(lenderSpec));
     }
 
-    /*----------------------------------------------------------*|
-    |*  # CREATE PROPOSAL                                       *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      CREATE PROPOSAL                         */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Create a borrow request proposal and transfers collateral to the vault and SDEX to fee sink.
@@ -300,14 +300,14 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
 
         // Fees to sink (burned)
         if (feeAmount > 0) {
-            MultiToken.Asset memory feeHelper = MultiToken.ERC20({assetAddress: config.sdex(), amount: feeAmount});
-            _pushFrom(feeHelper, msg.sender, config.sink());
+            MultiToken.Asset memory feeHelper = MultiToken.ERC20({assetAddress: config.SDEX(), amount: feeAmount});
+            _pushFrom(feeHelper, msg.sender, config.SINK());
         }
     }
 
-    /*----------------------------------------------------------*|
-    |*  # CANCEL PROPOSAL AND WITHDRAW UNUSED COLLATERAL        *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*        CANCEL PROPOSAL AND WITHDRAW UNUSED COLLATERAL        */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice A borrower can cancel their proposal and withdraw unused collateral.
@@ -335,9 +335,9 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         _push(collateral, proposer);
     }
 
-    /*----------------------------------------------------------*|
-    |*  # CREATE LOAN                                           *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          CREATE LOAN                         */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Create a new loan.
@@ -450,8 +450,8 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     function getLoanFee(address assetAddress, uint256 amount) public view returns (uint256) {
         uint256 tokenFactor = config.tokenFactors(assetAddress);
         return (tokenFactor == 0)
-            ? config.unlistedFee()
-            : SDListedFee.calculate(config.listedFee(), config.variableFactor(), tokenFactor, amount);
+            ? config.fixFeeUnlisted()
+            : SDListedFee.calculate(config.fixFeeListed(), config.variableFactor(), tokenFactor, amount);
     }
 
     /**
@@ -492,9 +492,9 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         }
     }
 
-    /*----------------------------------------------------------*|
-    |*  # REPAY LOAN                                            *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          REPAY LOAN                          */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Repay running loan.
@@ -642,9 +642,9 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         emit LOANPaidBack({loanId: loanId});
     }
 
-    /*----------------------------------------------------------*|
-    |*  # LOAN REPAYMENT AMOUNT                                 *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      LOAN REPAYMENT AMOUNT                   */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Calculate the loan repayment amount with fixed and accrued interest.
@@ -700,9 +700,9 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         return loan.fixedInterestAmount + accruedInterest;
     }
 
-    /*----------------------------------------------------------*|
-    |*  # CLAIM LOAN                                            *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          CLAIM LOAN                          */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Claim a repaid or defaulted loan.
@@ -835,9 +835,9 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         delete LOANs[loanId];
     }
 
-    /*----------------------------------------------------------*|
-    |*  # GET LOAN                                              *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          GET LOAN                            */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Return a LOAN data struct associated with a loan id.
@@ -899,9 +899,9 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         return (loan.status == 2 && loan.defaultTimestamp <= block.timestamp) ? 4 : loan.status;
     }
 
-    /*----------------------------------------------------------*|
-    |*  # MultiToken                                            *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          MultiToken                          */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Check if the asset is valid with the MultiToken dependency lib and the category registry.
@@ -929,9 +929,9 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         }
     }
 
-    /*----------------------------------------------------------*|
-    |*  # IPWNLoanMetadataProvider                              *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      IPWNLoanMetadataProvider                */
+    /* ------------------------------------------------------------ */
 
     /**
      * @inheritdoc IPWNLoanMetadataProvider
@@ -940,9 +940,9 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         return config.loanMetadataUri(address(this));
     }
 
-    /*----------------------------------------------------------*|
-    |*  # ERC5646                                               *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                            ERC5646                           */
+    /* ------------------------------------------------------------ */
 
     /**
      * @inheritdoc IERC5646

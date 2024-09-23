@@ -144,8 +144,8 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         assertEq(t20.balanceOf(address(deployment.simpleLoan)), COLLATERAL_AMOUNT);
         assertEq(t20.balanceOf(borrower), 0);
 
-        assertEq(deployment.sdex.balanceOf(address(deployment.sink)), deployment.config.unlistedFee());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.unlistedFee());
+        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
     }
 
     function test_CreateProposal_ERC721_UnlistedFee()
@@ -161,8 +161,8 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         assertEq(t721.balanceOf(address(deployment.simpleLoan)), 1);
         assertEq(t721.balanceOf(borrower), 0);
 
-        assertEq(deployment.sdex.balanceOf(address(deployment.sink)), deployment.config.unlistedFee());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.unlistedFee());
+        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
     }
 
     function test_CreateProposal_FungibleERC1155_UnlistedFee()
@@ -178,8 +178,8 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         assertEq(t1155.balanceOf(address(deployment.simpleLoan), COLLATERAL_ID), COLLATERAL_AMOUNT);
         assertEq(t1155.balanceOf(borrower, COLLATERAL_ID), 0);
 
-        assertEq(deployment.sdex.balanceOf(address(deployment.sink)), deployment.config.unlistedFee());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.unlistedFee());
+        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
     }
 
     function test_CreateProposal_NonFungibleERC1155_UnlistedFee()
@@ -195,8 +195,8 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         assertEq(t1155.balanceOf(address(deployment.simpleLoan), COLLATERAL_ID), 1);
         assertEq(t1155.balanceOf(borrower, COLLATERAL_ID), 0);
 
-        assertEq(deployment.sdex.balanceOf(address(deployment.sink)), deployment.config.unlistedFee());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.unlistedFee());
+        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
     }
 
     modifier whenListedFee() {
@@ -215,7 +215,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         // Setup listed fee and token
         address owner = deployment.config.owner();
         vm.startPrank(owner);
-        deployment.config.setListedFee(1e17);
+        deployment.config.setFixFeeListed(1e17);
         deployment.config.setVariableFactor(2e20);
         deployment.config.setListedToken(address(credit), 1e16);
         vm.stopPrank();
@@ -226,13 +226,13 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         assertEq(t20.balanceOf(address(deployment.simpleLoan)), COLLATERAL_AMOUNT);
         assertEq(t20.balanceOf(borrower), 0);
 
-        uint256 lf = deployment.config.listedFee();
+        uint256 lf = deployment.config.fixFeeListed();
         uint256 vf = deployment.config.variableFactor();
         uint256 tf = deployment.config.tokenFactors(address(credit));
 
         uint256 feeAmount = lf + (((vf * tf) / 1e18) * proposal.availableCreditLimit) / 1e18;
 
-        assertEq(deployment.sdex.balanceOf(address(deployment.sink)), feeAmount);
+        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), feeAmount);
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - feeAmount);
     }
 }

@@ -113,8 +113,8 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
-        assertEq(deployment.sdex.balanceOf(address(deployment.sink)), deployment.config.unlistedFee());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.unlistedFee());
+        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
         (uint8 status,,,,,,,,,,,) = deployment.simpleLoan.getLOAN(id);
@@ -153,8 +153,8 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
-        assertEq(deployment.sdex.balanceOf(address(deployment.sink)), deployment.config.unlistedFee());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.unlistedFee());
+        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
         (uint8 status,,,,,,,,,,,) = deployment.simpleLoan.getLOAN(id);
@@ -214,8 +214,8 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
-        assertEq(deployment.sdex.balanceOf(address(deployment.sink)), deployment.config.unlistedFee());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.unlistedFee());
+        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
         (uint8 status,,,,,,,,,,,) = deployment.simpleLoan.getLOAN(id);
@@ -239,8 +239,8 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
-        assertEq(deployment.sdex.balanceOf(address(deployment.sink)), deployment.config.unlistedFee());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.unlistedFee());
+        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
         (uint8 status,,,,,,,,,,,) = deployment.simpleLoan.getLOAN(id);
@@ -264,8 +264,8 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
-        assertEq(deployment.sdex.balanceOf(address(deployment.sink)), deployment.config.unlistedFee());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.unlistedFee());
+        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
         (uint8 status,,,,,,,,,,,) = deployment.simpleLoan.getLOAN(id);

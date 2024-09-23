@@ -21,9 +21,9 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
     using MultiToken for MultiToken.Asset;
     using SDTransfer for MultiToken.Asset;
 
-    /*----------------------------------------------------------*|
-    |*  # EVENTS DEFINITIONS                                    *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      EVENTS DEFINITIONS                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Emitted when asset transfer happens from an `origin` address to a vault.
@@ -52,18 +52,18 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
      */
     event PoolSupply(MultiToken.Asset asset, address indexed poolAdapter, address indexed pool, address indexed owner);
 
-    /*----------------------------------------------------------*|
-    |*  # ERRORS DEFINITIONS                                    *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      ERRORS DEFINITIONS                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Thrown when the Vault receives an asset that is not transferred by the Vault itself.
      */
     error UnsupportedTransferFunction();
 
-    /*----------------------------------------------------------*|
-    |*  # TRANSFER FUNCTIONS                                    *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      TRANSFER FUNCTIONS                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Function pulling an asset into a vault.
@@ -153,9 +153,9 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
         emit PoolSupply(asset, address(poolAdapter), pool, owner);
     }
 
-    /*----------------------------------------------------------*|
-    |*  # PERMIT                                                *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                            PERMIT                            */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Try to execute a permit for an ERC20 token.
@@ -178,9 +178,9 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
         }
     }
 
-    /*----------------------------------------------------------*|
-    |*  # ERC721/1155 RECEIVED HOOKS                            *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                  ERC721/1155 RECEIVED HOOKS                  */
+    /* ------------------------------------------------------------ */
 
     /**
      * @dev Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom}
@@ -240,9 +240,9 @@ abstract contract PWNVault is IERC721Receiver, IERC1155Receiver {
         revert UnsupportedTransferFunction();
     }
 
-    /*----------------------------------------------------------*|
-    |*  # SUPPORTED INTERFACES                                  *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      SUPPORTED INTERFACES                    */
+    /* ------------------------------------------------------------ */
 
     /**
      * @dev Returns true if this contract implements the interface defined by

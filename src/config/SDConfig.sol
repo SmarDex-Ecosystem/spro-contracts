@@ -15,31 +15,39 @@ import {IStateFingerprintComputer} from "pwn/interfaces/IStateFingerprintCompute
 contract SDConfig is Ownable2Step, Initializable {
     string internal constant VERSION = "1.0";
 
-    /*----------------------------------------------------------*|
-    |*  # VARIABLES & CONSTANTS DEFINITIONS                     *|
-    |*----------------------------------------------------------*/
-
-    /**
-     * @notice SDEX token address.
-     */
-    address public sdex;
+    /* ------------------------------------------------------------ */
+    /*              VARIABLES & CONSTANTS DEFINITIONS               */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Fee sink address.
      */
-    address public sink;
+    address public constant SINK = address(0xdead);
+
+    /**
+     * @notice SDEX token address.
+     */
+    address public immutable SDEX;
+
+    /**
+     * @notice Percentage of a proposal's availableCreditLimit which can be used in partial lending.
+     */
+    uint16 public partialPositionPercentage;
+
+    /// @dev Percentage denominator (10_000 = 100%)
+    uint256 internal constant PERCENTAGE = 1e4;
 
     /**
      * @notice Protocol fixed fee for unlisted credit tokens.
      * @dev Amount of SDEX tokens (units 1e18).
      */
-    uint256 public unlistedFee;
+    uint256 public fixFeeUnlisted;
 
     /**
      * @notice Protocol fixed fee for listed credit tokens.
      * @dev Amount of SDEX tokens (units 1e18).
      */
-    uint256 public listedFee;
+    uint256 public fixFeeListed;
 
     /**
      * @notice Variable factor for calculating variable fee component for listed credit tokens.
@@ -69,47 +77,24 @@ contract SDConfig is Ownable2Step, Initializable {
      */
     mapping(address => address) private _poolAdapterRegistry;
 
-    /**
-     * @notice Minimum percentage of a proposal's availableCreditLimit which can be used in partial lending.
-     */
-    uint16 public minimumPartialPositionPercentage;
-
-    /**
-     * @notice Maximum percentage of a proposal's availableCreditLimit which can be used in partial lending.
-     */
-    uint16 public maximumPartialPositionPercentage;
-
-    /// @dev Percentage denominator (10_000 = 100%)
-    uint256 internal constant PERCENTAGE = 1e4;
-
-    /*----------------------------------------------------------*|
-    |*  # EVENTS DEFINITIONS                                    *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      EVENTS DEFINITIONS                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Emitted when new listed fee is set.
      */
-    event ListedFeeUpdated(uint256 oldFee, uint256 newFee);
+    event FixFeeListedUpdated(uint256 oldFee, uint256 newFee);
 
     /**
      * @notice Emitted when new unlisted fee is set.
      */
-    event UnlistedFeeUpdated(uint256 oldFee, uint256 newFee);
+    event FixFeeUnlistedUpdated(uint256 oldFee, uint256 newFee);
 
     /**
      * @notice Emitted when new variable factor is set.
      */
     event VariableFactorUpdated(uint256 oldFactor, uint256 newFactor);
-
-    /**
-     * @notice Emitted when the sdex token address is set.
-     */
-    event SDEXInitialized(address sdex);
-
-    /**
-     * @notice Emitted when the fee sink address is set.
-     */
-    event SinkInitialized(address sink);
 
     /**
      * @notice Emitted when a listed token factor is set.
@@ -126,9 +111,9 @@ contract SDConfig is Ownable2Step, Initializable {
      */
     event DefaultLOANMetadataUriUpdated(string newUri);
 
-    /*----------------------------------------------------------*|
-    |*  # ERRORS DEFINITIONS                                    *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      ERRORS DEFINITIONS                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Thrown when registering a computer which does not support the asset it is registered for.
@@ -136,75 +121,69 @@ contract SDConfig is Ownable2Step, Initializable {
     error InvalidComputerContract(address computer, address asset);
 
     /**
-     * @notice Thrown when trying to set a fee value higher than `MAX_FEE`.
-     */
-    error InvalidFeeValue(uint256 fee, uint256 limit);
-
-    /**
-     * @notice Thrown when trying to set the sink or sdex token as the zero address.
-     */
-    error ZeroAddress();
-
-    /**
      * @notice Thrown when trying to set a LOAN token metadata uri for zero address loan contract.
      */
     error ZeroLoanContract();
 
     /**
-     * @notice Thrown when trying to set a minimum percentage value higher than `PERCENTAGE`.
+     * @notice Thrown when trying to set a percentage value higher than `PERCENTAGE`.
      */
     error ExcessivePercentageValue(uint16 percentage);
 
     /**
-     * @notice Thrown when trying to set a threshold value higher than `MAX_THRESHOLD`.
+     * @notice Thrown when trying to set a percentage value equal to zero.
      */
-    error ThresholdsOutOfOrder();
+    error ZeroPercentageValue();
 
-    /*----------------------------------------------------------*|
-    |*  # CONSTRUCTOR                                           *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          CONSTRUCTOR                         */
+    /* ------------------------------------------------------------ */
 
-    constructor() Ownable2Step() {
+    constructor(address _sdex) Ownable2Step() {
         // PWNConfig is used as a proxy. Use initializer to setup initial properties.
         _disableInitializers();
         _transferOwnership(address(0));
+        require(_sdex != address(0), "SDEX is zero address");
+        SDEX = _sdex;
     }
 
     function initialize(
         address _owner,
-        address _sdex,
-        address _sink,
-        uint256 _unlistedFee,
-        uint256 _listedFee,
-        uint256 _variableFactor
+        uint256 _fixFeeUnlisted,
+        uint256 _fixFeeListed,
+        uint256 _variableFactor,
+        uint16 _percentage
     ) external initializer {
         require(_owner != address(0), "Owner is zero address");
+        require(_percentage > 0 && _percentage < PERCENTAGE / 2, "Partial percentage position value is invalid");
         _transferOwnership(_owner);
-        _setSDEX(_sdex);
-        _setSink(_sink);
-        _setUnlistedFee(_unlistedFee);
-        _setListedFee(_listedFee);
-        _setVariableFactor(_variableFactor);
+
+        fixFeeUnlisted = _fixFeeUnlisted;
+        fixFeeListed = _fixFeeListed;
+        variableFactor = _variableFactor;
+        partialPositionPercentage = _percentage;
     }
 
-    /*----------------------------------------------------------*|
-    |*  # FEE MANAGEMENT                                        *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      FEE MANAGEMENT                          */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Set new protocol listed fee value.
      * @param fee New listed fee value in amount SDEX tokens (units 1e18)
      */
-    function setListedFee(uint256 fee) external onlyOwner {
-        _setListedFee(fee);
+    function setFixFeeListed(uint256 fee) external onlyOwner {
+        emit FixFeeListedUpdated(fixFeeListed, fee);
+        fixFeeListed = fee;
     }
 
     /**
      * @notice Set new protocol unlisted fee value.
      * @param fee New unlisted fee value in amount SDEX tokens (units 1e18)
      */
-    function setUnlistedFee(uint256 fee) external onlyOwner {
-        _setUnlistedFee(fee);
+    function setFixFeeUnlisted(uint256 fee) external onlyOwner {
+        emit FixFeeUnlistedUpdated(fixFeeUnlisted, fee);
+        fixFeeUnlisted = fee;
     }
 
     /**
@@ -212,7 +191,8 @@ contract SDConfig is Ownable2Step, Initializable {
      * @param factor New variable factor value (units 1e18)
      */
     function setVariableFactor(uint256 factor) external onlyOwner {
-        _setVariableFactor(factor);
+        emit VariableFactorUpdated(variableFactor, factor);
+        variableFactor = factor;
     }
 
     /**
@@ -222,93 +202,27 @@ contract SDConfig is Ownable2Step, Initializable {
      * @dev Token is unlisted for `factor == 0` and listed for `factor != 0`.
      */
     function setListedToken(address token, uint256 factor) external onlyOwner {
-        _setListedToken(token, factor);
+        emit ListedTokenUpdated(token, factor);
+        tokenFactors[token] = factor;
     }
+
+    /* ------------------------------------------------------------ */
+    /*                  PARTIAL LENDING THRESHOLDS                  */
+    /* ------------------------------------------------------------ */
 
     /**
-     * @notice Internal implementation to set new protocol listed fee value.
-     * @param _fee New listed fee value in amount SDEX tokens (units 1e18)
+     * @notice Set percentage of a proposal's availableCreditLimit which can be used in partial lending.
+     * @param percentage New percentage value.
      */
-    function _setListedFee(uint256 _fee) private {
-        emit ListedFeeUpdated(listedFee, _fee);
-        listedFee = _fee;
+    function setPartialPositionPercentage(uint16 percentage) external onlyOwner {
+        if (percentage == 0) revert ZeroPercentageValue();
+        if (percentage >= PERCENTAGE / 2) revert ExcessivePercentageValue(percentage);
+        partialPositionPercentage = percentage;
     }
 
-    /**
-     * @notice Internal implementation to set new protocol unlisted fee value.
-     * @param _fee New unlisted fee value in amount SDEX tokens (units 1e18)
-     */
-    function _setUnlistedFee(uint256 _fee) private {
-        emit UnlistedFeeUpdated(unlistedFee, _fee);
-        unlistedFee = _fee;
-    }
-
-    /**
-     * @notice Internal implementation to set new protocol variable factor
-     * @param _factor New variable factor value (units 1e18)
-     */
-    function _setVariableFactor(uint256 _factor) private {
-        emit VariableFactorUpdated(variableFactor, _factor);
-        variableFactor = _factor;
-    }
-
-    /**
-     * @notice Set SDEX token address
-     * @param _sdex SDEX token address
-     */
-    function _setSDEX(address _sdex) private {
-        if (_sdex == address(0)) revert ZeroAddress();
-        sdex = _sdex;
-        emit SDEXInitialized(_sdex);
-    }
-
-    /**
-     * @notice Set fee sink address
-     * @param _sink Fee sink address
-     */
-    function _setSink(address _sink) private {
-        if (_sink == address(0)) revert ZeroAddress();
-        sink = _sink;
-        emit SinkInitialized(_sink);
-    }
-
-    /**
-     * @notice Internal implementation to set new protocol token factor for credit asset
-     * @param _token Credit token address.
-     * @param _factor New token factor value (units 1e18)
-     */
-    function _setListedToken(address _token, uint256 _factor) private {
-        tokenFactors[_token] = _factor;
-        emit ListedTokenUpdated(_token, _factor);
-    }
-
-    /*----------------------------------------------------------*|
-    |*  # PARTIAL LENDING THRESHOLDS                            *|
-    |*----------------------------------------------------------*/
-
-    /**
-     * @notice Set minimum percentage of a proposal's availableCreditLimit which can be used in partial lending.
-     * @param percentage New minimum percentage value.
-     */
-    function setMinimumPartialPositionPercentage(uint16 percentage) external onlyOwner {
-        if (percentage > PERCENTAGE) revert ExcessivePercentageValue(percentage);
-        if (percentage > maximumPartialPositionPercentage) revert ThresholdsOutOfOrder();
-        minimumPartialPositionPercentage = percentage;
-    }
-
-    /**
-     * @notice Set maximum percentage of a proposal's availableCreditLimit which can be used in partial lending.
-     * @param percentage New maximum percentage value.
-     */
-    function setMaximumPartialPositionPercentage(uint16 percentage) external onlyOwner {
-        if (percentage > PERCENTAGE) revert ExcessivePercentageValue(percentage);
-        if (percentage < minimumPartialPositionPercentage) revert ThresholdsOutOfOrder();
-        maximumPartialPositionPercentage = percentage;
-    }
-
-    /*----------------------------------------------------------*|
-    |*  # LOAN METADATA                                         *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          LOAN METADATA                       */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Set a LOAN token metadata uri for a specific loan contract.
@@ -345,9 +259,9 @@ contract SDConfig is Ownable2Step, Initializable {
         if (bytes(uri).length == 0) uri = _loanMetadataUri[address(0)];
     }
 
-    /*----------------------------------------------------------*|
-    |*  # STATE FINGERPRINT COMPUTER                            *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                  STATE FINGERPRINT COMPUTER                  */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Returns the state fingerprint computer for a given asset.
@@ -373,9 +287,9 @@ contract SDConfig is Ownable2Step, Initializable {
         _sfComputerRegistry[asset] = computer;
     }
 
-    /*----------------------------------------------------------*|
-    |*  # POOL ADAPTER                                          *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          POOL ADAPTER                        */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Returns the pool adapter for a given pool.

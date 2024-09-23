@@ -17,7 +17,6 @@ import {SDSimpleLoanSimpleProposal} from "pwn/loan/terms/simple/proposal/SDSimpl
 import {PWNLOAN} from "pwn/loan/token/PWNLOAN.sol";
 import {PWNRevokedNonce} from "pwn/nonce/PWNRevokedNonce.sol";
 import {T20} from "test/helper/T20.sol";
-import {SDSink} from "pwn/SDSink.sol";
 
 abstract contract SDDeployments is CommonBase {
     using stdJson for string;
@@ -42,7 +41,6 @@ abstract contract SDDeployments is CommonBase {
         T20 sdex;
         SDSimpleLoan simpleLoan;
         SDSimpleLoanSimpleProposal simpleLoanSimpleProposal;
-        SDSink sink;
     }
 
     function _loadDeployedAddresses() internal {

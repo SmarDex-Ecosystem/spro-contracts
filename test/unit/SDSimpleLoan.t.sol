@@ -151,36 +151,4 @@ contract SDSimpleLoanTest is Test {
         );
         simpleLoan.exposed_checkLoanCreditAddress(loanCreditAddress, expectedCreditAddress);
     }
-
-    //    function test_withdrawCreditFromPool_AmountGtZero() external {
-    //        MultiToken.Asset memory credit_;
-    //        credit_.amount = 1e18;
-    //        SDSimpleLoan.Terms memory loanTerms;
-    //        SDSimpleLoan.LenderSpec memory lenderSpec =
-    //            SDSimpleLoan.LenderSpec({sourceOfFunds: poolAdapter, creditAmount: 1e18, permitData: ""});
-    //
-    //        vm.mockCall(
-    //            credit_.assetAddress,
-    //            abi.encodeWithSignature("balanceOf(address)", loanTerms.lender),
-    //            abi.encode(credit_.amount)
-    //        );
-    //
-    //        vm.mockCall(
-    //            address(poolAdapter),
-    //            abi.encodeWithSignature(
-    //                "withdraw(address,address,address,uint256",
-    //                poolAdapter,
-    //                lenderSpec.sourceOfFunds,
-    //                credit_.assetAddress,
-    //                credit_.amount
-    //            ),
-    //            abi.encode("")
-    //        );
-    //
-    //        simpleLoan.exposed_withdrawCreditFromPool(credit_, loanTerms, lenderSpec);
-    //        //        vm.expectCall(
-    //        //            address(poolAdapter),
-    //        //            abi.encodeWithSelector(IPoolAdapter.withdraw.selector, pool, alice, asset.assetAddress, asset.amount)
-    //        //        );
-    //    }
 }

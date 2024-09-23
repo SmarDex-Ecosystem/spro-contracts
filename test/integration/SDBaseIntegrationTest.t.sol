@@ -68,8 +68,8 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
 
     uint256 public constant INITIAL_SDEX_BALANCE = 1_000_000e18;
 
-    uint16 public constant DEFAULT_MIN_THRESHOLD = 500;
-    uint16 public constant DEFAULT_MAX_THRESHOLD = 9500;
+    uint16 public constant DEFAULT_THRESHOLD = 500;
+    uint16 public constant PERCENTAGE = 1e4;
 
     function setUp() public virtual override {
         super.setUp();
@@ -119,8 +119,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
 
         // Set thresholds in config
         vm.startPrank(deployment.protocolAdmin);
-        SDConfig(deployment.config).setMaximumPartialPositionPercentage(DEFAULT_MAX_THRESHOLD);
-        SDConfig(deployment.config).setMinimumPartialPositionPercentage(DEFAULT_MIN_THRESHOLD);
+        SDConfig(deployment.config).setPartialPositionPercentage(DEFAULT_THRESHOLD);
         vm.stopPrank();
 
         // Add labels

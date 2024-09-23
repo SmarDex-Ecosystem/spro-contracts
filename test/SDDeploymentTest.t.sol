@@ -14,7 +14,6 @@ import {
     PWNHubTags,
     SDSimpleLoan,
     SDSimpleLoanSimpleProposal,
-    SDSink,
     PWNLOAN,
     PWNRevokedNonce,
     MultiTokenCategoryRegistry
@@ -24,6 +23,7 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
     uint256 public constant UNLISTED_FEE = 50e18;
     uint256 public constant LISTED_FEE = 20e18;
     uint256 public constant VARIABLE_FACTOR = 1e13;
+    uint16 public constant PARTIAL_POSITION_PERCENTAGE = 500;
 
     function setUp() public virtual {
         // _loadDeployedAddresses();
@@ -32,7 +32,6 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
         // Labels
         vm.label(deployment.proxyAdmin, "proxyAdmin");
         vm.label(deployment.protocolAdmin, "protocolAdmin");
-        vm.label(address(deployment.sink), "sink");
         vm.label(address(deployment.sdex), "sdex");
         vm.label(address(deployment.categoryRegistry), "categoryRegistry");
         vm.label(address(deployment.configSingleton), "configSingleton");
@@ -48,9 +47,6 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
         deployment.proxyAdmin = makeAddr("proxyAdmin");
         deployment.protocolAdmin = makeAddr("protocolAdmin");
 
-        // Deploy SDSink
-        deployment.sink = new SDSink();
-
         // Deploy SDEX token
         deployment.sdex = new T20();
 
@@ -59,18 +55,17 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
         deployment.categoryRegistry = new MultiTokenCategoryRegistry();
 
         // Deploy protocol
-        deployment.configSingleton = new SDConfig();
+        deployment.configSingleton = new SDConfig(address(deployment.sdex));
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
             address(deployment.configSingleton),
             deployment.proxyAdmin,
             abi.encodeWithSignature(
-                "initialize(address,address,address,uint256,uint256,uint256)",
+                "initialize(address,uint256,uint256,uint256,uint16)",
                 deployment.protocolAdmin,
-                deployment.sdex,
-                deployment.sink,
                 UNLISTED_FEE,
                 LISTED_FEE,
-                VARIABLE_FACTOR
+                VARIABLE_FACTOR,
+                PARTIAL_POSITION_PERCENTAGE
             )
         );
         deployment.config = SDConfig(address(proxy));

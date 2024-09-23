@@ -295,7 +295,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
             abi.encodeWithSelector(
                 SDSimpleLoanProposal.CreditAmountLeavesTooLittle.selector,
                 (CREDIT_LIMIT * 9501) / 1e4,
-                DEFAULT_MAX_THRESHOLD * CREDIT_LIMIT / 1e4
+                (PERCENTAGE - DEFAULT_THRESHOLD) * CREDIT_LIMIT / 1e4
             )
         );
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, (CREDIT_LIMIT * 9501) / 1e4, abi.encode(proposal));
@@ -456,7 +456,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
             abi.encodeWithSelector(
                 SDSimpleLoanProposal.CreditAmountLeavesTooLittle.selector,
                 CREDIT_LIMIT - 1,
-                DEFAULT_MAX_THRESHOLD * CREDIT_LIMIT / 1e4
+                (PERCENTAGE - DEFAULT_THRESHOLD) * CREDIT_LIMIT / 1e4
             )
         );
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT - 1, abi.encode(proposal));
@@ -609,7 +609,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
             abi.encodeWithSelector(
                 SDSimpleLoanProposal.CreditAmountLeavesTooLittle.selector,
                 CREDIT_LIMIT - 1,
-                DEFAULT_MAX_THRESHOLD * CREDIT_LIMIT / 1e4
+                (PERCENTAGE - DEFAULT_THRESHOLD) * CREDIT_LIMIT / 1e4
             )
         );
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT - 1, abi.encode(proposal));

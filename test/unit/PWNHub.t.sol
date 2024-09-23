@@ -25,9 +25,9 @@ abstract contract PWNHubTest is Test {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # CONSTRUCTOR                                           *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  CONSTRUCTOR                                              */
+/* ------------------------------------------------------------ */
 
 contract PWNHub_Constructor_Test is PWNHubTest {
     function test_shouldSetHubOwner() external {
@@ -40,9 +40,9 @@ contract PWNHub_Constructor_Test is PWNHubTest {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # SET TAG                                               *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  SET TAG                                                  */
+/* ------------------------------------------------------------ */
 
 contract PWNHub_SetTag_Test is PWNHubTest {
     function test_shouldFail_whenCallerIsNotOwner() external {
@@ -80,9 +80,9 @@ contract PWNHub_SetTag_Test is PWNHubTest {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # SET TAGS                                              *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  SET TAGS                                                 */
+/* ------------------------------------------------------------ */
 
 contract PWNHub_SetTags_Test is PWNHubTest {
     address[] addrs;
@@ -157,9 +157,9 @@ contract PWNHub_SetTags_Test is PWNHubTest {
     }
 }
 
-/*----------------------------------------------------------*|
-|*  # HAS TAG                                               *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  HAS TAG                                                  */
+/* ------------------------------------------------------------ */
 
 contract PWNHub_HasTag_Test is PWNHubTest {
     function test_shouldReturnFalse_whenAddressDoesNotHaveTag() external {

@@ -17,6 +17,10 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
     using MultiToken for MultiToken.Asset;
     using SDTransfer for MultiToken.Asset;
 
+    /* ------------------------------------------------------------ */
+    /*  VARIABLES & CONSTANTS DEFINITIONS                        */
+    /* ------------------------------------------------------------ */
+
     string public constant VERSION = "1.0";
 
     /**
@@ -72,19 +76,35 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
      */
     mapping(bytes32 => MultiToken.Asset) public withdrawableCollateral;
 
+    /* ------------------------------------------------------------ */
+    /*                      EVENTS DEFINITIONS                      */
+    /* ------------------------------------------------------------ */
+
     /**
      * @notice Emitted when a proposal is made via an on-chain transaction.
      */
     event ProposalMade(bytes32 indexed proposalHash, address indexed proposer, Proposal proposal);
+
+    /* ------------------------------------------------------------ */
+    /*                      ERRORS DEFINITIONS                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Thrown when a partial loan is attempted for NFT collateral.
      */
     error OnlyCompleteLendingForNFTs(uint256 creditAmount, uint256 availableCreditLimit);
 
+    /* ------------------------------------------------------------ */
+    /*                          CONSTRUCTOR                         */
+    /* ------------------------------------------------------------ */
+
     constructor(address _hub, address _revokedNonce, address _config)
         SDSimpleLoanProposal(_hub, _revokedNonce, _config, "SDSimpleLoanSimpleProposal", VERSION)
     {}
+
+    /* ------------------------------------------------------------ */
+    /*                          EXTERNALS                           */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Get an proposal hash according to EIP-712
@@ -232,17 +252,6 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
     }
 
     /**
-     * @notice Checks for a complete loan with credit amount equal to available credit limit
-     * @param _creditAmount Credit amount of the proposal.
-     * @param _availableCreditLimit Available credit limit of the proposal.
-     */
-    function _checkCompleteLoan(uint256 _creditAmount, uint256 _availableCreditLimit) internal pure {
-        if (_creditAmount != _availableCreditLimit) {
-            revert OnlyCompleteLendingForNFTs(_creditAmount, _availableCreditLimit);
-        }
-    }
-
-    /**
      * @notice Cancels a proposal and resets withdrawable collateral.
      * @dev Revokes the nonce if still usable and block.timestamp is < proposal expiration.
      * @param proposalData Encoded proposal data.
@@ -277,6 +286,21 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
             if (revokedNonce.isNonceUsable(proposal.proposer, proposal.nonceSpace, proposal.nonce)) {
                 revokedNonce.revokeNonce(proposal.proposer, proposal.nonceSpace, proposal.nonce);
             }
+        }
+    }
+
+    /* ------------------------------------------------------------ */
+    /*                          INTERNALS                           */
+    /* ------------------------------------------------------------ */
+
+    /**
+     * @notice Checks for a complete loan with credit amount equal to available credit limit
+     * @param _creditAmount Credit amount of the proposal.
+     * @param _availableCreditLimit Available credit limit of the proposal.
+     */
+    function _checkCompleteLoan(uint256 _creditAmount, uint256 _availableCreditLimit) internal pure {
+        if (_creditAmount != _availableCreditLimit) {
+            revert OnlyCompleteLendingForNFTs(_creditAmount, _availableCreditLimit);
         }
     }
 }

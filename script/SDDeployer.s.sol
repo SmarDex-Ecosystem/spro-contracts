@@ -5,7 +5,6 @@ import {console2} from "forge-std/src/Script.sol";
 import {ScriptUtils} from "./lib/ScriptUtils.sol";
 
 import {SDDeployer} from "pwn/deployment/SDDeployer.sol";
-import {SDSink} from "pwn/SDSink.sol";
 import "openzeppelin/utils/Create2.sol";
 
 import {T20} from "test/helper/T20.sol";
@@ -33,29 +32,6 @@ contract Deploy is ScriptUtils {
         console2.log("SDDeployer address", deployer);
 
         _writeDeploymentAddress(deployer, ".deployer");
-    }
-
-    /*//////////////////////////////////////////////////////////////////////////
-                                  SINK
-    //////////////////////////////////////////////////////////////////////////*/
-
-    bytes32 internal constant SINK = keccak256("SDSink");
-
-    // local deployment:
-    // forge script script/SDDeployer.s.sol:Deploy --sig "deploySink()" --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY --broadcast
-
-    function deploySink() external {
-        uint256 pk = vm.envUint("PRIVATE_KEY");
-
-        vm.startBroadcast(pk);
-
-        address sink = Create2.deploy(0, SINK, type(SDSink).creationCode);
-
-        vm.stopBroadcast();
-
-        console2.log("SDSink address", sink);
-
-        _writeDeploymentAddress(sink, ".sink");
     }
 
     /*//////////////////////////////////////////////////////////////////////////
