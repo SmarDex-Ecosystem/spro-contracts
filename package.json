@@ -28,7 +28,7 @@
     "slither": "slither .",
     "snapshot": "FOUNDRY_PROFILE=ci forge clean && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --no-match-contract Fork --offline",
     "snapshot:check": "FOUNDRY_PROFILE=ci forge build && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --no-match-contract Fork --check --offline",
-    "test": "forge coverage -vvv --report lcov --ir-minimum"
+    "test": "forge test"
   },
   "files": [
     "dist",
