@@ -1,0 +1,12 @@
+cancelProposal.t.sol
+├── when the proposal contract does not have the LOAN_PROPOSAL tag in the hub
+│   └── it should revert
+└── when the proposal contract has the LOAN_PROPOSAL tag in the hub
+    └── when the cancel proposal call to the proposal contract succeeds
+        ├── when the caller is not the proposer
+        │   └── it should revert
+        ├── when the caller is the proposer
+        │   └── when the collateral asset is invalid
+        │       └── it should revert
+        └── when the collateral asset is valid
+            └── the collateral will be transferred to the proposer

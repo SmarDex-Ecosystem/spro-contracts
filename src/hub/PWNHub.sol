@@ -1,57 +1,49 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity 0.8.16;
 
-import { Ownable2Step } from "openzeppelin/access/Ownable2Step.sol";
-
+import {Ownable2Step} from "openzeppelin/access/Ownable2Step.sol";
 
 /**
  * @title PWN Hub
  * @notice Connects PWN contracts together into protocol via tags.
  */
 contract PWNHub is Ownable2Step {
-
-    /*----------------------------------------------------------*|
-    |*  # VARIABLES & CONSTANTS DEFINITIONS                     *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*              VARIABLES & CONSTANTS DEFINITIONS               */
+    /* ------------------------------------------------------------ */
 
     /**
      * @dev Mapping of address tags. (contract address => tag => is tagged)
      */
-    mapping (address => mapping (bytes32 => bool)) private tags;
+    mapping(address => mapping(bytes32 => bool)) private tags;
 
-
-    /*----------------------------------------------------------*|
-    |*  # EVENTS DEFINITIONS                                    *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      EVENTS DEFINITIONS                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Emitted when tag is set for an address.
      */
     event TagSet(address indexed _address, bytes32 indexed tag, bool hasTag);
 
-
-    /*----------------------------------------------------------*|
-    |*  # ERRORS DEFINITIONS                                    *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      ERRORS DEFINITIONS                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Thrown when `PWNHub.setTags` inputs lengths are not equal.
      */
     error InvalidInputData();
 
+    /* ------------------------------------------------------------ */
+    /*                          CONSTRUCTOR                         */
+    /* ------------------------------------------------------------ */
 
-    /*----------------------------------------------------------*|
-    |*  # CONSTRUCTOR                                           *|
-    |*----------------------------------------------------------*/
+    constructor() Ownable2Step() {}
 
-    constructor() Ownable2Step() {
-
-    }
-
-
-    /*----------------------------------------------------------*|
-    |*  # TAG MANAGEMENT                                        *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          TAG MANAGEMENT                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Set tag to an address.
@@ -73,20 +65,20 @@ contract PWNHub is Ownable2Step {
      * @param _hasTag Bool value if tags are added or removed.
      */
     function setTags(address[] memory _addresses, bytes32[] memory _tags, bool _hasTag) external onlyOwner {
-        if (_addresses.length != _tags.length)
-            revert InvalidInputData();
+        if (_addresses.length != _tags.length) revert InvalidInputData();
 
         uint256 length = _tags.length;
         for (uint256 i; i < length;) {
             setTag(_addresses[i], _tags[i], _hasTag);
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
     }
 
-
-    /*----------------------------------------------------------*|
-    |*  # TAG GETTER                                            *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          TAG GETTER                          */
+    /* ------------------------------------------------------------ */
 
     /**
      * @dev Return if an address is associated with a tag.
@@ -97,5 +89,4 @@ contract PWNHub is Ownable2Step {
     function hasTag(address _address, bytes32 tag) external view returns (bool) {
         return tags[_address][tag];
     }
-
 }

@@ -1,0 +1,1000 @@
+// SPDX-License-Identifier: GPL-3.0-only
+pragma solidity 0.8.16;
+
+import {SDSimpleLoanProposal} from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
+import {SigUtils} from "test/utils/SigUtils.sol";
+import {IPoolAdapter} from "test/helper/DummyPoolAdapter.sol";
+import {Math} from "openzeppelin/utils/math/Math.sol";
+import {
+    MultiToken,
+    MultiTokenCategoryRegistry,
+    SDBaseIntegrationTest,
+    SDConfig,
+    IPWNDeployer,
+    PWNHub,
+    PWNHubTags,
+    SDSimpleLoan,
+    SDSimpleLoanSimpleProposal,
+    PWNLOAN,
+    PWNRevokedNonce
+} from "test/integration/SDBaseIntegrationTest.t.sol";
+
+contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
+    function setUp() public override {
+        super.setUp();
+    }
+
+    function test_shouldCreateERC20Proposal_shouldCreatePartialLoan_shouldWithdrawRemainingCollateral() external {
+        // Create the proposal
+        vm.prank(borrower);
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _createERC20Proposal();
+
+        // Create the loan
+        vm.prank(lender);
+        uint256 loanId = _createLoan(proposalSpec, "");
+
+        // Borrower withdraws remaining collateral
+        vm.startPrank(borrower);
+        deployment.simpleLoanSimpleProposal.revokeNonce(proposal.nonceSpace, proposal.nonce);
+        _cancelProposal(proposal);
+        vm.stopPrank();
+
+        // ASSERTIONS
+        // loan token
+        assertEq(deployment.loanToken.ownerOf(loanId), lender, "0: loanToken owner should be lender");
+        // credit token
+        assertEq(
+            credit.balanceOf(lender),
+            INITIAL_CREDIT_BALANCE - CREDIT_AMOUNT,
+            "1: initial credit token balance reduced by credit amount"
+        );
+        assertEq(
+            credit.balanceOf(borrower), CREDIT_AMOUNT, "2: credit token balance of borrower should be CREDIT_AMOUNT"
+        );
+        assertEq(
+            credit.balanceOf(address(deployment.simpleLoan)), 0, "3: credit token balance of loan contract should be 0"
+        );
+        // collateral token
+        assertEq(t20.balanceOf(lender), 0, "4: ERC20 collateral token balance of lender should be 0");
+        assertEq(
+            t20.balanceOf(borrower),
+            COLLATERAL_AMOUNT - (CREDIT_AMOUNT * COLLATERAL_AMOUNT) / CREDIT_LIMIT,
+            "5: ERC20 collateral token balance of borrower should be unused collateral"
+        );
+        assertEq(
+            t20.balanceOf(address(deployment.simpleLoan)),
+            (CREDIT_AMOUNT * COLLATERAL_AMOUNT) / CREDIT_LIMIT,
+            "6: ERC20 collateral token balance of loan contract should be used collateral"
+        );
+        // nonce
+        assertEq(
+            deployment.revokedNonce.isNonceUsable(borrower, proposal.nonceSpace, proposal.nonce),
+            false,
+            "7: nonce for borrower should not be usable"
+        );
+        // loan id
+        assertEq(
+            deployment.loanToken.loanContract(loanId),
+            address(deployment.simpleLoan),
+            "8: loan contract should be mapped to loanId"
+        );
+        // sdex fees
+        assertEq(
+            deployment.sdex.balanceOf(address(deployment.config.SINK())),
+            deployment.config.fixFeeUnlisted(),
+            "9: sink should contain the sdex unlisted fee"
+        );
+    }
+
+    function test_shouldCreateERC721Proposal_shouldCreateLoan_cannotWithdrawCollateral() external {
+        // Create the proposal
+        vm.prank(borrower);
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _createERC721Proposal();
+
+        // Create the loan
+        vm.prank(lender);
+        uint256 loanId = _createLoan(proposalSpec, "");
+
+        // Borrower withdraws remaining collateral
+        vm.prank(borrower);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SDSimpleLoan.InvalidMultiTokenAsset.selector,
+                uint8(proposal.collateralCategory),
+                proposal.collateralAddress,
+                proposal.collateralId,
+                type(uint256).max
+            )
+        );
+        _cancelProposal(proposal);
+
+        // ASSERTIONS
+        // loan token
+        assertEq(deployment.loanToken.ownerOf(loanId), lender, "0: loanToken owner should be lender");
+        // credit token
+        assertEq(
+            credit.balanceOf(lender),
+            INITIAL_CREDIT_BALANCE - CREDIT_LIMIT,
+            "1: initial credit token balance reduced by credit limit (== credit amount)"
+        );
+        assertEq(credit.balanceOf(borrower), CREDIT_LIMIT, "2: credit token balance of borrower should be CREDIT_LIMIT");
+        assertEq(
+            credit.balanceOf(address(deployment.simpleLoan)), 0, "3: credit token balance of loan contract should be 0"
+        );
+        // collateral token
+        assertEq(t721.balanceOf(lender), 0, "4: ERC721 collateral token balance of lender should be 0");
+        assertEq(t721.balanceOf(borrower), 0, "5: ERC721 collateral token balance of borrower should be 0");
+        assertEq(
+            t721.balanceOf(address(deployment.simpleLoan)),
+            1,
+            "6: ERC721 collateral token balance of loan contract should be used collateral"
+        );
+        // loan id
+        assertEq(
+            deployment.loanToken.loanContract(loanId),
+            address(deployment.simpleLoan),
+            "7: loan contract should be mapped to loanId"
+        );
+        // sdex fees
+        assertEq(
+            deployment.sdex.balanceOf(address(deployment.config.SINK())),
+            deployment.config.fixFeeUnlisted(),
+            "8: sink should contain the sdex unlisted fee"
+        );
+    }
+
+    function test_shouldCreateERC721Proposal_withdrawCollateral() external {
+        // Create the proposal
+        vm.prank(borrower);
+        _createERC721Proposal();
+
+        // Borrower withdraws remaining collateral
+        vm.startPrank(borrower);
+        _cancelProposal(proposal);
+
+        // ASSERTIONS
+        // collateral token
+        assertEq(t721.balanceOf(lender), 0, "0: ERC721 collateral token balance of lender should be 0");
+        assertEq(t721.balanceOf(borrower), 1, "1: ERC721 collateral token balance of borrower should be 1");
+        assertEq(
+            t721.balanceOf(address(deployment.simpleLoan)),
+            0,
+            "2: ERC721 collateral token balance of loan contract should be 0"
+        );
+        // nonce
+        assertEq(
+            deployment.revokedNonce.isNonceUsable(borrower, proposal.nonceSpace, proposal.nonce),
+            false,
+            "3: nonce for borrower should not be usable"
+        );
+    }
+
+    function test_shouldCreateFungibleERC1155Proposal_shouldCreateLoan_canWithdrawRemainingCollateral() external {
+        // Create the proposal
+        vm.prank(borrower);
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _createFungibleERC1155Proposal();
+
+        // Create the loan
+        vm.prank(lender);
+        uint256 loanId = _createLoan(proposalSpec, "");
+
+        // Borrower withdraws remaining collateral
+        vm.startPrank(borrower);
+        _cancelProposal(proposal);
+
+        // ASSERTIONS
+        // loan token
+        assertEq(deployment.loanToken.ownerOf(loanId), lender, "0: loanToken owner should be lender");
+        // credit token
+        assertEq(
+            credit.balanceOf(lender),
+            INITIAL_CREDIT_BALANCE - CREDIT_AMOUNT,
+            "1: initial credit token balance reduced by credit amount"
+        );
+        assertEq(
+            credit.balanceOf(borrower), CREDIT_AMOUNT, "2: credit token balance of borrower should be CREDIT_AMOUNT"
+        );
+        assertEq(
+            credit.balanceOf(address(deployment.simpleLoan)), 0, "3: credit token balance of loan contract should be 0"
+        );
+        // collateral token
+        assertEq(t1155.balanceOf(lender, COLLATERAL_ID), 0, "4: ERC1155 collateral token balance of lender should be 0");
+        assertEq(
+            t1155.balanceOf(borrower, COLLATERAL_ID),
+            COLLATERAL_AMOUNT - (CREDIT_AMOUNT * COLLATERAL_AMOUNT) / CREDIT_LIMIT,
+            "5: ERC1155 collateral token balance of borrower should be unused collateral"
+        );
+        assertEq(
+            t1155.balanceOf(address(deployment.simpleLoan), COLLATERAL_ID),
+            (CREDIT_AMOUNT * COLLATERAL_AMOUNT) / CREDIT_LIMIT,
+            "6: ERC1155 collateral token balance of loan contract should be used collateral"
+        );
+        // loan id
+        assertEq(
+            deployment.loanToken.loanContract(loanId),
+            address(deployment.simpleLoan),
+            "7: loan contract should be mapped to loanId"
+        );
+        // sdex fees
+        assertEq(
+            deployment.sdex.balanceOf(address(deployment.config.SINK())),
+            deployment.config.fixFeeUnlisted(),
+            "8: sink should contain the sdex unlisted fee"
+        );
+    }
+
+    function test_shouldCreateNonFungibleERC1155Proposal_shouldCreateLoan_cannotWithdrawCollateral() external {
+        // Create the proposal
+        vm.prank(borrower);
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _createNonFungibleERC1155Proposal();
+
+        // Create the loan
+        vm.prank(lender);
+        uint256 loanId = _createLoan(proposalSpec, "");
+
+        // Borrower attempts to withdraw remaining collateral. Expect revert for ERC1155 amount == 0.
+        vm.startPrank(borrower);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SDSimpleLoan.InvalidMultiTokenAsset.selector,
+                uint8(proposal.collateralCategory),
+                proposal.collateralAddress,
+                proposal.collateralId,
+                0
+            )
+        );
+        _cancelProposal(proposal);
+
+        // ASSERTIONS
+        // loan token
+        assertEq(deployment.loanToken.ownerOf(loanId), lender, "0: loanToken owner should be lender");
+        // credit token
+        assertEq(
+            credit.balanceOf(lender),
+            INITIAL_CREDIT_BALANCE - CREDIT_LIMIT,
+            "1: initial credit token balance reduced by credit amount"
+        );
+        assertEq(credit.balanceOf(borrower), CREDIT_LIMIT, "2: credit token balance of borrower should be CREDIT_LIMIT");
+        assertEq(
+            credit.balanceOf(address(deployment.simpleLoan)), 0, "3: credit token balance of loan contract should be 0"
+        );
+        // collateral token
+        assertEq(t1155.balanceOf(lender, COLLATERAL_ID), 0, "4: ERC1155 collateral token balance of lender should be 0");
+        assertEq(
+            t1155.balanceOf(borrower, COLLATERAL_ID), 0, "5: ERC1155 collateral token balance of borrower should be 0"
+        );
+        assertEq(
+            t1155.balanceOf(address(deployment.simpleLoan), COLLATERAL_ID),
+            1,
+            "6: ERC1155 collateral token balance of loan contract should be 1"
+        );
+        // loan id
+        assertEq(
+            deployment.loanToken.loanContract(loanId),
+            address(deployment.simpleLoan),
+            "7: loan contract should be mapped to loanId"
+        );
+        // sdex fees
+        assertEq(
+            deployment.sdex.balanceOf(address(deployment.config.SINK())),
+            deployment.config.fixFeeUnlisted(),
+            "8: sink should contain the sdex unlisted fee"
+        );
+    }
+
+    function test_PartialLoan_ERC20Collateral_CancelProposal_RepayLoan() external {
+        // Borrower: creates proposal
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _createERC20Proposal();
+
+        // Mint initial state & approve credit
+        credit.mint(lender, INITIAL_CREDIT_BALANCE);
+        vm.prank(lender);
+        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
+
+        // Lender: creates the loan
+        vm.prank(lender);
+        uint256 loanId = deployment.simpleLoan.createLOAN({
+            proposalSpec: proposalSpec,
+            lenderSpec: _buildLenderSpec(false),
+            extra: ""
+        });
+
+        // Borrower: cancels proposal, withdrawing unused collateral
+        vm.startPrank(borrower);
+        deployment.simpleLoan.cancelProposal(proposalSpec);
+
+        // Warp ahead, just before loan default
+        vm.warp(proposal.duration - 1);
+
+        // Borrower approvals for credit token
+        credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
+        credit.approve(address(deployment.simpleLoan), CREDIT_AMOUNT + FIXED_INTEREST_AMOUNT);
+
+        // Borrower: repays loan
+        deployment.simpleLoan.repayLOAN(loanId, "");
+
+        // Assertions
+        assertEq(credit.balanceOf(borrower), 0);
+        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + FIXED_INTEREST_AMOUNT);
+
+        assertEq(t20.balanceOf(borrower), COLLATERAL_AMOUNT);
+        assertEq(t20.balanceOf(address(deployment.simpleLoan)), 0);
+        assertEq(t20.balanceOf(lender), 0);
+
+        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
+    }
+
+    function test_CompleteLoan_ERC721Collateral_RepayLoan() external {
+        // Borrower: creates proposal
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _createERC721Proposal();
+
+        // Mint initial state & approve credit
+        credit.mint(lender, INITIAL_CREDIT_BALANCE);
+        vm.prank(lender);
+        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
+
+        // Lender: creates the loan
+        vm.prank(lender);
+        uint256 loanId = deployment.simpleLoan.createLOAN({
+            proposalSpec: proposalSpec,
+            lenderSpec: _buildLenderSpec(true),
+            extra: ""
+        });
+
+        // Warp ahead, just before loan default
+        vm.warp(proposal.duration - 1);
+
+        vm.startPrank(borrower);
+        // Borrower approvals for credit token
+        credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
+        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT + FIXED_INTEREST_AMOUNT);
+
+        // Borrower: repays loan
+        deployment.simpleLoan.repayLOAN(loanId, "");
+
+        // Assertions
+        assertEq(credit.balanceOf(borrower), 0);
+        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + FIXED_INTEREST_AMOUNT);
+
+        assertEq(t721.balanceOf(borrower), 1);
+        assertEq(t721.balanceOf(address(deployment.simpleLoan)), 0);
+        assertEq(t721.balanceOf(lender), 0);
+
+        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
+    }
+
+    function test_PartialLoan_FungibleERC1155Collateral_CancelProposal_RepayLoan() external {
+        // Borrower: creates proposal
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _createFungibleERC1155Proposal();
+
+        // Mint initial state & approve credit
+        credit.mint(lender, INITIAL_CREDIT_BALANCE);
+        vm.prank(lender);
+        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
+
+        // Lender: creates the loan
+        vm.prank(lender);
+        uint256 loanId = deployment.simpleLoan.createLOAN({
+            proposalSpec: proposalSpec,
+            lenderSpec: _buildLenderSpec(false),
+            extra: ""
+        });
+
+        // Warp ahead, just before loan default
+        vm.warp(proposal.duration - 1);
+
+        // Borrower: cancels proposal, withdrawing unused collateral
+        vm.startPrank(borrower);
+        deployment.simpleLoan.cancelProposal(proposalSpec);
+
+        // Borrower approvals for credit token
+        credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
+        credit.approve(address(deployment.simpleLoan), CREDIT_AMOUNT + FIXED_INTEREST_AMOUNT);
+
+        // Borrower: repays loan
+        deployment.simpleLoan.repayLOAN(loanId, "");
+
+        // Assertions
+        assertEq(credit.balanceOf(borrower), 0);
+        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + FIXED_INTEREST_AMOUNT);
+
+        assertEq(t1155.balanceOf(borrower, COLLATERAL_ID), COLLATERAL_AMOUNT);
+        assertEq(t1155.balanceOf(address(deployment.simpleLoan), COLLATERAL_ID), 0);
+        assertEq(t1155.balanceOf(lender, COLLATERAL_ID), 0);
+
+        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
+    }
+
+    function test_PartialLoan_GtCreditThreshold() external {
+        // Create the proposal
+        vm.prank(borrower);
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _createERC20Proposal();
+
+        // 97% of available credit limit
+        uint256 amount = 9700 * CREDIT_LIMIT / 1e4;
+
+        // Mint initial state & approve credit
+        credit.mint(lender, INITIAL_CREDIT_BALANCE);
+        vm.startPrank(lender);
+        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
+
+        SDSimpleLoan.LenderSpec memory lenderSpec =
+            SDSimpleLoan.LenderSpec({sourceOfFunds: lender, creditAmount: amount, permitData: ""});
+
+        // Create loan, expecting revert
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SDSimpleLoanProposal.CreditAmountLeavesTooLittle.selector,
+                amount,
+                (PERCENTAGE - DEFAULT_THRESHOLD) * CREDIT_LIMIT / 1e4
+            )
+        );
+        deployment.simpleLoan.createLOAN({proposalSpec: proposalSpec, lenderSpec: lenderSpec, extra: ""});
+        vm.stopPrank();
+    }
+
+    function test_RevertWhen_CreateAlreadyMadeProposal() external {
+        // Create the proposal
+        _createERC20Proposal();
+        // Mint initial state & approve collateral
+        t20.mint(borrower, proposal.collateralAmount);
+        vm.prank(borrower);
+        t20.approve(address(deployment.simpleLoan), proposal.collateralAmount);
+
+        // Create the proposal
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+
+        vm.expectRevert(SDSimpleLoanProposal.ProposalAlreadyExists.selector);
+        vm.prank(borrower);
+        deployment.simpleLoan.createProposal(proposalSpec);
+    }
+
+    function test_RevertWhen_InvalidCollateralAsset() external {
+        proposal.collateralCategory = MultiToken.Category.ERC721;
+        proposal.collateralAddress = address(t721);
+        proposal.collateralId = COLLATERAL_ID;
+        proposal.collateralAmount = 2; // this is invalid
+
+        // Mint initial state & approve collateral
+        t721.mint(borrower, COLLATERAL_ID);
+        vm.prank(borrower);
+        t721.approve(address(deployment.simpleLoan), COLLATERAL_ID);
+
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+
+        vm.startPrank(borrower);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SDSimpleLoan.InvalidMultiTokenAsset.selector,
+                uint8(proposal.collateralCategory),
+                proposal.collateralAddress,
+                proposal.collateralId,
+                proposal.collateralAmount
+            )
+        );
+        deployment.simpleLoan.createProposal(proposalSpec);
+    }
+
+    function test_shouldFail_getProposalCreditStatus_ProposalNotMade() external {
+        vm.expectRevert(SDSimpleLoanProposal.ProposalNotMade.selector);
+        deployment.simpleLoanSimpleProposal.getProposalCreditStatus(proposal);
+    }
+
+    function testFuzz_GetProposalCreditStatus(uint256 limit, uint256 used) external {
+        vm.assume(limit != 0);
+        vm.assume(used <= limit);
+
+        proposal.availableCreditLimit = limit;
+        _createERC20Proposal();
+
+        bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
+
+        vm.store(
+            address(deployment.simpleLoanSimpleProposal), keccak256(abi.encode(proposalHash, 0)), bytes32(uint256(1))
+        );
+        vm.store(address(deployment.simpleLoanSimpleProposal), keccak256(abi.encode(proposalHash, 1)), bytes32(used));
+
+        (uint256 r, uint256 u) = deployment.simpleLoanSimpleProposal.getProposalCreditStatus(proposal);
+
+        assertEq(r, limit - u);
+    }
+
+    function testGas_MultiplePartialLoans_Original() external {
+        uint256[] memory loanIds = _setupMultipleRepay();
+        vm.startPrank(borrower);
+        uint256 startGas = gasleft();
+        for (uint256 i; i < 4; ++i) {
+            deployment.simpleLoan.repayLOAN(loanIds[i], "");
+        }
+        emit log_named_uint("repayLOAN with for loop", startGas - gasleft());
+    }
+
+    function testGas_MultiplePartialLoans_RepayMultiple() external {
+        uint256[] memory loanIds = _setupMultipleRepay();
+        vm.startPrank(borrower);
+        uint256 startGas = gasleft();
+        deployment.simpleLoan.repayMultipleLOANs(loanIds, address(credit), "");
+        emit log_named_uint("Gas used", startGas - gasleft());
+    }
+
+    function test_MultiplePartialLoans_RepayMultiple() external {
+        uint256[] memory loanIds = _setupMultipleRepay();
+
+        vm.startPrank(borrower);
+        deployment.simpleLoan.repayMultipleLOANs(loanIds, address(credit), "");
+
+        // Assertions
+        assertEq(credit.balanceOf(borrower), 0);
+        require(
+            credit.balanceOf(lender) == credit.balanceOf(alice) && credit.balanceOf(lender) == credit.balanceOf(bob)
+                && credit.balanceOf(lender) == credit.balanceOf(charlee)
+        );
+        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + FIXED_INTEREST_AMOUNT);
+
+        assertEq(0, deployment.loanToken.balanceOf(lender));
+        assertEq(0, deployment.loanToken.balanceOf(alice));
+        assertEq(0, deployment.loanToken.balanceOf(bob));
+        assertEq(0, deployment.loanToken.balanceOf(charlee));
+
+        assertEq(2000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(borrower)); // 20% since 4 loans @ 5% minimum amount
+        assertEq(8000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(address(deployment.simpleLoan)));
+    }
+
+    function test_MultiplePartialLoans_RepayMultiple_PermitCreditTokens() external {
+        uint256[] memory loanIds = _setupMultipleRepayCreditPermit();
+
+        permit.asset = address(creditPermit);
+        permit.owner = borrower;
+        permit.amount = deployment.simpleLoan.totalLoanRepaymentAmount(loanIds, address(creditPermit));
+        permit.deadline = 8 days;
+
+        SigUtils.Permit memory p = SigUtils.Permit({
+            owner: permit.owner,
+            spender: address(deployment.simpleLoan),
+            value: permit.amount,
+            nonce: creditPermit.nonces(borrower),
+            deadline: permit.deadline
+        });
+
+        bytes32 digest = sigUtils.getTypedDataHash(p);
+
+        vm.startPrank(borrower);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(borrowerPK, digest);
+
+        permit.v = v;
+        permit.r = r;
+        permit.s = s;
+
+        // zero the approvals before the repayment, tokens should be transferred via permit
+        creditPermit.approve(address(deployment.simpleLoan), 0);
+
+        deployment.simpleLoan.repayMultipleLOANs(loanIds, address(creditPermit), abi.encode(permit));
+    }
+
+    function test_MultiplePartialLoans_RepayLOAN_PermitCreditTokens() external {
+        uint256[] memory loanIds = _setupMultipleRepayCreditPermit();
+
+        permit.asset = address(creditPermit);
+        permit.owner = borrower;
+        permit.amount = deployment.simpleLoan.loanRepaymentAmount(loanIds[0]);
+        permit.deadline = 8 days;
+
+        SigUtils.Permit memory p = SigUtils.Permit({
+            owner: permit.owner,
+            spender: address(deployment.simpleLoan),
+            value: permit.amount,
+            nonce: creditPermit.nonces(borrower),
+            deadline: permit.deadline
+        });
+
+        bytes32 digest = sigUtils.getTypedDataHash(p);
+
+        vm.startPrank(borrower);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(borrowerPK, digest);
+
+        permit.v = v;
+        permit.r = r;
+        permit.s = s;
+
+        // zero the approvals before the repayment, tokens should be transferred via permit
+        creditPermit.approve(address(deployment.simpleLoan), 0);
+
+        deployment.simpleLoan.repayLOAN(loanIds[0], abi.encode(permit));
+    }
+
+    function test_MultiplePartialLoans_RepayMultiple_RepayerNotOwner() external {
+        uint256[] memory loanIds = _setupMultipleRepay();
+
+        address repayer = makeAddr("repayer");
+        uint256 repayAmount = deployment.simpleLoan.totalLoanRepaymentAmount(loanIds, address(credit));
+
+        credit.mint(repayer, repayAmount);
+        vm.startPrank(repayer);
+        credit.approve(address(deployment.simpleLoan), repayAmount);
+        deployment.simpleLoan.repayMultipleLOANs(loanIds, address(credit), "");
+        vm.stopPrank();
+
+        // Assertions
+        assertEq(credit.balanceOf(borrower), 8 * FIXED_INTEREST_AMOUNT); // 4x minted in _setupMultipleRepay & not used
+        require(
+            credit.balanceOf(lender) == credit.balanceOf(alice) && credit.balanceOf(lender) == credit.balanceOf(bob)
+                && credit.balanceOf(lender) == credit.balanceOf(charlee)
+        );
+        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + FIXED_INTEREST_AMOUNT);
+
+        assertEq(0, deployment.loanToken.balanceOf(lender));
+        assertEq(0, deployment.loanToken.balanceOf(alice));
+        assertEq(0, deployment.loanToken.balanceOf(bob));
+        assertEq(0, deployment.loanToken.balanceOf(charlee));
+
+        assertEq(2000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(borrower)); // 20% since 4 loans @ 5% minimum amount
+        assertEq(8000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(address(deployment.simpleLoan)));
+    }
+
+    function test_MultiplePartialLoans_RepayMultiple_ClaimMultiple() external {
+        uint256[] memory loanIds = _setupMultipleRepay();
+
+        vm.prank(alice);
+        deployment.loanToken.transferFrom(alice, lender, 2);
+
+        vm.prank(bob);
+        deployment.loanToken.transferFrom(bob, lender, 3);
+
+        vm.prank(borrower);
+        deployment.simpleLoan.repayMultipleLOANs(loanIds, address(credit), "");
+
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = 2;
+        ids[1] = 3;
+
+        vm.prank(lender);
+        deployment.simpleLoan.claimMultipleLOANs(ids);
+    }
+
+    function _setupMultipleRepay() internal returns (uint256[] memory loanIds) {
+        vm.prank(borrower);
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _createERC20Proposal();
+
+        // Setup lenders array
+        address[] memory lenders = new address[](4);
+        lenders[0] = lender;
+        lenders[1] = alice;
+        lenders[2] = bob;
+        lenders[3] = charlee;
+
+        // Minimum credit amount
+        uint256 minCreditAmount = (proposal.availableCreditLimit * deployment.config.partialPositionPercentage()) / 1e4;
+
+        // Setup loanIds array
+        loanIds = new uint256[](4);
+
+        // Create loans for lenders
+        for (uint256 i; i < 4; ++i) {
+            // Mint initial state & approve credit
+            credit.mint(lenders[i], INITIAL_CREDIT_BALANCE);
+            vm.startPrank(lenders[i]);
+            credit.approve(address(deployment.simpleLoan), minCreditAmount);
+
+            // Lender spec
+            SDSimpleLoan.LenderSpec memory lenderSpec =
+                SDSimpleLoan.LenderSpec({sourceOfFunds: lenders[i], creditAmount: minCreditAmount, permitData: ""});
+
+            // Create loan
+            loanIds[i] =
+                deployment.simpleLoan.createLOAN({proposalSpec: proposalSpec, lenderSpec: lenderSpec, extra: ""});
+            vm.stopPrank();
+        }
+
+        // Warp forward 4 days
+        skip(4 days);
+
+        // Approve repayment amount
+        uint256 totalAmount = deployment.simpleLoan.totalLoanRepaymentAmount(loanIds, address(credit));
+        credit.mint(borrower, 4 * FIXED_INTEREST_AMOUNT);
+        vm.prank(borrower);
+        credit.approve(address(deployment.simpleLoan), totalAmount);
+    }
+
+    function _setupMultipleRepayCreditPermit() internal returns (uint256[] memory loanIds) {
+        proposal.creditAddress = address(creditPermit);
+
+        vm.prank(borrower);
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _createERC20Proposal();
+
+        // Setup lenders array
+        address[] memory lenders = new address[](4);
+        lenders[0] = lender;
+        lenders[1] = alice;
+        lenders[2] = bob;
+        lenders[3] = charlee;
+
+        // Minimum credit amount
+        uint256 minCreditAmount = (proposal.availableCreditLimit * deployment.config.partialPositionPercentage()) / 1e4;
+
+        // Setup loanIds array
+        loanIds = new uint256[](4);
+
+        // Create loans for lenders
+        for (uint256 i; i < 4; ++i) {
+            // Mint initial state & approve credit
+            creditPermit.mint(lenders[i], INITIAL_CREDIT_BALANCE);
+            vm.startPrank(lenders[i]);
+            creditPermit.approve(address(deployment.simpleLoan), minCreditAmount);
+
+            // Lender spec
+            SDSimpleLoan.LenderSpec memory lenderSpec =
+                SDSimpleLoan.LenderSpec({sourceOfFunds: lenders[i], creditAmount: minCreditAmount, permitData: ""});
+
+            // Create loan
+            loanIds[i] =
+                deployment.simpleLoan.createLOAN({proposalSpec: proposalSpec, lenderSpec: lenderSpec, extra: ""});
+            vm.stopPrank();
+        }
+
+        // Warp forward 4 days
+        skip(4 days);
+
+        // Approve repayment amount
+        uint256 totalAmount = deployment.simpleLoan.totalLoanRepaymentAmount(loanIds, address(creditPermit));
+        creditPermit.mint(borrower, 4 * FIXED_INTEREST_AMOUNT);
+        vm.prank(borrower);
+        creditPermit.approve(address(deployment.simpleLoan), totalAmount);
+    }
+
+    function test_getStateFingerprint() external {
+        // Create the proposal
+        vm.prank(borrower);
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _createFungibleERC1155Proposal();
+
+        // Create the loan
+        vm.prank(lender);
+        uint256 loanId = _createLoan(proposalSpec, "");
+
+        (uint8 status,, uint40 defaultTimestamp,,,, uint24 accruingInterestAPR, uint256 fixedInterestAmount,,,,) =
+            deployment.simpleLoan.getLOAN(loanId);
+
+        bytes32 fp = keccak256(abi.encode(status, defaultTimestamp, fixedInterestAmount, accruingInterestAPR));
+        assertEq(fp, deployment.simpleLoan.getStateFingerprint(loanId));
+    }
+
+    function test_loanMetadataUri() external view {
+        string memory uri = deployment.simpleLoan.loanMetadataUri();
+        assertEq(uri, "");
+    }
+
+    function test_shouldFail_claimLOAN_CallerNotLoanTokenHolder() external {
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _createERC20Proposal();
+
+        // Mint initial state & approve credit
+        credit.mint(lender, INITIAL_CREDIT_BALANCE);
+        vm.prank(lender);
+        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
+
+        // Lender: creates the loan
+        vm.prank(lender);
+        uint256 loanId = deployment.simpleLoan.createLOAN({
+            proposalSpec: proposalSpec,
+            lenderSpec: _buildLenderSpec(false),
+            extra: ""
+        });
+
+        vm.startPrank(borrower);
+        // Borrower approvals for credit token
+        credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
+        credit.approve(address(deployment.simpleLoan), CREDIT_AMOUNT + FIXED_INTEREST_AMOUNT);
+        vm.stopPrank();
+
+        // Transfer loanToken to this address
+        vm.prank(lender);
+        deployment.loanToken.transferFrom(lender, address(this), loanId);
+
+        // Borrower: repays loan
+        vm.prank(borrower);
+        deployment.simpleLoan.repayLOAN(loanId, "");
+
+        // Initial lender repays loan
+        vm.startPrank(lender);
+        vm.expectRevert(SDSimpleLoan.CallerNotLOANTokenHolder.selector);
+        deployment.simpleLoan.claimLOAN(loanId);
+    }
+
+    function test_shouldFail_claimLOAN_RunningAndExpired() external {
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _createERC20Proposal();
+
+        // Mint initial state & approve credit
+        credit.mint(lender, INITIAL_CREDIT_BALANCE);
+        vm.prank(lender);
+        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
+
+        // Lender: creates the loan
+        vm.prank(lender);
+        uint256 loanId = deployment.simpleLoan.createLOAN({
+            proposalSpec: proposalSpec,
+            lenderSpec: _buildLenderSpec(true),
+            extra: ""
+        });
+
+        // Borrower approvals for credit token
+        vm.startPrank(borrower);
+        credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
+        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT + FIXED_INTEREST_AMOUNT);
+        vm.stopPrank();
+
+        // Transfer loanToken to this address
+        vm.prank(lender);
+        deployment.loanToken.transferFrom(lender, address(this), loanId);
+
+        vm.warp(100 days); // loan should be expired
+
+        // loan token holder claims the expired loan
+        deployment.simpleLoan.claimLOAN(loanId);
+
+        assertEq(t20.balanceOf(address(this)), proposal.collateralAmount); // collateral amount transferred to loan token holder
+        assertEq(deployment.loanToken.balanceOf(address(this)), 0); // loanToken balance should be zero now
+    }
+
+    function test_shouldFail_claimLOAN_LoanRunning() external {
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _createERC20Proposal();
+
+        // Mint initial state & approve credit
+        credit.mint(lender, INITIAL_CREDIT_BALANCE);
+        vm.prank(lender);
+        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
+
+        // Lender: creates the loan
+        vm.prank(lender);
+        uint256 loanId = deployment.simpleLoan.createLOAN({
+            proposalSpec: proposalSpec,
+            lenderSpec: _buildLenderSpec(false),
+            extra: ""
+        });
+
+        vm.startPrank(borrower);
+        // Borrower approvals for credit token
+        credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
+        credit.approve(address(deployment.simpleLoan), CREDIT_AMOUNT + FIXED_INTEREST_AMOUNT);
+        vm.stopPrank();
+
+        // Try to repay loan
+        vm.startPrank(lender);
+        vm.expectRevert(SDSimpleLoan.LoanRunning.selector);
+        deployment.simpleLoan.claimLOAN(loanId);
+    }
+
+    function test_shouldFail_RepayToPool_InvalidSourceOfFunds() external {
+        // Setup repay to pool with invalid source of funds
+        vm.mockCall(
+            address(deployment.config),
+            abi.encodeWithSignature("getPoolAdapter(address)", address(this)),
+            abi.encode(IPoolAdapter(poolAdapter))
+        );
+        _createERC20Proposal();
+
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        SDSimpleLoan.LenderSpec memory lenderSpec = _buildLenderSpec(true);
+        lenderSpec.sourceOfFunds = address(this);
+
+        // Mint to source of funds and approve pool adapter
+        credit.mint(address(this), INITIAL_CREDIT_BALANCE);
+        credit.approve(address(poolAdapter), CREDIT_LIMIT);
+
+        // Lender creates loan
+        vm.startPrank(lender);
+        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
+        uint256 id = deployment.simpleLoan.createLOAN(proposalSpec, lenderSpec, "");
+        vm.stopPrank();
+
+        // Borrower approvals for credit token
+        vm.startPrank(borrower);
+        credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
+        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT + FIXED_INTEREST_AMOUNT);
+
+        // End of setup
+        vm.mockCall(
+            address(deployment.config),
+            abi.encodeWithSignature("getPoolAdapter(address)", address(this)),
+            abi.encode(address(0))
+        );
+
+        // Loan should be repaid, yet not claimed due to try/catch
+        deployment.simpleLoan.repayLOAN(id, "");
+        vm.stopPrank();
+
+        vm.prank(address(deployment.simpleLoan));
+        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoan.InvalidSourceOfFunds.selector, address(this)));
+        deployment.simpleLoan.tryClaimRepaidLOAN(id, CREDIT_LIMIT, lender);
+    }
+
+    function test_RepayToPool() external {
+        // Setup repay to pool
+        vm.mockCall(
+            address(deployment.config),
+            abi.encodeWithSignature("getPoolAdapter(address)", address(this)),
+            abi.encode(IPoolAdapter(poolAdapter))
+        );
+
+        _createERC20Proposal();
+
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        SDSimpleLoan.LenderSpec memory lenderSpec = _buildLenderSpec(true);
+        lenderSpec.sourceOfFunds = address(this);
+
+        // Mint to source of funds and approve pool adapter
+        credit.mint(address(this), INITIAL_CREDIT_BALANCE);
+        credit.approve(address(poolAdapter), CREDIT_LIMIT);
+
+        // Lender creates loan
+        vm.startPrank(lender);
+        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
+        uint256 id = deployment.simpleLoan.createLOAN(proposalSpec, lenderSpec, "");
+        vm.stopPrank();
+
+        // Borrower approvals for credit token
+        vm.startPrank(borrower);
+        credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
+        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT + FIXED_INTEREST_AMOUNT);
+
+        // End of setup
+        deployment.simpleLoan.repayLOAN(id, "");
+
+        // Assertions
+        assertEq(credit.balanceOf(borrower), 0);
+        assertEq(credit.balanceOf(lender), 0);
+        assertEq(credit.balanceOf(address(this)), INITIAL_CREDIT_BALANCE + FIXED_INTEREST_AMOUNT);
+
+        assertEq(t20.balanceOf(borrower), COLLATERAL_AMOUNT);
+        assertEq(t20.balanceOf(address(deployment.simpleLoan)), 0);
+        assertEq(t20.balanceOf(lender), 0);
+
+        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
+    }
+
+    function testFuzz_loanAccruedInterest(uint256 amount, uint256 apr, uint256 future) external {
+        amount = bound(amount, ((500 * CREDIT_LIMIT) / 1e4), ((9500 * CREDIT_LIMIT) / 1e4));
+        apr = bound(apr, 1, deployment.simpleLoan.MAX_ACCRUING_INTEREST_APR());
+        future = bound(future, 1 days, proposal.expiration);
+
+        proposal.accruingInterestAPR = uint24(apr);
+
+        // Create the proposal
+        vm.prank(borrower);
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _createERC20Proposal();
+
+        // Mint initial state & approve credit
+        credit.mint(lender, INITIAL_CREDIT_BALANCE);
+        vm.startPrank(lender);
+        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
+
+        // Create loan
+        SDSimpleLoan.LenderSpec memory lenderSpec =
+            SDSimpleLoan.LenderSpec({sourceOfFunds: lender, creditAmount: amount, permitData: ""});
+
+        uint256 loanId =
+            deployment.simpleLoan.createLOAN({proposalSpec: proposalSpec, lenderSpec: lenderSpec, extra: ""});
+
+        // skip to the future
+        skip(future);
+
+        (, uint40 startTimestamp,,,,, uint24 accruingInterestAPR, uint256 fixedInterestAmount,,,,) =
+            deployment.simpleLoan.getLOAN(loanId);
+
+        // Assertions
+        uint256 accruingMinutes = (block.timestamp - startTimestamp) / 1 minutes;
+        uint256 accruedInterest = Math.mulDiv(
+            amount,
+            uint256(accruingInterestAPR) * accruingMinutes,
+            deployment.simpleLoan.ACCRUING_INTEREST_APR_DENOMINATOR()
+        );
+
+        assertEq(deployment.simpleLoan.loanRepaymentAmount(loanId), amount + fixedInterestAmount + accruedInterest);
+    }
+}

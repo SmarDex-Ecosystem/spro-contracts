@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity 0.8.16;
 
-import { Test } from "forge-std/Test.sol";
+import {Test} from "forge-std/src/Test.sol";
 
 import {
     MultiToken,
@@ -10,16 +10,15 @@ import {
     IERC1155Receiver,
     PWNVault,
     IPoolAdapter,
-    Permit
+    Permit,
+    SDTransfer
 } from "pwn/loan/vault/PWNVault.sol";
 
-import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
-import { T20 } from "test/helper/T20.sol";
-import { T721 } from "test/helper/T721.sol";
-
+import {DummyPoolAdapter} from "test/helper/DummyPoolAdapter.sol";
+import {T20} from "test/helper/T20.sol";
+import {T721} from "test/helper/T721.sol";
 
 contract PWNVaultHarness is PWNVault {
-
     function pull(MultiToken.Asset memory asset, address origin) external {
         _pull(asset, origin);
     }
@@ -32,22 +31,24 @@ contract PWNVaultHarness is PWNVault {
         _pushFrom(asset, origin, beneficiary);
     }
 
-    function withdrawFromPool(MultiToken.Asset memory asset, IPoolAdapter poolAdapter, address pool, address owner) external {
+    function withdrawFromPool(MultiToken.Asset memory asset, IPoolAdapter poolAdapter, address pool, address owner)
+        external
+    {
         _withdrawFromPool(asset, poolAdapter, pool, owner);
     }
 
-    function supplyToPool(MultiToken.Asset memory asset, IPoolAdapter poolAdapter, address pool, address owner) external {
+    function supplyToPool(MultiToken.Asset memory asset, IPoolAdapter poolAdapter, address pool, address owner)
+        external
+    {
         _supplyToPool(asset, poolAdapter, pool, owner);
     }
 
     function exposed_tryPermit(Permit calldata permit) external {
         _tryPermit(permit);
     }
-
 }
 
 abstract contract PWNVaultTest is Test {
-
     PWNVaultHarness vault;
     address token = makeAddr("token");
     address alice = makeAddr("alice");
@@ -59,7 +60,9 @@ abstract contract PWNVaultTest is Test {
     event VaultPull(MultiToken.Asset asset, address indexed origin);
     event VaultPush(MultiToken.Asset asset, address indexed beneficiary);
     event VaultPushFrom(MultiToken.Asset asset, address indexed origin, address indexed beneficiary);
-    event PoolWithdraw(MultiToken.Asset asset, address indexed poolAdapter, address indexed pool, address indexed owner);
+    event PoolWithdraw(
+        MultiToken.Asset asset, address indexed poolAdapter, address indexed pool, address indexed owner
+    );
     event PoolSupply(MultiToken.Asset asset, address indexed poolAdapter, address indexed pool, address indexed owner);
 
     constructor() {
@@ -71,24 +74,20 @@ abstract contract PWNVaultTest is Test {
         t20 = new T20();
         t721 = new T721();
     }
-
 }
 
-
-/*----------------------------------------------------------*|
-|*  # PULL                                                  *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  PULL                                                     */
+/* ------------------------------------------------------------ */
 
 contract PWNVault_Pull_Test is PWNVaultTest {
-
     function test_shouldCallTransferFrom_fromOrigin_toVault() external {
         t721.mint(alice, 42);
         vm.prank(alice);
         t721.approve(address(vault), 42);
 
         vm.expectCall(
-            address(t721),
-            abi.encodeWithSignature("transferFrom(address,address,uint256)", alice, address(vault), 42)
+            address(t721), abi.encodeWithSignature("transferFrom(address,address,uint256)", alice, address(vault), 42)
         );
 
         MultiToken.Asset memory asset = MultiToken.Asset(MultiToken.Category.ERC721, address(t721), 42, 0);
@@ -96,13 +95,9 @@ contract PWNVault_Pull_Test is PWNVaultTest {
     }
 
     function test_shouldFail_whenIncompleteTransaction() external {
-        vm.mockCall(
-            token,
-            abi.encodeWithSignature("ownerOf(uint256)"),
-            abi.encode(alice)
-        );
+        vm.mockCall(token, abi.encodeWithSignature("ownerOf(uint256)"), abi.encode(alice));
 
-        vm.expectRevert(abi.encodeWithSelector(PWNVault.IncompleteTransfer.selector));
+        vm.expectRevert(abi.encodeWithSelector(SDTransfer.IncompleteTransfer.selector));
         MultiToken.Asset memory asset = MultiToken.Asset(MultiToken.Category.ERC721, token, 42, 0);
         vault.pull(asset, alice);
     }
@@ -119,16 +114,13 @@ contract PWNVault_Pull_Test is PWNVaultTest {
 
         vault.pull(asset, alice);
     }
-
 }
 
-
-/*----------------------------------------------------------*|
-|*  # PUSH                                                  *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  PUSH                                                     */
+/* ------------------------------------------------------------ */
 
 contract PWNVault_Push_Test is PWNVaultTest {
-
     function test_shouldCallSafeTransferFrom_fromVault_toBeneficiary() external {
         t721.mint(address(vault), 42);
 
@@ -142,13 +134,9 @@ contract PWNVault_Push_Test is PWNVaultTest {
     }
 
     function test_shouldFail_whenIncompleteTransaction() external {
-        vm.mockCall(
-            token,
-            abi.encodeWithSignature("ownerOf(uint256)"),
-            abi.encode(address(vault))
-        );
+        vm.mockCall(token, abi.encodeWithSignature("ownerOf(uint256)"), abi.encode(address(vault)));
 
-        vm.expectRevert(abi.encodeWithSelector(PWNVault.IncompleteTransfer.selector));
+        vm.expectRevert(abi.encodeWithSelector(SDTransfer.IncompleteTransfer.selector));
         MultiToken.Asset memory asset = MultiToken.Asset(MultiToken.Category.ERC721, token, 42, 0);
         vault.push(asset, alice);
     }
@@ -163,16 +151,13 @@ contract PWNVault_Push_Test is PWNVaultTest {
 
         vault.push(asset, alice);
     }
-
 }
 
-
-/*----------------------------------------------------------*|
-|*  # PUSH FROM                                             *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  PUSH FROM                                                */
+/* ------------------------------------------------------------ */
 
 contract PWNVault_PushFrom_Test is PWNVaultTest {
-
     function test_shouldCallSafeTransferFrom_fromOrigin_toBeneficiary() external {
         t721.mint(alice, 42);
         vm.prank(alice);
@@ -188,13 +173,9 @@ contract PWNVault_PushFrom_Test is PWNVaultTest {
     }
 
     function test_shouldFail_whenIncompleteTransaction() external {
-        vm.mockCall(
-            token,
-            abi.encodeWithSignature("ownerOf(uint256)"),
-            abi.encode(alice)
-        );
+        vm.mockCall(token, abi.encodeWithSignature("ownerOf(uint256)"), abi.encode(alice));
 
-        vm.expectRevert(abi.encodeWithSelector(PWNVault.IncompleteTransfer.selector));
+        vm.expectRevert(abi.encodeWithSelector(SDTransfer.IncompleteTransfer.selector));
         MultiToken.Asset memory asset = MultiToken.Asset(MultiToken.Category.ERC721, token, 42, 0);
         vault.pushFrom(asset, alice, bob);
     }
@@ -211,13 +192,11 @@ contract PWNVault_PushFrom_Test is PWNVaultTest {
 
         vault.pushFrom(asset, alice, bob);
     }
-
 }
 
-
-/*----------------------------------------------------------*|
-|*  # WITHDRAW FROM POOL                                    *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  WITHDRAW FROM POOL                                       */
+/* ------------------------------------------------------------ */
 
 contract PWNVault_WithdrawFromPool_Test is PWNVaultTest {
     using MultiToken for address;
@@ -226,7 +205,7 @@ contract PWNVault_WithdrawFromPool_Test is PWNVaultTest {
     address pool = makeAddr("pool");
     MultiToken.Asset asset;
 
-    function setUp() override public {
+    function setUp() public override {
         super.setUp();
 
         asset = address(t20).ERC20(42e18);
@@ -235,7 +214,6 @@ contract PWNVault_WithdrawFromPool_Test is PWNVaultTest {
         vm.prank(pool);
         t20.approve(address(poolAdapter), asset.amount);
     }
-
 
     function test_shouldCallWithdrawOnPoolAdapter() external {
         vm.expectCall(
@@ -247,13 +225,9 @@ contract PWNVault_WithdrawFromPool_Test is PWNVaultTest {
     }
 
     function test_shouldFail_whenIncompleteTransaction() external {
-        vm.mockCall(
-            asset.assetAddress,
-            abi.encodeWithSignature("balanceOf(address)", alice),
-            abi.encode(asset.amount)
-        );
+        vm.mockCall(asset.assetAddress, abi.encodeWithSignature("balanceOf(address)", alice), abi.encode(asset.amount));
 
-        vm.expectRevert(abi.encodeWithSelector(PWNVault.IncompleteTransfer.selector));
+        vm.expectRevert(abi.encodeWithSelector(SDTransfer.IncompleteTransfer.selector));
         vault.withdrawFromPool(asset, poolAdapter, pool, alice);
     }
 
@@ -263,13 +237,11 @@ contract PWNVault_WithdrawFromPool_Test is PWNVaultTest {
 
         vault.withdrawFromPool(asset, poolAdapter, pool, alice);
     }
-
 }
 
-
-/*----------------------------------------------------------*|
-|*  # SUPPLY TO POOL                                        *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  SUPPLY TO POOL                                           */
+/* ------------------------------------------------------------ */
 
 contract PWNVault_SupplyToPool_Test is PWNVaultTest {
     using MultiToken for address;
@@ -278,7 +250,7 @@ contract PWNVault_SupplyToPool_Test is PWNVaultTest {
     address pool = makeAddr("pool");
     MultiToken.Asset asset;
 
-    function setUp() override public {
+    function setUp() public override {
         super.setUp();
 
         asset = address(t20).ERC20(42e18);
@@ -286,11 +258,9 @@ contract PWNVault_SupplyToPool_Test is PWNVaultTest {
         t20.mint(address(vault), asset.amount);
     }
 
-
     function test_shouldTransferAssetToPoolAdapter() external {
         vm.expectCall(
-            asset.assetAddress,
-            abi.encodeWithSignature("transfer(address,uint256)", address(poolAdapter), asset.amount)
+            asset.assetAddress, abi.encodeWithSignature("transfer(address,uint256)", address(poolAdapter), asset.amount)
         );
 
         vault.supplyToPool(asset, poolAdapter, pool, alice);
@@ -307,12 +277,10 @@ contract PWNVault_SupplyToPool_Test is PWNVaultTest {
 
     function test_shouldFail_whenIncompleteTransaction() external {
         vm.mockCall(
-            asset.assetAddress,
-            abi.encodeWithSignature("balanceOf(address)", address(vault)),
-            abi.encode(asset.amount)
+            asset.assetAddress, abi.encodeWithSignature("balanceOf(address)", address(vault)), abi.encode(asset.amount)
         );
 
-        vm.expectRevert(abi.encodeWithSelector(PWNVault.IncompleteTransfer.selector));
+        vm.expectRevert(abi.encodeWithSelector(SDTransfer.IncompleteTransfer.selector));
         vault.supplyToPool(asset, poolAdapter, pool, alice);
     }
 
@@ -322,16 +290,13 @@ contract PWNVault_SupplyToPool_Test is PWNVaultTest {
 
         vault.supplyToPool(asset, poolAdapter, pool, alice);
     }
-
 }
 
-
-/*----------------------------------------------------------*|
-|*  # TRY PERMIT                                            *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  TRY PERMIT                                               */
+/* ------------------------------------------------------------ */
 
 contract PWNVault_TryPermit_Test is PWNVaultTest {
-
     Permit permit;
     string permitSignature = "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)";
 
@@ -355,13 +320,18 @@ contract PWNVault_TryPermit_Test is PWNVaultTest {
         });
     }
 
-
     function test_shouldCallPermit_whenPermitAssetNonZero() external {
         vm.expectCall(
             token,
             abi.encodeWithSignature(
                 permitSignature,
-                permit.owner, address(vault), permit.amount, permit.deadline, permit.v, permit.r, permit.s
+                permit.owner,
+                address(vault),
+                permit.amount,
+                permit.deadline,
+                permit.v,
+                permit.r,
+                permit.s
             )
         );
 
@@ -369,11 +339,7 @@ contract PWNVault_TryPermit_Test is PWNVaultTest {
     }
 
     function test_shouldNotCallPermit_whenPermitIsZero() external {
-        vm.expectCall({
-            callee: token,
-            data: abi.encodeWithSignature(permitSignature),
-            count: 0
-        });
+        vm.expectCall({callee: token, data: abi.encodeWithSignature(permitSignature), count: 0});
 
         permit.asset = address(0);
         vault.exposed_tryPermit(permit);
@@ -384,17 +350,14 @@ contract PWNVault_TryPermit_Test is PWNVaultTest {
 
         vault.exposed_tryPermit(permit);
     }
-
 }
 
-
-/*----------------------------------------------------------*|
-|*  # ERC721/1155 RECEIVED HOOKS                            *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  ERC721/1155 RECEIVED HOOKS                               */
+/* ------------------------------------------------------------ */
 
 contract PWNVault_ReceivedHooks_Test is PWNVaultTest {
-
-    function test_shouldReturnCorrectValue_whenOperatorIsVault_onERC721Received() external {
+    function test_shouldReturnCorrectValue_whenOperatorIsVault_onERC721Received() external view {
         bytes4 returnValue = vault.onERC721Received(address(vault), address(0), 0, "");
 
         assertTrue(returnValue == IERC721Receiver.onERC721Received.selector);
@@ -405,7 +368,7 @@ contract PWNVault_ReceivedHooks_Test is PWNVaultTest {
         vault.onERC721Received(address(0), address(0), 0, "");
     }
 
-    function test_shouldReturnCorrectValue_whenOperatorIsVault_onERC1155Received() external {
+    function test_shouldReturnCorrectValue_whenOperatorIsVault_onERC1155Received() external view {
         bytes4 returnValue = vault.onERC1155Received(address(vault), address(0), 0, 0, "");
 
         assertTrue(returnValue == IERC1155Receiver.onERC1155Received.selector);
@@ -423,26 +386,22 @@ contract PWNVault_ReceivedHooks_Test is PWNVaultTest {
         vm.expectRevert(abi.encodeWithSelector(PWNVault.UnsupportedTransferFunction.selector));
         vault.onERC1155BatchReceived(address(0), address(0), ids, values, "");
     }
-
 }
 
-
-/*----------------------------------------------------------*|
-|*  # SUPPORTS INTERFACE                                    *|
-|*----------------------------------------------------------*/
+/* ------------------------------------------------------------ */
+/*  SUPPORTS INTERFACE                                       */
+/* ------------------------------------------------------------ */
 
 contract PWNVault_SupportsInterface_Test is PWNVaultTest {
-
-    function test_shouldReturnTrue_whenIERC165() external {
+    function test_shouldReturnTrue_whenIERC165() external view {
         assertTrue(vault.supportsInterface(type(IERC165).interfaceId));
     }
 
-    function test_shouldReturnTrue_whenIERC721Receiver() external {
+    function test_shouldReturnTrue_whenIERC721Receiver() external view {
         assertTrue(vault.supportsInterface(type(IERC721Receiver).interfaceId));
     }
 
-    function test_shouldReturnTrue_whenIERC1155Receiver() external {
+    function test_shouldReturnTrue_whenIERC1155Receiver() external view {
         assertTrue(vault.supportsInterface(type(IERC1155Receiver).interfaceId));
     }
-
 }
