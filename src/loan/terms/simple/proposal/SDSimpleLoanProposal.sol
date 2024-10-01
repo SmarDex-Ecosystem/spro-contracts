@@ -306,7 +306,7 @@ abstract contract SDSimpleLoanProposal {
             IStateFingerprintComputer computer = config.getStateFingerprintComputer(proposal.collateralAddress);
             if (address(computer) != address(0)) {
                 // Asset has registered computer
-                currentFingerprint = computer.computeStateFingerprint({ token: proposal.collateralAddress });
+                currentFingerprint = computer.computeStateFingerprint({ token: proposal.collateralAddress, tokenId: 0 });
             } else {
                 // Asset is not implementing ERC5646 and no computer is registered
                 revert MissingStateFingerprintComputer();

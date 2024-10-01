@@ -10,9 +10,10 @@ interface IStateFingerprintComputer {
     /**
      * @notice Compute current token state fingerprint for a given token.
      * @param token Address of a token contract.
+     * @param tokenId Token id to compute state fingerprint for.
      * @return Current token state fingerprint.
      */
-    function computeStateFingerprint(address token) external view returns (bytes32);
+    function computeStateFingerprint(address token, uint256 tokenId) external view returns (bytes32);
 
     /**
      * @notice Check if the computer supports a given token address.
