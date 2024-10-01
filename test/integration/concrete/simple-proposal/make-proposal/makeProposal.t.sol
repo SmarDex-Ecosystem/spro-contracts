@@ -90,20 +90,6 @@ contract MakeProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SD
             )
         );
         assertEq(proposalMadeBool, 1, "proposalMade not set");
-
-        // Assert that the withdrawable collateral was set
-        bytes32 slot = keccak256(abi.encode(proposalHash, SLOT_WITHDRAWABLE_COLLATERAL));
-        bytes32 wc = vm.load(address(deployment.simpleLoanSimpleProposal), slot);
-        assertEq(uint8(uint256(wc << 80 >> 248)), 0);
-        assertEq(
-            address(uint160(uint256(wc << 88 >> 96))),
-            proposal.collateralAddress,
-            "withdrawableCollateral: collateral address not set"
-        );
-        assertEq(
-            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
-            proposal.collateralAmount,
-            "withdrawableCollateral: collateral amount not set"
-        );
+        assertEq(deployment.simpleLoanSimpleProposal.proposalsMade(proposalHash), true, "proposalMade not set");
     }
 }

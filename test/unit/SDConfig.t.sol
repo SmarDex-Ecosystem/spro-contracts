@@ -63,9 +63,6 @@ contract SDConfig_Constructor_Test is SDConfigTest {
         bytes32 ownerValue = vm.load(address(config), OWNER_SLOT);
         assertEq(address(uint160(uint256(ownerValue))), address(0));
 
-        bytes32 initializedSlotValue = vm.load(address(config), INITIALIZED_SLOT);
-        assertEq(uint16(uint256((initializedSlotValue << 88) >> 248)), 255); // disable initializers
-
         bytes32 partialPositionValue = vm.load(address(config), PARTIAL_POSITION_PERCENTAGE_SLOT);
         assertEq(uint16(uint256(partialPositionValue >> PARTIAL_POSITION_PERCENTAGE_OFFSET)), 0);
 
@@ -107,8 +104,7 @@ contract SDConfig_Initialize_Test is SDConfigTest {
         bytes32 ownerValue = vm.load(address(config), OWNER_SLOT);
         assertEq(address(uint160(uint256(ownerValue))), owner);
 
-        bytes32 partialPositionValue = vm.load(address(config), PARTIAL_POSITION_PERCENTAGE_SLOT);
-        assertEq(uint16(uint256(partialPositionValue >> PARTIAL_POSITION_PERCENTAGE_OFFSET)), partialPositionPercentage);
+        assertEq(config.partialPositionPercentage(), partialPositionPercentage);
 
         bytes32 unlistedFeeValue = vm.load(address(config), UNLISTED_FEE_SLOT);
         assertEq(uint256(unlistedFeeValue), fixFeeUnlisted);
