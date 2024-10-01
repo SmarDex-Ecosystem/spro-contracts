@@ -17,16 +17,13 @@ import { Permit, InvalidPermitOwner, InvalidPermitAsset } from "pwn/loan/vault/P
 import { PWNVault } from "pwn/loan/vault/PWNVault.sol";
 import { PWNRevokedNonce } from "pwn/nonce/PWNRevokedNonce.sol";
 import { Expired, AddressMissingHubTag } from "pwn/PWNErrors.sol";
-
 import { SDSimpleLoanSimpleProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanSimpleProposal.sol";
 
-import { console2 } from "forge-std/Script.sol";
 /**
  * @title SD Simple Loan -- forked from PWNSimpleLoan.sol
  * @notice Contract managing a simple loan in PWN protocol.
  * @dev Acts as a vault for every loan created by this contract.
  */
-
 contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     string public constant VERSION = "1.0";
 
@@ -365,13 +362,8 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
             revert InterestAPROutOfBounds({ current: loanTerms.accruingInterestAPR, limit: MAX_ACCRUING_INTEREST_APR });
         }
 
-        console2.log("1 lenderSpec.creditAmount", lenderSpec.creditAmount);
-        console2.log("1 loanTerms.collateralAmount", loanTerms.collateralAmount);
         // Create a new loan
         loanId = _createLoan({ loanTerms: loanTerms, lenderSpec: lenderSpec });
-
-        LOAN storage loan = LOANs[loanId];
-        console2.log("1 loan.principalAmount", loan.principalAmount);
 
         emit LOANCreated({
             loanId: loanId,
@@ -432,6 +424,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         loan.fixedInterestAmount = loanTerms.fixedInterestAmount;
         loan.principalAmount = loanTerms.creditAmount;
         loan.collateral = loanTerms.collateral;
+        loan.collateralAmount = loanTerms.collateralAmount;
     }
 
     /**
@@ -554,7 +547,6 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
             LOAN storage loan = LOANs[loanId];
-            console2.log("2 loan.principalAmount", loan.principalAmount);
 
             // Checks: loan can be repaid & credit address is the same for all loanIds
             _checkLoanCanBeRepaid(loan.status, loan.defaultTimestamp);
@@ -574,19 +566,12 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
             _tryPermit(permit);
         }
         // Transfer the repaid credit to the vault
-        console2.log("2 totalRepaymentAmount", totalRepaymentAmount);
         _pull(creditAddress, totalRepaymentAmount, msg.sender);
 
         for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
             LOAN storage loan = LOANs[loanId];
 
-            if (loan.borrower == address(0x440d9Ab59A4ED2f575666C23EF8c17c53a96e3e0)) {
-                console2.log("loan.borrower", loan.borrower);
-                console2.log("loan.collateral", loan.collateral);
-                console2.log("loan.collateralAmount", loan.collateralAmount);
-                console2.log("loan.principalAmount", loan.principalAmount);
-            }
             // Transfer collateral back to the borrower
             _push(loan.collateral, loan.collateralAmount, loan.borrower);
 
