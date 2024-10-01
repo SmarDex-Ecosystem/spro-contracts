@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import { ERC721 } from "openzeppelin/token/ERC721/ERC721.sol";
+import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 import { PWNHub } from "pwn/hub/PWNHub.sol";
 import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
 import { IERC5646 } from "pwn/interfaces/IERC5646.sol";
 import { IPWNLoanMetadataProvider } from "pwn/interfaces/IPWNLoanMetadataProvider.sol";
-
 
 /**
  * @title PWN LOAN token
@@ -16,10 +15,9 @@ import { IPWNLoanMetadataProvider } from "pwn/interfaces/IPWNLoanMetadataProvide
  *      PWN LOAN token is shared between all loan contracts.
  */
 contract PWNLOAN is ERC721, IERC5646 {
-
-    /*----------------------------------------------------------*|
-    |*  # VARIABLES & CONSTANTS DEFINITIONS                     *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                VARIABLES & CONSTANTS DEFINITIONS             */
+    /* ------------------------------------------------------------ */
 
     PWNHub public immutable hub;
 
@@ -31,12 +29,11 @@ contract PWNLOAN is ERC721, IERC5646 {
     /**
      * @dev Mapping of a LOAN id to a loan contract that minted the LOAN token.
      */
-    mapping (uint256 => address) public loanContract;
+    mapping(uint256 => address) public loanContract;
 
-
-    /*----------------------------------------------------------*|
-    |*  # EVENTS DEFINITIONS                                    *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      EVENTS DEFINITIONS                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Emitted when a new LOAN token is minted.
@@ -48,10 +45,9 @@ contract PWNLOAN is ERC721, IERC5646 {
      */
     event LOANBurned(uint256 indexed loanId);
 
-
-    /*----------------------------------------------------------*|
-    |*  # ERRORS DEFINITIONS                                    *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      ERRORS DEFINITIONS                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Thrown when `PWNLOAN.burn` caller is not a loan contract that minted the LOAN token.
@@ -63,30 +59,28 @@ contract PWNLOAN is ERC721, IERC5646 {
      */
     error CallerMissingHubTag(bytes32 tag);
 
-
-    /*----------------------------------------------------------*|
-    |*  # MODIFIERS                                             *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          MODIFIERS                           */
+    /* ------------------------------------------------------------ */
 
     modifier onlyActiveLoan() {
-        if (!hub.hasTag(msg.sender, PWNHubTags.ACTIVE_LOAN))
+        if (!hub.hasTag(msg.sender, PWNHubTags.ACTIVE_LOAN)) {
             revert CallerMissingHubTag({ tag: PWNHubTags.ACTIVE_LOAN });
+        }
         _;
     }
 
-
-    /*----------------------------------------------------------*|
-    |*  # CONSTRUCTOR                                           *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          CONSTRUCTOR                         */
+    /* ------------------------------------------------------------ */
 
     constructor(address _hub) ERC721("PWN LOAN", "LOAN") {
         hub = PWNHub(_hub);
     }
 
-
-    /*----------------------------------------------------------*|
-    |*  # TOKEN LIFECYCLE                                       *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                       TOKEN LIFECYCLE                        */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Mint a new LOAN token.
@@ -108,18 +102,18 @@ contract PWNLOAN is ERC721, IERC5646 {
      * @param loanId Id of a LOAN token to be burned.
      */
     function burn(uint256 loanId) external {
-        if (loanContract[loanId] != msg.sender)
+        if (loanContract[loanId] != msg.sender) {
             revert InvalidLoanContractCaller();
+        }
 
         delete loanContract[loanId];
         _burn(loanId);
         emit LOANBurned(loanId);
     }
 
-
-    /*----------------------------------------------------------*|
-    |*  # METADATA                                              *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          METADATA                            */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Return a LOAN token metadata uri base on a loan contract that minted the token.
@@ -127,15 +121,14 @@ contract PWNLOAN is ERC721, IERC5646 {
      * @return Metadata uri for given token id (loan id).
      */
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        _requireMinted(tokenId);
+        _requireOwned(tokenId);
 
         return IPWNLoanMetadataProvider(loanContract[tokenId]).loanMetadataUri();
     }
 
-
-    /*----------------------------------------------------------*|
-    |*  # ERC5646                                               *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          ERC5646                             */
+    /* ------------------------------------------------------------ */
 
     /**
      * @dev See {IERC5646-getStateFingerprint}.
@@ -143,23 +136,19 @@ contract PWNLOAN is ERC721, IERC5646 {
     function getStateFingerprint(uint256 tokenId) external view virtual override returns (bytes32) {
         address _loanContract = loanContract[tokenId];
 
-        if (_loanContract == address(0))
-            return bytes32(0);
+        if (_loanContract == address(0)) return bytes32(0);
 
         return IERC5646(_loanContract).getStateFingerprint(tokenId);
     }
 
-
-    /*----------------------------------------------------------*|
-    |*  # ERC165                                                *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          ERC165                              */
+    /* ------------------------------------------------------------ */
 
     /**
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return super.supportsInterface(interfaceId) ||
-            interfaceId == type(IERC5646).interfaceId;
+        return super.supportsInterface(interfaceId) || interfaceId == type(IERC5646).interfaceId;
     }
-
 }

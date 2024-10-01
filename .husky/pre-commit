@@ -1,0 +1,2 @@
+forge fmt --check
+just trufflehog

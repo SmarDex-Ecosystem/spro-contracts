@@ -1,0 +1,12 @@
+createProposal.t.sol
+├── when the proposal contract does not have the LOAN_PROPOSAL tag in the hub
+│   └── it should revert
+└── when the proposal contract has the LOAN_PROPOSAL tag in the hub
+    └── when the proposal data is valid
+        ├── it should successfully make a proposal in the proposal contract
+        ├── when the caller is not the proposer
+        │   └── it should revert
+        └── when the caller is the proposer
+            ├── it should transfer the collateral to the vault from the proposer
+            └── given the fee amount is greater than zero
+                └── it should transfer the SDEX token from the borrower to the fee sink

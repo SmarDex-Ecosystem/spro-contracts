@@ -1,20 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
 import { PWNHub } from "pwn/hub/PWNHub.sol";
 import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
 import { AddressMissingHubTag } from "pwn/PWNErrors.sol";
-
 
 /**
  * @title PWN Revoked Nonce
  * @notice Contract holding revoked nonces.
  */
 contract PWNRevokedNonce {
-
-    /*----------------------------------------------------------*|
-    |*  # VARIABLES & CONSTANTS DEFINITIONS                     *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                VARIABLES & CONSTANTS DEFINITIONS             */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Access tag that needs to be assigned to a caller in PWN Hub
@@ -32,17 +30,16 @@ contract PWNRevokedNonce {
      * @notice Mapping of revoked nonces by an address. Every address has its own nonce space.
      *         (owner => nonce space => nonce => is revoked)
      */
-    mapping (address => mapping (uint256 => mapping (uint256 => bool))) private _revokedNonce;
+    mapping(address => mapping(uint256 => mapping(uint256 => bool))) private _revokedNonce;
 
     /**
      * @notice Mapping of current nonce space for an address.
      */
-    mapping (address => uint256) private _nonceSpace;
+    mapping(address => uint256) private _nonceSpace;
 
-
-    /*----------------------------------------------------------*|
-    |*  # EVENTS DEFINITIONS                                    *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      EVENTS DEFINITIONS                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Emitted when a nonce is revoked.
@@ -54,10 +51,9 @@ contract PWNRevokedNonce {
      */
     event NonceSpaceRevoked(address indexed owner, uint256 indexed nonceSpace);
 
-
-    /*----------------------------------------------------------*|
-    |*  # ERRORS DEFINITIONS                                    *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                      ERRORS DEFINITIONS                      */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Thrown when trying to revoke a nonce that is already revoked.
@@ -70,31 +66,29 @@ contract PWNRevokedNonce {
      */
     error NonceNotUsable(address addr, uint256 nonceSpace, uint256 nonce);
 
-
-    /*----------------------------------------------------------*|
-    |*  # MODIFIERS                                             *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          MODIFIERS                           */
+    /* ------------------------------------------------------------ */
 
     modifier onlyWithHubTag() {
-        if (!hub.hasTag(msg.sender, accessTag))
+        if (!hub.hasTag(msg.sender, accessTag)) {
             revert AddressMissingHubTag({ addr: msg.sender, tag: accessTag });
+        }
         _;
     }
 
-
-    /*----------------------------------------------------------*|
-    |*  # CONSTRUCTOR                                           *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          CONSTRUCTOR                         */
+    /* ------------------------------------------------------------ */
 
     constructor(address _hub, bytes32 _accessTag) {
         accessTag = _accessTag;
         hub = PWNHub(_hub);
     }
 
-
-    /*----------------------------------------------------------*|
-    |*  # NONCE                                                 *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                              NONCE                           */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Revoke callers nonce in the current nonce space.
@@ -169,23 +163,22 @@ contract PWNRevokedNonce {
     }
 
     /**
-     * @notice Return true if owners nonce is usable. Nonce is usable if it is not revoked and in the current nonce space.
+     * @notice Return true if owners nonce is usable. Nonce is usable if it is not revoked and in the current nonce
+     * space.
      * @param owner Address of a nonce owner.
      * @param nonceSpace Value of a nonce space.
      * @param nonce Value of a nonce.
      * @return True if nonce is usable.
      */
     function isNonceUsable(address owner, uint256 nonceSpace, uint256 nonce) external view returns (bool) {
-        if (_nonceSpace[owner] != nonceSpace)
-            return false;
+        if (_nonceSpace[owner] != nonceSpace) return false;
 
         return !_revokedNonce[owner][nonceSpace][nonce];
     }
 
-
-    /*----------------------------------------------------------*|
-    |*  # NONCE SPACE                                           *|
-    |*----------------------------------------------------------*/
+    /* ------------------------------------------------------------ */
+    /*                          NONCE SPACE                         */
+    /* ------------------------------------------------------------ */
 
     /**
      * @notice Revoke all nonces in the current nonce space and increment nonce space.
@@ -205,5 +198,4 @@ contract PWNRevokedNonce {
     function currentNonceSpace(address owner) external view returns (uint256) {
         return _nonceSpace[owner];
     }
-
 }

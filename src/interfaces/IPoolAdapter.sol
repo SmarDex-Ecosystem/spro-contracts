@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
 /**
  * @title IPoolAdapter
  * @notice Interface for pool adapters used to withdraw and supply assets to the pool.
  */
 interface IPoolAdapter {
-
     /**
      * @notice Withdraw an asset from the pool on behalf of the owner.
      * @dev Withdrawn asset remains in the owner. Caller must have the ACTIVE_LOAN tag in the hub.
@@ -26,5 +25,4 @@ interface IPoolAdapter {
      * @param amount The amount of the asset to supply.
      */
     function supply(address pool, address owner, address asset, uint256 amount) external;
-
 }

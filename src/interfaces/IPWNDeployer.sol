@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
 /**
  * @title IPWNDeployer
  * @notice Interface of the PWN deployer contract.
  */
 interface IPWNDeployer {
-
     /**
      * @notice Function to return the owner of the deployer contract.
      * @return Owner of the deployer contract.
@@ -28,7 +27,9 @@ interface IPWNDeployer {
      * @param bytecode Bytecode of the contract to be deployed.
      * @return Address of the deployed contract.
      */
-    function deployAndTransferOwnership(bytes32 salt, address owner, bytes memory bytecode) external returns (address);
+    function deployAndTransferOwnership(bytes32 salt, address owner, bytes memory bytecode)
+        external
+        returns (address);
 
     /**
      * @notice Function to compute the address of a contract with a given salt and bytecode hash.
@@ -37,5 +38,4 @@ interface IPWNDeployer {
      * @return Address of the deployed contract.
      */
     function computeAddress(bytes32 salt, bytes32 bytecodeHash) external view returns (address);
-
 }

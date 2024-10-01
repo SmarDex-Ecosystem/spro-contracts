@@ -1,0 +1,119 @@
+// SPDX-License-Identifier: GPL-3.0-only
+pragma solidity ^0.8.26;
+
+import {
+    SDBaseIntegrationTest,
+    SDConfig,
+    IPWNDeployer,
+    PWNHub,
+    PWNHubTags,
+    SDSimpleLoan,
+    SDSimpleLoanSimpleProposal,
+    PWNLOAN,
+    PWNRevokedNonce
+} from "test/integration/SDBaseIntegrationTest.t.sol";
+
+import { SDSimpleLoanProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
+import { Expired, AddressMissingHubTag } from "pwn/PWNErrors.sol";
+
+contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationTest {
+    function test_RevertWhen_NoProposalLoanTag() external {
+        // Remove LOAN_PROPOSAL tag for proposal contract
+        address[] memory addrs = new address[](1);
+        addrs[0] = address(deployment.simpleLoanSimpleProposal);
+        bytes32[] memory tags = new bytes32[](1);
+        tags[0] = PWNHubTags.LOAN_PROPOSAL;
+
+        vm.prank(deployment.protocolAdmin);
+        deployment.hub.setTags(addrs, tags, false);
+
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        vm.prank(borrower);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AddressMissingHubTag.selector, address(deployment.simpleLoanSimpleProposal), PWNHubTags.LOAN_PROPOSAL
+            )
+        );
+        deployment.simpleLoan.createProposal(proposalSpec);
+    }
+
+    modifier proposalContractHasTag() {
+        _;
+    }
+
+    modifier whenValidProposalData() {
+        _;
+    }
+
+    function test_RevertWhen_CallerIsNotProposer() external proposalContractHasTag whenValidProposalData {
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoan.CallerIsNotStatedProposer.selector, borrower));
+        deployment.simpleLoan.createProposal(proposalSpec);
+    }
+
+    modifier whenCallerIsProposer() {
+        _;
+    }
+
+    modifier whenValidCollateral() {
+        _;
+    }
+
+    modifier whenFeeAmountGtZero() {
+        _;
+    }
+
+    function test_CreateProposal_ERC20_UnlistedFee()
+        external
+        proposalContractHasTag
+        whenValidProposalData
+        whenCallerIsProposer
+        whenValidCollateral
+        whenFeeAmountGtZero
+    {
+        _createERC20Proposal();
+
+        assertEq(t20.balanceOf(address(deployment.simpleLoan)), COLLATERAL_AMOUNT);
+        assertEq(t20.balanceOf(borrower), 0);
+
+        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
+    }
+
+    modifier whenListedFee() {
+        _;
+    }
+
+    function test_createProposal_ERC20()
+        external
+        proposalContractHasTag
+        whenValidProposalData
+        whenCallerIsProposer
+        whenValidCollateral
+        whenFeeAmountGtZero
+        whenListedFee
+    {
+        // Setup listed fee and token
+        address owner = deployment.config.owner();
+        vm.startPrank(owner);
+        deployment.config.setFixFeeListed(1e17);
+        deployment.config.setVariableFactor(2e20);
+        deployment.config.setListedToken(address(credit), 1e16);
+        vm.stopPrank();
+
+        // Create proposal
+        _createERC20Proposal();
+
+        assertEq(t20.balanceOf(address(deployment.simpleLoan)), COLLATERAL_AMOUNT);
+        assertEq(t20.balanceOf(borrower), 0);
+
+        uint256 lf = deployment.config.fixFeeListed();
+        uint256 vf = deployment.config.variableFactor();
+        uint256 tf = deployment.config.tokenFactors(address(credit));
+
+        uint256 feeAmount = lf + (((vf * tf) / 1e18) * proposal.availableCreditLimit) / 1e18;
+
+        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), feeAmount);
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - feeAmount);
+    }
+}
