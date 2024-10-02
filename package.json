@@ -1,7 +1,7 @@
 {
-  "name": "foundry-template",
+  "name": "@smardex/pwnfork",
+  "description": "PWN fork",
   "version": "0.1.0",
-  "description": "Template repository for creating a new Foundry project quickly and in accordance with the Real Estate Executive standards",
   "repository": "github:Blockchain-RA2-Tech/foundry-template",
   "author": {
     "name": "RA2 Tech SA",
