@@ -14,9 +14,6 @@ abstract contract PWNRevokedNonceTest is Test {
     address hub = address(0x80b);
     address alice = address(0xa11ce);
 
-    event NonceRevoked(address indexed owner, uint256 indexed nonceSpace, uint256 indexed nonce);
-    event NonceSpaceRevoked(address indexed owner, uint256 indexed nonceSpace);
-
     function setUp() public virtual {
         revokedNonce = new PWNRevokedNonce(hub, accessTag);
     }
@@ -59,7 +56,7 @@ contract PWNRevokedNonce_RevokeNonce_Test is PWNRevokedNonceTest {
         vm.store(address(revokedNonce), _nonceSpaceSlot(alice), bytes32(nonceSpace));
 
         vm.expectEmit();
-        emit NonceRevoked(alice, nonceSpace, nonce);
+        emit PWNRevokedNonce.NonceRevoked(alice, nonceSpace, nonce);
 
         vm.prank(alice);
         revokedNonce.revokeNonce(nonce);
@@ -119,7 +116,7 @@ contract PWNRevokedNonce_RevokeNonces_Test is PWNRevokedNonceTest {
 
         for (uint256 i; i < nonces.length; ++i) {
             vm.expectEmit();
-            emit NonceRevoked(alice, nonceSpace, nonces[i]);
+            emit PWNRevokedNonce.NonceRevoked(alice, nonceSpace, nonces[i]);
         }
 
         vm.prank(alice);
@@ -149,7 +146,7 @@ contract PWNRevokedNonce_RevokeNonceWithNonceSpace_Test is PWNRevokedNonceTest {
 
     function testFuzz_shouldEmit_NonceRevoked(uint256 nonceSpace, uint256 nonce) external {
         vm.expectEmit();
-        emit NonceRevoked(alice, nonceSpace, nonce);
+        emit PWNRevokedNonce.NonceRevoked(alice, nonceSpace, nonce);
 
         vm.prank(alice);
         revokedNonce.revokeNonce(nonceSpace, nonce);
@@ -202,7 +199,7 @@ contract PWNRevokedNonce_RevokeNonceWithOwner_Test is PWNRevokedNonceTest {
         vm.store(address(revokedNonce), _nonceSpaceSlot(owner), bytes32(nonceSpace));
 
         vm.expectEmit();
-        emit NonceRevoked(owner, nonceSpace, nonce);
+        emit PWNRevokedNonce.NonceRevoked(owner, nonceSpace, nonce);
 
         vm.prank(accessEnabledAddress);
         revokedNonce.revokeNonce(owner, nonce);
@@ -250,7 +247,7 @@ contract PWNRevokedNonce_RevokeNonceWithNonceSpaceAndOwner_Test is PWNRevokedNon
 
     function testFuzz_shouldEmit_NonceRevoked(address owner, uint256 nonceSpace, uint256 nonce) external {
         vm.expectEmit();
-        emit NonceRevoked(owner, nonceSpace, nonce);
+        emit PWNRevokedNonce.NonceRevoked(owner, nonceSpace, nonce);
 
         vm.prank(accessEnabledAddress);
         revokedNonce.revokeNonce(owner, nonceSpace, nonce);
@@ -324,7 +321,7 @@ contract PWNRevokedNonce_RevokeNonceSpace_Test is PWNRevokedNonceTest {
         vm.store(address(revokedNonce), nonceSpaceSlot, bytes32(nonceSpace));
 
         vm.expectEmit();
-        emit NonceSpaceRevoked(alice, nonceSpace);
+        emit PWNRevokedNonce.NonceSpaceRevoked(alice, nonceSpace);
 
         vm.prank(alice);
         revokedNonce.revokeNonceSpace();

@@ -18,9 +18,6 @@ abstract contract PWNLOANTest is Test {
     address alice = address(0xa11ce);
     address activeLoanContract = address(0x01);
 
-    event LOANMinted(uint256 indexed loanId, address indexed loanContract, address indexed owner);
-    event LOANBurned(uint256 indexed loanId);
-
     constructor() {
         vm.etch(hub, bytes("data"));
     }
@@ -104,7 +101,7 @@ contract PWNLOAN_Mint_Test is PWNLOANTest {
         vm.store(address(loanToken), LAST_LOAN_ID_SLOT, bytes32(lastLoanId));
 
         vm.expectEmit(true, true, true, false);
-        emit LOANMinted(lastLoanId + 1, activeLoanContract, alice);
+        emit PWNLOAN.LOANMinted(lastLoanId + 1, activeLoanContract, alice);
 
         vm.prank(activeLoanContract);
         loanToken.mint(alice);
@@ -149,7 +146,7 @@ contract PWNLOAN_Burn_Test is PWNLOANTest {
 
     function test_shouldEmitEvent_LOANBurned() external {
         vm.expectEmit(true, false, false, false);
-        emit LOANBurned(loanId);
+        emit PWNLOAN.LOANBurned(loanId);
 
         vm.prank(activeLoanContract);
         loanToken.burn(loanId);

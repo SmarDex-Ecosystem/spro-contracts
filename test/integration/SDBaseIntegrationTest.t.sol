@@ -8,7 +8,6 @@ import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { IERC5646 } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
 import { T20 } from "test/helper/T20.sol";
-import { Events } from "test/utils/Events.sol";
 import { console2 } from "forge-std/Test.sol";
 import {
     SDDeploymentTest,
@@ -22,7 +21,7 @@ import {
     PWNRevokedNonce
 } from "test/SDDeploymentTest.t.sol";
 
-abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
+abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     T20 t20;
     T20 credit;
 

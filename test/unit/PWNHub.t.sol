@@ -15,8 +15,6 @@ abstract contract PWNHubTest is Test {
     address addr = address(0x01);
     bytes32 tag = keccak256("tag_1");
 
-    event TagSet(address indexed _address, bytes32 indexed tag, bool hasTag);
-
     function setUp() external {
         vm.prank(owner);
         hub = new PWNHub();
@@ -75,7 +73,7 @@ contract PWNHub_SetTag_Test is PWNHubTest {
 
     function test_shouldEmitEvent_TagSet() external {
         vm.expectEmit(true, true, false, true);
-        emit TagSet(addr, tag, true);
+        emit PWNHub.TagSet(addr, tag, true);
 
         vm.prank(owner);
         hub.setTag(addr, tag, true);
@@ -151,7 +149,7 @@ contract PWNHub_SetTags_Test is PWNHubTest {
     function test_shouldEmitEvent_TagSet_forEverySet() external {
         for (uint256 i; i < tags.length; ++i) {
             vm.expectEmit(true, true, false, true);
-            emit TagSet(addrs[i], tags[i], true);
+            emit PWNHub.TagSet(addrs[i], tags[i], true);
         }
 
         vm.prank(owner);

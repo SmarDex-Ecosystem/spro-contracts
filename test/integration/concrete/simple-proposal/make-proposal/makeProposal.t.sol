@@ -78,7 +78,7 @@ contract MakeProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SD
 
         // Emit event
         vm.expectEmit(true, true, true, false);
-        emit ProposalMade(proposalHash, proposal.proposer, proposal);
+        emit SDSimpleLoanSimpleProposal.ProposalMade(proposalHash, proposal.proposer, proposal);
 
         vm.prank(proposal.loanContract);
         deployment.simpleLoanSimpleProposal.makeProposal(abi.encode(proposal));

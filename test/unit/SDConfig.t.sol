@@ -33,13 +33,6 @@ abstract contract SDConfigTest is Test {
     address sink = makeAddr("sink");
     address creditToken = makeAddr("creditToken");
 
-    event FixFeeListedUpdated(uint256 oldFee, uint256 newFee);
-    event FixFeeUnlistedUpdated(uint256 oldFee, uint256 newFee);
-    event VariableFactorUpdated(uint256 oldFactor, uint256 newFactor);
-    event ListedTokenUpdated(address token, uint256 factor);
-    event LOANMetadataUriUpdated(address indexed loanContract, string newUri);
-    event DefaultLOANMetadataUriUpdated(string newUri);
-
     function setUp() public virtual {
         config = new SDConfig(sdex);
     }
@@ -165,7 +158,7 @@ contract SDConfig_SetUnlistedFee_Test is SDConfigTest {
 
     function test_shouldEmitEvent_FeeUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit FixFeeUnlistedUpdated(0, fee);
+        emit SDConfig.FixFeeUnlistedUpdated(0, fee);
 
         vm.prank(owner);
         config.setFixFeeUnlisted(fee);
@@ -200,7 +193,7 @@ contract SDConfig_SetListedFee_Test is SDConfigTest {
 
     function test_shouldEmitEvent_FeeUpdated() external {
         vm.expectEmit(true, true, false, false);
-        emit FixFeeListedUpdated(0, fee);
+        emit SDConfig.FixFeeListedUpdated(0, fee);
 
         vm.prank(owner);
         config.setFixFeeListed(fee);
@@ -250,7 +243,7 @@ contract SDConfig_SetListedToken_Test is SDConfigTest {
 
     function test_shouldEmitEvent_TokenFactorUpdated() external {
         vm.expectEmit(true, true, false, false);
-        emit ListedTokenUpdated(creditToken, factor);
+        emit SDConfig.ListedTokenUpdated(creditToken, factor);
 
         vm.prank(owner);
         config.setListedToken(creditToken, factor);
@@ -340,7 +333,7 @@ contract SDConfig_SetLOANMetadataUri_Test is SDConfigTest {
 
     function test_shouldEmitEvent_LOANMetadataUriUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit LOANMetadataUriUpdated(loanContract, tokenUri);
+        emit SDConfig.LOANMetadataUriUpdated(loanContract, tokenUri);
 
         vm.prank(owner);
         config.setLOANMetadataUri(loanContract, tokenUri);
@@ -381,7 +374,7 @@ contract SDConfig_SetDefaultLOANMetadataUri_Test is SDConfigTest {
 
     function test_shouldEmitEvent_DefaultLOANMetadataUriUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit DefaultLOANMetadataUriUpdated(tokenUri);
+        emit SDConfig.DefaultLOANMetadataUriUpdated(tokenUri);
 
         vm.prank(owner);
         config.setDefaultLOANMetadataUri(tokenUri);
