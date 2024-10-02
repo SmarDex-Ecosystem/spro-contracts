@@ -138,9 +138,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
             abi.encodeWithSignature("computeStateFingerprint(address,uint256)"),
             abi.encode(collateralStateFingerprint)
         );
-        console2.log("alice", alice);
-        console2.log("bob", bob);
-        console2.log("charlee", charlee);
     }
 
     // Make the proposal
