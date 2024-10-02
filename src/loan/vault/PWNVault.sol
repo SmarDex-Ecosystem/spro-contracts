@@ -7,7 +7,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { IPoolAdapter } from "pwn/interfaces/IPoolAdapter.sol";
 import { Permit } from "pwn/loan/vault/Permit.sol";
-import { console2 } from "forge-std/Test.sol";
 
 /**
  * @title PWN Vault

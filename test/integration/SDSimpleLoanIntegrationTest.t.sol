@@ -5,7 +5,6 @@ import { SDSimpleLoanProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoa
 import { SigUtils } from "test/utils/SigUtils.sol";
 import { IPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { console2 } from "forge-std/Test.sol";
 import {
     SDBaseIntegrationTest,
     SDConfig,
@@ -324,10 +323,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(0, deployment.loanToken.balanceOf(alice));
         assertEq(0, deployment.loanToken.balanceOf(bob));
         assertEq(0, deployment.loanToken.balanceOf(charlee));
-
-        console2.log("borrower", borrower);
-        console2.log("t20.balanceOf(borrower)", t20.balanceOf(borrower));
-        console2.log("t20", address(t20));
         assertEq(2000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(borrower)); // 20% since 4 loans @ 5% minimum amount
         assertEq(8000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(address(deployment.simpleLoan)));
     }
