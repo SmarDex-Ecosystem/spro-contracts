@@ -46,11 +46,15 @@ abstract contract PWNVaultTest is Test {
 
     T20 t20;
 
-    event VaultPull(address asset, address indexed origin);
-    event VaultPush(address asset, address indexed beneficiary);
-    event VaultPushFrom(address asset, address indexed origin, address indexed beneficiary);
-    event PoolWithdraw(address asset, address indexed poolAdapter, address indexed pool, address indexed owner);
-    event PoolSupply(address asset, address indexed poolAdapter, address indexed pool, address indexed owner);
+    event VaultPull(address asset, address indexed origin, uint256 amount);
+    event VaultPush(address asset, address indexed beneficiary, uint256 amount);
+    event VaultPushFrom(address asset, address indexed origin, address indexed beneficiary, uint256 amount);
+    event PoolWithdraw(
+        address asset, address indexed poolAdapter, address indexed pool, address indexed owner, uint256 amount
+    );
+    event PoolSupply(
+        address asset, address indexed poolAdapter, address indexed pool, address indexed owner, uint256 amount
+    );
 
     constructor() {
         vm.etch(token, bytes("data"));
@@ -69,7 +73,7 @@ abstract contract PWNVaultTest is Test {
 contract PWNVault_Pull_Test is PWNVaultTest {
     function test_pullEmitEvent() external {
         vm.expectEmit(true, true, true, true);
-        emit VaultPull(token, alice);
+        emit VaultPull(token, alice, 42);
         vault.pull(token, 42, alice);
     }
 }
@@ -81,7 +85,7 @@ contract PWNVault_Pull_Test is PWNVaultTest {
 contract PWNVault_Push_Test is PWNVaultTest {
     function test_pushEmitEvent() external {
         vm.expectEmit(true, true, true, true);
-        emit VaultPush(token, alice);
+        emit VaultPush(token, alice, 99_999_999);
         vault.push(token, 99_999_999, alice);
     }
 }
@@ -93,7 +97,7 @@ contract PWNVault_Push_Test is PWNVaultTest {
 contract PWNVault_PushFrom_Test is PWNVaultTest {
     function test_pushFromEmitEvent() external {
         vm.expectEmit(true, true, true, true);
-        emit VaultPushFrom(token, alice, bob);
+        emit VaultPushFrom(token, alice, bob, 42);
         vault.pushFrom(token, 42, alice, bob);
     }
 }
@@ -135,7 +139,7 @@ contract PWNVault_WithdrawFromPool_Test is PWNVaultTest {
 
     function test_shouldEmitEvent_PoolWithdraw() external {
         vm.expectEmit();
-        emit PoolWithdraw(asset, address(poolAdapter), pool, alice);
+        emit PoolWithdraw(asset, address(poolAdapter), pool, alice, amount);
 
         vault.withdrawFromPool(asset, amount, poolAdapter, pool, alice);
     }
@@ -182,7 +186,7 @@ contract PWNVault_SupplyToPool_Test is PWNVaultTest {
 
     function test_shouldEmitEvent_PoolSupply() external {
         vm.expectEmit();
-        emit PoolSupply(asset, address(poolAdapter), pool, alice);
+        emit PoolSupply(asset, address(poolAdapter), pool, alice, amount);
 
         vault.supplyToPool(asset, amount, poolAdapter, pool, alice);
     }

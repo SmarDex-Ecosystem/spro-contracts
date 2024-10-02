@@ -23,27 +23,31 @@ abstract contract PWNVault {
     /**
      * @notice Emitted when asset transfer happens from an `origin` address to a vault.
      */
-    event VaultPull(address asset, address indexed origin);
+    event VaultPull(address asset, address indexed origin, uint256 amount);
 
     /**
      * @notice Emitted when asset transfer happens from a vault to a `beneficiary` address.
      */
-    event VaultPush(address asset, address indexed beneficiary);
+    event VaultPush(address asset, address indexed beneficiary, uint256 amount);
 
     /**
      * @notice Emitted when asset transfer happens from an `origin` address to a `beneficiary` address.
      */
-    event VaultPushFrom(address asset, address indexed origin, address indexed beneficiary);
+    event VaultPushFrom(address asset, address indexed origin, address indexed beneficiary, uint256 amount);
 
     /**
      * @notice Emitted when asset is withdrawn from a pool to an `owner` address.
      */
-    event PoolWithdraw(address asset, address indexed poolAdapter, address indexed pool, address indexed owner);
+    event PoolWithdraw(
+        address asset, address indexed poolAdapter, address indexed pool, address indexed owner, uint256 amount
+    );
 
     /**
      * @notice Emitted when asset is supplied to a pool from a vault.
      */
-    event PoolSupply(address asset, address indexed poolAdapter, address indexed pool, address indexed owner);
+    event PoolSupply(
+        address asset, address indexed poolAdapter, address indexed pool, address indexed owner, uint256 amount
+    );
 
     /* ------------------------------------------------------------ */
     /*                      ERRORS DEFINITIONS                      */
@@ -73,7 +77,7 @@ abstract contract PWNVault {
     function _pull(address asset, uint256 amount, address origin) internal {
         IERC20Metadata(asset).safeTransferFrom(origin, address(this), amount);
 
-        emit VaultPull(asset, origin);
+        emit VaultPull(asset, origin, amount);
     }
 
     /**
@@ -84,7 +88,7 @@ abstract contract PWNVault {
      */
     function _push(address asset, uint256 amount, address beneficiary) internal {
         IERC20Metadata(asset).safeTransfer(beneficiary, amount);
-        emit VaultPush(asset, beneficiary);
+        emit VaultPush(asset, beneficiary, amount);
     }
 
     /**
@@ -98,7 +102,7 @@ abstract contract PWNVault {
     function _pushFrom(address asset, uint256 amount, address origin, address beneficiary) internal {
         IERC20Metadata(asset).safeTransferFrom(origin, beneficiary, amount);
 
-        emit VaultPushFrom(asset, origin, beneficiary);
+        emit VaultPushFrom(asset, origin, beneficiary, amount);
     }
 
     /**
@@ -120,7 +124,7 @@ abstract contract PWNVault {
             revert InvalidAmountTransfer();
         }
 
-        emit PoolWithdraw(asset, address(poolAdapter), pool, owner);
+        emit PoolWithdraw(asset, address(poolAdapter), pool, owner, amount);
     }
 
     /**
@@ -147,7 +151,7 @@ abstract contract PWNVault {
 
         // Note: Assuming pool will revert supply transaction if it fails.
 
-        emit PoolSupply(asset, address(poolAdapter), pool, owner);
+        emit PoolSupply(asset, address(poolAdapter), pool, owner, amount);
     }
 
     /* ------------------------------------------------------------ */
