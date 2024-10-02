@@ -1,26 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {MultiToken, IMultiTokenCategoryRegistry} from "MultiToken/MultiToken.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import {Math} from "openzeppelin/utils/math/Math.sol";
-import {SafeCast} from "openzeppelin/utils/math/SafeCast.sol";
-
-import {SDConfig} from "pwn/config/SDConfig.sol";
-import {PWNHub} from "pwn/hub/PWNHub.sol";
-import {PWNHubTags} from "pwn/hub/PWNHubTags.sol";
-import {IERC5646} from "pwn/interfaces/IERC5646.sol";
-import {IPoolAdapter} from "pwn/interfaces/IPoolAdapter.sol";
-import {IPWNLoanMetadataProvider} from "pwn/interfaces/IPWNLoanMetadataProvider.sol";
-import {SDListedFee} from "pwn/loan/lib/SDListedFee.sol";
-import {SDSimpleLoanProposal} from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
-import {PWNLOAN} from "pwn/loan/token/PWNLOAN.sol";
-import {Permit, InvalidPermitOwner, InvalidPermitAsset} from "pwn/loan/vault/Permit.sol";
-import {PWNVault} from "pwn/loan/vault/PWNVault.sol";
-import {PWNRevokedNonce} from "pwn/nonce/PWNRevokedNonce.sol";
-import {Expired, AddressMissingHubTag} from "pwn/PWNErrors.sol";
-
-import {SDSimpleLoanSimpleProposal} from "pwn/loan/terms/simple/proposal/SDSimpleLoanSimpleProposal.sol";
+import { SDConfig } from "pwn/config/SDConfig.sol";
+import { PWNHub } from "pwn/hub/PWNHub.sol";
+import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
+import { IERC5646 } from "pwn/interfaces/IERC5646.sol";
+import { IPoolAdapter } from "pwn/interfaces/IPoolAdapter.sol";
+import { IPWNLoanMetadataProvider } from "pwn/interfaces/IPWNLoanMetadataProvider.sol";
+import { SDListedFee } from "pwn/loan/lib/SDListedFee.sol";
+import { SDSimpleLoanProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
+import { PWNLOAN } from "pwn/loan/token/PWNLOAN.sol";
+import { Permit, InvalidPermitOwner, InvalidPermitAsset } from "pwn/loan/vault/Permit.sol";
+import { PWNVault } from "pwn/loan/vault/PWNVault.sol";
+import { PWNRevokedNonce } from "pwn/nonce/PWNRevokedNonce.sol";
+import { Expired, AddressMissingHubTag } from "pwn/PWNErrors.sol";
+import { SDSimpleLoanSimpleProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanSimpleProposal.sol";
 
 /**
  * @title SD Simple Loan -- forked from PWNSimpleLoan.sol
@@ -28,8 +25,6 @@ import {SDSimpleLoanSimpleProposal} from "pwn/loan/terms/simple/proposal/SDSimpl
  * @dev Acts as a vault for every loan created by this contract.
  */
 contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
-    using MultiToken for address;
-
     string public constant VERSION = "1.0";
 
     /* ------------------------------------------------------------ */
@@ -60,7 +55,6 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     PWNLOAN public immutable loanToken;
     SDConfig public immutable config;
     PWNRevokedNonce public immutable revokedNonce;
-    IMultiTokenCategoryRegistry public immutable categoryRegistry;
 
     /**
      * @notice Struct defining a simple loan terms.
@@ -68,9 +62,12 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
      * @param lender Address of a lender.
      * @param borrower Address of a borrower.
      * @param duration Loan duration in seconds.
-     * @param collateral Asset used as a loan collateral. For a definition see { MultiToken dependency lib }.
-     * @param credit Asset used as a loan credit. For a definition see { MultiToken dependency lib }.
-     * @param fixedInterestAmount Fixed interest amount in credit asset tokens. It is the minimum amount of interest which has to be paid by a borrower.
+     * @param collateral Address of a collateral asset.
+     * @param collateralAmount Amount of a collateral asset.
+     * @param credit Address of a credit asset.
+     * @param creditAmount Amount of a credit asset.
+     * @param fixedInterestAmount Fixed interest amount in credit asset tokens. It is the minimum amount of interest
+     * which has to be paid by a borrower.
      * @param accruingInterestAPR Accruing interest APR with 2 decimals.
      * @param lenderSpecHash Hash of a lender specification.
      * @param borrowerSpecHash Hash of a borrower specification.
@@ -79,8 +76,10 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         address lender;
         address borrower;
         uint32 duration;
-        MultiToken.Asset collateral;
-        MultiToken.Asset credit;
+        address collateral;
+        uint256 collateralAmount;
+        address credit;
+        uint256 creditAmount;
         uint256 fixedInterestAmount;
         uint24 accruingInterestAPR;
         bytes32 lenderSpecHash;
@@ -99,7 +98,8 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
 
     /**
      * @notice Lender specification during loan creation.
-     * @param sourceOfFunds Address of a source of funds. This can be the lenders address, if the loan is funded directly,
+     * @param sourceOfFunds Address of a source of funds. This can be the lenders address, if the loan is funded
+     * directly,
      *                      or a pool address from with the funds are withdrawn on the lenders behalf.
      * @param creditAmount Amount of credit tokens to lend.
      * @param permitData Callers permit data for a loans credit asset.
@@ -122,9 +122,11 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
      * @param accruingInterestAPR Accruing interest APR with 2 decimals.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      *                            It is the minimum amount of interest which has to be paid by a borrower.
-     *                            This property is reused to store the final interest amount if the loan is repaid and waiting to be claimed.
+     *                            This property is reused to store the final interest amount if the loan is repaid and
+     * waiting to be claimed.
      * @param principalAmount Principal amount in credit asset tokens.
-     * @param collateral Asset used as a loan collateral. For a definition see { MultiToken dependency lib }.
+     * @param collateral Address of a collateral asset.
+     * @param collateralAmount Amount of a collateral asset.
      */
     struct LOAN {
         uint8 status;
@@ -137,7 +139,8 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         uint24 accruingInterestAPR;
         uint256 fixedInterestAmount;
         uint256 principalAmount;
-        MultiToken.Asset collateral;
+        address collateral;
+        uint256 collateralAmount;
     }
 
     /**
@@ -231,12 +234,6 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     error InvalidSourceOfFunds(address sourceOfFunds);
 
     /**
-     * @notice Thrown when MultiToken.Asset is invalid.
-     * @dev Could be because of invalid category, address, id or amount.
-     */
-    error InvalidMultiTokenAsset(uint8 category, address addr, uint256 id, uint256 amount);
-
-    /**
      * @notice Thrown when the loan credit address is different than the expected credit address.
      */
     error DifferentCreditAddress(address loanCreditAddress, address expectedCreditAddress);
@@ -245,12 +242,11 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
 
-    constructor(address _hub, address _loanToken, address _config, address _revokedNonce, address _categoryRegistry) {
+    constructor(address _hub, address _loanToken, address _config, address _revokedNonce) {
         hub = PWNHub(_hub);
         loanToken = PWNLOAN(_loanToken);
         config = SDConfig(_config);
         revokedNonce = PWNRevokedNonce(_revokedNonce);
-        categoryRegistry = IMultiTokenCategoryRegistry(_categoryRegistry);
     }
 
     /* ------------------------------------------------------------ */
@@ -277,31 +273,27 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     function createProposal(ProposalSpec calldata proposalSpec) external {
         // Check provided proposal contract
         if (!hub.hasTag(proposalSpec.proposalContract, PWNHubTags.LOAN_PROPOSAL)) {
-            revert AddressMissingHubTag({addr: proposalSpec.proposalContract, tag: PWNHubTags.LOAN_PROPOSAL});
+            revert AddressMissingHubTag({ addr: proposalSpec.proposalContract, tag: PWNHubTags.LOAN_PROPOSAL });
         }
 
         // Make the proposal
-        (address proposer, MultiToken.Asset memory collateral, address creditAddress, uint256 creditLimit) =
+        (address proposer, address collateral, uint256 collateralAmount, address creditAddress, uint256 creditLimit) =
             SDSimpleLoanProposal(proposalSpec.proposalContract).makeProposal(proposalSpec.proposalData);
 
         // Check caller is the proposer
         if (msg.sender != proposer) {
-            revert CallerIsNotStatedProposer({addr: proposer});
+            revert CallerIsNotStatedProposer({ addr: proposer });
         }
 
-        // Check if collateral is a valid MultiToken.Asset struct
-        _checkValidAsset(collateral);
-
         // Transfer collateral to Vault
-        _pull(collateral, proposer);
+        _pull(collateral, collateralAmount, proposer);
 
         // Calculate fee amount
         uint256 feeAmount = getLoanFee(creditAddress, creditLimit);
 
         // Fees to sink (burned)
         if (feeAmount > 0) {
-            MultiToken.Asset memory feeHelper = MultiToken.ERC20({assetAddress: config.SDEX(), amount: feeAmount});
-            _pushFrom(feeHelper, msg.sender, config.SINK());
+            _pushFrom(config.SDEX(), feeAmount, msg.sender, config.SINK());
         }
     }
 
@@ -312,27 +304,23 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     /**
      * @notice A borrower can cancel their proposal and withdraw unused collateral.
      * @dev Resets withdrawable collateral, revokes the nonce if needed, transfers unused collateral to the proposer.
-     * @dev ERC-721 and non-fungible ERC-1155 should fail _checkValidAsset if a lender has accepted the proposal.
      * @dev Fungible withdrawable collateral with amount == 0 calls should not revert, should transfer 0 tokens.
      * @param proposalSpec Proposal specification struct.
      */
     function cancelProposal(ProposalSpec calldata proposalSpec) external {
         // Check provided proposal contract
         if (!hub.hasTag(proposalSpec.proposalContract, PWNHubTags.LOAN_PROPOSAL)) {
-            revert AddressMissingHubTag({addr: proposalSpec.proposalContract, tag: PWNHubTags.LOAN_PROPOSAL});
+            revert AddressMissingHubTag({ addr: proposalSpec.proposalContract, tag: PWNHubTags.LOAN_PROPOSAL });
         }
 
-        (address proposer, MultiToken.Asset memory collateral) =
+        (address proposer, address collateral, uint256 collateralAmount) =
             SDSimpleLoanProposal(proposalSpec.proposalContract).cancelProposal(proposalSpec.proposalData);
 
         // The caller must be the proposer
         if (msg.sender != proposer) revert CallerNotProposer();
 
-        // Check if collateral is a valid MultiToken.Asset struct
-        _checkValidAsset(collateral);
-
         // Transfers withdrawable collateral to the proposer/borrower
-        _push(collateral, proposer);
+        _push(collateral, collateralAmount, proposer);
     }
 
     /* ------------------------------------------------------------ */
@@ -353,7 +341,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     {
         // Check provided proposal contract
         if (!hub.hasTag(proposalSpec.proposalContract, PWNHubTags.LOAN_PROPOSAL)) {
-            revert AddressMissingHubTag({addr: proposalSpec.proposalContract, tag: PWNHubTags.LOAN_PROPOSAL});
+            revert AddressMissingHubTag({ addr: proposalSpec.proposalContract, tag: PWNHubTags.LOAN_PROPOSAL });
         }
 
         // Accept proposal and get loan terms
@@ -366,20 +354,16 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
 
         // Check minimum loan duration
         if (loanTerms.duration < MIN_LOAN_DURATION) {
-            revert InvalidDuration({current: loanTerms.duration, limit: MIN_LOAN_DURATION});
+            revert InvalidDuration({ current: loanTerms.duration, limit: MIN_LOAN_DURATION });
         }
 
         // Check maximum accruing interest APR
         if (loanTerms.accruingInterestAPR > MAX_ACCRUING_INTEREST_APR) {
-            revert InterestAPROutOfBounds({current: loanTerms.accruingInterestAPR, limit: MAX_ACCRUING_INTEREST_APR});
+            revert InterestAPROutOfBounds({ current: loanTerms.accruingInterestAPR, limit: MAX_ACCRUING_INTEREST_APR });
         }
 
-        // Check loan credit and collateral validity
-        _checkValidAsset(loanTerms.credit);
-        _checkValidAsset(loanTerms.collateral);
-
         // Create a new loan
-        loanId = _createLoan({loanTerms: loanTerms, lenderSpec: lenderSpec});
+        loanId = _createLoan({ loanTerms: loanTerms, lenderSpec: lenderSpec });
 
         emit LOANCreated({
             loanId: loanId,
@@ -393,7 +377,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         // Execute permit for the caller
         if (lenderSpec.permitData.length > 0) {
             Permit memory permit = abi.decode(lenderSpec.permitData, (Permit));
-            _checkPermit(msg.sender, loanTerms.credit.assetAddress, permit);
+            _checkPermit(msg.sender, loanTerms.credit, permit);
             _tryPermit(permit);
         }
 
@@ -410,10 +394,10 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     function _checkPermit(address caller, address creditAddress, Permit memory permit) internal pure {
         if (permit.asset != address(0)) {
             if (permit.owner != caller) {
-                revert InvalidPermitOwner({current: permit.owner, expected: caller});
+                revert InvalidPermitOwner({ current: permit.owner, expected: caller });
             }
             if (permit.asset != creditAddress) {
-                revert InvalidPermitAsset({current: permit.asset, expected: creditAddress});
+                revert InvalidPermitAsset({ current: permit.asset, expected: creditAddress });
             }
         }
     }
@@ -430,7 +414,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         // Store loan data under loan id
         LOAN storage loan = LOANs[loanId];
         loan.status = 2;
-        loan.creditAddress = loanTerms.credit.assetAddress;
+        loan.creditAddress = loanTerms.credit;
         loan.originalSourceOfFunds = lenderSpec.sourceOfFunds;
         loan.startTimestamp = uint40(block.timestamp);
         loan.defaultTimestamp = uint40(block.timestamp) + loanTerms.duration;
@@ -438,8 +422,9 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         loan.originalLender = loanTerms.lender;
         loan.accruingInterestAPR = loanTerms.accruingInterestAPR;
         loan.fixedInterestAmount = loanTerms.fixedInterestAmount;
-        loan.principalAmount = loanTerms.credit.amount;
+        loan.principalAmount = loanTerms.creditAmount;
         loan.collateral = loanTerms.collateral;
+        loan.collateralAmount = loanTerms.collateralAmount;
     }
 
     /**
@@ -463,32 +448,34 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         // Lender is not the source of funds
         if (lenderSpec.sourceOfFunds != loanTerms.lender) {
             // Withdraw credit asset to the lender first
-            _withdrawCreditFromPool(loanTerms.credit, loanTerms, lenderSpec);
+            _withdrawCreditFromPool(loanTerms.credit, loanTerms.creditAmount, loanTerms, lenderSpec);
         }
 
         // Transfer credit to borrower
-        _pushFrom(loanTerms.credit, loanTerms.lender, loanTerms.borrower);
+        _pushFrom(loanTerms.credit, loanTerms.creditAmount, loanTerms.lender, loanTerms.borrower);
     }
 
     /**
      * @notice Withdraw a credit asset from a pool to the Vault.
      * @dev The function will revert if pool doesn't have registered pool adapter.
      * @param credit Asset to be pulled from the pool.
+     * @param creditAmount Amount of an asset to be pulled.
      * @param loanTerms Loan terms struct.
      * @param lenderSpec Lender specification struct.
      */
     function _withdrawCreditFromPool(
-        MultiToken.Asset memory credit,
+        address credit,
+        uint256 creditAmount,
         Terms memory loanTerms,
         LenderSpec calldata lenderSpec
     ) internal {
         IPoolAdapter poolAdapter = config.getPoolAdapter(lenderSpec.sourceOfFunds);
         if (address(poolAdapter) == address(0)) {
-            revert InvalidSourceOfFunds({sourceOfFunds: lenderSpec.sourceOfFunds});
+            revert InvalidSourceOfFunds({ sourceOfFunds: lenderSpec.sourceOfFunds });
         }
 
-        if (credit.amount > 0) {
-            _withdrawFromPool(credit, poolAdapter, lenderSpec.sourceOfFunds, loanTerms.lender);
+        if (creditAmount > 0) {
+            _withdrawFromPool(credit, creditAmount, poolAdapter, lenderSpec.sourceOfFunds, loanTerms.lender);
         }
     }
 
@@ -498,10 +485,12 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
 
     /**
      * @notice Repay running loan.
-     * @dev Any address can repay a running loan, but a collateral will be transferred to a borrower address associated with the loan.
+     * @dev Any address can repay a running loan, but a collateral will be transferred to a borrower address associated
+     * with the loan.
      *      If the LOAN token holder is the same as the original lender, the repayment credit asset will be
      *      transferred to the LOAN token holder directly. Otherwise it will transfer the repayment credit asset to
-     *      a vault, waiting on a LOAN token holder to claim it. The function assumes a prior token approval to a contract address
+     *      a vault, waiting on a LOAN token holder to claim it. The function assumes a prior token approval to a
+     * contract address
      *      or a signed permit.
      * @param loanId Id of a loan that is being repaid.
      * @param permitData Callers credit permit data.
@@ -523,13 +512,13 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
 
         // Transfer the repaid credit to the Vault
         uint256 repaymentAmount = loanRepaymentAmount(loanId);
-        _pull(loan.creditAddress.ERC20(repaymentAmount), msg.sender);
+        _pull(loan.creditAddress, repaymentAmount, msg.sender);
 
         // Transfer collateral back to borrower
-        _push(loan.collateral, loan.borrower);
+        _push(loan.collateral, loan.collateralAmount, loan.borrower);
 
         // Try to repay directly
-        try this.tryClaimRepaidLOAN(loanId, repaymentAmount, loanToken.ownerOf(loanId)) {}
+        try this.tryClaimRepaidLOAN(loanId, repaymentAmount, loanToken.ownerOf(loanId)) { }
         catch {
             // Note: Safe transfer or supply to a pool can fail. In that case leave the LOAN token in repaid state and
             // wait for the LOAN token owner to claim the repaid credit. Otherwise lender would be able to prevent
@@ -539,10 +528,12 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
 
     /**
      * @notice Repay running loans.
-     * @dev Any address can repay a running loan, but a collateral will be transferred to a borrower address associated with the loan.
+     * @dev Any address can repay a running loan, but a collateral will be transferred to a borrower address associated
+     * with the loan.
      *      If the LOAN token holder is the same as the original lender, the repayment credit asset will be
      *      transferred to the LOAN token holder directly. Otherwise it will transfer the repayment credit asset to
-     *      a vault, waiting on a LOAN token holder to claim it. The function assumes a prior token approval to a contract address
+     *      a vault, waiting on a LOAN token holder to claim it. The function assumes a prior token approval to a
+     * contract address
      *      or a signed permit.
      * @param loanIds Id array of loans that are being repaid.
      * @param creditAddress Expected credit address for all loan ids.
@@ -575,19 +566,20 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
             _tryPermit(permit);
         }
         // Transfer the repaid credit to the vault
-        _pull(creditAddress.ERC20(totalRepaymentAmount), msg.sender);
+        _pull(creditAddress, totalRepaymentAmount, msg.sender);
 
         for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
             LOAN storage loan = LOANs[loanId];
 
             // Transfer collateral back to the borrower
-            _push(loan.collateral, loan.borrower);
+            _push(loan.collateral, loan.collateralAmount, loan.borrower);
 
             // Try to repay directly (for each loanId)
-            try this.tryClaimRepaidLOAN(loanId, loanRepaymentAmount(loanId), loanToken.ownerOf(loanId)) {}
+            try this.tryClaimRepaidLOAN(loanId, loanRepaymentAmount(loanId), loanToken.ownerOf(loanId)) { }
             catch {
-                // Note: Safe transfer or supply to a pool can fail. In that case leave the LOAN token in repaid state and
+                // Note: Safe transfer or supply to a pool can fail. In that case leave the LOAN token in repaid state
+                // and
                 // wait for the LOAN token owner to claim the repaid credit. Otherwise lender would be able to prevent
                 // borrower from repaying the loan.
             }
@@ -639,7 +631,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         // Note: Reusing `fixedInterestAmount` to store accrued interest at the time of repayment
         // to have the value at the time of claim and stop accruing new interest.
 
-        emit LOANPaidBack({loanId: loanId});
+        emit LOANPaidBack({ loanId: loanId });
     }
 
     /* ------------------------------------------------------------ */
@@ -723,10 +715,10 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
             revert NonExistingLoan();
         } else if (loan.status == 3) {
             // Loan has been paid back
-            _settleLoanClaim({loanId: loanId, loanOwner: msg.sender, defaulted: false});
+            _settleLoanClaim({ loanId: loanId, loanOwner: msg.sender, defaulted: false });
         } else if (loan.status == 2 && loan.defaultTimestamp <= block.timestamp) {
             // Loan is running but expired
-            _settleLoanClaim({loanId: loanId, loanOwner: msg.sender, defaulted: true});
+            _settleLoanClaim({ loanId: loanId, loanOwner: msg.sender, defaulted: true });
         }
         // Loan is in wrong state
         else {
@@ -770,12 +762,12 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         // Note: The loan owner is the original lender at this point.
 
         address destinationOfFunds = loan.originalSourceOfFunds;
-        MultiToken.Asset memory repaymentCredit = loan.creditAddress.ERC20(creditAmount);
+        address credit = loan.creditAddress;
 
         // Delete loan data & burn LOAN token before calling safe transfer
         _deleteLoan(loanId);
 
-        emit LOANClaimed({loanId: loanId, defaulted: false});
+        emit LOANClaimed({ loanId: loanId, defaulted: false });
 
         // End here if the credit amount is zero
         if (creditAmount == 0) return;
@@ -784,7 +776,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
 
         // Repay the original lender
         if (destinationOfFunds == loanOwner) {
-            _push(repaymentCredit, loanOwner);
+            _push(credit, creditAmount, loanOwner);
         } else {
             IPoolAdapter poolAdapter = config.getPoolAdapter(destinationOfFunds);
             // Check that pool has registered adapter
@@ -792,11 +784,11 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
                 // Note: Adapter can be unregistered during the loan lifetime, so the pool might not have an adapter.
                 // In that case, the loan owner will be able to claim the repaid credit.
 
-                revert InvalidSourceOfFunds({sourceOfFunds: destinationOfFunds});
+                revert InvalidSourceOfFunds({ sourceOfFunds: destinationOfFunds });
             }
 
             // Supply the repaid credit to the original pool
-            _supplyToPool(repaymentCredit, poolAdapter, destinationOfFunds, loanOwner);
+            _supplyToPool(credit, creditAmount, poolAdapter, destinationOfFunds, loanOwner);
         }
 
         // Note: If the transfer fails, the LOAN token will remain in repaid state and the LOAN token owner
@@ -814,16 +806,16 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         LOAN storage loan = LOANs[loanId];
 
         // Store in memory before deleting the loan
-        MultiToken.Asset memory asset =
-            defaulted ? loan.collateral : loan.creditAddress.ERC20(loanRepaymentAmount(loanId));
+        address asset = defaulted ? loan.collateral : loan.creditAddress;
+        uint256 assetAmount = defaulted ? loan.collateralAmount : loanRepaymentAmount(loanId);
 
         // Delete loan data & burn LOAN token before calling safe transfer
         _deleteLoan(loanId);
 
-        emit LOANClaimed({loanId: loanId, defaulted: defaulted});
+        emit LOANClaimed({ loanId: loanId, defaulted: defaulted });
 
         // Transfer asset to current LOAN token owner
-        _push(asset, loanOwner);
+        _push(asset, assetAmount, loanOwner);
     }
 
     /**
@@ -840,53 +832,59 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     /* ------------------------------------------------------------ */
 
     /**
+     * @notice Loan information struct.
+     * @param status LOAN status.
+     * @param startTimestamp Unix timestamp (in seconds) of a loan creation date.
+     * @param defaultTimestamp Unix timestamp (in seconds) of a loan default date.
+     * @param borrower Address of a loan borrower.
+     * @param originalLender Address of a loan original lender.
+     * @param loanOwner Address of a LOAN token holder.
+     * @param accruingInterestAPR Accruing interest APR with 2 decimal places.
+     * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
+     * @param credit Address of a credit asset.
+     * @param collateral Address of a collateral asset.
+     * @param collateralAmount Amount of a collateral asset.
+     * @param originalSourceOfFunds Address of a source of funds for the loan. Original lender address, if the loan was
+     * funded directly, or a pool address from witch credit funds were withdrawn / borrowred.
+     * @param repaymentAmount Loan repayment amount in credit asset tokens.
+     */
+    struct LoanInfo {
+        uint8 status;
+        uint40 startTimestamp;
+        uint40 defaultTimestamp;
+        address borrower;
+        address originalLender;
+        address loanOwner;
+        uint24 accruingInterestAPR;
+        uint256 fixedInterestAmount;
+        address credit;
+        address collateral;
+        uint256 collateralAmount;
+        address originalSourceOfFunds;
+        uint256 repaymentAmount;
+    }
+
+    /**
      * @notice Return a LOAN data struct associated with a loan id.
      * @param loanId Id of a loan in question.
-     * @return status LOAN status.
-     * @return startTimestamp Unix timestamp (in seconds) of a loan creation date.
-     * @return defaultTimestamp Unix timestamp (in seconds) of a loan default date.
-     * @return borrower Address of a loan borrower.
-     * @return originalLender Address of a loan original lender.
-     * @return loanOwner Address of a LOAN token holder.
-     * @return accruingInterestAPR Accruing interest APR with 2 decimal places.
-     * @return fixedInterestAmount Fixed interest amount in credit asset tokens.
-     * @return credit Asset used as a loan credit. For a definition see { MultiToken dependency lib }.
-     * @return collateral Asset used as a loan collateral. For a definition see { MultiToken dependency lib }.
-     * @return originalSourceOfFunds Address of a source of funds for the loan. Original lender address, if the loan was funded directly, or a pool address from witch credit funds were withdrawn / borrowred.
-     * @return repaymentAmount Loan repayment amount in credit asset tokens.
+     * @return loanInfo Loan information struct.
      */
-    function getLOAN(uint256 loanId)
-        external
-        view
-        returns (
-            uint8 status,
-            uint40 startTimestamp,
-            uint40 defaultTimestamp,
-            address borrower,
-            address originalLender,
-            address loanOwner,
-            uint24 accruingInterestAPR,
-            uint256 fixedInterestAmount,
-            MultiToken.Asset memory credit,
-            MultiToken.Asset memory collateral,
-            address originalSourceOfFunds,
-            uint256 repaymentAmount
-        )
-    {
+    function getLOAN(uint256 loanId) external view returns (LoanInfo memory loanInfo) {
         LOAN storage loan = LOANs[loanId];
 
-        status = _getLOANStatus(loanId);
-        startTimestamp = loan.startTimestamp;
-        defaultTimestamp = loan.defaultTimestamp;
-        borrower = loan.borrower;
-        originalLender = loan.originalLender;
-        loanOwner = loan.status != 0 ? loanToken.ownerOf(loanId) : address(0);
-        accruingInterestAPR = loan.accruingInterestAPR;
-        fixedInterestAmount = loan.fixedInterestAmount;
-        credit = loan.creditAddress.ERC20(loan.principalAmount);
-        collateral = loan.collateral;
-        originalSourceOfFunds = loan.originalSourceOfFunds;
-        repaymentAmount = loanRepaymentAmount(loanId);
+        loanInfo.status = _getLOANStatus(loanId);
+        loanInfo.startTimestamp = loan.startTimestamp;
+        loanInfo.defaultTimestamp = loan.defaultTimestamp;
+        loanInfo.borrower = loan.borrower;
+        loanInfo.originalLender = loan.originalLender;
+        loanInfo.loanOwner = loan.status != 0 ? loanToken.ownerOf(loanId) : address(0);
+        loanInfo.accruingInterestAPR = loan.accruingInterestAPR;
+        loanInfo.fixedInterestAmount = loan.fixedInterestAmount;
+        loanInfo.credit = loan.creditAddress;
+        loanInfo.collateral = loan.collateral;
+        loanInfo.collateralAmount = loan.collateralAmount;
+        loanInfo.originalSourceOfFunds = loan.originalSourceOfFunds;
+        loanInfo.repaymentAmount = loanRepaymentAmount(loanId);
     }
 
     /**
@@ -897,36 +895,6 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     function _getLOANStatus(uint256 loanId) private view returns (uint8) {
         LOAN storage loan = LOANs[loanId];
         return (loan.status == 2 && loan.defaultTimestamp <= block.timestamp) ? 4 : loan.status;
-    }
-
-    /* ------------------------------------------------------------ */
-    /*                          MultiToken                          */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Check if the asset is valid with the MultiToken dependency lib and the category registry.
-     * @dev See MultiToken.isValid for more details.
-     * @param asset Asset to be checked.
-     * @return True if the asset is valid.
-     */
-    function isValidAsset(MultiToken.Asset memory asset) public view returns (bool) {
-        return MultiToken.isValid(asset, categoryRegistry);
-    }
-
-    /**
-     * @notice Check if the asset is valid with the MultiToken lib and the category registry.
-     * @dev The function will revert if the asset is not valid.
-     * @param asset Asset to be checked.
-     */
-    function _checkValidAsset(MultiToken.Asset memory asset) private view {
-        if (!isValidAsset(asset) || (asset.category == MultiToken.Category.ERC1155 && asset.amount == 0)) {
-            revert InvalidMultiTokenAsset({
-                category: uint8(asset.category),
-                addr: asset.assetAddress,
-                id: asset.id,
-                amount: asset.amount
-            });
-        }
     }
 
     /* ------------------------------------------------------------ */

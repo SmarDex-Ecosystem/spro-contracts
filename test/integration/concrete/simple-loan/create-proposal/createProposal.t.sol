@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
 import {
-    MultiToken,
-    MultiTokenCategoryRegistry,
     SDBaseIntegrationTest,
     SDConfig,
     IPWNDeployer,
@@ -15,8 +13,8 @@ import {
     PWNRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 
-import {SDSimpleLoanProposal} from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
-import {Expired, AddressMissingHubTag} from "pwn/PWNErrors.sol";
+import { SDSimpleLoanProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
+import { Expired, AddressMissingHubTag } from "pwn/PWNErrors.sol";
 
 contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationTest {
     function test_RevertWhen_NoProposalLoanTag() external {
@@ -57,72 +55,6 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         _;
     }
 
-    function test_RevertWhen_InvalidCollateral_ERC721()
-        external
-        proposalContractHasTag
-        whenValidProposalData
-        whenCallerIsProposer
-    {
-        // Adjust base proposal
-        proposal.collateralCategory = MultiToken.Category.ERC721;
-        proposal.collateralAddress = address(t721);
-        proposal.collateralId = COLLATERAL_ID;
-        proposal.collateralAmount = 2; // this is invalid
-
-        // Mint initial state & approve collateral
-        t721.mint(borrower, COLLATERAL_ID);
-        vm.prank(borrower);
-        t721.approve(address(deployment.simpleLoan), COLLATERAL_ID);
-
-        // Create the proposal
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
-
-        vm.prank(borrower);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                SDSimpleLoan.InvalidMultiTokenAsset.selector,
-                proposal.collateralCategory,
-                proposal.collateralAddress,
-                proposal.collateralId,
-                proposal.collateralAmount
-            )
-        );
-        deployment.simpleLoan.createProposal(proposalSpec);
-    }
-
-    function test_RevertWhen_InvalidCollateral_ERC1155()
-        external
-        proposalContractHasTag
-        whenValidProposalData
-        whenCallerIsProposer
-    {
-        // Adjust base proposal
-        proposal.collateralCategory = MultiToken.Category.ERC1155;
-        proposal.collateralAddress = address(t1155);
-        proposal.collateralId = COLLATERAL_ID;
-        proposal.collateralAmount = 0;
-
-        // Mint initial state & approve collateral
-        t1155.mint(borrower, COLLATERAL_ID, 1);
-        vm.prank(borrower);
-        t1155.setApprovalForAll(address(deployment.simpleLoan), true);
-
-        // Create the proposal
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
-
-        vm.prank(borrower);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                SDSimpleLoan.InvalidMultiTokenAsset.selector,
-                proposal.collateralCategory,
-                proposal.collateralAddress,
-                proposal.collateralId,
-                proposal.collateralAmount
-            )
-        );
-        deployment.simpleLoan.createProposal(proposalSpec);
-    }
-
     modifier whenValidCollateral() {
         _;
     }
@@ -143,57 +75,6 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
 
         assertEq(t20.balanceOf(address(deployment.simpleLoan)), COLLATERAL_AMOUNT);
         assertEq(t20.balanceOf(borrower), 0);
-
-        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
-    }
-
-    function test_CreateProposal_ERC721_UnlistedFee()
-        external
-        proposalContractHasTag
-        whenValidProposalData
-        whenCallerIsProposer
-        whenValidCollateral
-        whenFeeAmountGtZero
-    {
-        _createERC721Proposal();
-
-        assertEq(t721.balanceOf(address(deployment.simpleLoan)), 1);
-        assertEq(t721.balanceOf(borrower), 0);
-
-        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
-    }
-
-    function test_CreateProposal_FungibleERC1155_UnlistedFee()
-        external
-        proposalContractHasTag
-        whenValidProposalData
-        whenCallerIsProposer
-        whenValidCollateral
-        whenFeeAmountGtZero
-    {
-        _createFungibleERC1155Proposal();
-
-        assertEq(t1155.balanceOf(address(deployment.simpleLoan), COLLATERAL_ID), COLLATERAL_AMOUNT);
-        assertEq(t1155.balanceOf(borrower, COLLATERAL_ID), 0);
-
-        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
-    }
-
-    function test_CreateProposal_NonFungibleERC1155_UnlistedFee()
-        external
-        proposalContractHasTag
-        whenValidProposalData
-        whenCallerIsProposer
-        whenValidCollateral
-        whenFeeAmountGtZero
-    {
-        _createNonFungibleERC1155Proposal();
-
-        assertEq(t1155.balanceOf(address(deployment.simpleLoan), COLLATERAL_ID), 1);
-        assertEq(t1155.balanceOf(borrower, COLLATERAL_ID), 0);
 
         assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());

@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {Test} from "forge-std/src/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
-import {PWNHub} from "pwn/hub/PWNHub.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+
+import { PWNHub } from "pwn/hub/PWNHub.sol";
 
 abstract contract PWNHubTest is Test {
     bytes32 internal constant TAGS_SLOT = bytes32(uint256(2)); // `tags` mapping position
@@ -12,8 +14,6 @@ abstract contract PWNHubTest is Test {
     address owner = address(0x1001);
     address addr = address(0x01);
     bytes32 tag = keccak256("tag_1");
-
-    event TagSet(address indexed _address, bytes32 indexed tag, bool hasTag);
 
     function setUp() external {
         vm.prank(owner);
@@ -48,7 +48,7 @@ contract PWNHub_SetTag_Test is PWNHubTest {
     function test_shouldFail_whenCallerIsNotOwner() external {
         address other = address(0x123);
 
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, other));
         vm.prank(other);
         hub.setTag(addr, tag, true);
     }
@@ -73,7 +73,7 @@ contract PWNHub_SetTag_Test is PWNHubTest {
 
     function test_shouldEmitEvent_TagSet() external {
         vm.expectEmit(true, true, false, true);
-        emit TagSet(addr, tag, true);
+        emit PWNHub.TagSet(addr, tag, true);
 
         vm.prank(owner);
         hub.setTag(addr, tag, true);
@@ -101,7 +101,7 @@ contract PWNHub_SetTags_Test is PWNHubTest {
     function test_shouldFail_whenCallerIsNotOwner() external {
         address other = address(0x123);
 
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, other));
         vm.prank(other);
         hub.setTags(addrs, tags, true);
     }
@@ -149,7 +149,7 @@ contract PWNHub_SetTags_Test is PWNHubTest {
     function test_shouldEmitEvent_TagSet_forEverySet() external {
         for (uint256 i; i < tags.length; ++i) {
             vm.expectEmit(true, true, false, true);
-            emit TagSet(addrs[i], tags[i], true);
+            emit PWNHub.TagSet(addrs[i], tags[i], true);
         }
 
         vm.prank(owner);

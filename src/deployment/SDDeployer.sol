@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import "openzeppelin/access/Ownable.sol";
-import "openzeppelin/utils/Create2.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Create2.sol";
 
 /**
  * @title SD Deployer - forked from PWNDeployer.sol
- * @notice Contract that deploys other SD protocol contracts with `CREATE2` opcode, to have same addresses on different chains.
+ * @notice Contract that deploys other SD protocol contracts with `CREATE2` opcode, to have same addresses on different
+ * chains.
  */
 contract SDDeployer is Ownable {
     string internal constant VERSION = "1.0";
@@ -15,9 +16,7 @@ contract SDDeployer is Ownable {
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
 
-    constructor(address _owner) Ownable() {
-        _transferOwnership(_owner);
-    }
+    constructor(address _owner) Ownable(_owner) { }
 
     /* ------------------------------------------------------------ */
     /*                          DEPLOY FUNCTIONS                    */

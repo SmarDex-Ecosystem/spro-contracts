@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {MultiToken} from "MultiToken/MultiToken.sol";
-import {ERC165Checker} from "openzeppelin/utils/introspection/ERC165Checker.sol";
-import {Math} from "openzeppelin/utils/math/Math.sol";
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import {SDConfig, IStateFingerprintComputer} from "pwn/config/SDConfig.sol";
-import {PWNHub} from "pwn/hub/PWNHub.sol";
-import {PWNHubTags} from "pwn/hub/PWNHubTags.sol";
-import {IERC5646} from "pwn/interfaces/IERC5646.sol";
-import {SDSimpleLoan} from "pwn/loan/terms/simple/loan/SDSimpleLoan.sol";
-import {PWNRevokedNonce} from "pwn/nonce/PWNRevokedNonce.sol";
-import {Expired, AddressMissingHubTag} from "pwn/PWNErrors.sol";
+import { SDConfig, IStateFingerprintComputer } from "pwn/config/SDConfig.sol";
+import { PWNHub } from "pwn/hub/PWNHub.sol";
+import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
+import { IERC5646 } from "pwn/interfaces/IERC5646.sol";
+import { SDSimpleLoan } from "pwn/loan/terms/simple/loan/SDSimpleLoan.sol";
+import { PWNRevokedNonce } from "pwn/nonce/PWNRevokedNonce.sol";
+import { Expired, AddressMissingHubTag } from "pwn/PWNErrors.sol";
 
 /**
  * @title SD Simple Loan Proposal Base Contract
@@ -32,7 +31,6 @@ abstract contract SDSimpleLoanProposal {
 
     struct ProposalBase {
         address collateralAddress;
-        uint256 collateralId;
         bool checkCollateralStateFingerprint;
         bytes32 collateralStateFingerprint;
         uint256 availableCreditLimit;
@@ -171,26 +169,34 @@ abstract contract SDSimpleLoanProposal {
      * @dev Function will mark a proposal hash as proposed.
      * @param proposalData Encoded proposal data.
      * @return proposer Address of the borrower/proposer
-     * @return collateral Collateral token as a MultiToken.Asset struct.
+     * @return collateral Address of the collateral token.
+     * @return collateralAmount Amount of the collateral token.
      * @return creditAddress Address of the credit token.
      * @return creditLimit Credit limit.
      */
     function makeProposal(bytes calldata proposalData)
         external
         virtual
-        returns (address proposer, MultiToken.Asset memory collateral, address creditAddress, uint256 creditLimit);
+        returns (
+            address proposer,
+            address collateral,
+            uint256 collateralAmount,
+            address creditAddress,
+            uint256 creditLimit
+        );
 
     /**
      * @notice Cancel a proposal and withdraw unused collateral.
      * @dev Function can be called only by a loan contract with appropriate PWN Hub tag.
      * @param proposalData Encoded proposal data.
      * @return proposer Address of the borrower/proposer.
-     * @return collateral Collateral token as a MultiToken.Asset struct.
+     * @return collateral Address of the collateral token.
+     * @return collateralAmount Amount of the collateral token.
      */
     function cancelProposal(bytes calldata proposalData)
         external
         virtual
-        returns (address proposer, MultiToken.Asset memory collateral);
+        returns (address proposer, address collateral, uint256 collateralAmount);
 
     /* ------------------------------------------------------------ */
     /*                          INTERNALS                           */
@@ -217,10 +223,10 @@ abstract contract SDSimpleLoanProposal {
      */
     function _makeProposal(bytes32 proposalHash, address loanContract) internal {
         if (msg.sender != loanContract) {
-            revert CallerNotLoanContract({caller: msg.sender, loanContract: loanContract});
+            revert CallerNotLoanContract({ caller: msg.sender, loanContract: loanContract });
         }
         if (!hub.hasTag(loanContract, PWNHubTags.ACTIVE_LOAN)) {
-            revert AddressMissingHubTag({addr: loanContract, tag: PWNHubTags.ACTIVE_LOAN});
+            revert AddressMissingHubTag({ addr: loanContract, tag: PWNHubTags.ACTIVE_LOAN });
         }
 
         if (proposalsMade[proposalHash]) revert ProposalAlreadyExists();
@@ -239,10 +245,10 @@ abstract contract SDSimpleLoanProposal {
     {
         // Check loan contract
         if (msg.sender != proposal.loanContract) {
-            revert CallerNotLoanContract({caller: msg.sender, loanContract: proposal.loanContract});
+            revert CallerNotLoanContract({ caller: msg.sender, loanContract: proposal.loanContract });
         }
         if (!hub.hasTag(proposal.loanContract, PWNHubTags.ACTIVE_LOAN)) {
-            revert AddressMissingHubTag({addr: proposal.loanContract, tag: PWNHubTags.ACTIVE_LOAN});
+            revert AddressMissingHubTag({ addr: proposal.loanContract, tag: PWNHubTags.ACTIVE_LOAN });
         }
 
         // Check that the proposal was made on-chain
@@ -250,12 +256,12 @@ abstract contract SDSimpleLoanProposal {
 
         // Check proposer is not acceptor
         if (proposal.proposer == acceptor) {
-            revert AcceptorIsProposer({addr: acceptor});
+            revert AcceptorIsProposer({ addr: acceptor });
         }
 
         // Check proposal is not expired
         if (block.timestamp >= proposal.expiration) {
-            revert Expired({current: block.timestamp, expiration: proposal.expiration});
+            revert Expired({ current: block.timestamp, expiration: proposal.expiration });
         }
 
         // Check proposal is not revoked
@@ -274,14 +280,14 @@ abstract contract SDSimpleLoanProposal {
             uint256 minCreditAmount =
                 Math.mulDiv(proposal.availableCreditLimit, config.partialPositionPercentage(), PERCENTAGE);
             if (creditAmount < minCreditAmount) {
-                revert CreditAmountTooSmall({amount: creditAmount, minimum: minCreditAmount});
+                revert CreditAmountTooSmall({ amount: creditAmount, minimum: minCreditAmount });
             }
 
             uint256 maxCreditAmount = Math.mulDiv(
                 proposal.availableCreditLimit, (PERCENTAGE - config.partialPositionPercentage()), PERCENTAGE
             );
             if (creditAmount > maxCreditAmount) {
-                revert CreditAmountLeavesTooLittle({amount: creditAmount, maximum: maxCreditAmount});
+                revert CreditAmountLeavesTooLittle({ amount: creditAmount, maximum: maxCreditAmount });
             }
         } else if (creditUsed[proposalHash] + creditAmount > proposal.availableCreditLimit) {
             // Revert, credit limit is exceeded
@@ -300,13 +306,10 @@ abstract contract SDSimpleLoanProposal {
             IStateFingerprintComputer computer = config.getStateFingerprintComputer(proposal.collateralAddress);
             if (address(computer) != address(0)) {
                 // Asset has registered computer
-                currentFingerprint = computer.computeStateFingerprint({
-                    token: proposal.collateralAddress,
-                    tokenId: proposal.collateralId
-                });
+                currentFingerprint = computer.computeStateFingerprint({ token: proposal.collateralAddress, tokenId: 0 });
             } else if (ERC165Checker.supportsInterface(proposal.collateralAddress, type(IERC5646).interfaceId)) {
                 // Asset implements ERC5646
-                currentFingerprint = IERC5646(proposal.collateralAddress).getStateFingerprint(proposal.collateralId);
+                currentFingerprint = IERC5646(proposal.collateralAddress).getStateFingerprint(0);
             } else {
                 // Asset is not implementing ERC5646 and no computer is registered
                 revert MissingStateFingerprintComputer();

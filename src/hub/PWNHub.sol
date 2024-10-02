@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {Ownable2Step} from "openzeppelin/access/Ownable2Step.sol";
+import { Ownable, Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 /**
  * @title PWN Hub
@@ -39,7 +39,7 @@ contract PWNHub is Ownable2Step {
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
 
-    constructor() Ownable2Step() {}
+    constructor() Ownable(msg.sender) { }
 
     /* ------------------------------------------------------------ */
     /*                          TAG MANAGEMENT                      */

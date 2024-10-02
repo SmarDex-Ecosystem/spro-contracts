@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {Test} from "forge-std/src/Test.sol";
-import {MultiToken} from "MultiToken/MultiToken.sol";
-import {IERC165} from "openzeppelin/utils/introspection/IERC165.sol";
+import { Test } from "forge-std/Test.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {
     PWNHub,
@@ -16,25 +15,31 @@ import {
 contract SDSimpleLoanProposalHarness is SDSimpleLoanProposal {
     constructor(address _hub, address _revokedNonce, address _config, string memory _name, string memory _version)
         SDSimpleLoanProposal(_hub, _revokedNonce, _config, _name, _version)
-    {}
+    { }
 
     function acceptProposal(address acceptor, uint256 creditAmount, bytes calldata proposalData)
         external
         override
         returns (bytes32 proposalHash, SDSimpleLoan.Terms memory loanTerms)
-    {}
+    { }
 
     function makeProposal(bytes calldata proposalData)
         external
         override
-        returns (address proposer, MultiToken.Asset memory collateral, address creditAddress, uint256 creditLimit)
-    {}
+        returns (
+            address proposer,
+            address collateral,
+            uint256 collateralAmount,
+            address creditAddress,
+            uint256 creditLimit
+        )
+    { }
 
     function cancelProposal(bytes calldata proposalData)
         external
         override
-        returns (address proposer, MultiToken.Asset memory collateral)
-    {}
+        returns (address proposer, address collateral, uint256 collateralAmount)
+    { }
 }
 
 contract SDSimpleLoanProposalTest is Test {

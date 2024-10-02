@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {Ownable2Step} from "openzeppelin/access/Ownable2Step.sol";
-import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-import {IPoolAdapter} from "pwn/interfaces/IPoolAdapter.sol";
-import {IStateFingerprintComputer} from "pwn/interfaces/IStateFingerprintComputer.sol";
+import { IPoolAdapter } from "pwn/interfaces/IPoolAdapter.sol";
+import { IStateFingerprintComputer } from "pwn/interfaces/IStateFingerprintComputer.sol";
 
 /**
  * @title PWN Config
@@ -139,7 +140,7 @@ contract SDConfig is Ownable2Step, Initializable {
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
 
-    constructor(address _sdex) Ownable2Step() {
+    constructor(address _sdex) Ownable(msg.sender) {
         // PWNConfig is used as a proxy. Use initializer to setup initial properties.
         _disableInitializers();
         _transferOwnership(address(0));
@@ -231,7 +232,8 @@ contract SDConfig is Ownable2Step, Initializable {
      */
     function setLOANMetadataUri(address loanContract, string memory metadataUri) external onlyOwner {
         if (loanContract == address(0)) {
-            // address(0) is used as a default metadata uri. Use `setDefaultLOANMetadataUri` to set default metadata uri.
+            // address(0) is used as a default metadata uri. Use `setDefaultLOANMetadataUri` to set default metadata
+            // uri.
             revert ZeroLoanContract();
         }
 
@@ -280,7 +282,7 @@ contract SDConfig is Ownable2Step, Initializable {
     function registerStateFingerprintComputer(address asset, address computer) external onlyOwner {
         if (computer != address(0)) {
             if (!IStateFingerprintComputer(computer).supportsToken(asset)) {
-                revert InvalidComputerContract({computer: computer, asset: asset});
+                revert InvalidComputerContract({ computer: computer, asset: asset });
             }
         }
 

@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {Test} from "forge-std/src/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
-import {PWNHubTags} from "pwn/hub/PWNHubTags.sol";
-import {IERC5646} from "pwn/interfaces/IERC5646.sol";
-import {PWNLOAN} from "pwn/loan/token/PWNLOAN.sol";
+import { IERC721Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+
+import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
+import { IERC5646 } from "pwn/interfaces/IERC5646.sol";
+import { PWNLOAN } from "pwn/loan/token/PWNLOAN.sol";
 
 abstract contract PWNLOANTest is Test {
     bytes32 internal constant LAST_LOAN_ID_SLOT = bytes32(uint256(6)); // `lastLoanId` property position
@@ -15,9 +17,6 @@ abstract contract PWNLOANTest is Test {
     address hub = address(0x80b);
     address alice = address(0xa11ce);
     address activeLoanContract = address(0x01);
-
-    event LOANMinted(uint256 indexed loanId, address indexed loanContract, address indexed owner);
-    event LOANBurned(uint256 indexed loanId);
 
     constructor() {
         vm.etch(hub, bytes("data"));
@@ -102,7 +101,7 @@ contract PWNLOAN_Mint_Test is PWNLOANTest {
         vm.store(address(loanToken), LAST_LOAN_ID_SLOT, bytes32(lastLoanId));
 
         vm.expectEmit(true, true, true, false);
-        emit LOANMinted(lastLoanId + 1, activeLoanContract, alice);
+        emit PWNLOAN.LOANMinted(lastLoanId + 1, activeLoanContract, alice);
 
         vm.prank(activeLoanContract);
         loanToken.mint(alice);
@@ -141,13 +140,13 @@ contract PWNLOAN_Burn_Test is PWNLOANTest {
         vm.prank(activeLoanContract);
         loanToken.burn(loanId);
 
-        vm.expectRevert("ERC721: invalid token ID");
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, loanId));
         loanToken.ownerOf(loanId);
     }
 
     function test_shouldEmitEvent_LOANBurned() external {
         vm.expectEmit(true, false, false, false);
-        emit LOANBurned(loanId);
+        emit PWNLOAN.LOANBurned(loanId);
 
         vm.prank(activeLoanContract);
         loanToken.burn(loanId);

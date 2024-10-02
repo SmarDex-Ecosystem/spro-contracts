@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {Test} from "forge-std/src/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
 import {
     SDSimpleLoan,
@@ -9,18 +9,16 @@ import {
     InvalidPermitOwner,
     InvalidPermitAsset,
     Math,
-    MultiToken,
     Permit,
     PWNRevokedNonce,
     IPoolAdapter
 } from "pwn/loan/terms/simple/loan/SDSimpleLoan.sol";
 
-import {T20} from "test/helper/T20.sol";
-import {T721} from "test/helper/T721.sol";
-import {DummyPoolAdapter} from "test/helper/DummyPoolAdapter.sol";
+import { T20 } from "test/helper/T20.sol";
+import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 
 contract SDSimpleLoanHarness is SDSimpleLoan {
-    constructor(address _h, address _lt, address _c, address _rn, address _cr) SDSimpleLoan(_h, _lt, _c, _rn, _cr) {}
+    constructor(address _h, address _lt, address _c, address _rn) SDSimpleLoan(_h, _lt, _c, _rn) { }
 
     function exposed_checkPermit(address caller, address creditAddress, Permit memory permit) external pure {
         _checkPermit(caller, creditAddress, permit);
@@ -35,11 +33,12 @@ contract SDSimpleLoanHarness is SDSimpleLoan {
     }
 
     function exposed_withdrawCreditFromPool(
-        MultiToken.Asset memory credit,
+        address credit,
+        uint256 creditAmount,
         Terms memory loanTerms,
         LenderSpec calldata lenderSpec
     ) external {
-        _withdrawCreditFromPool(credit, loanTerms, lenderSpec);
+        _withdrawCreditFromPool(credit, creditAmount, loanTerms, lenderSpec);
     }
 }
 
@@ -48,7 +47,6 @@ contract SDSimpleLoanTest is Test {
     address public loanToken = makeAddr("loanToken");
     address public config = makeAddr("config");
     address public revokedNonce = makeAddr("revokedNonce");
-    address public categoryRegistry = makeAddr("categoryRegistry");
 
     address public permitAsset = makeAddr("permitAsset");
     address public credit = makeAddr("credit");
@@ -59,7 +57,7 @@ contract SDSimpleLoanTest is Test {
 
     function setUp() public {
         vm.etch(config, bytes("data"));
-        simpleLoan = new SDSimpleLoanHarness(hub, loanToken, config, revokedNonce, categoryRegistry);
+        simpleLoan = new SDSimpleLoanHarness(hub, loanToken, config, revokedNonce);
 
         vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(poolAdapter));
     }
@@ -69,12 +67,11 @@ contract SDSimpleLoanTest is Test {
         assertEq(address(simpleLoan.loanToken()), loanToken);
         assertEq(address(simpleLoan.config()), config);
         assertEq(address(simpleLoan.revokedNonce()), revokedNonce);
-        assertEq(address(simpleLoan.categoryRegistry()), categoryRegistry);
     }
 
     function testFuzz_getLenderSpecHash(address source, uint256 amount, bytes memory data) external view {
         SDSimpleLoan.LenderSpec memory ls =
-            SDSimpleLoan.LenderSpec({sourceOfFunds: source, creditAmount: amount, permitData: data});
+            SDSimpleLoan.LenderSpec({ sourceOfFunds: source, creditAmount: amount, permitData: data });
         bytes32 lenderSpecHash = keccak256(abi.encode(ls));
 
         assertEq(simpleLoan.getLenderSpecHash(ls), lenderSpecHash);
@@ -94,7 +91,7 @@ contract SDSimpleLoanTest is Test {
         permit.owner = address(this);
 
         vm.expectRevert(abi.encodeWithSelector(InvalidPermitAsset.selector, permit.asset, address(this)));
-        simpleLoan.exposed_checkPermit({caller: address(this), creditAddress: address(this), permit: permit});
+        simpleLoan.exposed_checkPermit({ caller: address(this), creditAddress: address(this), permit: permit });
     }
 
     function testFuzz_shouldFail_withdrawCreditFromPool_InvalidSourceOfFunds(
@@ -102,15 +99,15 @@ contract SDSimpleLoanTest is Test {
         uint256 amount,
         bytes memory data
     ) external {
-        MultiToken.Asset memory credit_;
+        address credit_;
         SDSimpleLoan.Terms memory loanTerms;
         SDSimpleLoan.LenderSpec memory lenderSpec =
-            SDSimpleLoan.LenderSpec({sourceOfFunds: source, creditAmount: amount, permitData: data});
+            SDSimpleLoan.LenderSpec({ sourceOfFunds: source, creditAmount: amount, permitData: data });
 
         vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(address(0)));
 
         vm.expectRevert(abi.encodeWithSelector(SDSimpleLoan.InvalidSourceOfFunds.selector, lenderSpec.sourceOfFunds));
-        simpleLoan.exposed_withdrawCreditFromPool(credit_, loanTerms, lenderSpec);
+        simpleLoan.exposed_withdrawCreditFromPool(credit_, amount, loanTerms, lenderSpec);
     }
 
     function test_loanRepaymentAmount_shouldReturnZeroForNonExistingLoan() external view {

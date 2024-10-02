@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {console2} from "forge-std/src/Script.sol";
-import {ScriptUtils} from "./lib/ScriptUtils.sol";
+import { console2 } from "forge-std/Script.sol";
+import { ScriptUtils } from "./lib/ScriptUtils.sol";
 
 import {
     TransparentUpgradeableProxy,
     ITransparentUpgradeableProxy
-} from "openzeppelin/proxy/transparent/TransparentUpgradeableProxy.sol";
+} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import "@openzeppelin/contracts/utils/Create2.sol";
 import {
     SDDeployments,
     SDConfig,
@@ -17,10 +18,8 @@ import {
     SDSimpleLoan,
     SDSimpleLoanSimpleProposal,
     PWNLOAN,
-    PWNRevokedNonce,
-    MultiTokenCategoryRegistry
+    PWNRevokedNonce
 } from "pwn/SDDeployments.sol";
-import "openzeppelin/utils/Create2.sol";
 
 library SDContractDeployerParams {
     string internal constant VERSION = "1.0";
@@ -80,7 +79,8 @@ contract Deploy is ScriptUtils, SDDeployments {
     */
 
     // Local:
-    // forge script script/SD.s.sol:Deploy --sig "deployProtocol()" --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY --broadcast
+    // forge script script/SD.s.sol:Deploy --sig "deployProtocol()" --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY
+    // --broadcast
 
     /// @dev Expecting to have deployer, proxyAdmin, protocolAdmin and sdex
     /// addresses set in the `deployments/sdlatest.json`.
@@ -129,19 +129,10 @@ contract Deploy is ScriptUtils, SDDeployments {
                 SDContractDeployerParams.PARTIAL_POSITION_PERCENTAGE
             )
         );
-        ITransparentUpgradeableProxy(address(deployment.config)).changeAdmin(deployment.proxyAdmin);
+        // ITransparentUpgradeableProxy(address(deployment.config)).changeAdmin(deployment.proxyAdmin);
         vm.stopBroadcast();
 
         vm.startBroadcast();
-        // - MultiToken category registry
-        deployment.categoryRegistry = MultiTokenCategoryRegistry(
-            _deployAndTransferOwnership({ // Need ownership acceptance from the new owner
-                salt: SDContractDeployerParams.CONFIG,
-                owner: deployment.protocolAdmin,
-                bytecode: type(MultiTokenCategoryRegistry).creationCode
-            })
-        );
-
         // - Hub
         deployment.hub = PWNHub(
             _deployAndTransferOwnership({ // Need ownership acceptance from the new owner
@@ -179,8 +170,7 @@ contract Deploy is ScriptUtils, SDDeployments {
                         address(deployment.hub),
                         address(deployment.loanToken),
                         address(deployment.config),
-                        address(deployment.revokedNonce),
-                        address(deployment.categoryRegistry)
+                        address(deployment.revokedNonce)
                     )
                 )
             })
@@ -203,7 +193,6 @@ contract Deploy is ScriptUtils, SDDeployments {
         console2.log("ProxyAdmin:", deployment.proxyAdmin);
         console2.log("ProtocolAdmin:", deployment.protocolAdmin);
         console2.log("SDEX:", address(deployment.sdex));
-        console2.log("MultiToken Category Registry:", address(deployment.categoryRegistry));
         console2.log("SDConfig - singleton:", configSingleton);
         console2.log("SDConfig - proxy:", address(deployment.config));
         console2.log("PWNHub:", address(deployment.hub));
@@ -213,7 +202,6 @@ contract Deploy is ScriptUtils, SDDeployments {
         console2.log("SDSimpleLoanSimpleProposal:", address(deployment.simpleLoanSimpleProposal));
 
         // Writes deployment addresses to deployments JSON - @note currently points to sdLatest.json
-        _writeDeploymentAddress(address(deployment.categoryRegistry), ".categoryRegistry");
         _writeDeploymentAddress(configSingleton, ".configSingleton");
         _writeDeploymentAddress(address(deployment.config), ".config");
         _writeDeploymentAddress(address(deployment.hub), ".hub");

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {Test} from "forge-std/src/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
-import {SDListedFee} from "pwn/loan/lib/SDListedFee.sol";
+import { SDListedFee } from "pwn/loan/lib/SDListedFee.sol";
 
 contract SDFeeCalculator_CalculateFeeAmount_Test is Test {
     uint256 internal constant ff = 5e18;

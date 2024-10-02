@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {console2} from "forge-std/src/Script.sol";
-import {ScriptUtils} from "./lib/ScriptUtils.sol";
+import { console2 } from "forge-std/Script.sol";
+import { ScriptUtils } from "./lib/ScriptUtils.sol";
 
-import {SDDeployer} from "pwn/deployment/SDDeployer.sol";
-import "openzeppelin/utils/Create2.sol";
+import { SDDeployer } from "pwn/deployment/SDDeployer.sol";
+import "@openzeppelin/contracts/utils/Create2.sol";
 
-import {T20} from "test/helper/T20.sol";
+import { T20 } from "test/helper/T20.sol";
 
 contract Deploy is ScriptUtils {
     /*//////////////////////////////////////////////////////////////////////////
@@ -15,7 +15,8 @@ contract Deploy is ScriptUtils {
     //////////////////////////////////////////////////////////////////////////*/
 
     // local deployment:
-    // forge script script/SDDeployer.s.sol:Deploy --sig "deployDeployer()" --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY --broadcast
+    // forge script script/SDDeployer.s.sol:Deploy --sig "deployDeployer()" --rpc-url $LOCAL_URL --private-key
+    // $PRIVATE_KEY --broadcast
 
     bytes32 internal constant DEPLOYER = keccak256("SDDeployer");
 
@@ -41,7 +42,8 @@ contract Deploy is ScriptUtils {
     bytes32 internal constant SDEX = keccak256("SDEX");
 
     // local deployment:
-    // forge script script/SDDeployer.s.sol:Deploy --sig "deploySDEX()" --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY --broadcast
+    // forge script script/SDDeployer.s.sol:Deploy --sig "deploySDEX()" --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY
+    // --broadcast
 
     function deploySDEX() external {
         uint256 pk = vm.envUint("PRIVATE_KEY");

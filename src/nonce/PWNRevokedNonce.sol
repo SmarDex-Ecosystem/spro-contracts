@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {PWNHub} from "pwn/hub/PWNHub.sol";
-import {PWNHubTags} from "pwn/hub/PWNHubTags.sol";
-import {AddressMissingHubTag} from "pwn/PWNErrors.sol";
+import { PWNHub } from "pwn/hub/PWNHub.sol";
+import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
+import { AddressMissingHubTag } from "pwn/PWNErrors.sol";
 
 /**
  * @title PWN Revoked Nonce
@@ -72,7 +72,7 @@ contract PWNRevokedNonce {
 
     modifier onlyWithHubTag() {
         if (!hub.hasTag(msg.sender, accessTag)) {
-            revert AddressMissingHubTag({addr: msg.sender, tag: accessTag});
+            revert AddressMissingHubTag({ addr: msg.sender, tag: accessTag });
         }
         _;
     }
@@ -143,7 +143,7 @@ contract PWNRevokedNonce {
      */
     function _revokeNonce(address owner, uint256 nonceSpace, uint256 nonce) private {
         if (_revokedNonce[owner][nonceSpace][nonce]) {
-            revert NonceAlreadyRevoked({addr: owner, nonceSpace: nonceSpace, nonce: nonce});
+            revert NonceAlreadyRevoked({ addr: owner, nonceSpace: nonceSpace, nonce: nonce });
         }
         _revokedNonce[owner][nonceSpace][nonce] = true;
         emit NonceRevoked(owner, nonceSpace, nonce);
@@ -163,7 +163,8 @@ contract PWNRevokedNonce {
     }
 
     /**
-     * @notice Return true if owners nonce is usable. Nonce is usable if it is not revoked and in the current nonce space.
+     * @notice Return true if owners nonce is usable. Nonce is usable if it is not revoked and in the current nonce
+     * space.
      * @param owner Address of a nonce owner.
      * @param nonceSpace Value of a nonce space.
      * @param nonce Value of a nonce.

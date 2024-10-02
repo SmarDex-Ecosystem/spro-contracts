@@ -1,22 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {stdJson} from "forge-std/src/StdJson.sol";
-import {CommonBase} from "forge-std/src/Base.sol";
+import { stdJson } from "forge-std/StdJson.sol";
+import { CommonBase } from "forge-std/Base.sol";
 
-import {MultiTokenCategoryRegistry} from "MultiToken/MultiTokenCategoryRegistry.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import {Strings} from "openzeppelin/utils/Strings.sol";
-
-import {SDConfig} from "pwn/config/SDConfig.sol";
-import {PWNHub} from "pwn/hub/PWNHub.sol";
-import {PWNHubTags} from "pwn/hub/PWNHubTags.sol";
-import {IPWNDeployer} from "pwn/interfaces/IPWNDeployer.sol";
-import {SDSimpleLoan} from "pwn/loan/terms/simple/loan/SDSimpleLoan.sol";
-import {SDSimpleLoanSimpleProposal} from "pwn/loan/terms/simple/proposal/SDSimpleLoanSimpleProposal.sol";
-import {PWNLOAN} from "pwn/loan/token/PWNLOAN.sol";
-import {PWNRevokedNonce} from "pwn/nonce/PWNRevokedNonce.sol";
-import {T20} from "test/helper/T20.sol";
+import { SDConfig } from "pwn/config/SDConfig.sol";
+import { PWNHub } from "pwn/hub/PWNHub.sol";
+import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
+import { IPWNDeployer } from "pwn/interfaces/IPWNDeployer.sol";
+import { SDSimpleLoan } from "pwn/loan/terms/simple/loan/SDSimpleLoan.sol";
+import { SDSimpleLoanSimpleProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanSimpleProposal.sol";
+import { PWNLOAN } from "pwn/loan/token/PWNLOAN.sol";
+import { PWNRevokedNonce } from "pwn/nonce/PWNRevokedNonce.sol";
+import { T20 } from "test/helper/T20.sol";
 
 abstract contract SDDeployments is CommonBase {
     using stdJson for string;
@@ -29,7 +27,6 @@ abstract contract SDDeployments is CommonBase {
 
     // Properties need to be in alphabetical order
     struct Deployment {
-        MultiTokenCategoryRegistry categoryRegistry;
         SDConfig config;
         SDConfig configSingleton;
         IPWNDeployer deployer;

@@ -1,44 +1,51 @@
 {
   "name": "@smardex/pwnfork",
   "description": "PWN fork",
-  "version": "0.0.1",
-  "dependencies": {
-    "@openzeppelin/contracts": "^4.9.6",
-    "@openzeppelin/contracts-upgradeable": "^4.9.6"
+  "version": "0.1.0",
+  "repository": "github:Blockchain-RA2-Tech/foundry-template",
+  "author": {
+    "name": "RA2 Tech SA",
+    "url": "https://ra2.tech"
   },
-  "devDependencies": {
-    "@prb/test": "^0.6.4",
-    "forge-std": "github:foundry-rs/forge-std#v1.8.2",
-    "prettier": "^3.0.0",
-    "solhint": "^3.6.2",
-    "prettier-plugin-solidity": "^1.3.1",
-    "multitoken": "github:PWNFinance/MultiToken#v3.0.1"
-  },
-  "keywords": [
-    "blockchain",
-    "ethereum",
-    "forge",
-    "foundry",
-    "smart-contracts",
-    "solidity",
-    "template"
-  ],
+  "license": "BUSL-1.1",
   "private": true,
   "scripts": {
-    "clean": "rm -rf cache out",
-    "build": "forge build",
-    "lint": "bun run lint:sol && bun run prettier:check",
-    "lint:write": "bun run prettier:check  && bun run prettier:write",
-    "lint:sol": "bun run prettier:check:sol && bun solhint {script,src,test}/**/*.sol",
-    "prettier:check": "bun run prettier:check:sol && bun run prettier:check:others",
-    "prettier:write": "bun run prettier:write:sol && bun run prettier:write:others",
-    "prettier:check:others": "prettier --check \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
-    "prettier:write:others": "prettier --write \"**/*.{json,md,ymll}\" --ignore-path \".prettierignore\"",
-    "prettier:check:sol": "prettier --check \"**/*.sol\" --ignore-path \".prettierignore\" --config .prettierrc.yml --plugin=prettier-plugin-solidity",
-    "prettier:write:sol": "prettier --write \"**/*.sol\" --ignore-path \".prettierignore\" --config .prettierrc.yml --plugin=prettier-plugin-solidity",
+    "clean": "rm -rf dist && rm -rf node_modules && rm -rf .coverage && rm -rf out && rm -rf dependencies && forge clean && npm i && forge soldeer install",
+    "cov": "forge build --skip .sol && forge coverage --no-match-test \"(FFI|Fork|Fuzz|invariant)\" --no-match-contract Fork -vvv --offline",
+    "cov:html": "npm run coverage && genhtml -o .coverage lcov.info && open .coverage/index.html",
+    "coverage": "npm run cov -- --report lcov",
+    "deploy:fork": "forge script -i 1 -f anvil script/Deploy.s.sol",
+    "exportAbi": "forge build --ast && tsx ./script/exportAbi.ts -g '{*.sol,!(libraries|interfaces)/**/*.sol}' && tsup ./dist/abi/index.ts --format cjs --format esm --dts --sourcemap",
+    "format": "forge fmt",
+    "format:js": "npx @biomejs/biome format . --write",
+    "installDeps": "npm i && forge soldeer install",
+    "lint": "solhint 'src/**/*.sol'",
+    "lint:test": "solhint -c test/.solhint.json 'test/**/*.sol'",
+    "natspec": "npx natspec-smells > natspec-smells.txt 2>&1",
+    "prepare": "husky",
+    "quicktest": "forge test -vvv --no-match-test \"(FFI|Fork|Fuzz|invariant)\" --no-match-contract Fork --offline",
+    "quicktest:gas": "npm run quicktest -- --gas-report",
+    "slither": "slither .",
+    "snapshot": "FOUNDRY_PROFILE=ci forge clean && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --no-match-contract Fork --offline",
+    "snapshot:check": "FOUNDRY_PROFILE=ci forge build && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --no-match-contract Fork --check --offline",
     "test": "forge test",
-    "test:coverage": "forge coverage",
-    "test:coverage:report": "forge coverage --report lcov && lcov --remove lcov.info  -o lcov.info 'test/*' 'script/*' && genhtml lcov.info --branch-coverage --output-dir coverage",
-    "wagmi:hooks": "bunx wagmi generate"
+    "coverage:custom": "forge coverage --report lcov --ir-minimum"
+  },
+  "files": [
+    "dist",
+    "broadcast",
+    "docs"
+  ],
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.2",
+    "@defi-wonderland/natspec-smells": "^1.1.5",
+    "@types/node": "^20.0.0",
+    "commander": "^12.1.0",
+    "glob": "^11.0.0",
+    "husky": "^9.1.6",
+    "tsup": "^8.3.0",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2",
+    "viem": "^2.21.14"
   }
 }

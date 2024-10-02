@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
 import {
-    MultiToken,
-    MultiTokenCategoryRegistry,
     SDBaseIntegrationTest,
     SDConfig,
     IPWNDeployer,
@@ -15,8 +13,8 @@ import {
     PWNRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 
-import {SDSimpleLoanProposal} from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
-import {Expired, AddressMissingHubTag} from "pwn/PWNErrors.sol";
+import { SDSimpleLoanProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
+import { Expired, AddressMissingHubTag } from "pwn/PWNErrors.sol";
 
 contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SDBaseIntegrationTest {
     function test_RevertWhen_DataCannotBeDecoded() external {
@@ -28,7 +26,6 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         bytes memory baseProposalData = abi.encode(
             SDSimpleLoanProposal.ProposalBase({
                 collateralAddress: address(t20),
-                collateralId: 0,
                 checkCollateralStateFingerprint: false,
                 collateralStateFingerprint: bytes32(0),
                 availableCreditLimit: CREDIT_LIMIT,
@@ -332,8 +329,8 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
             deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
 
         uint256 collateralUsed = (CREDIT_AMOUNT * COLLATERAL_AMOUNT) / CREDIT_LIMIT;
-        assertEq(loanTerms.collateral.amount, collateralUsed, "collateral amount != collateralUsed");
-        assertEq(loanTerms.credit.amount, CREDIT_AMOUNT, "credit amount incorrect");
+        assertEq(loanTerms.collateralAmount, collateralUsed, "collateral amount != collateralUsed");
+        assertEq(loanTerms.creditAmount, CREDIT_AMOUNT, "credit amount incorrect");
     }
 
     modifier whenERC20Collateral() {
@@ -373,7 +370,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         bytes32 slot = keccak256(abi.encode(proposalHash, SLOT_WITHDRAWABLE_COLLATERAL));
         bytes32 wc = vm.load(address(deployment.simpleLoanSimpleProposal), slot);
         assertEq(
-            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot)))),
             proposal.collateralAmount,
             "withdrawableCollateral: collateral amount not set"
         );
@@ -388,7 +385,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
 
         wc = vm.load(address(deployment.simpleLoanSimpleProposal), slot);
         assertEq(
-            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot)))),
             proposal.collateralAmount - ((CREDIT_AMOUNT * COLLATERAL_AMOUNT) / CREDIT_LIMIT),
             "withdrawableCollateral: collateral amount decremented correctly"
         );
@@ -414,7 +411,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
         bytes32 slot = keccak256(abi.encode(proposalHash, SLOT_WITHDRAWABLE_COLLATERAL));
         assertEq(
-            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot)))),
             proposal.collateralAmount,
             "withdrawableCollateral: collateral amount not set"
         );
@@ -428,230 +425,9 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
 
         assertEq(
-            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot)))),
             0,
             "withdrawableCollateral: collateral amount decremented correctly"
-        );
-    }
-
-    function test_RevertWhen_CreditAmountLtLimit_ERC721()
-        external
-        whenProposalDataDecodes
-        loanContractIsCaller
-        loanContractHasHubTag
-        whenProposalMade
-        whenAcceptorNotProposer
-        whenProposalNotExpired
-        whenNonceUsable
-        whenCreditLimitGtZero
-        whenCreditUsedAndAmountBelowLimit
-        whenCreditAmountAboveMinimum
-        whenNoFingerprintChecks
-        whenERC721Collateral
-    {
-        _createERC721Proposal();
-
-        vm.prank(proposal.loanContract);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                SDSimpleLoanProposal.CreditAmountLeavesTooLittle.selector,
-                CREDIT_LIMIT - 1,
-                (PERCENTAGE - DEFAULT_THRESHOLD) * CREDIT_LIMIT / 1e4
-            )
-        );
-        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT - 1, abi.encode(proposal));
-    }
-
-    modifier whenCreditAmountEqualsLimit() {
-        _;
-    }
-
-    function test_AcceptProposal_ERC721()
-        external
-        whenProposalDataDecodes
-        loanContractIsCaller
-        loanContractHasHubTag
-        whenProposalMade
-        whenAcceptorNotProposer
-        whenProposalNotExpired
-        whenNonceUsable
-        whenCreditLimitGtZero
-        whenCreditUsedAndAmountBelowLimit
-        whenCreditAmountAboveMinimum
-        whenNoFingerprintChecks
-        whenERC721Collateral
-        whenCreditAmountEqualsLimit
-    {
-        _createERC721Proposal();
-
-        bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
-        bytes32 slot = keccak256(abi.encode(proposalHash, SLOT_WITHDRAWABLE_COLLATERAL));
-        assertEq(
-            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
-            0,
-            "withdrawableCollateral: collateral amount not set"
-        );
-
-        vm.expectCall({
-            callee: address(deployment.config),
-            data: abi.encodeWithSignature("getStateFingerprintComputer(address)"),
-            count: 0
-        });
-        vm.prank(proposal.loanContract);
-        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
-
-        assertEq(
-            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
-            type(uint256).max,
-            "withdrawableCollateral: collateral amount incorrect"
-        );
-    }
-
-    function test_AcceptProposal_Partial_ERC1155()
-        external
-        whenProposalDataDecodes
-        loanContractIsCaller
-        loanContractHasHubTag
-        whenProposalMade
-        whenAcceptorNotProposer
-        whenProposalNotExpired
-        whenNonceUsable
-        whenCreditLimitGtZero
-        whenCreditUsedAndAmountBelowLimit
-        whenCreditAmountAboveMinimum
-        whenNoFingerprintChecks
-        whenFungibleERC1155Collateral
-    {
-        _createFungibleERC1155Proposal();
-
-        bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
-        bytes32 slot = keccak256(abi.encode(proposalHash, SLOT_WITHDRAWABLE_COLLATERAL));
-        assertEq(
-            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
-            COLLATERAL_AMOUNT,
-            "withdrawableCollateral: collateral amount not set"
-        );
-
-        vm.expectCall({
-            callee: address(deployment.config),
-            data: abi.encodeWithSignature("getStateFingerprintComputer(address)"),
-            count: 0
-        });
-        vm.prank(proposal.loanContract);
-        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
-
-        assertEq(
-            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
-            COLLATERAL_AMOUNT - ((CREDIT_AMOUNT * COLLATERAL_AMOUNT) / CREDIT_LIMIT),
-            "withdrawableCollateral: collateral amount incorrect"
-        );
-    }
-
-    function test_AcceptProposal_Complete_FungibleERC1155()
-        external
-        whenProposalDataDecodes
-        loanContractIsCaller
-        loanContractHasHubTag
-        whenProposalMade
-        whenAcceptorNotProposer
-        whenProposalNotExpired
-        whenNonceUsable
-        whenCreditLimitGtZero
-        whenCreditUsedAndAmountBelowLimit
-        whenCreditAmountAboveMinimum
-        whenNoFingerprintChecks
-        whenFungibleERC1155Collateral
-    {
-        _createFungibleERC1155Proposal();
-
-        bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
-        bytes32 slot = keccak256(abi.encode(proposalHash, SLOT_WITHDRAWABLE_COLLATERAL));
-        assertEq(
-            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
-            COLLATERAL_AMOUNT,
-            "withdrawableCollateral: collateral amount not set"
-        );
-
-        vm.expectCall({
-            callee: address(deployment.config),
-            data: abi.encodeWithSignature("getStateFingerprintComputer(address)"),
-            count: 0
-        });
-        vm.prank(proposal.loanContract);
-        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
-
-        assertEq(
-            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
-            0,
-            "withdrawableCollateral: collateral amount incorrect"
-        );
-    }
-
-    function test_RevertWhen_CreditAmountLtLimit_ERC1155()
-        external
-        whenProposalDataDecodes
-        loanContractIsCaller
-        loanContractHasHubTag
-        whenProposalMade
-        whenAcceptorNotProposer
-        whenProposalNotExpired
-        whenNonceUsable
-        whenCreditLimitGtZero
-        whenCreditUsedAndAmountBelowLimit
-        whenCreditAmountAboveMinimum
-        whenNoFingerprintChecks
-        whenNonFungibleERC1155Collateral
-    {
-        _createNonFungibleERC1155Proposal();
-
-        vm.prank(proposal.loanContract);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                SDSimpleLoanProposal.CreditAmountLeavesTooLittle.selector,
-                CREDIT_LIMIT - 1,
-                (PERCENTAGE - DEFAULT_THRESHOLD) * CREDIT_LIMIT / 1e4
-            )
-        );
-        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT - 1, abi.encode(proposal));
-    }
-
-    function test_AcceptProposal_Complete_NonFungibleERC1155()
-        external
-        whenProposalDataDecodes
-        loanContractIsCaller
-        loanContractHasHubTag
-        whenProposalMade
-        whenAcceptorNotProposer
-        whenProposalNotExpired
-        whenNonceUsable
-        whenCreditLimitGtZero
-        whenCreditUsedAndAmountBelowLimit
-        whenCreditAmountAboveMinimum
-        whenNoFingerprintChecks
-        whenNonFungibleERC1155Collateral
-    {
-        _createNonFungibleERC1155Proposal();
-
-        bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
-        bytes32 slot = keccak256(abi.encode(proposalHash, SLOT_WITHDRAWABLE_COLLATERAL));
-        assertEq(
-            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
-            1,
-            "withdrawableCollateral: collateral amount not set"
-        );
-
-        vm.expectCall({
-            callee: address(deployment.config),
-            data: abi.encodeWithSignature("getStateFingerprintComputer(address)"),
-            count: 0
-        });
-        vm.prank(proposal.loanContract);
-        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
-
-        assertEq(
-            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
-            0,
-            "withdrawableCollateral: collateral amount incorrect"
         );
     }
 
@@ -676,7 +452,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
         bytes32 slot = keccak256(abi.encode(proposalHash, SLOT_WITHDRAWABLE_COLLATERAL));
         assertEq(
-            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot)))),
             proposal.collateralAmount,
             "withdrawableCollateral: collateral amount not set"
         );
@@ -689,7 +465,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
 
         assertEq(
-            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
+            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot)))),
             0,
             "withdrawableCollateral: collateral amount decremented correctly"
         );
@@ -707,9 +483,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         vm.assume(stateFp != collateralStateFingerprint);
         vm.mockCall(
             stateFingerprintComputer,
-            abi.encodeWithSignature(
-                "computeStateFingerprint(address,uint256)", proposal.collateralAddress, proposal.collateralId
-            ),
+            abi.encodeWithSignature("computeStateFingerprint(address,uint256)", proposal.collateralAddress),
             abi.encode(stateFp)
         );
         vm.expectRevert(

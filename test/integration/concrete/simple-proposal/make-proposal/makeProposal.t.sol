@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
 import {
-    MultiToken,
-    MultiTokenCategoryRegistry,
     SDBaseIntegrationTest,
     SDConfig,
     IPWNDeployer,
@@ -15,8 +13,8 @@ import {
     PWNRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 
-import {SDSimpleLoanProposal} from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
-import {AddressMissingHubTag} from "pwn/PWNErrors.sol";
+import { SDSimpleLoanProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
+import { AddressMissingHubTag } from "pwn/PWNErrors.sol";
 
 contract MakeProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SDBaseIntegrationTest {
     function test_RevertWhen_DataCannotBeDecoded() external {
@@ -28,7 +26,6 @@ contract MakeProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SD
         bytes memory baseProposalData = abi.encode(
             SDSimpleLoanProposal.ProposalBase({
                 collateralAddress: address(t20),
-                collateralId: 0,
                 checkCollateralStateFingerprint: false,
                 collateralStateFingerprint: bytes32(0),
                 availableCreditLimit: CREDIT_LIMIT,
@@ -81,7 +78,7 @@ contract MakeProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SD
 
         // Emit event
         vm.expectEmit(true, true, true, false);
-        emit ProposalMade(proposalHash, proposal.proposer, proposal);
+        emit SDSimpleLoanSimpleProposal.ProposalMade(proposalHash, proposal.proposer, proposal);
 
         vm.prank(proposal.loanContract);
         deployment.simpleLoanSimpleProposal.makeProposal(abi.encode(proposal));
@@ -93,25 +90,6 @@ contract MakeProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SD
             )
         );
         assertEq(proposalMadeBool, 1, "proposalMade not set");
-
-        // Assert that the withdrawable collateral was set
-        bytes32 slot = keccak256(abi.encode(proposalHash, SLOT_WITHDRAWABLE_COLLATERAL));
-        bytes32 wc = vm.load(address(deployment.simpleLoanSimpleProposal), slot);
-        assertEq(uint8(uint256(wc << 80 >> 248)), 0);
-        assertEq(
-            address(uint160(uint256(wc << 88 >> 96))),
-            proposal.collateralAddress,
-            "withdrawableCollateral: collateral address not set"
-        );
-        assertEq(
-            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 1))),
-            proposal.collateralId,
-            "withdrawableCollateral: collateral id not set"
-        );
-        assertEq(
-            uint256(vm.load(address(deployment.simpleLoanSimpleProposal), bytes32(uint256(slot) + 2))),
-            proposal.collateralAmount,
-            "withdrawableCollateral: collateral amount not set"
-        );
+        assertEq(deployment.simpleLoanSimpleProposal.proposalsMade(proposalHash), true, "proposalMade not set");
     }
 }

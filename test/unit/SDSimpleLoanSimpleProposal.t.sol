@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {Test} from "forge-std/src/Test.sol";
-import {PWNHubTags} from "pwn/hub/PWNHubTags.sol";
+import { Test } from "forge-std/Test.sol";
+import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
 import {
     SDSimpleLoanSimpleProposal,
     SDSimpleLoanProposal,
-    SDSimpleLoan,
-    MultiToken
+    SDSimpleLoan
 } from "pwn/loan/terms/simple/proposal/SDSimpleLoanSimpleProposal.sol";
 
 contract SDSimpleLoanSimpleProposalHarness is SDSimpleLoanSimpleProposal {
     constructor(address _hub, address _revokedNonce, address _config)
         SDSimpleLoanSimpleProposal(_hub, _revokedNonce, _config)
-    {}
+    { }
 
     function exposed_checkCompleteLoan(uint256 _creditAmount, uint256 _availableCreditLimit) external pure {
         _checkCompleteLoan(_creditAmount, _availableCreditLimit);
@@ -33,9 +32,7 @@ contract SDSimpleLoanSimpleProposalTest is Test {
 
     function testFuzz_encodeProposalData(address addr) external view {
         SDSimpleLoanSimpleProposal.Proposal memory proposal = SDSimpleLoanSimpleProposal.Proposal({
-            collateralCategory: MultiToken.Category.ERC20,
             collateralAddress: addr,
-            collateralId: 0,
             collateralAmount: 1e20,
             checkCollateralStateFingerprint: false,
             collateralStateFingerprint: bytes32(0),

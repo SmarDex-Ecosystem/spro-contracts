@@ -7,9 +7,6 @@ createProposal.t.sol
         ├── when the caller is not the proposer
         │   └── it should revert
         └── when the caller is the proposer
-            ├── when the collateral object is not a valid MultiToken.Asset
-            │   └── it should revert
-            └── when the collateral object is a valid MultiToken.Asset
-                ├── it should transfer the collateral to the vault from the proposer
-                └── given the fee amount is greater than zero
-                    └── it should transfer the SDEX token from the borrower to the fee sink
+            ├── it should transfer the collateral to the vault from the proposer
+            └── given the fee amount is greater than zero
+                └── it should transfer the SDEX token from the borrower to the fee sink

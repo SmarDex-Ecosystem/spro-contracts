@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {SDSimpleLoanProposal} from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
-import {Expired, AddressMissingHubTag} from "pwn/PWNErrors.sol";
-import {SigUtils} from "test/utils/SigUtils.sol";
-import {IPoolAdapter} from "test/helper/DummyPoolAdapter.sol";
+import { SDSimpleLoanProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
+import { Expired, AddressMissingHubTag } from "pwn/PWNErrors.sol";
+import { SigUtils } from "test/utils/SigUtils.sol";
+import { IPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import {
-    MultiToken,
-    MultiTokenCategoryRegistry,
     SDBaseIntegrationTest,
     SDConfig,
     IPWNDeployer,
@@ -91,14 +89,6 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         _;
     }
 
-    modifier whenERC721Collateral() {
-        _;
-    }
-
-    modifier whenERC1155Collateral() {
-        _;
-    }
-
     function test_CreateLoan_ERC20() external proposalContractHasTag whenLoanTermsValid whenERC20Collateral {
         _createERC20Proposal();
 
@@ -117,8 +107,8 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
-        (uint8 status,,,,,,,,,,,) = deployment.simpleLoan.getLOAN(id);
-        assertEq(status, 2);
+        (SDSimpleLoan.LoanInfo memory loanInfo) = deployment.simpleLoan.getLOAN(id);
+        assertEq(loanInfo.status, 2);
 
         assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE - lenderSpec.creditAmount);
         assertEq(credit.balanceOf(borrower), lenderSpec.creditAmount);
@@ -157,8 +147,8 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
-        (uint8 status,,,,,,,,,,,) = deployment.simpleLoan.getLOAN(id);
-        assertEq(status, 2);
+        (SDSimpleLoan.LoanInfo memory loanInfo) = deployment.simpleLoan.getLOAN(id);
+        assertEq(loanInfo.status, 2);
 
         assertEq(credit.balanceOf(address(this)), INITIAL_CREDIT_BALANCE - lenderSpec.creditAmount);
         assertEq(credit.balanceOf(lender), 0);
@@ -218,60 +208,10 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
-        (uint8 status,,,,,,,,,,,) = deployment.simpleLoan.getLOAN(id);
-        assertEq(status, 2);
+        (SDSimpleLoan.LoanInfo memory loanInfo) = deployment.simpleLoan.getLOAN(id);
+        assertEq(loanInfo.status, 2);
 
         assertEq(creditPermit.balanceOf(lender), INITIAL_CREDIT_BALANCE - lenderSpec.creditAmount);
         assertEq(creditPermit.balanceOf(borrower), lenderSpec.creditAmount);
-    }
-
-    function test_CreateLoan_ERC721() external proposalContractHasTag whenLoanTermsValid whenERC721Collateral {
-        _createERC721Proposal();
-
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
-        SDSimpleLoan.LenderSpec memory lenderSpec = _buildLenderSpec(true);
-
-        vm.startPrank(lender);
-        credit.mint(lender, INITIAL_CREDIT_BALANCE);
-        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
-
-        uint256 id = deployment.simpleLoan.createLOAN(proposalSpec, lenderSpec, "");
-        vm.stopPrank();
-
-        assertEq(deployment.loanToken.ownerOf(id), lender);
-        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
-        assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
-
-        (uint8 status,,,,,,,,,,,) = deployment.simpleLoan.getLOAN(id);
-        assertEq(status, 2);
-
-        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE - lenderSpec.creditAmount);
-        assertEq(credit.balanceOf(borrower), lenderSpec.creditAmount);
-    }
-
-    function test_CreateLoan_ERC1155() external proposalContractHasTag whenLoanTermsValid whenERC1155Collateral {
-        _createFungibleERC1155Proposal();
-
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
-        SDSimpleLoan.LenderSpec memory lenderSpec = _buildLenderSpec(true);
-
-        vm.startPrank(lender);
-        credit.mint(lender, INITIAL_CREDIT_BALANCE);
-        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
-
-        uint256 id = deployment.simpleLoan.createLOAN(proposalSpec, lenderSpec, "");
-        vm.stopPrank();
-
-        assertEq(deployment.loanToken.ownerOf(id), lender);
-        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
-        assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
-
-        (uint8 status,,,,,,,,,,,) = deployment.simpleLoan.getLOAN(id);
-        assertEq(status, 2);
-
-        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE - lenderSpec.creditAmount);
-        assertEq(credit.balanceOf(borrower), lenderSpec.creditAmount);
     }
 }

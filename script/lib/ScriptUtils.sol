@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {Script} from "forge-std/src/Script.sol";
-import {stdJson} from "forge-std/src/StdJson.sol";
+import { Script } from "forge-std/Script.sol";
+import { stdJson } from "forge-std/StdJson.sol";
 
 contract ScriptUtils is Script {
     using stdJson for string;

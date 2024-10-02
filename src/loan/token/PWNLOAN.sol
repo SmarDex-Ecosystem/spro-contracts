@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {ERC721} from "openzeppelin/token/ERC721/ERC721.sol";
+import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-import {PWNHub} from "pwn/hub/PWNHub.sol";
-import {PWNHubTags} from "pwn/hub/PWNHubTags.sol";
-import {IERC5646} from "pwn/interfaces/IERC5646.sol";
-import {IPWNLoanMetadataProvider} from "pwn/interfaces/IPWNLoanMetadataProvider.sol";
+import { PWNHub } from "pwn/hub/PWNHub.sol";
+import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
+import { IERC5646 } from "pwn/interfaces/IERC5646.sol";
+import { IPWNLoanMetadataProvider } from "pwn/interfaces/IPWNLoanMetadataProvider.sol";
 
 /**
  * @title PWN LOAN token
@@ -65,7 +65,7 @@ contract PWNLOAN is ERC721, IERC5646 {
 
     modifier onlyActiveLoan() {
         if (!hub.hasTag(msg.sender, PWNHubTags.ACTIVE_LOAN)) {
-            revert CallerMissingHubTag({tag: PWNHubTags.ACTIVE_LOAN});
+            revert CallerMissingHubTag({ tag: PWNHubTags.ACTIVE_LOAN });
         }
         _;
     }
@@ -121,7 +121,7 @@ contract PWNLOAN is ERC721, IERC5646 {
      * @return Metadata uri for given token id (loan id).
      */
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        _requireMinted(tokenId);
+        _requireOwned(tokenId);
 
         return IPWNLoanMetadataProvider(loanContract[tokenId]).loanMetadataUri();
     }

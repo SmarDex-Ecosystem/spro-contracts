@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
 import {
-    MultiToken,
-    MultiTokenCategoryRegistry,
     SDBaseIntegrationTest,
     SDConfig,
     IPWNDeployer,
@@ -14,8 +12,8 @@ import {
     PWNLOAN,
     PWNRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
-import {AddressMissingHubTag} from "pwn/PWNErrors.sol";
-import {SDSimpleLoanProposal} from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
+import { AddressMissingHubTag } from "pwn/PWNErrors.sol";
+import { SDSimpleLoanProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
 
 contract CancelProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SDBaseIntegrationTest {
     function test_RevertWhen_DataCannotBeDecoded() external {
@@ -27,7 +25,6 @@ contract CancelProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         bytes memory baseProposalData = abi.encode(
             SDSimpleLoanProposal.ProposalBase({
                 collateralAddress: address(t20),
-                collateralId: 0,
                 checkCollateralStateFingerprint: false,
                 collateralStateFingerprint: bytes32(0),
                 availableCreditLimit: CREDIT_LIMIT,
@@ -79,14 +76,12 @@ contract CancelProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         _createERC20Proposal();
 
         vm.prank(proposal.loanContract);
-        (address proposer, MultiToken.Asset memory collateral) =
+        (address proposer, address collateral, uint256 collateralAmount) =
             deployment.simpleLoanSimpleProposal.cancelProposal(abi.encode(proposal));
 
         assertEq(proposer, borrower);
-        require(collateral.category == MultiToken.Category.ERC20);
-        assertEq(collateral.assetAddress, address(t20));
-        assertEq(collateral.id, 0);
-        assertEq(collateral.amount, COLLATERAL_AMOUNT);
+        assertEq(collateral, address(t20));
+        assertEq(collateralAmount, COLLATERAL_AMOUNT);
 
         // Assert that the withdrawable collateral was set
         bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);

@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {MultiToken} from "MultiToken/MultiToken.sol";
-import {Permit} from "pwn/loan/vault/Permit.sol";
-import {SigUtils} from "test/utils/SigUtils.sol";
-import {CreditPermit} from "test/helper/CreditPermit.sol";
-import {DummyPoolAdapter} from "test/helper/DummyPoolAdapter.sol";
-import {IERC165} from "openzeppelin/utils/introspection/IERC165.sol";
-import {IERC5646} from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
-import {T20} from "test/helper/T20.sol";
-import {T721} from "test/helper/T721.sol";
-import {T1155} from "test/helper/T1155.sol";
-import {Events} from "test/utils/Events.sol";
+import { Permit } from "pwn/loan/vault/Permit.sol";
+import { SigUtils } from "test/utils/SigUtils.sol";
+import { CreditPermit } from "test/helper/CreditPermit.sol";
+import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { IERC5646 } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
+import { T20 } from "test/helper/T20.sol";
 import {
     SDDeploymentTest,
     SDConfig,
@@ -21,14 +17,11 @@ import {
     SDSimpleLoan,
     SDSimpleLoanSimpleProposal,
     PWNLOAN,
-    PWNRevokedNonce,
-    MultiTokenCategoryRegistry
+    PWNRevokedNonce
 } from "test/SDDeploymentTest.t.sol";
 
-abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
+abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     T20 t20;
-    T721 t721;
-    T1155 t1155;
     T20 credit;
 
     uint256 lenderPK = uint256(777);
@@ -76,8 +69,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
 
         // Deploy tokens
         t20 = new T20();
-        t721 = new T721();
-        t1155 = new T1155();
         credit = new T20();
 
         // Permit
@@ -90,9 +81,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
 
         // Deploy protocol contracts
         proposal = SDSimpleLoanSimpleProposal.Proposal({
-            collateralCategory: MultiToken.Category.ERC20,
             collateralAddress: address(t20),
-            collateralId: 0,
             collateralAmount: COLLATERAL_AMOUNT,
             checkCollateralStateFingerprint: false,
             collateralStateFingerprint: bytes32(0),
@@ -127,8 +116,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
         vm.label(borrower, "borrower");
         vm.label(address(credit), "credit");
         vm.label(address(t20), "t20");
-        vm.label(address(t721), "t721");
-        vm.label(address(t1155), "t1155");
 
         // Setup & label new lender addresses
         (alice, aliceKey) = makeAddrAndKey("alice");
@@ -165,63 +152,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
         deployment.simpleLoan.createProposal(proposalSpec);
     }
 
-    function _createERC721Proposal() internal returns (SDSimpleLoan.ProposalSpec memory proposalSpec) {
-        // Adjust base proposal
-        proposal.collateralCategory = MultiToken.Category.ERC721;
-        proposal.collateralAddress = address(t721);
-        proposal.collateralId = COLLATERAL_ID;
-        proposal.collateralAmount = 0;
-
-        // Mint initial state & approve collateral
-        t721.mint(borrower, COLLATERAL_ID);
-        vm.prank(borrower);
-        t721.approve(address(deployment.simpleLoan), COLLATERAL_ID);
-
-        // Create the proposal
-        proposalSpec = _buildProposalSpec(proposal);
-
-        vm.prank(borrower);
-        deployment.simpleLoan.createProposal(proposalSpec);
-    }
-
-    function _createFungibleERC1155Proposal() internal returns (SDSimpleLoan.ProposalSpec memory proposalSpec) {
-        // Adjust base proposal
-        proposal.collateralCategory = MultiToken.Category.ERC1155;
-        proposal.collateralAddress = address(t1155);
-        proposal.collateralId = COLLATERAL_ID;
-        proposal.collateralAmount = COLLATERAL_AMOUNT;
-
-        // Mint initial state & approve collateral
-        t1155.mint(borrower, COLLATERAL_ID, COLLATERAL_AMOUNT);
-        vm.prank(borrower);
-        t1155.setApprovalForAll(address(deployment.simpleLoan), true);
-
-        // Create the proposal
-        proposalSpec = _buildProposalSpec(proposal);
-
-        vm.prank(borrower);
-        deployment.simpleLoan.createProposal(proposalSpec);
-    }
-
-    function _createNonFungibleERC1155Proposal() internal returns (SDSimpleLoan.ProposalSpec memory proposalSpec) {
-        // Adjust base proposal
-        proposal.collateralCategory = MultiToken.Category.ERC1155;
-        proposal.collateralAddress = address(t1155);
-        proposal.collateralId = COLLATERAL_ID;
-        proposal.collateralAmount = 1;
-
-        // Mint initial state & approve collateral
-        t1155.mint(borrower, COLLATERAL_ID, 1);
-        vm.prank(borrower);
-        t1155.setApprovalForAll(address(deployment.simpleLoan), true);
-
-        // Create the proposal
-        proposalSpec = _buildProposalSpec(proposal);
-
-        vm.prank(borrower);
-        deployment.simpleLoan.createProposal(proposalSpec);
-    }
-
     function _createLoan(SDSimpleLoan.ProposalSpec memory proposalSpec, bytes memory revertData)
         internal
         returns (uint256 loanId)
@@ -237,22 +167,11 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
         }
 
         vm.prank(lender);
-        if (
-            proposal.collateralCategory == MultiToken.Category.ERC721
-                || (proposal.collateralCategory == MultiToken.Category.ERC1155 && proposal.collateralAmount == 1)
-        ) {
-            return deployment.simpleLoan.createLOAN({
-                proposalSpec: proposalSpec,
-                lenderSpec: _buildLenderSpec(true),
-                extra: ""
-            });
-        } else {
-            return deployment.simpleLoan.createLOAN({
-                proposalSpec: proposalSpec,
-                lenderSpec: _buildLenderSpec(false),
-                extra: ""
-            });
-        }
+        return deployment.simpleLoan.createLOAN({
+            proposalSpec: proposalSpec,
+            lenderSpec: _buildLenderSpec(false),
+            extra: ""
+        });
     }
 
     function _cancelProposal(SDSimpleLoanSimpleProposal.Proposal memory _proposal) internal {
@@ -261,8 +180,8 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest, Events {
 
     function _buildLenderSpec(bool complete) internal view returns (SDSimpleLoan.LenderSpec memory lenderSpec) {
         lenderSpec = complete
-            ? SDSimpleLoan.LenderSpec({sourceOfFunds: lender, creditAmount: CREDIT_LIMIT, permitData: ""})
-            : SDSimpleLoan.LenderSpec({sourceOfFunds: lender, creditAmount: CREDIT_AMOUNT, permitData: ""});
+            ? SDSimpleLoan.LenderSpec({ sourceOfFunds: lender, creditAmount: CREDIT_LIMIT, permitData: "" })
+            : SDSimpleLoan.LenderSpec({ sourceOfFunds: lender, creditAmount: CREDIT_AMOUNT, permitData: "" });
     }
 
     function _buildProposalSpec(SDSimpleLoanSimpleProposal.Proposal memory _proposal)

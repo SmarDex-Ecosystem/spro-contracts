@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {Test} from "forge-std/src/Test.sol";
-import {T20} from "test/helper/T20.sol";
+import { Test } from "forge-std/Test.sol";
+import { T20 } from "test/helper/T20.sol";
 
-import {TransparentUpgradeableProxy} from "openzeppelin/proxy/transparent/TransparentUpgradeableProxy.sol";
+import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {
     SDDeployments,
@@ -15,8 +15,7 @@ import {
     SDSimpleLoan,
     SDSimpleLoanSimpleProposal,
     PWNLOAN,
-    PWNRevokedNonce,
-    MultiTokenCategoryRegistry
+    PWNRevokedNonce
 } from "pwn/SDDeployments.sol";
 
 abstract contract SDDeploymentTest is SDDeployments, Test {
@@ -27,13 +26,13 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
 
     function setUp() public virtual {
         // _loadDeployedAddresses();
-        _protocolNotDeployedOnSelectedChain(); // @note keep this until block.chainid == 31337 removed from sdLatest.json, or deployments JSON pointed elsewhere
+        _protocolNotDeployedOnSelectedChain(); // @note keep this until block.chainid == 31337 removed from
+            // sdLatest.json, or deployments JSON pointed elsewhere
 
         // Labels
         vm.label(deployment.proxyAdmin, "proxyAdmin");
         vm.label(deployment.protocolAdmin, "protocolAdmin");
         vm.label(address(deployment.sdex), "sdex");
-        vm.label(address(deployment.categoryRegistry), "categoryRegistry");
         vm.label(address(deployment.configSingleton), "configSingleton");
         vm.label(address(deployment.config), "config");
         vm.label(address(deployment.hub), "hub");
@@ -49,10 +48,6 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
 
         // Deploy SDEX token
         deployment.sdex = new T20();
-
-        // Deploy category registry
-        vm.prank(deployment.proxyAdmin);
-        deployment.categoryRegistry = new MultiTokenCategoryRegistry();
 
         // Deploy protocol
         deployment.configSingleton = new SDConfig(address(deployment.sdex));
@@ -80,8 +75,7 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
             address(deployment.hub),
             address(deployment.loanToken),
             address(deployment.config),
-            address(deployment.revokedNonce),
-            address(deployment.categoryRegistry)
+            address(deployment.revokedNonce)
         );
 
         deployment.simpleLoanSimpleProposal = new SDSimpleLoanSimpleProposal(

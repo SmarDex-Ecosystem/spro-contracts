@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
-import {console2} from "forge-std/src/Script.sol";
-import {ScriptUtils} from "./lib/ScriptUtils.sol";
+import { ScriptUtils } from "./lib/ScriptUtils.sol";
 
-import {SDDeployments, PWNHubTags} from "pwn/SDDeployments.sol";
-import "openzeppelin/utils/Create2.sol";
+import "@openzeppelin/contracts/utils/Create2.sol";
+
+import { SDDeployments, PWNHubTags } from "pwn/SDDeployments.sol";
 
 // This script must be run by the protocol admin
 // Local:
