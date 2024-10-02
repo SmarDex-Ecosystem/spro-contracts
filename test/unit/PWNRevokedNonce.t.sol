@@ -32,9 +32,9 @@ abstract contract PWNRevokedNonceTest is Test {
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  REVOKE NONCE                                             */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                                REVOKE NONCE                                */
+/* -------------------------------------------------------------------------- */
 
 contract PWNRevokedNonce_RevokeNonce_Test is PWNRevokedNonceTest {
     function testFuzz_shouldFail_whenNonceAlreadyRevoked(uint256 nonceSpace, uint256 nonce) external {
@@ -66,9 +66,9 @@ contract PWNRevokedNonce_RevokeNonce_Test is PWNRevokedNonceTest {
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  REVOKE NONCES                                            */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                                REVOKE NONCES                               */
+/* -------------------------------------------------------------------------- */
 
 contract PWNRevokedNonce_RevokeNonces_Test is PWNRevokedNonceTest {
     uint256[] nonces;
@@ -127,9 +127,9 @@ contract PWNRevokedNonce_RevokeNonces_Test is PWNRevokedNonceTest {
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  REVOKE NONCE WITH NONCE SPACE                            */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                        REVOKE NONCE WITH NONCE SPACE                       */
+/* -------------------------------------------------------------------------- */
 
 contract PWNRevokedNonce_RevokeNonceWithNonceSpace_Test is PWNRevokedNonceTest {
     function testFuzz_shouldFail_whenNonceAlreadyRevoked(uint256 nonceSpace, uint256 nonce) external {
@@ -156,9 +156,9 @@ contract PWNRevokedNonce_RevokeNonceWithNonceSpace_Test is PWNRevokedNonceTest {
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  REVOKE NONCE WITH OWNER                                  */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                           REVOKE NONCE WITH OWNER                          */
+/* -------------------------------------------------------------------------- */
 
 contract PWNRevokedNonce_RevokeNonceWithOwner_Test is PWNRevokedNonceTest {
     address accessEnabledAddress = address(0x01);
@@ -209,9 +209,9 @@ contract PWNRevokedNonce_RevokeNonceWithOwner_Test is PWNRevokedNonceTest {
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  REVOKE NONCE WITH NONCE SPACE AND OWNER                  */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                   REVOKE NONCE WITH NONCE SPACE AND OWNER                  */
+/* -------------------------------------------------------------------------- */
 
 contract PWNRevokedNonce_RevokeNonceWithNonceSpaceAndOwner_Test is PWNRevokedNonceTest {
     address accessEnabledAddress = address(0x01);
@@ -257,9 +257,9 @@ contract PWNRevokedNonce_RevokeNonceWithNonceSpaceAndOwner_Test is PWNRevokedNon
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  IS NONCE REVOKED                                         */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                              IS NONCE REVOKED                              */
+/* -------------------------------------------------------------------------- */
 
 contract PWNRevokedNonce_IsNonceRevoked_Test is PWNRevokedNonceTest {
     function testFuzz_shouldReturnStoredValue(uint256 nonceSpace, uint256 nonce, bool revoked) external {
@@ -269,9 +269,9 @@ contract PWNRevokedNonce_IsNonceRevoked_Test is PWNRevokedNonceTest {
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  IS NONCE USABLE                                          */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                               IS NONCE USABLE                              */
+/* -------------------------------------------------------------------------- */
 
 contract PWNRevokedNonce_IsNonceUsable_Test is PWNRevokedNonceTest {
     function testFuzz_shouldReturnFalse_whenNonceSpaceIsNotEqualToCurrentNonceSpace(
@@ -302,9 +302,9 @@ contract PWNRevokedNonce_IsNonceUsable_Test is PWNRevokedNonceTest {
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  REVOKE NONCE SPACE                                       */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                             REVOKE NONCE SPACE                             */
+/* -------------------------------------------------------------------------- */
 
 contract PWNRevokedNonce_RevokeNonceSpace_Test is PWNRevokedNonceTest {
     function testFuzz_shouldIncrementCurrentNonceSpace(uint256 nonceSpace) external {
@@ -342,9 +342,9 @@ contract PWNRevokedNonce_RevokeNonceSpace_Test is PWNRevokedNonceTest {
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  CURRENT NONCE SPACE                                      */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                             CURRENT NONCE SPACE                            */
+/* -------------------------------------------------------------------------- */
 
 contract PWNRevokedNonce_CurrentNonceSpace_Test is PWNRevokedNonceTest {
     function testFuzz_shouldReturnCurrentNonceSpace(uint256 nonceSpace) external {
