@@ -49,7 +49,8 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
     function test_RevertWhen_InvalidLoanDuration() external proposalContractHasTag {
         // Set bad duration value
         uint256 minDuration = deployment.simpleLoan.MIN_LOAN_DURATION();
-        proposal.duration = uint32(minDuration - 1);
+        proposal.startTimestamp = uint40(block.timestamp);
+        proposal.defaultTimestamp = uint40(block.timestamp) + uint32(minDuration - 1);
 
         // Create proposal
         _createERC20Proposal();
@@ -59,7 +60,11 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         SDSimpleLoan.LenderSpec memory lenderSpec = _buildLenderSpec(true);
 
         vm.prank(lender);
-        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoan.InvalidDuration.selector, proposal.duration, minDuration));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SDSimpleLoan.InvalidDuration.selector, proposal.defaultTimestamp - proposal.startTimestamp, minDuration
+            )
+        );
         deployment.simpleLoan.createLOAN(proposalSpec, lenderSpec, "");
     }
 

@@ -116,4 +116,30 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), feeAmount);
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - feeAmount);
     }
+
+    function test_RevertWhen_InvalidDuration()
+        external
+        proposalContractHasTag
+        whenValidProposalData
+        whenCallerIsProposer
+        whenValidCollateral
+        whenFeeAmountGtZero
+        whenListedFee
+    {
+        // Set bad timestamp value
+        proposal.startTimestamp = uint40(block.timestamp);
+        proposal.defaultTimestamp = proposal.startTimestamp - 1;
+
+        // Mint initial state & approve collateral
+        t20.mint(borrower, proposal.collateralAmount);
+        vm.prank(borrower);
+        t20.approve(address(deployment.simpleLoan), proposal.collateralAmount);
+
+        // Create the proposal
+        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+
+        vm.prank(borrower);
+        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanSimpleProposal.InvalidDuration.selector));
+        deployment.simpleLoan.createProposal(proposalSpec);
+    }
 }

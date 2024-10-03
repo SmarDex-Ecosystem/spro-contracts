@@ -61,7 +61,8 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
      * @dev This struct is created by proposal contracts and never stored.
      * @param lender Address of a lender.
      * @param borrower Address of a borrower.
-     * @param duration Loan duration in seconds.
+     * @param startTimestamp Unix timestamp (in seconds) of a start date.
+     * @param defaultTimestamp Unix timestamp (in seconds) of a default date.
      * @param collateral Address of a collateral asset.
      * @param collateralAmount Amount of a collateral asset.
      * @param credit Address of a credit asset.
@@ -75,7 +76,8 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     struct Terms {
         address lender;
         address borrower;
-        uint32 duration;
+        uint40 startTimestamp;
+        uint40 defaultTimestamp;
         address collateral;
         uint256 collateralAmount;
         address credit;
@@ -353,8 +355,11 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         });
 
         // Check minimum loan duration
-        if (loanTerms.duration < MIN_LOAN_DURATION) {
-            revert InvalidDuration({ current: loanTerms.duration, limit: MIN_LOAN_DURATION });
+        if (loanTerms.defaultTimestamp - loanTerms.startTimestamp < MIN_LOAN_DURATION) {
+            revert InvalidDuration({
+                current: loanTerms.defaultTimestamp - loanTerms.startTimestamp,
+                limit: MIN_LOAN_DURATION
+            });
         }
 
         // Check maximum accruing interest APR
@@ -416,8 +421,8 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         loan.status = 2;
         loan.creditAddress = loanTerms.credit;
         loan.originalSourceOfFunds = lenderSpec.sourceOfFunds;
-        loan.startTimestamp = uint40(block.timestamp);
-        loan.defaultTimestamp = uint40(block.timestamp) + loanTerms.duration;
+        loan.startTimestamp = loanTerms.startTimestamp;
+        loan.defaultTimestamp = loanTerms.defaultTimestamp;
         loan.borrower = loanTerms.borrower;
         loan.originalLender = loanTerms.lender;
         loan.accruingInterestAPR = loanTerms.accruingInterestAPR;
@@ -685,7 +690,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     function _loanAccruedInterest(LOAN storage loan) private view returns (uint256) {
         if (loan.accruingInterestAPR == 0) return loan.fixedInterestAmount;
 
-        uint256 accruingMinutes = (block.timestamp - loan.startTimestamp) / 1 minutes;
+        uint256 accruingMinutes = (loan.defaultTimestamp - loan.startTimestamp) / 1 minutes;
         uint256 accruedInterest = Math.mulDiv(
             loan.principalAmount, uint256(loan.accruingInterestAPR) * accruingMinutes, ACCRUING_INTEREST_APR_DENOMINATOR
         );

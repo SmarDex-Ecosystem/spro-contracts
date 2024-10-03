@@ -38,7 +38,8 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
      * @param fixedInterestAmount Fixed interest amount in credit tokens. It is the minimum amount of interest which has
      * to be paid by a borrower.
      * @param accruingInterestAPR Accruing interest APR with 2 decimals.
-     * @param duration Loan duration in seconds.
+     * @param startTimestamp Proposal start timestamp in seconds.
+     * @param defaultTimestamp Proposal default timestamp in seconds.
      * @param expiration Proposal expiration timestamp in seconds.
      * @param proposer Address of a proposal signer. If `isOffer` is true, the proposer is the lender. If `isOffer` is
      * false, the proposer is the borrower.
@@ -58,7 +59,8 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
         uint256 availableCreditLimit;
         uint256 fixedInterestAmount;
         uint24 accruingInterestAPR;
-        uint32 duration;
+        uint40 startTimestamp;
+        uint40 defaultTimestamp;
         uint40 expiration;
         address proposer;
         bytes32 proposerSpecHash;
@@ -90,6 +92,11 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
      * @notice Thrown when a partial loan is attempted for NFT collateral.
      */
     error OnlyCompleteLendingForNFTs(uint256 creditAmount, uint256 availableCreditLimit);
+
+    /**
+     * @notice Thrown when the start timestamp is greater than the default timestamp.
+     */
+    error InvalidDuration();
 
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
@@ -166,6 +173,9 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
     {
         // Decode proposal data
         Proposal memory proposal = decodeProposalData(proposalData);
+        if (proposal.startTimestamp > proposal.defaultTimestamp) {
+            revert InvalidDuration();
+        }
 
         // Make proposal hash
         bytes32 proposalHash = _getProposalHash(PROPOSAL_TYPEHASH, abi.encode(proposal));
@@ -220,7 +230,8 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
         loanTerms = SDSimpleLoan.Terms({
             lender: acceptor,
             borrower: proposal.proposer,
-            duration: proposal.duration,
+            startTimestamp: proposal.startTimestamp,
+            defaultTimestamp: proposal.defaultTimestamp,
             collateral: proposal.collateralAddress,
             collateralAmount: collateralUsed_,
             credit: proposal.creditAddress,
