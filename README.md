@@ -5,20 +5,18 @@
 
 # SmarDex fork of PWN Protocol
 
-PWN is a protocol that enables peer-to-peer (P2P) loans using arbitrary collateral. PWN smart contracts support ERC20, ERC721, and ERC1155 standards, making it versatile and adaptable to a wide range of use cases.
+PWN is a protocol that enables peer-to-peer (P2P) loans using arbitrary collateral. PWN smart contracts support ERC20 standards, making it versatile and adaptable to a wide range of use cases.
 
 Key changes made in this fork include:
 
-- Fees are now taken in the SDEX token, no modification is made to the loan/borrow amount.
+- Fees are now taken in the SDEX token and these token are burned, no modification is made to the loan/borrow amount.
 - Offchain proposal creation is disabled.
 - Creating a borrow proposal requires transfer of the collateral to the vault.
 - Lenders may no longer create lending proposals, but must match a borrow proposal which has been made onchain.
-- Multiple lenders may partially lend against an ERC-20 or fungible ERC-1155 borrow request, up to a total specified borrow amount.
-- ERC-721 tokens may not be partially lent against.
+- Multiple lenders may partially lend against an ERC-20 borrow request, up to a total specified borrow amount.
 - Removed loan refinance, loan extension features.
 - Thresholds added to the partial lending feature which does not allow a lender to match with less than 5% of the requested borrow amount.
 - Domain separators updated to ensure no permit reuse with the base PWN protocol is possible.
-- A `Sink` trivial contract is prepared to serve as a token burn address.
 
 ## Installation
 
