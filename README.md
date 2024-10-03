@@ -1,3 +1,8 @@
+# <h1 align="center">Ultimate Synthetic Delta Neutral - USDN</h1>
+
+[![Main workflow](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/ci.yml/badge.svg)](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/ci.yml)
+[![Release Workflow](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/release.yml/badge.svg)](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/release.yml)
+
 # SmarDex fork of PWN Protocol
 
 PWN is a protocol that enables peer-to-peer (P2P) loans using arbitrary collateral. PWN smart contracts support ERC20, ERC721, and ERC1155 standards, making it versatile and adaptable to a wide range of use cases.
@@ -15,107 +20,110 @@ Key changes made in this fork include:
 - Domain separators updated to ensure no permit reuse with the base PWN protocol is possible.
 - A `Sink` trivial contract is prepared to serve as a token burn address.
 
-## Change Details
+## Installation
 
-### Setting fees
+### Foundry
 
-Fees are controlled from the `SDConfig` contract, by the contract owner.
+To install Foundry, run the following commands in your terminal:
 
-A user must have made an SDEX approval of the appropriate amount to the `SDSimpleLoan` contract prior to transacting.
-
-The fixed fee for listed tokens, `listedFee`, and the fixed fee for unlisted tokens, `unlistedFee`, are both in terms of units of SDEX tokens. For example to charge a 1 SDEX fee for unlisted tokens, the owner calls `setUnlistedFee` with an input value of `1000000000000000000` (1e18 units).
-
-A token is implicitly unlisted if a `tokenFactors` value is not set for it.
-
-The variable component of the fee is contained in two quantities, the `variableFactor` conversion quantity, and the `tokenFactors` token-specific quantity. Both of these quantities use 18 decimal precision (1e18 = 1).
-
-The example given in the specification is that if a user wants to borrow 250 ETH, the factor of ETH is 4000, the
-VariableFactor is 0.00001 and FixFeeListed = 5 we will have
-𝑇𝑜𝑡𝑎𝑙 𝑓𝑒𝑒𝑠 = 𝐹𝑖𝑥𝐹𝑒𝑒𝐿𝑖𝑠𝑡𝑒𝑑 + 𝑉𝑎𝑟𝑖𝑎𝑏𝑙𝑒𝐹𝑎𝑐𝑡𝑜𝑟 ∗ 𝑡𝑜𝑘𝑒𝑛𝐹𝑎𝑐𝑡𝑜𝑟 ∗ 𝑞𝑢𝑎𝑛𝑡𝑖𝑡𝑦
-𝑇𝑜𝑡𝑎𝑙 𝑓𝑒𝑒𝑠 = 5 + 0.00001 ∗ 4000 ∗ 250 = 15
-
-The parameters for this works out as follows:
-
-```
-listedFee = 5000000000000000000                 // 5 SDEX
-variableFactor = 10000000000000                 // 0.00001 * 10**18
-ETH borrow amount = 250000000000000000000       // 250 ETH
-tokenFactors[WETH] = 4000000000000000000000     // 4000 * 10**18
-
-RESULT: 5000000000000000000 + 10000000000000 * 250000000000000000000 * 4000000000000000000000 / 1e36
-        = 5000000000000000000 + 10000000000000000000
-        = 15000000000000000000 // 15 SDEX
+```bash
+curl -L https://foundry.paradigm.xyz | bash
+source ~/.bashrc
+foundryup
 ```
 
-An alternative example using USDC (6 decimals):
+### Dependencies
 
-```
-listedFee = 5000000000000000000                         // 5 SDEX
-variableFactor = 10000000000000                         // 0.00001 * 10**18
-USDC borrow amount = 1000000000000                      // 1 million USDC
-tokenFactors[WETH] = 1000000000000000000000000000000    // 1 * 10**30
+To install existing dependencies, run the following commands:
 
-RESULT: 5000000000000000000 + 10000000000000 * 1000000000000 * 1e30 / 1e36
-        = 5000000000000000000 + 10000000000000000000
-        = 15000000000000000000 // 15 SDEX
+```bash
+forge soldeer install
+npm install
 ```
 
-In this case, the desired token factor of 1, which wad-formats to 1e18, is multiplied by 1e12 to account for the decimal difference between USDC and ETH. If a token was used which had more than 18 decimals, the token factor would have to be adjusted down in a similar fashion.
+The `forge soldeer install` command is only used to add libraries for the smart contracts. Other dependencies should be managed with
+npm.
 
-## Deployment
+In order to add a new dependency, use the `forge soldeer install [packagename]~[version]` command with any package from the
+[soldeer registry](https://soldeer.xyz/).
 
-Deployed addresses are read to and written from `deployments/sdLatest.json`. Deployment takes place in the following steps:
+For instance, to add [OpenZeppelin library](https://github.com/OpenZeppelin/openzeppelin-contracts) version 5.0.2:
 
-1. Populate the configuration parameters. The initial fee and factor settings must be set in `SD.s.sol`. To prepare for deployment, the following fields must be set in the desired chain in `sdLatest.json`. The rest are contracts which will be deployed as part of the protocol deployment step.
-   1. `proxyAdmin` - proxy admin address
-   2. `protocolAdmin`- protocol admin address
-   3. `sdex` - SDEX token on the chain
-2. Deploy the deployer contract.
-3. Execute the deployment script.
-4. Protocol admin accepts ownership of the SDHub and SDConfig contracts.
-5. Protocol admin sets Hub tags.
-   1. SimpleLoan receives ACTIVE_LOAN, NONCE_MANAGER
-   2. SimpleLoanSimpleProposal receives LOAN_PROPOSAL, NONCE_MANAGER
-   3. View the `SDSetTags.s.sol` script file for example call.
-
-```sh
-# Deploy the deployer
-$ forge script script/SDDeployer.s.sol:Deploy -vvvvv --sig "deployDeployer()" --rpc-url $<target_chain> --private-key $PRIVATE_KEY --broadcast
-
-# Then, run the following to deploy the protocol:
-$ forge script script/SD.s.sol:Deploy -vvvvv --sig "deployProtocol()" --rpc-url $<target_chain> --private-key $PRIVATE_KEY --broadcast
+```bash
+forge soldeer install @openzeppelin-contracts~5.0.2
 ```
 
-### Local deployment
+The last step is to update the remappings array in the `foundry.toml` config file.
 
-To deploy a test copy locally:
+### Nix
 
-```sh
-# Start local node
-$ anvil
+If using [`nix`](https://nixos.org/), the repository provides a development shell in the form of a flake.
 
-# In different terminal
-$ forge script script/SDDeployer.s.sol:Deploy -vvvvv --sig "deployDeployer()" --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY --broadcast
-$ forge script script/SDDeployer.s.sol:Deploy -vvvvv --sig "deploySDEX()" --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY --broadcast
+The devshell can be activated with the `nix develop` command.
 
-# Then, run the following to deploy the protocol:
-$ forge script script/SD.s.sol:Deploy -vvvvv --sig "deployProtocol()" --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY --broadcast
+To automatically activate the dev shell when opening the workspace, install [`direnv`](https://direnv.net/)
+(available on nixpkgs) and run the following command inside this folder:
 
-# Accept the ownership transfer (adjust if private key is not set as local admin)
-$ cast send <address> "acceptOwnership()" --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY
-
-# Set tags via utility script
-$ forge script script/SDSetTags.s.sol:SDSetTags -vvvvv --rpc-url $LOCAL_URL --private-key $PRIVATE_KEY --broadcast
+```console
+$ direnv allow
 ```
 
-## Development
+The environment provides the following tools:
 
-Note: Coverage must be run using the `--ir-minimum` flag to avoid stack-too-deep errors with the coverage tool. Example:
+- load `.env` file as environment variables
+- foundry
+- solc v0.8.26
+- slither
+- lcov
+- Node 20 + Typescript
+- Rust toolchain
+- `test_utils` dependencies
 
-```sh
-forge coverage --report lcov --ir-minimum
+## Usage
+
+### Tests
+
+To run tests, use `forge test -vvv` or `npm run test`.
+
+### Snapshots
+
+The CI checks that there was no unintended regression in gas usage. To do so, it relies on the `.gas-snapshot` file
+which records gas usage for all tests. When tests have changed, a new snapshot should be generated with the
+`npm run snapshot` command and commited to the repo.
+
+### Deployment scripts
+
+## Foundry Documentation
+
+For comprehensive details on Foundry, refer to the [Foundry book](https://book.getfoundry.sh/).
+
+### Helpful Resources
+
+- [Forge Cheat Codes](https://book.getfoundry.sh/cheatcodes/)
+- [Forge Commands](https://book.getfoundry.sh/reference/forge/)
+- [Cast Commands](https://book.getfoundry.sh/reference/cast/)
+
+## Code Standards and Tools
+
+### Forge Formatter
+
+Foundry comes with a built-in code formatter that we configured like this (default values were omitted):
+
+```toml
+[profile.default.fmt]
+line_length = 120 # Max line length
+bracket_spacing = true # Spacing the brackets in the code
+wrap_comments = true # use max line length for comments as well
+number_underscore = "thousands" # add underscore separators in large numbers
 ```
 
-## PWN Developer Documentation
+### Husky
 
-You can find in-depth information about the base smart contracts and their usage in the [PWN Developer Docs](https://dev-docs.pwn.xyz/).
+The pre-commit configuration for Husky runs `forge fmt --check` to check the code formatting before each commit. It also
+checks the gas snapshot and prevents committing if it has changed.
+
+In order to setup the git pre-commit hook, run `npm install`.
+
+### Slither
+
+Slither is integrated into a GitHub workflow and runs on every push to the master branch.
