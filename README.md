@@ -1,4 +1,4 @@
-# <h1 align="center">Ultimate Synthetic Delta Neutral - USDN</h1>
+# <h1 align="center">SPRO_contracts</h1>
 
 [![Main workflow](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/ci.yml/badge.svg)](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/ci.yml)
 [![Release Workflow](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/release.yml/badge.svg)](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/release.yml)
