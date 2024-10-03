@@ -49,8 +49,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
     function test_RevertWhen_InvalidLoanDuration() external proposalContractHasTag {
         // Set bad duration value
         uint256 minDuration = deployment.simpleLoan.MIN_LOAN_DURATION();
-        proposal.startTimestamp = uint40(block.timestamp);
-        proposal.defaultTimestamp = uint40(block.timestamp) + uint32(minDuration - 1);
+        proposal.defaultTimestamp = proposal.startTimestamp + uint32(minDuration - 1);
 
         // Create proposal
         _createERC20Proposal();

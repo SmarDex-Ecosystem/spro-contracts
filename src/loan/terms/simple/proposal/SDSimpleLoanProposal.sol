@@ -34,7 +34,7 @@ abstract contract SDSimpleLoanProposal {
         bool checkCollateralStateFingerprint;
         bytes32 collateralStateFingerprint;
         uint256 availableCreditLimit;
-        uint40 expiration;
+        uint40 startTimestamp;
         address proposer;
         uint256 nonceSpace;
         uint256 nonce;
@@ -260,8 +260,8 @@ abstract contract SDSimpleLoanProposal {
         }
 
         // Check proposal is not expired
-        if (block.timestamp >= proposal.expiration) {
-            revert Expired({ current: block.timestamp, expiration: proposal.expiration });
+        if (block.timestamp >= proposal.startTimestamp) {
+            revert Expired({ current: block.timestamp, expiration: proposal.startTimestamp });
         }
 
         // Check proposal is not revoked

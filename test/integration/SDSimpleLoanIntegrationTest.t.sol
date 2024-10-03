@@ -635,7 +635,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     function testFuzz_loanAccruedInterest(uint256 amount, uint256 apr, uint256 future) external {
         amount = bound(amount, ((500 * CREDIT_LIMIT) / 1e4), ((9500 * CREDIT_LIMIT) / 1e4));
         apr = bound(apr, 1, deployment.simpleLoan.MAX_ACCRUING_INTEREST_APR());
-        future = bound(future, 1 days, proposal.expiration);
+        future = bound(future, 1 days, proposal.startTimestamp);
 
         proposal.accruingInterestAPR = uint24(apr);
 

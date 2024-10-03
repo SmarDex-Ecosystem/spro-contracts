@@ -29,7 +29,7 @@ contract MakeProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SD
                 checkCollateralStateFingerprint: false,
                 collateralStateFingerprint: bytes32(0),
                 availableCreditLimit: CREDIT_LIMIT,
-                expiration: uint40(block.timestamp + 5 days),
+                startTimestamp: uint40(block.timestamp + 5 days),
                 proposer: borrower,
                 nonceSpace: 0,
                 nonce: 0,

@@ -42,7 +42,6 @@ contract SDSimpleLoanSimpleProposalTest is Test {
             accruingInterestAPR: 0,
             startTimestamp: uint40(block.timestamp),
             defaultTimestamp: uint40(block.timestamp) + 5 days,
-            expiration: uint40(block.timestamp + 7 days),
             proposer: addr,
             proposerSpecHash: keccak256(abi.encode(addr)),
             nonceSpace: 0,

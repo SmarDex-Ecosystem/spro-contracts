@@ -29,7 +29,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
                 checkCollateralStateFingerprint: false,
                 collateralStateFingerprint: bytes32(0),
                 availableCreditLimit: CREDIT_LIMIT,
-                expiration: uint40(block.timestamp + 5 days),
+                startTimestamp: uint40(block.timestamp + 5 days),
                 proposer: borrower,
                 nonceSpace: 0,
                 nonce: 0,
@@ -120,10 +120,10 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
     {
         _createERC20Proposal();
 
-        vm.warp(proposal.expiration);
+        vm.warp(proposal.startTimestamp);
 
         vm.prank(proposal.loanContract);
-        vm.expectRevert(abi.encodeWithSelector(Expired.selector, block.timestamp, proposal.expiration));
+        vm.expectRevert(abi.encodeWithSelector(Expired.selector, block.timestamp, proposal.startTimestamp));
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
     }
 
