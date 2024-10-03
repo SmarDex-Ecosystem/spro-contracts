@@ -21,7 +21,7 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
      * @dev EIP-712 simple proposal struct type hash.
      */
     bytes32 public constant PROPOSAL_TYPEHASH = keccak256(
-        "Proposal(address collateralAddress,uint256 collateralAmount,bool checkCollateralStateFingerprint,bytes32 collateralStateFingerprint,address creditAddress,uint256 availableCreditLimit,uint256 fixedInterestAmount,uint40 accruingInterestAPR,uint32 duration,uint40 expiration,address proposer,bytes32 proposerSpecHash,uint256 nonceSpace,uint256 nonce,address loanContract)"
+        "Proposal(address collateralAddress,uint256 collateralAmount,bool checkCollateralStateFingerprint,bytes32 collateralStateFingerprint,address creditAddress,uint256 availableCreditLimit,uint256 fixedInterestAmount,uint40 accruingInterestAPR,uint32 duration,uint40 startTimestamp,address proposer,bytes32 proposerSpecHash,uint256 nonceSpace,uint256 nonce,address loanContract)"
     );
 
     /**
@@ -40,7 +40,6 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
      * @param accruingInterestAPR Accruing interest APR with 2 decimals.
      * @param startTimestamp Proposal start timestamp in seconds.
      * @param defaultTimestamp Proposal default timestamp in seconds.
-     * @param expiration Proposal expiration timestamp in seconds.
      * @param proposer Address of a proposal signer. If `isOffer` is true, the proposer is the lender. If `isOffer` is
      * false, the proposer is the borrower.
      * @param proposerSpecHash Hash of a proposer specific data, which must be provided during a loan creation.
@@ -61,7 +60,6 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
         uint24 accruingInterestAPR;
         uint40 startTimestamp;
         uint40 defaultTimestamp;
-        uint40 expiration;
         address proposer;
         bytes32 proposerSpecHash;
         uint256 nonceSpace;
@@ -216,7 +214,7 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
                 checkCollateralStateFingerprint: proposal.checkCollateralStateFingerprint,
                 collateralStateFingerprint: proposal.collateralStateFingerprint,
                 availableCreditLimit: proposal.availableCreditLimit,
-                expiration: proposal.expiration,
+                startTimestamp: proposal.startTimestamp,
                 proposer: proposal.proposer,
                 nonceSpace: proposal.nonceSpace,
                 nonce: proposal.nonce,
@@ -247,7 +245,7 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
 
     /**
      * @notice Cancels a proposal and resets withdrawable collateral.
-     * @dev Revokes the nonce if still usable and block.timestamp is < proposal expiration.
+     * @dev Revokes the nonce if still usable and block.timestamp is < proposal startTimestamp.
      * @param proposalData Encoded proposal data.
      * @return proposer Address of the borrower/proposer.
      * @return collateral Address or the token.
@@ -278,7 +276,7 @@ contract SDSimpleLoanSimpleProposal is SDSimpleLoanProposal {
         delete withdrawableCollateral[proposalHash];
 
         // Revokes nonce if nonce is still usable
-        if (block.timestamp < proposal.expiration) {
+        if (block.timestamp < proposal.startTimestamp) {
             if (revokedNonce.isNonceUsable(proposal.proposer, proposal.nonceSpace, proposal.nonce)) {
                 revokedNonce.revokeNonce(proposal.proposer, proposal.nonceSpace, proposal.nonce);
             }
