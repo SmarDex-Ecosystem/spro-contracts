@@ -692,7 +692,10 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
 
         uint256 accruingMinutes = (loan.defaultTimestamp - loan.startTimestamp) / 1 minutes;
         uint256 accruedInterest = Math.mulDiv(
-            loan.principalAmount, uint256(loan.accruingInterestAPR) * accruingMinutes, ACCRUING_INTEREST_APR_DENOMINATOR
+            loan.principalAmount,
+            uint256(loan.accruingInterestAPR) * accruingMinutes,
+            ACCRUING_INTEREST_APR_DENOMINATOR,
+            Math.Rounding.Ceil
         );
         return loan.fixedInterestAmount + accruedInterest;
     }

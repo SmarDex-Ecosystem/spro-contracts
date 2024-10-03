@@ -20,6 +20,7 @@ library SDListedFee {
         pure
         returns (uint256 feeAmount)
     {
-        feeAmount = fixFeeListed + Math.mulDiv((variableFactor * tokenFactor) / WAD, loanAmount, WAD);
+        feeAmount =
+            fixFeeListed + Math.mulDiv((variableFactor * tokenFactor) / WAD, loanAmount, WAD, Math.Rounding.Ceil);
     }
 }

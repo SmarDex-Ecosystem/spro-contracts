@@ -665,7 +665,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         uint256 accruedInterest = Math.mulDiv(
             amount,
             uint256(loanInfo.accruingInterestAPR) * accruingMinutes,
-            deployment.simpleLoan.ACCRUING_INTEREST_APR_DENOMINATOR()
+            deployment.simpleLoan.ACCRUING_INTEREST_APR_DENOMINATOR(),
+            Math.Rounding.Ceil
         );
 
         assertEq(

@@ -3,6 +3,8 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+
 import { SDListedFee } from "pwn/loan/lib/SDListedFee.sol";
 
 contract SDFeeCalculator_CalculateFeeAmount_Test is Test {
@@ -46,8 +48,10 @@ contract SDFeeCalculator_CalculateFeeAmount_Test is Test {
         _loanAmount = bound(_loanAmount, 0, 1e30);
 
         uint256 feeAmount = SDListedFee.calculate(_ff, _vf, _tf, _loanAmount);
-        uint256 intermediate = (_vf * _tf) / 1e18;
+        uint256 intermediate = (_vf * _tf) / SDListedFee.WAD;
         uint256 expectedFee = _ff + (intermediate * _loanAmount) / 1e18;
-        assertEq(feeAmount, expectedFee);
+        assertApproxEqAbs(feeAmount, expectedFee, 1);
+        uint256 expectedFee2 = _ff + Math.mulDiv(intermediate, _loanAmount, SDListedFee.WAD, Math.Rounding.Ceil);
+        assertEq(feeAmount, expectedFee2);
     }
 }
