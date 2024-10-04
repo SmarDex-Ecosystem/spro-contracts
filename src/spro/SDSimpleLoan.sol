@@ -23,7 +23,7 @@ import { ISproTypes } from "src/interfaces/ISproTypes.sol";
  * @notice Contract managing a simple loan in PWN protocol.
  * @dev Acts as a vault for every loan created by this contract.
  */
-contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider, ISproErrors, ISproEvents {
+contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     string public constant VERSION = "1.0";
 
     /* ------------------------------------------------------------ */
@@ -641,39 +641,6 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider, ISproErro
     /* ------------------------------------------------------------ */
     /*                          GET LOAN                            */
     /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Loan information struct.
-     * @param status LOAN status.
-     * @param startTimestamp Unix timestamp (in seconds) of a loan creation date.
-     * @param defaultTimestamp Unix timestamp (in seconds) of a loan default date.
-     * @param borrower Address of a loan borrower.
-     * @param originalLender Address of a loan original lender.
-     * @param loanOwner Address of a LOAN token holder.
-     * @param accruingInterestAPR Accruing interest APR with 2 decimal places.
-     * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
-     * @param credit Address of a credit asset.
-     * @param collateral Address of a collateral asset.
-     * @param collateralAmount Amount of a collateral asset.
-     * @param originalSourceOfFunds Address of a source of funds for the loan. Original lender address, if the loan was
-     * funded directly, or a pool address from witch credit funds were withdrawn / borrowred.
-     * @param repaymentAmount Loan repayment amount in credit asset tokens.
-     */
-    struct LoanInfo {
-        uint8 status;
-        uint40 startTimestamp;
-        uint40 defaultTimestamp;
-        address borrower;
-        address originalLender;
-        address loanOwner;
-        uint24 accruingInterestAPR;
-        uint256 fixedInterestAmount;
-        address credit;
-        address collateral;
-        uint256 collateralAmount;
-        address originalSourceOfFunds;
-        uint256 repaymentAmount;
-    }
 
     /**
      * @notice Return a LOAN data struct associated with a loan id.

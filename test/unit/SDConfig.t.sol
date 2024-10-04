@@ -8,6 +8,9 @@ import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable
 
 import { SDConfig } from "spro/SDConfig.sol";
 
+import { ISproEvents } from "src/interfaces/ISproEvents.sol";
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+
 // forge inspect src/config/SDConfig.sol:SDConfig storage --pretty
 
 abstract contract SDConfigTest is Test {
@@ -158,7 +161,7 @@ contract SDConfig_SetUnlistedFee_Test is SDConfigTest {
 
     function test_shouldEmitEvent_FeeUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit SDConfig.FixFeeUnlistedUpdated(0, fee);
+        emit ISproEvents.FixFeeUnlistedUpdated(0, fee);
 
         vm.prank(owner);
         config.setFixFeeUnlisted(fee);
@@ -193,7 +196,7 @@ contract SDConfig_SetListedFee_Test is SDConfigTest {
 
     function test_shouldEmitEvent_FeeUpdated() external {
         vm.expectEmit(true, true, false, false);
-        emit SDConfig.FixFeeListedUpdated(0, fee);
+        emit ISproEvents.FixFeeListedUpdated(0, fee);
 
         vm.prank(owner);
         config.setFixFeeListed(fee);
@@ -243,7 +246,7 @@ contract SDConfig_SetListedToken_Test is SDConfigTest {
 
     function test_shouldEmitEvent_TokenFactorUpdated() external {
         vm.expectEmit(true, true, false, false);
-        emit SDConfig.ListedTokenUpdated(creditToken, factor);
+        emit ISproEvents.ListedTokenUpdated(creditToken, factor);
 
         vm.prank(owner);
         config.setListedToken(creditToken, factor);
@@ -276,7 +279,7 @@ contract SDConfig_PartialLendingThresholds_Test is SDConfigTest {
     function test_shouldFail_whenZeroPercentage() external {
         vm.startPrank(owner);
 
-        vm.expectRevert(SDConfig.ZeroPercentageValue.selector);
+        vm.expectRevert(ISproErrors.ZeroPercentageValue.selector);
         config.setPartialPositionPercentage(0);
     }
 
@@ -284,7 +287,7 @@ contract SDConfig_PartialLendingThresholds_Test is SDConfigTest {
         vm.assume(percentage > PERCENTAGE);
         vm.startPrank(owner);
 
-        vm.expectRevert(abi.encodeWithSelector(SDConfig.ExcessivePercentageValue.selector, percentage));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.ExcessivePercentageValue.selector, percentage));
         config.setPartialPositionPercentage(percentage);
     }
 }
@@ -309,7 +312,7 @@ contract SDConfig_SetLOANMetadataUri_Test is SDConfigTest {
     }
 
     function test_shouldFail_whenZeroLoanContract() external {
-        vm.expectRevert(abi.encodeWithSelector(SDConfig.ZeroLoanContract.selector));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.ZeroLoanContract.selector));
         vm.prank(owner);
         config.setLOANMetadataUri(address(0), tokenUri);
     }
@@ -333,7 +336,7 @@ contract SDConfig_SetLOANMetadataUri_Test is SDConfigTest {
 
     function test_shouldEmitEvent_LOANMetadataUriUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit SDConfig.LOANMetadataUriUpdated(loanContract, tokenUri);
+        emit ISproEvents.LOANMetadataUriUpdated(loanContract, tokenUri);
 
         vm.prank(owner);
         config.setLOANMetadataUri(loanContract, tokenUri);
@@ -374,7 +377,7 @@ contract SDConfig_SetDefaultLOANMetadataUri_Test is SDConfigTest {
 
     function test_shouldEmitEvent_DefaultLOANMetadataUriUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit SDConfig.DefaultLOANMetadataUriUpdated(tokenUri);
+        emit ISproEvents.DefaultLOANMetadataUriUpdated(tokenUri);
 
         vm.prank(owner);
         config.setDefaultLOANMetadataUri(tokenUri);
@@ -469,7 +472,7 @@ contract SDConfig_RegisterStateFingerprintComputer_Test is SDConfigTest {
         assumeAddressIsNot(computer, AddressType.ForgeAddress, AddressType.Precompile, AddressType.ZeroAddress);
         _mockSupportsToken(computer, asset, false);
 
-        vm.expectRevert(abi.encodeWithSelector(SDConfig.InvalidComputerContract.selector, computer, asset));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidComputerContract.selector, computer, asset));
         vm.prank(owner);
         config.registerStateFingerprintComputer(asset, computer);
     }

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
-import { Expired, AddressMissingHubTag } from "src/PWNErrors.sol";
 import { SigUtils } from "test/utils/SigUtils.sol";
 import { IPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import {
@@ -14,24 +13,9 @@ import {
     PWNRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+
 contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationTest {
-    function test_RevertWhen_NoProposalLoanTag() external {
-        _createERC20Proposal();
-
-        // Remove LOAN_PROPOSAL tag for proposal contract
-        address[] memory addrs = new address[](1);
-        addrs[0] = address(deployment.simpleLoanSimpleProposal);
-
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
-        SDSimpleLoan.LenderSpec memory lenderSpec = _buildLenderSpec(true);
-
-        vm.prank(lender);
-        vm.expectRevert(
-            abi.encodeWithSelector(AddressMissingHubTag.selector, address(deployment.simpleLoanSimpleProposal))
-        );
-        deployment.simpleLoan.createLOAN(proposalSpec, lenderSpec, "");
-    }
-
     modifier proposalContractHasTag() {
         _;
     }
@@ -51,7 +35,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         vm.prank(lender);
         vm.expectRevert(
             abi.encodeWithSelector(
-                SDSimpleLoan.InvalidDuration.selector, proposal.defaultTimestamp - proposal.startTimestamp, minDuration
+                ISproErrors.InvalidDuration.selector, proposal.defaultTimestamp - proposal.startTimestamp, minDuration
             )
         );
         deployment.simpleLoan.createLOAN(proposalSpec, lenderSpec, "");
@@ -70,7 +54,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
 
         vm.prank(lender);
         vm.expectRevert(
-            abi.encodeWithSelector(SDSimpleLoan.InterestAPROutOfBounds.selector, proposal.accruingInterestAPR, maxApr)
+            abi.encodeWithSelector(ISproErrors.InterestAPROutOfBounds.selector, proposal.accruingInterestAPR, maxApr)
         );
         deployment.simpleLoan.createLOAN(proposalSpec, lenderSpec, "");
     }

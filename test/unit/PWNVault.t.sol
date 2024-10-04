@@ -4,6 +4,8 @@ pragma solidity ^0.8.26;
 import { Test } from "forge-std/Test.sol";
 
 import { PWNVault, IPoolAdapter, Permit } from "spro/PWNVault.sol";
+import { ISproEvents } from "src/interfaces/ISproEvents.sol";
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { T20 } from "test/helper/T20.sol";
@@ -63,7 +65,7 @@ abstract contract PWNVaultTest is Test {
 contract PWNVault_Pull_Test is PWNVaultTest {
     function test_pullEmitEvent() external {
         vm.expectEmit(true, true, true, true);
-        emit PWNVault.VaultPull(token, alice, 42);
+        emit ISproEvents.VaultPull(token, alice, 42);
         vault.pull(token, 42, alice);
     }
 }
@@ -75,7 +77,7 @@ contract PWNVault_Pull_Test is PWNVaultTest {
 contract PWNVault_Push_Test is PWNVaultTest {
     function test_pushEmitEvent() external {
         vm.expectEmit(true, true, true, true);
-        emit PWNVault.VaultPush(token, alice, 99_999_999);
+        emit ISproEvents.VaultPush(token, alice, 99_999_999);
         vault.push(token, 99_999_999, alice);
     }
 }
@@ -87,7 +89,7 @@ contract PWNVault_Push_Test is PWNVaultTest {
 contract PWNVault_PushFrom_Test is PWNVaultTest {
     function test_pushFromEmitEvent() external {
         vm.expectEmit(true, true, true, true);
-        emit PWNVault.VaultPushFrom(token, alice, bob, 42);
+        emit ISproEvents.VaultPushFrom(token, alice, bob, 42);
         vault.pushFrom(token, 42, alice, bob);
     }
 }
@@ -123,13 +125,13 @@ contract PWNVault_WithdrawFromPool_Test is PWNVaultTest {
 
     function test_shouldFail_whenIncompleteTransaction() external {
         vm.mockCall(asset, abi.encodeWithSignature("balanceOf(address)", alice), abi.encode(amount));
-        vm.expectRevert(abi.encodeWithSelector(PWNVault.InvalidAmountTransfer.selector));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidAmountTransfer.selector));
         vault.withdrawFromPool(asset, amount, poolAdapter, pool, alice);
     }
 
     function test_shouldEmitEvent_PoolWithdraw() external {
         vm.expectEmit();
-        emit PWNVault.PoolWithdraw(asset, address(poolAdapter), pool, alice, amount);
+        emit ISproEvents.PoolWithdraw(asset, address(poolAdapter), pool, alice, amount);
 
         vault.withdrawFromPool(asset, amount, poolAdapter, pool, alice);
     }
@@ -170,13 +172,13 @@ contract PWNVault_SupplyToPool_Test is PWNVaultTest {
 
     function test_shouldFail_whenIncompleteTransaction() external {
         vm.mockCall(asset, abi.encodeWithSignature("balanceOf(address)", address(vault)), abi.encode(amount));
-        vm.expectRevert(abi.encodeWithSelector(PWNVault.InvalidAmountTransfer.selector));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidAmountTransfer.selector));
         vault.supplyToPool(asset, amount, poolAdapter, pool, alice);
     }
 
     function test_shouldEmitEvent_PoolSupply() external {
         vm.expectEmit();
-        emit PWNVault.PoolSupply(asset, address(poolAdapter), pool, alice, amount);
+        emit ISproEvents.PoolSupply(asset, address(poolAdapter), pool, alice, amount);
 
         vault.supplyToPool(asset, amount, poolAdapter, pool, alice);
     }

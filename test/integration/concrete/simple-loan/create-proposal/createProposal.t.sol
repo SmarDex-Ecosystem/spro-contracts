@@ -11,22 +11,9 @@ import {
     PWNRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 
-import { Expired, AddressMissingHubTag } from "src/PWNErrors.sol";
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
 contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationTest {
-    function test_RevertWhen_NoProposalLoanTag() external {
-        // Remove LOAN_PROPOSAL tag for proposal contract
-        address[] memory addrs = new address[](1);
-        addrs[0] = address(deployment.simpleLoanSimpleProposal);
-
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
-        vm.prank(borrower);
-        vm.expectRevert(
-            abi.encodeWithSelector(AddressMissingHubTag.selector, address(deployment.simpleLoanSimpleProposal))
-        );
-        deployment.simpleLoan.createProposal(proposalSpec);
-    }
-
     modifier proposalContractHasTag() {
         _;
     }
@@ -37,7 +24,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
 
     function test_RevertWhen_CallerIsNotProposer() external proposalContractHasTag whenValidProposalData {
         SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
-        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoan.CallerIsNotStatedProposer.selector, borrower));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.CallerIsNotStatedProposer.selector, borrower));
         deployment.simpleLoan.createProposal(proposalSpec);
     }
 
@@ -129,7 +116,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
 
         vm.prank(borrower);
-        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanSimpleProposal.InvalidDurationStartTime.selector));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidDurationStartTime.selector));
         deployment.simpleLoan.createProposal(proposalSpec);
     }
 }

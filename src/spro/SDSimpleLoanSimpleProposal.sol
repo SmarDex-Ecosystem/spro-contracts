@@ -230,7 +230,7 @@ contract SDSimpleLoanSimpleProposal is ISproErrors, ISproEvents {
         // Create loan terms object
         uint256 collateralUsed_ = (creditAmount * proposal.collateralAmount) / proposal.availableCreditLimit;
 
-        loanTerms = SDSimpleLoan.Terms({
+        loanTerms = Terms({
             lender: acceptor,
             borrower: proposal.proposer,
             startTimestamp: proposal.startTimestamp,

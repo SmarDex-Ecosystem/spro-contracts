@@ -7,11 +7,6 @@ pragma solidity ^0.8.26;
  */
 interface ISproErrors {
     /**
-     * @notice Thrown when an address is missing a PWN Hub tag.
-     */
-    error AddressMissingHubTag(address addr, bytes32 tag);
-
-    /**
      * @notice Thrown when a proposal is expired.
      */
     error Expired(uint256 current, uint256 expiration);

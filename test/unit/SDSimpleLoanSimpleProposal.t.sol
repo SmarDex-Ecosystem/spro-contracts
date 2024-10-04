@@ -3,6 +3,8 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 import { SDSimpleLoanSimpleProposal, SDSimpleLoan } from "spro/SDSimpleLoanSimpleProposal.sol";
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
 contract SDSimpleLoanSimpleProposalHarness is SDSimpleLoanSimpleProposal {
     constructor(address _revokedNonce, address _config) SDSimpleLoanSimpleProposal(_revokedNonce, _config) { }
@@ -23,7 +25,7 @@ contract SDSimpleLoanSimpleProposalTest is Test {
     }
 
     function testFuzz_encodeProposalData(address addr) external view {
-        SDSimpleLoanSimpleProposal.Proposal memory proposal = SDSimpleLoanSimpleProposal.Proposal({
+        SDSimpleLoanSimpleProposal.Proposal memory proposal = ISproTypes.Proposal({
             collateralAddress: addr,
             collateralAmount: 1e20,
             checkCollateralStateFingerprint: false,
@@ -47,7 +49,7 @@ contract SDSimpleLoanSimpleProposalTest is Test {
     function testFuzz_shouldFail_partialLoan(uint256 a, uint256 l) external {
         vm.assume(a != l);
 
-        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanSimpleProposal.OnlyCompleteLendingForNFTs.selector, a, l));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.OnlyCompleteLendingForNFTs.selector, a, l));
         harness.exposed_checkCompleteLoan(a, l);
     }
 }

@@ -16,6 +16,9 @@ import {
 import { T20 } from "test/helper/T20.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+
 contract SDSimpleLoanHarness is SDSimpleLoan {
     constructor(address _lt, address _c, address _rn) SDSimpleLoan(_lt, _c, _rn) { }
 
@@ -69,7 +72,7 @@ contract SDSimpleLoanTest is Test {
 
     function testFuzz_getLenderSpecHash(address source, uint256 amount, bytes memory data) external view {
         SDSimpleLoan.LenderSpec memory ls =
-            SDSimpleLoan.LenderSpec({ sourceOfFunds: source, creditAmount: amount, permitData: data });
+            ISproTypes.LenderSpec({ sourceOfFunds: source, creditAmount: amount, permitData: data });
         bytes32 lenderSpecHash = keccak256(abi.encode(ls));
 
         assertEq(simpleLoan.getLenderSpecHash(ls), lenderSpecHash);
@@ -100,11 +103,11 @@ contract SDSimpleLoanTest is Test {
         address credit_;
         SDSimpleLoan.Terms memory loanTerms;
         SDSimpleLoan.LenderSpec memory lenderSpec =
-            SDSimpleLoan.LenderSpec({ sourceOfFunds: source, creditAmount: amount, permitData: data });
+            ISproTypes.LenderSpec({ sourceOfFunds: source, creditAmount: amount, permitData: data });
 
         vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(address(0)));
 
-        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoan.InvalidSourceOfFunds.selector, lenderSpec.sourceOfFunds));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidSourceOfFunds.selector, lenderSpec.sourceOfFunds));
         simpleLoan.exposed_withdrawCreditFromPool(credit_, amount, loanTerms, lenderSpec);
     }
 
@@ -115,22 +118,22 @@ contract SDSimpleLoanTest is Test {
     }
 
     function test_shouldFail_checkLoanCanBeRepaid_NonExistingLoan() external {
-        vm.expectRevert(SDSimpleLoan.NonExistingLoan.selector);
+        vm.expectRevert(ISproErrors.NonExistingLoan.selector);
         simpleLoan.exposed_checkLoanCanBeRepaid(0, 0);
 
-        vm.expectRevert(SDSimpleLoan.LoanNotRunning.selector);
+        vm.expectRevert(ISproErrors.LoanNotRunning.selector);
         simpleLoan.exposed_checkLoanCanBeRepaid(1, 0);
     }
 
     function test_shouldFail_checkLoanCanBeRepaid_LoanNotRunning() external {
-        vm.expectRevert(SDSimpleLoan.LoanNotRunning.selector);
+        vm.expectRevert(ISproErrors.LoanNotRunning.selector);
         simpleLoan.exposed_checkLoanCanBeRepaid(1, 0);
     }
 
     function test_shouldFail_checkLoanCanBeRepaid_LoanDefaulted() external {
         skip(30 days);
         uint40 ts = uint40(block.timestamp - 1);
-        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoan.LoanDefaulted.selector, ts));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.LoanDefaulted.selector, ts));
         simpleLoan.exposed_checkLoanCanBeRepaid(2, ts);
     }
 
@@ -141,7 +144,7 @@ contract SDSimpleLoanTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                SDSimpleLoan.DifferentCreditAddress.selector, loanCreditAddress, expectedCreditAddress
+                ISproErrors.DifferentCreditAddress.selector, loanCreditAddress, expectedCreditAddress
             )
         );
         simpleLoan.exposed_checkLoanCreditAddress(loanCreditAddress, expectedCreditAddress);

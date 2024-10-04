@@ -15,6 +15,9 @@ import {
     PWNRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+
 contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     function setUp() public override {
         super.setUp();
@@ -129,7 +132,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     function test_PartialLoan_GtCreditThreshold() external {
         // Create the proposal
         vm.prank(borrower);
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _createERC20Proposal();
+        ISproTypes.ProposalSpec memory proposalSpec = _createERC20Proposal();
 
         // 97% of available credit limit
         uint256 amount = 9700 * CREDIT_LIMIT / 1e4;
@@ -139,13 +142,13 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.startPrank(lender);
         credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
 
-        SDSimpleLoan.LenderSpec memory lenderSpec =
-            SDSimpleLoan.LenderSpec({ sourceOfFunds: lender, creditAmount: amount, permitData: "" });
+        ISproTypes.LenderSpec memory lenderSpec =
+            ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: amount, permitData: "" });
 
         // Create loan, expecting revert
         vm.expectRevert(
             abi.encodeWithSelector(
-                SDSimpleLoanSimpleProposal.CreditAmountLeavesTooLittle.selector,
+                ISproErrors.CreditAmountLeavesTooLittle.selector,
                 amount,
                 (PERCENTAGE - DEFAULT_THRESHOLD) * CREDIT_LIMIT / 1e4
             )
@@ -165,13 +168,13 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Create the proposal
         SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
 
-        vm.expectRevert(SDSimpleLoanSimpleProposal.ProposalAlreadyExists.selector);
+        vm.expectRevert(ISproErrors.ProposalAlreadyExists.selector);
         vm.prank(borrower);
         deployment.simpleLoan.createProposal(proposalSpec);
     }
 
     function test_shouldFail_getProposalCreditStatus_ProposalNotMade() external {
-        vm.expectRevert(SDSimpleLoanSimpleProposal.ProposalNotMade.selector);
+        vm.expectRevert(ISproErrors.ProposalNotMade.selector);
         deployment.simpleLoanSimpleProposal.getProposalCreditStatus(proposal);
     }
 
@@ -370,8 +373,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             credit.approve(address(deployment.simpleLoan), minCreditAmount);
 
             // Lender spec
-            SDSimpleLoan.LenderSpec memory lenderSpec =
-                SDSimpleLoan.LenderSpec({ sourceOfFunds: lenders[i], creditAmount: minCreditAmount, permitData: "" });
+            ISproTypes.LenderSpec memory lenderSpec =
+                ISproTypes.LenderSpec({ sourceOfFunds: lenders[i], creditAmount: minCreditAmount, permitData: "" });
 
             // Create loan
             loanIds[i] =
@@ -416,8 +419,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             creditPermit.approve(address(deployment.simpleLoan), minCreditAmount);
 
             // Lender spec
-            SDSimpleLoan.LenderSpec memory lenderSpec =
-                SDSimpleLoan.LenderSpec({ sourceOfFunds: lenders[i], creditAmount: minCreditAmount, permitData: "" });
+            ISproTypes.LenderSpec memory lenderSpec =
+                ISproTypes.LenderSpec({ sourceOfFunds: lenders[i], creditAmount: minCreditAmount, permitData: "" });
 
             // Create loan
             loanIds[i] =
@@ -472,12 +475,12 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Initial lender repays loan
         vm.startPrank(lender);
-        vm.expectRevert(SDSimpleLoan.CallerNotLOANTokenHolder.selector);
+        vm.expectRevert(ISproErrors.CallerNotLOANTokenHolder.selector);
         deployment.simpleLoan.claimLOAN(loanId);
     }
 
     function test_shouldFail_claimLOAN_RunningAndExpired() external {
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _createERC20Proposal();
+        ISproTypes.ProposalSpec memory proposalSpec = _createERC20Proposal();
 
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
@@ -536,7 +539,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Try to repay loan
         vm.startPrank(lender);
-        vm.expectRevert(SDSimpleLoan.LoanRunning.selector);
+        vm.expectRevert(ISproErrors.LoanRunning.selector);
         deployment.simpleLoan.claimLOAN(loanId);
     }
 
@@ -580,7 +583,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.stopPrank();
 
         vm.prank(address(deployment.simpleLoan));
-        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoan.InvalidSourceOfFunds.selector, address(this)));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidSourceOfFunds.selector, address(this)));
         deployment.simpleLoan.tryClaimRepaidLOAN(id, CREDIT_LIMIT, lender);
     }
 
@@ -639,7 +642,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Create the proposal
         vm.prank(borrower);
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _createERC20Proposal();
+        ISproTypes.ProposalSpec memory proposalSpec = _createERC20Proposal();
 
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
@@ -647,8 +650,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
 
         // Create loan
-        SDSimpleLoan.LenderSpec memory lenderSpec =
-            SDSimpleLoan.LenderSpec({ sourceOfFunds: lender, creditAmount: amount, permitData: "" });
+        ISproTypes.LenderSpec memory lenderSpec =
+            ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: amount, permitData: "" });
 
         uint256 loanId =
             deployment.simpleLoan.createLOAN({ proposalSpec: proposalSpec, lenderSpec: lenderSpec, extra: "" });
@@ -656,7 +659,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // skip to the future
         skip(future);
 
-        (SDSimpleLoan.LoanInfo memory loanInfo) = deployment.simpleLoan.getLOAN(loanId);
+        (ISproTypes.LoanInfo memory loanInfo) = deployment.simpleLoan.getLOAN(loanId);
 
         // Assertions
         uint256 accruingMinutes = (loanInfo.defaultTimestamp - loanInfo.startTimestamp) / 1 minutes;

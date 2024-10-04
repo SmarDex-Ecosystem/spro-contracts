@@ -10,7 +10,6 @@ import {
     PWNLOAN,
     PWNRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
-import { AddressMissingHubTag } from "src/PWNErrors.sol";
 import { SDSimpleLoanSimpleProposal } from "spro/SDSimpleLoanSimpleProposal.sol";
 
 contract CancelProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SDBaseIntegrationTest {
@@ -44,12 +43,6 @@ contract CancelProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
 
     modifier loanContractIsCaller() {
         _;
-    }
-
-    function test_RevertWhen_LoanContractNotActiveLoanTag() external whenProposalDataDecodes loanContractIsCaller {
-        vm.expectRevert(abi.encodeWithSelector(AddressMissingHubTag.selector, proposal.loanContract));
-        vm.prank(proposal.loanContract);
-        deployment.simpleLoanSimpleProposal.cancelProposal(abi.encode(proposal));
     }
 
     modifier loanContractHasActiveLoanTag() {

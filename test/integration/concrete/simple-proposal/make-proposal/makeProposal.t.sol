@@ -12,7 +12,7 @@ import {
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 
 import { SDSimpleLoanSimpleProposal } from "spro/SDSimpleLoanSimpleProposal.sol";
-import { AddressMissingHubTag } from "src/PWNErrors.sol";
+import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 
 contract MakeProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SDBaseIntegrationTest {
     function test_RevertWhen_DataCannotBeDecoded() external {
@@ -56,7 +56,7 @@ contract MakeProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SD
 
         // Emit event
         vm.expectEmit(true, true, true, false);
-        emit SDSimpleLoanSimpleProposal.ProposalMade(proposalHash, proposal.proposer, proposal);
+        emit ISproEvents.ProposalMade(proposalHash, proposal.proposer, proposal);
 
         vm.prank(proposal.loanContract);
         deployment.simpleLoanSimpleProposal.makeProposal(abi.encode(proposal));

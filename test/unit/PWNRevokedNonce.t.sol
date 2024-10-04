@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
-import { PWNRevokedNonce, AddressMissingHubTag } from "spro/PWNRevokedNonce.sol";
+import { PWNRevokedNonce } from "spro/PWNRevokedNonce.sol";
 
 abstract contract PWNRevokedNonceTest is Test {
     bytes32 internal constant REVOKED_NONCE_SLOT = bytes32(uint256(0)); // `_revokedNonce` mapping position
@@ -169,14 +169,6 @@ contract PWNRevokedNonce_RevokeNonceWithOwner_Test is PWNRevokedNonceTest {
         );
     }
 
-    function testFuzz_shouldFail_whenCallerIsDoesNotHaveAccessTag(address caller) external {
-        vm.assume(caller != accessEnabledAddress);
-
-        vm.expectRevert(abi.encodeWithSelector(AddressMissingHubTag.selector, caller, accessTag));
-        vm.prank(caller);
-        revokedNonce.revokeNonce(caller, 1);
-    }
-
     function testFuzz_shouldFail_whenNonceAlreadyRevoked(address owner, uint256 nonceSpace, uint256 nonce) external {
         vm.store(address(revokedNonce), _nonceSpaceSlot(owner), bytes32(nonceSpace));
         vm.store(address(revokedNonce), _revokedNonceSlot(owner, nonceSpace, nonce), bytes32(uint256(1)));
@@ -220,14 +212,6 @@ contract PWNRevokedNonce_RevokeNonceWithNonceSpaceAndOwner_Test is PWNRevokedNon
         vm.mockCall(
             hub, abi.encodeWithSignature("hasTag(address,bytes32)", accessEnabledAddress, accessTag), abi.encode(true)
         );
-    }
-
-    function testFuzz_shouldFail_whenCallerIsDoesNotHaveAccessTag(address caller) external {
-        vm.assume(caller != accessEnabledAddress);
-
-        vm.expectRevert(abi.encodeWithSelector(AddressMissingHubTag.selector, caller, accessTag));
-        vm.prank(caller);
-        revokedNonce.revokeNonce(caller, 1, 1);
     }
 
     function testFuzz_shouldFail_whenNonceAlreadyRevoked(address owner, uint256 nonceSpace, uint256 nonce) external {

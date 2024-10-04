@@ -18,6 +18,8 @@ import {
     PWNRevokedNonce
 } from "test/SDDeploymentTest.t.sol";
 
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
+
 abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     T20 t20;
     T20 credit;
@@ -78,7 +80,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         vm.label(address(poolAdapter), "poolAdapter");
 
         // Deploy protocol contracts
-        proposal = SDSimpleLoanSimpleProposal.Proposal({
+        proposal = ISproTypes.Proposal({
             collateralAddress: address(t20),
             collateralAmount: COLLATERAL_AMOUNT,
             checkCollateralStateFingerprint: false,
@@ -176,10 +178,10 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         deployment.simpleLoan.cancelProposal(_buildProposalSpec(_proposal));
     }
 
-    function _buildLenderSpec(bool complete) internal view returns (SDSimpleLoan.LenderSpec memory lenderSpec) {
+    function _buildLenderSpec(bool complete) internal view returns (ISproTypes.LenderSpec memory lenderSpec) {
         lenderSpec = complete
-            ? SDSimpleLoan.LenderSpec({ sourceOfFunds: lender, creditAmount: CREDIT_LIMIT, permitData: "" })
-            : SDSimpleLoan.LenderSpec({ sourceOfFunds: lender, creditAmount: CREDIT_AMOUNT, permitData: "" });
+            ? ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: CREDIT_LIMIT, permitData: "" })
+            : ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: CREDIT_AMOUNT, permitData: "" });
     }
 
     function _buildProposalSpec(SDSimpleLoanSimpleProposal.Proposal memory _proposal)
@@ -187,7 +189,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         view
         returns (SDSimpleLoan.ProposalSpec memory proposalSpec)
     {
-        return SDSimpleLoan.ProposalSpec({
+        return ISproTypes.ProposalSpec({
             proposalContract: address(deployment.simpleLoanSimpleProposal),
             proposalData: abi.encode(_proposal)
         });
