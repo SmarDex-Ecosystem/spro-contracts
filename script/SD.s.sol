@@ -13,13 +13,11 @@ import {
     SDDeployments,
     SDConfig,
     IPWNDeployer,
-    PWNHub,
-    PWNHubTags,
     SDSimpleLoan,
     SDSimpleLoanSimpleProposal,
     PWNLOAN,
     PWNRevokedNonce
-} from "pwn/SDDeployments.sol";
+} from "src/SDDeployments.sol";
 
 library SDContractDeployerParams {
     string internal constant VERSION = "1.0";
@@ -133,30 +131,17 @@ contract Deploy is ScriptUtils, SDDeployments {
         vm.stopBroadcast();
 
         vm.startBroadcast();
-        // - Hub
-        deployment.hub = PWNHub(
-            _deployAndTransferOwnership({ // Need ownership acceptance from the new owner
-                salt: SDContractDeployerParams.HUB,
-                owner: deployment.protocolAdmin,
-                bytecode: type(PWNHub).creationCode
-            })
-        );
 
         // - LOAN token
         deployment.loanToken = PWNLOAN(
-            _deploy({
-                salt: SDContractDeployerParams.LOAN,
-                bytecode: abi.encodePacked(type(PWNLOAN).creationCode, abi.encode(address(deployment.hub)))
-            })
+            _deploy({ salt: SDContractDeployerParams.LOAN, bytecode: abi.encodePacked(type(PWNLOAN).creationCode) })
         );
 
         // - Revoked nonces
         deployment.revokedNonce = PWNRevokedNonce(
             _deploy({
                 salt: SDContractDeployerParams.REVOKED_NONCE,
-                bytecode: abi.encodePacked(
-                    type(PWNRevokedNonce).creationCode, abi.encode(address(deployment.hub), PWNHubTags.NONCE_MANAGER)
-                )
+                bytecode: abi.encodePacked(type(PWNRevokedNonce).creationCode)
             })
         );
 
@@ -166,12 +151,7 @@ contract Deploy is ScriptUtils, SDDeployments {
                 salt: SDContractDeployerParams.SIMPLE_LOAN,
                 bytecode: abi.encodePacked(
                     type(SDSimpleLoan).creationCode,
-                    abi.encode(
-                        address(deployment.hub),
-                        address(deployment.loanToken),
-                        address(deployment.config),
-                        address(deployment.revokedNonce)
-                    )
+                    abi.encode(address(deployment.loanToken), address(deployment.config), address(deployment.revokedNonce))
                 )
             })
         );
@@ -182,7 +162,7 @@ contract Deploy is ScriptUtils, SDDeployments {
                 salt: SDContractDeployerParams.SIMPLE_LOAN_SIMPLE_PROPOSAL,
                 bytecode: abi.encodePacked(
                     type(SDSimpleLoanSimpleProposal).creationCode,
-                    abi.encode(address(deployment.hub), address(deployment.revokedNonce), address(deployment.config))
+                    abi.encode(address(deployment.revokedNonce), address(deployment.config))
                 )
             })
         );
@@ -195,7 +175,6 @@ contract Deploy is ScriptUtils, SDDeployments {
         console2.log("SDEX:", address(deployment.sdex));
         console2.log("SDConfig - singleton:", configSingleton);
         console2.log("SDConfig - proxy:", address(deployment.config));
-        console2.log("PWNHub:", address(deployment.hub));
         console2.log("PWNLOAN:", address(deployment.loanToken));
         console2.log("PWNRevokedNonce:", address(deployment.revokedNonce));
         console2.log("SDSimpleLoan:", address(deployment.simpleLoan));
@@ -204,7 +183,6 @@ contract Deploy is ScriptUtils, SDDeployments {
         // Writes deployment addresses to deployments JSON - @note currently points to sdLatest.json
         _writeDeploymentAddress(configSingleton, ".configSingleton");
         _writeDeploymentAddress(address(deployment.config), ".config");
-        _writeDeploymentAddress(address(deployment.hub), ".hub");
         _writeDeploymentAddress(address(deployment.loanToken), ".loanToken");
         _writeDeploymentAddress(address(deployment.revokedNonce), ".revokedNonce");
         _writeDeploymentAddress(address(deployment.simpleLoan), ".simpleLoan");

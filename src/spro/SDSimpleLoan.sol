@@ -4,20 +4,17 @@ pragma solidity ^0.8.26;
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { SDConfig } from "pwn/config/SDConfig.sol";
-import { PWNHub } from "pwn/hub/PWNHub.sol";
-import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
-import { IERC5646 } from "pwn/interfaces/IERC5646.sol";
-import { IPoolAdapter } from "pwn/interfaces/IPoolAdapter.sol";
-import { IPWNLoanMetadataProvider } from "pwn/interfaces/IPWNLoanMetadataProvider.sol";
-import { SDListedFee } from "pwn/loan/lib/SDListedFee.sol";
-import { SDSimpleLoanProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
-import { PWNLOAN } from "pwn/loan/token/PWNLOAN.sol";
-import { Permit, InvalidPermitOwner, InvalidPermitAsset } from "pwn/loan/vault/Permit.sol";
-import { PWNVault } from "pwn/loan/vault/PWNVault.sol";
-import { PWNRevokedNonce } from "pwn/nonce/PWNRevokedNonce.sol";
-import { Expired, AddressMissingHubTag } from "pwn/PWNErrors.sol";
-import { SDSimpleLoanSimpleProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanSimpleProposal.sol";
+import { SDConfig } from "spro/SDConfig.sol";
+import { IERC5646 } from "src/interfaces/IERC5646.sol";
+import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
+import { IPWNLoanMetadataProvider } from "src/interfaces/IPWNLoanMetadataProvider.sol";
+import { SDListedFee } from "src/libraries/SDListedFee.sol";
+import { PWNLOAN } from "spro/PWNLOAN.sol";
+import { Permit, InvalidPermitOwner, InvalidPermitAsset } from "spro/Permit.sol";
+import { PWNVault } from "spro/PWNVault.sol";
+import { PWNRevokedNonce } from "spro/PWNRevokedNonce.sol";
+import { Expired } from "src/PWNErrors.sol";
+import { SDSimpleLoanSimpleProposal } from "spro/SDSimpleLoanSimpleProposal.sol";
 
 /**
  * @title SD Simple Loan -- forked from PWNSimpleLoan.sol
@@ -51,7 +48,6 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         )
     );
 
-    PWNHub public immutable hub;
     PWNLOAN public immutable loanToken;
     SDConfig public immutable config;
     PWNRevokedNonce public immutable revokedNonce;
@@ -244,8 +240,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
 
-    constructor(address _hub, address _loanToken, address _config, address _revokedNonce) {
-        hub = PWNHub(_hub);
+    constructor(address _loanToken, address _config, address _revokedNonce) {
         loanToken = PWNLOAN(_loanToken);
         config = SDConfig(_config);
         revokedNonce = PWNRevokedNonce(_revokedNonce);
@@ -273,14 +268,9 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
      * @param proposalSpec Proposal specification struct.
      */
     function createProposal(ProposalSpec calldata proposalSpec) external {
-        // Check provided proposal contract
-        if (!hub.hasTag(proposalSpec.proposalContract, PWNHubTags.LOAN_PROPOSAL)) {
-            revert AddressMissingHubTag({ addr: proposalSpec.proposalContract, tag: PWNHubTags.LOAN_PROPOSAL });
-        }
-
         // Make the proposal
         (address proposer, address collateral, uint256 collateralAmount, address creditAddress, uint256 creditLimit) =
-            SDSimpleLoanProposal(proposalSpec.proposalContract).makeProposal(proposalSpec.proposalData);
+            SDSimpleLoanSimpleProposal(proposalSpec.proposalContract).makeProposal(proposalSpec.proposalData);
 
         // Check caller is the proposer
         if (msg.sender != proposer) {
@@ -310,13 +300,8 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
      * @param proposalSpec Proposal specification struct.
      */
     function cancelProposal(ProposalSpec calldata proposalSpec) external {
-        // Check provided proposal contract
-        if (!hub.hasTag(proposalSpec.proposalContract, PWNHubTags.LOAN_PROPOSAL)) {
-            revert AddressMissingHubTag({ addr: proposalSpec.proposalContract, tag: PWNHubTags.LOAN_PROPOSAL });
-        }
-
         (address proposer, address collateral, uint256 collateralAmount) =
-            SDSimpleLoanProposal(proposalSpec.proposalContract).cancelProposal(proposalSpec.proposalData);
+            SDSimpleLoanSimpleProposal(proposalSpec.proposalContract).cancelProposal(proposalSpec.proposalData);
 
         // The caller must be the proposer
         if (msg.sender != proposer) revert CallerNotProposer();
@@ -341,13 +326,8 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         external
         returns (uint256 loanId)
     {
-        // Check provided proposal contract
-        if (!hub.hasTag(proposalSpec.proposalContract, PWNHubTags.LOAN_PROPOSAL)) {
-            revert AddressMissingHubTag({ addr: proposalSpec.proposalContract, tag: PWNHubTags.LOAN_PROPOSAL });
-        }
-
         // Accept proposal and get loan terms
-        (bytes32 proposalHash, Terms memory loanTerms) = SDSimpleLoanProposal(proposalSpec.proposalContract)
+        (bytes32 proposalHash, Terms memory loanTerms) = SDSimpleLoanSimpleProposal(proposalSpec.proposalContract)
             .acceptProposal({
             acceptor: msg.sender,
             creditAmount: lenderSpec.creditAmount,

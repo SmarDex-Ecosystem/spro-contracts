@@ -5,7 +5,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { SDListedFee } from "pwn/loan/lib/SDListedFee.sol";
+import { SDListedFee } from "src/libraries/SDListedFee.sol";
 
 contract SDFeeCalculator_CalculateFeeAmount_Test is Test {
     uint256 internal constant ff = 5e18;

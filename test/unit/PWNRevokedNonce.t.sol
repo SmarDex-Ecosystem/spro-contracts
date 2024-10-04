@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
-import { PWNRevokedNonce, PWNHubTags, AddressMissingHubTag } from "pwn/nonce/PWNRevokedNonce.sol";
+import { PWNRevokedNonce, AddressMissingHubTag } from "spro/PWNRevokedNonce.sol";
 
 abstract contract PWNRevokedNonceTest is Test {
     bytes32 internal constant REVOKED_NONCE_SLOT = bytes32(uint256(0)); // `_revokedNonce` mapping position
@@ -15,7 +15,7 @@ abstract contract PWNRevokedNonceTest is Test {
     address alice = address(0xa11ce);
 
     function setUp() public virtual {
-        revokedNonce = new PWNRevokedNonce(hub, accessTag);
+        revokedNonce = new PWNRevokedNonce(accessTag);
     }
 
     function _revokedNonceSlot(address _owner, uint256 _nonceSpace, uint256 _nonce) internal pure returns (bytes32) {

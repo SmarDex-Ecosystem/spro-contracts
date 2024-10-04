@@ -5,20 +5,19 @@ import { Test } from "forge-std/Test.sol";
 
 import {
     SDSimpleLoan,
-    PWNHubTags,
     InvalidPermitOwner,
     InvalidPermitAsset,
     Math,
     Permit,
     PWNRevokedNonce,
     IPoolAdapter
-} from "pwn/loan/terms/simple/loan/SDSimpleLoan.sol";
+} from "spro/SDSimpleLoan.sol";
 
 import { T20 } from "test/helper/T20.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 
 contract SDSimpleLoanHarness is SDSimpleLoan {
-    constructor(address _h, address _lt, address _c, address _rn) SDSimpleLoan(_h, _lt, _c, _rn) { }
+    constructor(address _lt, address _c, address _rn) SDSimpleLoan(_lt, _c, _rn) { }
 
     function exposed_checkPermit(address caller, address creditAddress, Permit memory permit) external pure {
         _checkPermit(caller, creditAddress, permit);
@@ -57,13 +56,12 @@ contract SDSimpleLoanTest is Test {
 
     function setUp() public {
         vm.etch(config, bytes("data"));
-        simpleLoan = new SDSimpleLoanHarness(hub, loanToken, config, revokedNonce);
+        simpleLoan = new SDSimpleLoanHarness(loanToken, config, revokedNonce);
 
         vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(poolAdapter));
     }
 
     function test_constructor() external view {
-        assertEq(address(simpleLoan.hub()), hub);
         assertEq(address(simpleLoan.loanToken()), loanToken);
         assertEq(address(simpleLoan.config()), config);
         assertEq(address(simpleLoan.revokedNonce()), revokedNonce);

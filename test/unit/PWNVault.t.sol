@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
-import { PWNVault, IPoolAdapter, Permit } from "pwn/loan/vault/PWNVault.sol";
+import { PWNVault, IPoolAdapter, Permit } from "spro/PWNVault.sol";
 
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { T20 } from "test/helper/T20.sol";

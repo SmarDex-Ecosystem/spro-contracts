@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
-import { PWNHub } from "pwn/hub/PWNHub.sol";
-import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
-import { AddressMissingHubTag } from "pwn/PWNErrors.sol";
+import { AddressMissingHubTag } from "src/PWNErrors.sol";
 
 /**
  * @title PWN Revoked Nonce
@@ -19,12 +17,6 @@ contract PWNRevokedNonce {
      *         to call functions that revoke nonces on behalf of an owner.
      */
     bytes32 public immutable accessTag;
-
-    /**
-     * @notice PWN Hub contract.
-     * @dev Addresses revoking nonces on behalf of an owner need to have an access tag in PWN Hub.
-     */
-    PWNHub public immutable hub;
 
     /**
      * @notice Mapping of revoked nonces by an address. Every address has its own nonce space.
@@ -67,23 +59,11 @@ contract PWNRevokedNonce {
     error NonceNotUsable(address addr, uint256 nonceSpace, uint256 nonce);
 
     /* ------------------------------------------------------------ */
-    /*                          MODIFIERS                           */
-    /* ------------------------------------------------------------ */
-
-    modifier onlyWithHubTag() {
-        if (!hub.hasTag(msg.sender, accessTag)) {
-            revert AddressMissingHubTag({ addr: msg.sender, tag: accessTag });
-        }
-        _;
-    }
-
-    /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
 
-    constructor(address _hub, bytes32 _accessTag) {
+    constructor(bytes32 _accessTag) {
         accessTag = _accessTag;
-        hub = PWNHub(_hub);
     }
 
     /* ------------------------------------------------------------ */
@@ -123,7 +103,7 @@ contract PWNRevokedNonce {
      * @param owner Owner address of a revoking nonce.
      * @param nonce Nonce to be revoked.
      */
-    function revokeNonce(address owner, uint256 nonce) external onlyWithHubTag {
+    function revokeNonce(address owner, uint256 nonce) external {
         _revokeNonce(owner, _nonceSpace[owner], nonce);
     }
 
@@ -134,7 +114,7 @@ contract PWNRevokedNonce {
      * @param nonceSpace Nonce space where a nonce will be revoked.
      * @param nonce Nonce to be revoked.
      */
-    function revokeNonce(address owner, uint256 nonceSpace, uint256 nonce) external onlyWithHubTag {
+    function revokeNonce(address owner, uint256 nonceSpace, uint256 nonce) external {
         _revokeNonce(owner, nonceSpace, nonce);
     }
 

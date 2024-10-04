@@ -10,13 +10,11 @@ import {
     SDDeployments,
     SDConfig,
     IPWNDeployer,
-    PWNHub,
-    PWNHubTags,
     SDSimpleLoan,
     SDSimpleLoanSimpleProposal,
     PWNLOAN,
     PWNRevokedNonce
-} from "pwn/SDDeployments.sol";
+} from "src/SDDeployments.sol";
 
 abstract contract SDDeploymentTest is SDDeployments, Test {
     uint256 public constant UNLISTED_FEE = 50e18;
@@ -35,7 +33,6 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
         vm.label(address(deployment.sdex), "sdex");
         vm.label(address(deployment.configSingleton), "configSingleton");
         vm.label(address(deployment.config), "config");
-        vm.label(address(deployment.hub), "hub");
         vm.label(address(deployment.revokedNonce), "revokedNonce");
         vm.label(address(deployment.loanToken), "loanToken");
         vm.label(address(deployment.simpleLoan), "simpleLoan");
@@ -66,21 +63,16 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
         deployment.config = SDConfig(address(proxy));
 
         vm.prank(deployment.protocolAdmin);
-        deployment.hub = new PWNHub();
 
-        deployment.revokedNonce = new PWNRevokedNonce(address(deployment.hub), PWNHubTags.NONCE_MANAGER);
+        deployment.revokedNonce = new PWNRevokedNonce("tag");
 
-        deployment.loanToken = new PWNLOAN(address(deployment.hub));
+        deployment.loanToken = new PWNLOAN();
         deployment.simpleLoan = new SDSimpleLoan(
-            address(deployment.hub),
-            address(deployment.loanToken),
-            address(deployment.config),
-            address(deployment.revokedNonce)
+            address(deployment.loanToken), address(deployment.config), address(deployment.revokedNonce)
         );
 
-        deployment.simpleLoanSimpleProposal = new SDSimpleLoanSimpleProposal(
-            address(deployment.hub), address(deployment.revokedNonce), address(deployment.config)
-        );
+        deployment.simpleLoanSimpleProposal =
+            new SDSimpleLoanSimpleProposal(address(deployment.revokedNonce), address(deployment.config));
 
         // Set hub tags
         address[] memory addrs = new address[](10);
@@ -89,15 +81,5 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
 
         addrs[2] = address(deployment.simpleLoanSimpleProposal);
         addrs[3] = address(deployment.simpleLoanSimpleProposal);
-
-        bytes32[] memory tags = new bytes32[](10);
-        tags[0] = PWNHubTags.ACTIVE_LOAN;
-        tags[1] = PWNHubTags.NONCE_MANAGER;
-
-        tags[2] = PWNHubTags.LOAN_PROPOSAL;
-        tags[3] = PWNHubTags.NONCE_MANAGER;
-
-        vm.prank(deployment.protocolAdmin);
-        deployment.hub.setTags(addrs, tags, true);
     }
 }

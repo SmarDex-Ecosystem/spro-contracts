@@ -5,16 +5,14 @@ import {
     SDBaseIntegrationTest,
     SDConfig,
     IPWNDeployer,
-    PWNHub,
-    PWNHubTags,
     SDSimpleLoan,
     SDSimpleLoanSimpleProposal,
     PWNLOAN,
     PWNRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 
-import { SDSimpleLoanProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
-import { AddressMissingHubTag } from "pwn/PWNErrors.sol";
+import { SDSimpleLoanSimpleProposal } from "spro/SDSimpleLoanSimpleProposal.sol";
+import { AddressMissingHubTag } from "src/PWNErrors.sol";
 
 contract MakeProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SDBaseIntegrationTest {
     function test_RevertWhen_DataCannotBeDecoded() external {
@@ -24,7 +22,7 @@ contract MakeProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SD
         deployment.simpleLoanSimpleProposal.makeProposal(badData);
 
         bytes memory baseProposalData = abi.encode(
-            SDSimpleLoanProposal.ProposalBase({
+            SDSimpleLoanSimpleProposal.ProposalBase({
                 collateralAddress: address(t20),
                 checkCollateralStateFingerprint: false,
                 collateralStateFingerprint: bytes32(0),
@@ -45,28 +43,8 @@ contract MakeProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SD
         _;
     }
 
-    function test_RevertWhen_CallerNotLoanContract() external whenProposalDataDecodes {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                SDSimpleLoanProposal.CallerNotLoanContract.selector, address(this), proposal.loanContract
-            )
-        );
-        deployment.simpleLoanSimpleProposal.makeProposal(abi.encode(proposal));
-    }
-
     modifier loanContractIsCaller() {
         _;
-    }
-
-    function test_RevertWhen_LoanContractNotActiveLoanTag() external whenProposalDataDecodes loanContractIsCaller {
-        vm.prank(deployment.hub.owner());
-        deployment.hub.setTag(proposal.loanContract, PWNHubTags.ACTIVE_LOAN, false);
-
-        vm.expectRevert(
-            abi.encodeWithSelector(AddressMissingHubTag.selector, proposal.loanContract, PWNHubTags.ACTIVE_LOAN)
-        );
-        vm.prank(proposal.loanContract);
-        deployment.simpleLoanSimpleProposal.makeProposal(abi.encode(proposal));
     }
 
     modifier loanContractHasActiveLoanTag() {

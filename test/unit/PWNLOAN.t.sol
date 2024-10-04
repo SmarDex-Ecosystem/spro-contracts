@@ -5,32 +5,19 @@ import { Test } from "forge-std/Test.sol";
 
 import { IERC721Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
-import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
-import { IERC5646 } from "pwn/interfaces/IERC5646.sol";
-import { PWNLOAN } from "pwn/loan/token/PWNLOAN.sol";
+import { IERC5646 } from "src/interfaces/IERC5646.sol";
+import { PWNLOAN } from "spro/PWNLOAN.sol";
 
 abstract contract PWNLOANTest is Test {
     bytes32 internal constant LAST_LOAN_ID_SLOT = bytes32(uint256(6)); // `lastLoanId` property position
     bytes32 internal constant LOAN_CONTRACT_SLOT = bytes32(uint256(7)); // `loanContract` mapping position
 
     PWNLOAN loanToken;
-    address hub = address(0x80b);
     address alice = address(0xa11ce);
     address activeLoanContract = address(0x01);
 
-    constructor() {
-        vm.etch(hub, bytes("data"));
-    }
-
     function setUp() public virtual {
-        loanToken = new PWNLOAN(hub);
-
-        vm.mockCall(hub, abi.encodeWithSignature("hasTag(address,bytes32)"), abi.encode(false));
-        vm.mockCall(
-            hub,
-            abi.encodeWithSignature("hasTag(address,bytes32)", activeLoanContract, PWNHubTags.ACTIVE_LOAN),
-            abi.encode(true)
-        );
+        loanToken = new PWNLOAN();
     }
 
     function _loanContractSlot(uint256 loanId) internal pure returns (bytes32) {
@@ -55,7 +42,7 @@ contract PWNLOAN_Constructor_Test is PWNLOANTest {
 
 contract PWNLOAN_Mint_Test is PWNLOANTest {
     function test_shouldFail_whenCallerIsNotActiveLoanContract() external {
-        vm.expectRevert(abi.encodeWithSelector(PWNLOAN.CallerMissingHubTag.selector, PWNHubTags.ACTIVE_LOAN));
+        vm.expectRevert(abi.encodeWithSelector(PWNLOAN.CallerMissingHubTag.selector));
         vm.prank(alice);
         loanToken.mint(alice);
     }

@@ -1,19 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
-import { Permit } from "pwn/loan/vault/Permit.sol";
+import { Permit } from "spro/Permit.sol";
 import { SigUtils } from "test/utils/SigUtils.sol";
 import { CreditPermit } from "test/helper/CreditPermit.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import { IERC5646 } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
+import { IERC5646 } from "spro/SDSimpleLoanSimpleProposal.sol";
 import { T20 } from "test/helper/T20.sol";
 import {
     SDDeploymentTest,
     SDConfig,
     IPWNDeployer,
-    PWNHub,
-    PWNHubTags,
     SDSimpleLoan,
     SDSimpleLoanSimpleProposal,
     PWNLOAN,

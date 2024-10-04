@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import { console2 } from "forge-std/Script.sol";
 import { ScriptUtils } from "./lib/ScriptUtils.sol";
 
-import { SDDeployer } from "pwn/deployment/SDDeployer.sol";
+import { SDDeployer } from "src/deployment/SDDeployer.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
 
 import { T20 } from "test/helper/T20.sol";

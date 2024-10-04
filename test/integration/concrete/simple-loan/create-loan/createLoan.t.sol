@@ -1,16 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
-import { SDSimpleLoanProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
-import { Expired, AddressMissingHubTag } from "pwn/PWNErrors.sol";
+import { Expired, AddressMissingHubTag } from "src/PWNErrors.sol";
 import { SigUtils } from "test/utils/SigUtils.sol";
 import { IPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import {
     SDBaseIntegrationTest,
     SDConfig,
     IPWNDeployer,
-    PWNHub,
-    PWNHubTags,
     SDSimpleLoan,
     SDSimpleLoanSimpleProposal,
     PWNLOAN,
@@ -24,20 +21,13 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         // Remove LOAN_PROPOSAL tag for proposal contract
         address[] memory addrs = new address[](1);
         addrs[0] = address(deployment.simpleLoanSimpleProposal);
-        bytes32[] memory tags = new bytes32[](1);
-        tags[0] = PWNHubTags.LOAN_PROPOSAL;
-
-        vm.prank(deployment.protocolAdmin);
-        deployment.hub.setTags(addrs, tags, false);
 
         SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
         SDSimpleLoan.LenderSpec memory lenderSpec = _buildLenderSpec(true);
 
         vm.prank(lender);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                AddressMissingHubTag.selector, address(deployment.simpleLoanSimpleProposal), PWNHubTags.LOAN_PROPOSAL
-            )
+            abi.encodeWithSelector(AddressMissingHubTag.selector, address(deployment.simpleLoanSimpleProposal))
         );
         deployment.simpleLoan.createLOAN(proposalSpec, lenderSpec, "");
     }

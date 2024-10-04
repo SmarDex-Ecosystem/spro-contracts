@@ -5,15 +5,15 @@ import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { IPoolAdapter } from "pwn/interfaces/IPoolAdapter.sol";
-import { Permit } from "pwn/loan/vault/Permit.sol";
+import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
+import { Permit } from "spro/Permit.sol";
 
 /**
  * @title PWN Vault
  * @notice Base contract for transferring and managing collateral and loan assets in PWN protocol.
  * @dev Loan contracts inherits PWN Vault to act as a Vault for its loan type.
  */
-abstract contract PWNVault {
+contract PWNVault {
     using SafeERC20 for IERC20Metadata;
     /* ------------------------------------------------------------ */
     /*                      EVENTS DEFINITIONS                      */

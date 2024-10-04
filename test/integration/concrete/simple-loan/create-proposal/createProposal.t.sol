@@ -5,34 +5,24 @@ import {
     SDBaseIntegrationTest,
     SDConfig,
     IPWNDeployer,
-    PWNHub,
-    PWNHubTags,
     SDSimpleLoan,
     SDSimpleLoanSimpleProposal,
     PWNLOAN,
     PWNRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 
-import { SDSimpleLoanProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
-import { Expired, AddressMissingHubTag } from "pwn/PWNErrors.sol";
+import { Expired, AddressMissingHubTag } from "src/PWNErrors.sol";
 
 contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationTest {
     function test_RevertWhen_NoProposalLoanTag() external {
         // Remove LOAN_PROPOSAL tag for proposal contract
         address[] memory addrs = new address[](1);
         addrs[0] = address(deployment.simpleLoanSimpleProposal);
-        bytes32[] memory tags = new bytes32[](1);
-        tags[0] = PWNHubTags.LOAN_PROPOSAL;
-
-        vm.prank(deployment.protocolAdmin);
-        deployment.hub.setTags(addrs, tags, false);
 
         SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
         vm.prank(borrower);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                AddressMissingHubTag.selector, address(deployment.simpleLoanSimpleProposal), PWNHubTags.LOAN_PROPOSAL
-            )
+            abi.encodeWithSelector(AddressMissingHubTag.selector, address(deployment.simpleLoanSimpleProposal))
         );
         deployment.simpleLoan.createProposal(proposalSpec);
     }

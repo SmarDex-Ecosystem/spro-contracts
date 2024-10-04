@@ -3,10 +3,8 @@ pragma solidity ^0.8.26;
 
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-import { PWNHub } from "pwn/hub/PWNHub.sol";
-import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
-import { IERC5646 } from "pwn/interfaces/IERC5646.sol";
-import { IPWNLoanMetadataProvider } from "pwn/interfaces/IPWNLoanMetadataProvider.sol";
+import { IERC5646 } from "src/interfaces/IERC5646.sol";
+import { IPWNLoanMetadataProvider } from "src/interfaces/IPWNLoanMetadataProvider.sol";
 
 /**
  * @title PWN LOAN token
@@ -18,8 +16,6 @@ contract PWNLOAN is ERC721, IERC5646 {
     /* ------------------------------------------------------------ */
     /*                VARIABLES & CONSTANTS DEFINITIONS             */
     /* ------------------------------------------------------------ */
-
-    PWNHub public immutable hub;
 
     /**
      * @dev Last used LOAN id. First LOAN id is 1. This value is incremental.
@@ -60,23 +56,10 @@ contract PWNLOAN is ERC721, IERC5646 {
     error CallerMissingHubTag(bytes32 tag);
 
     /* ------------------------------------------------------------ */
-    /*                          MODIFIERS                           */
-    /* ------------------------------------------------------------ */
-
-    modifier onlyActiveLoan() {
-        if (!hub.hasTag(msg.sender, PWNHubTags.ACTIVE_LOAN)) {
-            revert CallerMissingHubTag({ tag: PWNHubTags.ACTIVE_LOAN });
-        }
-        _;
-    }
-
-    /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
 
-    constructor(address _hub) ERC721("PWN LOAN", "LOAN") {
-        hub = PWNHub(_hub);
-    }
+    constructor() ERC721("PWN LOAN", "LOAN") { }
 
     /* ------------------------------------------------------------ */
     /*                       TOKEN LIFECYCLE                        */
@@ -88,7 +71,7 @@ contract PWNLOAN is ERC721, IERC5646 {
      * @param owner Address of a LOAN token receiver.
      * @return loanId Id of a newly minted LOAN token.
      */
-    function mint(address owner) external onlyActiveLoan returns (uint256 loanId) {
+    function mint(address owner) external returns (uint256 loanId) {
         loanId = ++lastLoanId;
         loanContract[loanId] = msg.sender;
         _mint(owner, loanId);

@@ -6,14 +6,12 @@ import { CommonBase } from "forge-std/Base.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { SDConfig } from "pwn/config/SDConfig.sol";
-import { PWNHub } from "pwn/hub/PWNHub.sol";
-import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
-import { IPWNDeployer } from "pwn/interfaces/IPWNDeployer.sol";
-import { SDSimpleLoan } from "pwn/loan/terms/simple/loan/SDSimpleLoan.sol";
-import { SDSimpleLoanSimpleProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanSimpleProposal.sol";
-import { PWNLOAN } from "pwn/loan/token/PWNLOAN.sol";
-import { PWNRevokedNonce } from "pwn/nonce/PWNRevokedNonce.sol";
+import { SDConfig } from "spro/SDConfig.sol";
+import { IPWNDeployer } from "src/interfaces/IPWNDeployer.sol";
+import { SDSimpleLoan } from "spro/SDSimpleLoan.sol";
+import { SDSimpleLoanSimpleProposal } from "spro/SDSimpleLoanSimpleProposal.sol";
+import { PWNLOAN } from "spro/PWNLOAN.sol";
+import { PWNRevokedNonce } from "spro/PWNRevokedNonce.sol";
 import { T20 } from "test/helper/T20.sol";
 
 abstract contract SDDeployments is CommonBase {
@@ -30,7 +28,6 @@ abstract contract SDDeployments is CommonBase {
         SDConfig config;
         SDConfig configSingleton;
         IPWNDeployer deployer;
-        PWNHub hub;
         PWNLOAN loanToken;
         address proxyAdmin;
         address protocolAdmin;

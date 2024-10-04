@@ -2,17 +2,10 @@
 pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
-import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
-import {
-    SDSimpleLoanSimpleProposal,
-    SDSimpleLoanProposal,
-    SDSimpleLoan
-} from "pwn/loan/terms/simple/proposal/SDSimpleLoanSimpleProposal.sol";
+import { SDSimpleLoanSimpleProposal, SDSimpleLoan } from "spro/SDSimpleLoanSimpleProposal.sol";
 
 contract SDSimpleLoanSimpleProposalHarness is SDSimpleLoanSimpleProposal {
-    constructor(address _hub, address _revokedNonce, address _config)
-        SDSimpleLoanSimpleProposal(_hub, _revokedNonce, _config)
-    { }
+    constructor(address _revokedNonce, address _config) SDSimpleLoanSimpleProposal(_revokedNonce, _config) { }
 
     function exposed_checkCompleteLoan(uint256 _creditAmount, uint256 _availableCreditLimit) external pure {
         _checkCompleteLoan(_creditAmount, _availableCreditLimit);
@@ -20,14 +13,13 @@ contract SDSimpleLoanSimpleProposalHarness is SDSimpleLoanSimpleProposal {
 }
 
 contract SDSimpleLoanSimpleProposalTest is Test {
-    address public hub = makeAddr("hub");
     address public config = makeAddr("config");
     address public revokedNonce = makeAddr("revokedNonce");
 
     SDSimpleLoanSimpleProposalHarness harness;
 
     function setUp() public {
-        harness = new SDSimpleLoanSimpleProposalHarness(hub, config, revokedNonce);
+        harness = new SDSimpleLoanSimpleProposalHarness(config, revokedNonce);
     }
 
     function testFuzz_encodeProposalData(address addr) external view {

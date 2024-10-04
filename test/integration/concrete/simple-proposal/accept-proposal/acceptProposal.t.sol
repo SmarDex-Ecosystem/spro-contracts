@@ -5,16 +5,14 @@ import {
     SDBaseIntegrationTest,
     SDConfig,
     IPWNDeployer,
-    PWNHub,
-    PWNHubTags,
     SDSimpleLoan,
     SDSimpleLoanSimpleProposal,
     PWNLOAN,
     PWNRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 
-import { SDSimpleLoanProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
-import { Expired, AddressMissingHubTag } from "pwn/PWNErrors.sol";
+import { SDSimpleLoanSimpleProposal } from "spro/SDSimpleLoanSimpleProposal.sol";
+import { Expired, AddressMissingHubTag } from "src/PWNErrors.sol";
 
 contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SDBaseIntegrationTest {
     function test_RevertWhen_DataCannotBeDecoded() external {
@@ -24,7 +22,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, badData);
 
         bytes memory baseProposalData = abi.encode(
-            SDSimpleLoanProposal.ProposalBase({
+            SDSimpleLoanSimpleProposal.ProposalBase({
                 collateralAddress: address(t20),
                 checkCollateralStateFingerprint: false,
                 collateralStateFingerprint: bytes32(0),
@@ -45,15 +43,6 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         _;
     }
 
-    function test_RevertWhen_CallerNotLoanContract() external whenProposalDataDecodes {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                SDSimpleLoanProposal.CallerNotLoanContract.selector, address(this), proposal.loanContract
-            )
-        );
-        deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
-    }
-
     modifier loanContractIsCaller() {
         _;
     }
@@ -62,14 +51,9 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         // Remove ACTIVE_LOAN tag for loan contract
         address[] memory addrs = new address[](1);
         addrs[0] = address(deployment.simpleLoan);
-        bytes32[] memory tags = new bytes32[](1);
-        tags[0] = PWNHubTags.ACTIVE_LOAN;
-
-        vm.prank(deployment.protocolAdmin);
-        deployment.hub.setTags(addrs, tags, false);
 
         vm.prank(proposal.loanContract);
-        vm.expectRevert(abi.encodeWithSelector(AddressMissingHubTag.selector, proposal.loanContract, tags[0]));
+        vm.expectRevert(abi.encodeWithSelector(AddressMissingHubTag.selector, proposal.loanContract));
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
     }
 
@@ -84,7 +68,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         loanContractHasHubTag
     {
         vm.prank(proposal.loanContract);
-        vm.expectRevert(SDSimpleLoanProposal.ProposalNotMade.selector);
+        vm.expectRevert(SDSimpleLoanSimpleProposal.ProposalNotMade.selector);
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
     }
 
@@ -102,7 +86,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         _createERC20Proposal();
 
         vm.prank(proposal.loanContract);
-        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanProposal.AcceptorIsProposer.selector, borrower));
+        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanSimpleProposal.AcceptorIsProposer.selector, borrower));
         deployment.simpleLoanSimpleProposal.acceptProposal(borrower, CREDIT_AMOUNT, abi.encode(proposal));
     }
 
@@ -172,7 +156,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         _createERC20Proposal();
 
         vm.prank(proposal.loanContract);
-        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanProposal.AvailableCreditLimitZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanSimpleProposal.AvailableCreditLimitZero.selector));
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));
     }
 
@@ -205,7 +189,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         vm.prank(proposal.loanContract);
         vm.expectRevert(
             abi.encodeWithSelector(
-                SDSimpleLoanProposal.AvailableCreditLimitExceeded.selector,
+                SDSimpleLoanSimpleProposal.AvailableCreditLimitExceeded.selector,
                 creditUsedValue + CREDIT_AMOUNT,
                 CREDIT_LIMIT
             )
@@ -234,7 +218,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         vm.prank(proposal.loanContract);
         vm.expectRevert(
             abi.encodeWithSelector(
-                SDSimpleLoanProposal.CreditAmountTooSmall.selector, 1, (proposal.availableCreditLimit * 500) / 1e4
+                SDSimpleLoanSimpleProposal.CreditAmountTooSmall.selector, 1, (proposal.availableCreditLimit * 500) / 1e4
             )
         );
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, 1, abi.encode(proposal));
@@ -290,7 +274,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         vm.prank(proposal.loanContract);
         vm.expectRevert(
             abi.encodeWithSelector(
-                SDSimpleLoanProposal.CreditAmountLeavesTooLittle.selector,
+                SDSimpleLoanSimpleProposal.CreditAmountLeavesTooLittle.selector,
                 (CREDIT_LIMIT * 9501) / 1e4,
                 (PERCENTAGE - DEFAULT_THRESHOLD) * CREDIT_LIMIT / 1e4
             )
@@ -488,7 +472,9 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         );
         vm.expectRevert(
             abi.encodeWithSelector(
-                SDSimpleLoanProposal.InvalidCollateralStateFingerprint.selector, stateFp, collateralStateFingerprint
+                SDSimpleLoanSimpleProposal.InvalidCollateralStateFingerprint.selector,
+                stateFp,
+                collateralStateFingerprint
             )
         );
 
@@ -516,7 +502,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
             abi.encode("not implementing ERC165")
         );
 
-        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanProposal.MissingStateFingerprintComputer.selector));
+        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanSimpleProposal.MissingStateFingerprintComputer.selector));
         vm.prank(proposal.loanContract);
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
     }
@@ -537,7 +523,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         );
         _mockERC5646Support(proposal.collateralAddress, false);
 
-        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanProposal.MissingStateFingerprintComputer.selector));
+        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanSimpleProposal.MissingStateFingerprintComputer.selector));
         vm.prank(proposal.loanContract);
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_LIMIT, abi.encode(proposal));
     }
@@ -563,7 +549,9 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                SDSimpleLoanProposal.InvalidCollateralStateFingerprint.selector, stateFp, collateralStateFingerprint
+                SDSimpleLoanSimpleProposal.InvalidCollateralStateFingerprint.selector,
+                stateFp,
+                collateralStateFingerprint
             )
         );
         vm.prank(proposal.loanContract);

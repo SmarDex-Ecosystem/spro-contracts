@@ -6,7 +6,7 @@ import { Test } from "forge-std/Test.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-import { SDConfig } from "pwn/config/SDConfig.sol";
+import { SDConfig } from "spro/SDConfig.sol";
 
 // forge inspect src/config/SDConfig.sol:SDConfig storage --pretty
 

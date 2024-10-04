@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
-import { SDSimpleLoanProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
+import { SDSimpleLoanSimpleProposal } from "spro/SDSimpleLoanSimpleProposal.sol";
 import { SigUtils } from "test/utils/SigUtils.sol";
 import { IPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -9,8 +9,6 @@ import {
     SDBaseIntegrationTest,
     SDConfig,
     IPWNDeployer,
-    PWNHub,
-    PWNHubTags,
     SDSimpleLoan,
     SDSimpleLoanSimpleProposal,
     PWNLOAN,
@@ -147,7 +145,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Create loan, expecting revert
         vm.expectRevert(
             abi.encodeWithSelector(
-                SDSimpleLoanProposal.CreditAmountLeavesTooLittle.selector,
+                SDSimpleLoanSimpleProposal.CreditAmountLeavesTooLittle.selector,
                 amount,
                 (PERCENTAGE - DEFAULT_THRESHOLD) * CREDIT_LIMIT / 1e4
             )
@@ -167,13 +165,13 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Create the proposal
         SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
 
-        vm.expectRevert(SDSimpleLoanProposal.ProposalAlreadyExists.selector);
+        vm.expectRevert(SDSimpleLoanSimpleProposal.ProposalAlreadyExists.selector);
         vm.prank(borrower);
         deployment.simpleLoan.createProposal(proposalSpec);
     }
 
     function test_shouldFail_getProposalCreditStatus_ProposalNotMade() external {
-        vm.expectRevert(SDSimpleLoanProposal.ProposalNotMade.selector);
+        vm.expectRevert(SDSimpleLoanSimpleProposal.ProposalNotMade.selector);
         deployment.simpleLoanSimpleProposal.getProposalCreditStatus(proposal);
     }
 

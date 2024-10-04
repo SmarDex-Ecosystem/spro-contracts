@@ -5,8 +5,8 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-import { IPoolAdapter } from "pwn/interfaces/IPoolAdapter.sol";
-import { IStateFingerprintComputer } from "pwn/interfaces/IStateFingerprintComputer.sol";
+import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
+import { IStateFingerprintComputer } from "src/interfaces/IStateFingerprintComputer.sol";
 
 /**
  * @title PWN Config

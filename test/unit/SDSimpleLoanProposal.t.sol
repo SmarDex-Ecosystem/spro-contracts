@@ -5,52 +5,23 @@ import { Test } from "forge-std/Test.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {
-    PWNHub,
-    PWNRevokedNonce,
-    SDConfig,
-    SDSimpleLoan,
-    SDSimpleLoanProposal
-} from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
+    PWNRevokedNonce, SDConfig, SDSimpleLoan, SDSimpleLoanSimpleProposal
+} from "spro/SDSimpleLoanSimpleProposal.sol";
 
-contract SDSimpleLoanProposalHarness is SDSimpleLoanProposal {
-    constructor(address _hub, address _revokedNonce, address _config, string memory _name, string memory _version)
-        SDSimpleLoanProposal(_hub, _revokedNonce, _config, _name, _version)
-    { }
-
-    function acceptProposal(address acceptor, uint256 creditAmount, bytes calldata proposalData)
-        external
-        override
-        returns (bytes32 proposalHash, SDSimpleLoan.Terms memory loanTerms)
-    { }
-
-    function makeProposal(bytes calldata proposalData)
-        external
-        override
-        returns (
-            address proposer,
-            address collateral,
-            uint256 collateralAmount,
-            address creditAddress,
-            uint256 creditLimit
-        )
-    { }
-
-    function cancelProposal(bytes calldata proposalData)
-        external
-        override
-        returns (address proposer, address collateral, uint256 collateralAmount)
+contract SDSimpleLoanProposalHarness is SDSimpleLoanSimpleProposal {
+    constructor(address _revokedNonce, address _config, string memory _name, string memory _version)
+        SDSimpleLoanSimpleProposal(_revokedNonce, _config)
     { }
 }
 
 contract SDSimpleLoanProposalTest is Test {
-    address public hub = makeAddr("hub");
     address public revokedNonce = makeAddr("revokedNonce");
     address public config = makeAddr("config");
 
     function test_constructor() external {
         string memory name = "name";
         string memory version = "version";
-        SDSimpleLoanProposal s = new SDSimpleLoanProposalHarness(hub, revokedNonce, config, name, version);
+        SDSimpleLoanSimpleProposal s = new SDSimpleLoanProposalHarness(revokedNonce, config, name, version);
         bytes32 ds = keccak256(
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
@@ -61,7 +32,6 @@ contract SDSimpleLoanProposalTest is Test {
             )
         );
 
-        assertEq(address(s.hub()), hub);
         assertEq(address(s.revokedNonce()), revokedNonce);
         assertEq(address(s.config()), config);
         assertEq(s.DOMAIN_SEPARATOR(), ds);
