@@ -8,13 +8,14 @@ import { SDConfig, IStateFingerprintComputer } from "spro/SDConfig.sol";
 import { IERC5646 } from "src/interfaces/IERC5646.sol";
 import { SDSimpleLoan } from "spro/SDSimpleLoan.sol";
 import { PWNRevokedNonce } from "spro/PWNRevokedNonce.sol";
-import { Expired, AddressMissingHubTag } from "src/PWNErrors.sol";
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 
 /**
  * @title SD Simple Loan Simple Proposal
  * @notice Contract for creating and accepting simple loan proposals.
  */
-contract SDSimpleLoanSimpleProposal {
+contract SDSimpleLoanSimpleProposal is ISproErrors, ISproEvents {
     /* ------------------------------------------------------------ */
     /*  VARIABLES & CONSTANTS DEFINITIONS                        */
     /* ------------------------------------------------------------ */
@@ -29,76 +30,10 @@ contract SDSimpleLoanSimpleProposal {
     );
 
     /**
-     * @notice Construct defining a simple proposal.
-     * @param collateralAddress Address of an asset used as a collateral.
-     * @param collateralAmount Amount of tokens used as a collateral, in case of ERC721 should be 0.
-     * @param checkCollateralStateFingerprint If true, the collateral state fingerprint will be checked during proposal
-     * acceptance.
-     * @param collateralStateFingerprint Fingerprint of a collateral state defined by ERC5646.
-     * @param creditAddress Address of an asset which is lended to a borrower.
-     * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
-     * be borrowed using the proposal. If non-zero, proposal can be accepted more than once, until the credit limit is
-     * reached.
-     * @param fixedInterestAmount Fixed interest amount in credit tokens. It is the minimum amount of interest which has
-     * to be paid by a borrower.
-     * @param accruingInterestAPR Accruing interest APR with 2 decimals.
-     * @param startTimestamp Proposal start timestamp in seconds.
-     * @param defaultTimestamp Proposal default timestamp in seconds.
-     * @param proposer Address of a proposal signer. If `isOffer` is true, the proposer is the lender. If `isOffer` is
-     * false, the proposer is the borrower.
-     * @param proposerSpecHash Hash of a proposer specific data, which must be provided during a loan creation.
-     * @param nonceSpace Nonce space of a proposal nonce. All nonces in the same space can be revoked at once.
-     * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
-     * again proposal, which was once revoked. Can be used to create a group of proposals, where accepting one proposal
-     * will make other proposals in the group revoked.
-     * @param loanContract Address of a loan contract that will create a loan from the proposal.
-     */
-    struct Proposal {
-        address collateralAddress;
-        uint256 collateralAmount;
-        bool checkCollateralStateFingerprint;
-        bytes32 collateralStateFingerprint;
-        address creditAddress;
-        uint256 availableCreditLimit;
-        uint256 fixedInterestAmount;
-        uint24 accruingInterestAPR;
-        uint40 startTimestamp;
-        uint40 defaultTimestamp;
-        address proposer;
-        bytes32 proposerSpecHash;
-        uint256 nonceSpace;
-        uint256 nonce;
-        address loanContract;
-    }
-
-    /**
      * @dev Mapping of proposals to the borrower's withdrawable collateral tokens
      *      (proposal hash => amount of collateral tokens)
      */
     mapping(bytes32 => uint256) public withdrawableCollateral;
-
-    /* ------------------------------------------------------------ */
-    /*                      EVENTS DEFINITIONS                      */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Emitted when a proposal is made via an on-chain transaction.
-     */
-    event ProposalMade(bytes32 indexed proposalHash, address indexed proposer, Proposal proposal);
-
-    /* ------------------------------------------------------------ */
-    /*                      ERRORS DEFINITIONS                      */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Thrown when a partial loan is attempted for NFT collateral.
-     */
-    error OnlyCompleteLendingForNFTs(uint256 creditAmount, uint256 availableCreditLimit);
-
-    /**
-     * @notice Thrown when the start timestamp is greater than the default timestamp.
-     */
-    error InvalidDuration();
 
     /* ------------------------------------------------------------ */
     /*              VARIABLES & CONSTANTS DEFINITIONS               */
@@ -134,65 +69,6 @@ contract SDSimpleLoanSimpleProposal {
      *      (proposal hash => credit used)
      */
     mapping(bytes32 => uint256) public creditUsed;
-
-    /* ------------------------------------------------------------ */
-    /*                      ERRORS DEFINITIONS                      */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Thrown when a state fingerprint computer is not registered.
-     */
-    error MissingStateFingerprintComputer();
-
-    /**
-     * @notice Thrown when a proposed collateral state fingerprint doesn't match the current state.
-     */
-    error InvalidCollateralStateFingerprint(bytes32 current, bytes32 proposed);
-
-    /**
-     * @notice Thrown when a caller is not a stated proposer.
-     */
-    error CallerIsNotStatedProposer(address addr);
-
-    /**
-     * @notice Thrown when proposal acceptor and proposer are the same.
-     */
-    error AcceptorIsProposer(address addr);
-
-    /**
-     * @notice Thrown when credit amount is below the minimum amount for the proposal.
-     */
-    error CreditAmountTooSmall(uint256 amount, uint256 minimum);
-
-    /**
-     * @notice Thrown when credit amount is above the maximum amount for the proposal, but not 100% of available
-     */
-    error CreditAmountLeavesTooLittle(uint256 amount, uint256 maximum);
-
-    /**
-     * @notice Thrown when a proposal would exceed the available credit limit.
-     */
-    error AvailableCreditLimitExceeded(uint256 used, uint256 limit);
-
-    /**
-     * @notice Thrown when a proposal has an available credit limit of zero.
-     */
-    error AvailableCreditLimitZero();
-
-    /**
-     * @notice Thrown when caller is not allowed to accept a proposal.
-     */
-    error CallerNotAllowedAcceptor(address current, address allowed);
-
-    /**
-     * @notice Thrown when the proposal already exists.
-     */
-    error ProposalAlreadyExists();
-
-    /**
-     * @notice Thrown when the proposal has not been made.
-     */
-    error ProposalNotMade();
 
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
@@ -296,7 +172,7 @@ contract SDSimpleLoanSimpleProposal {
         // Decode proposal data
         Proposal memory proposal = decodeProposalData(proposalData);
         if (proposal.startTimestamp > proposal.defaultTimestamp) {
-            revert InvalidDuration();
+            revert InvalidDurationStartTime();
         }
 
         // Make proposal hash
@@ -325,7 +201,7 @@ contract SDSimpleLoanSimpleProposal {
      */
     function acceptProposal(address acceptor, uint256 creditAmount, bytes calldata proposalData)
         external
-        returns (bytes32 proposalHash, SDSimpleLoan.Terms memory loanTerms)
+        returns (bytes32 proposalHash, Terms memory loanTerms)
     {
         // Decode proposal data
         Proposal memory proposal = decodeProposalData(proposalData);

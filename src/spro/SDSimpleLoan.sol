@@ -13,15 +13,17 @@ import { PWNLOAN } from "spro/PWNLOAN.sol";
 import { Permit, InvalidPermitOwner, InvalidPermitAsset } from "spro/Permit.sol";
 import { PWNVault } from "spro/PWNVault.sol";
 import { PWNRevokedNonce } from "spro/PWNRevokedNonce.sol";
-import { Expired } from "src/PWNErrors.sol";
 import { SDSimpleLoanSimpleProposal } from "spro/SDSimpleLoanSimpleProposal.sol";
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { ISproEvents } from "src/interfaces/ISproEvents.sol";
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 /**
  * @title SD Simple Loan -- forked from PWNSimpleLoan.sol
  * @notice Contract managing a simple loan in PWN protocol.
  * @dev Acts as a vault for every loan created by this contract.
  */
-contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
+contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider, ISproErrors, ISproEvents {
     string public constant VERSION = "1.0";
 
     /* ------------------------------------------------------------ */
@@ -53,188 +55,9 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     PWNRevokedNonce public immutable revokedNonce;
 
     /**
-     * @notice Struct defining a simple loan terms.
-     * @dev This struct is created by proposal contracts and never stored.
-     * @param lender Address of a lender.
-     * @param borrower Address of a borrower.
-     * @param startTimestamp Unix timestamp (in seconds) of a start date.
-     * @param defaultTimestamp Unix timestamp (in seconds) of a default date.
-     * @param collateral Address of a collateral asset.
-     * @param collateralAmount Amount of a collateral asset.
-     * @param credit Address of a credit asset.
-     * @param creditAmount Amount of a credit asset.
-     * @param fixedInterestAmount Fixed interest amount in credit asset tokens. It is the minimum amount of interest
-     * which has to be paid by a borrower.
-     * @param accruingInterestAPR Accruing interest APR with 2 decimals.
-     * @param lenderSpecHash Hash of a lender specification.
-     * @param borrowerSpecHash Hash of a borrower specification.
-     */
-    struct Terms {
-        address lender;
-        address borrower;
-        uint40 startTimestamp;
-        uint40 defaultTimestamp;
-        address collateral;
-        uint256 collateralAmount;
-        address credit;
-        uint256 creditAmount;
-        uint256 fixedInterestAmount;
-        uint24 accruingInterestAPR;
-        bytes32 lenderSpecHash;
-        bytes32 borrowerSpecHash;
-    }
-
-    /**
-     * @notice Loan proposal specification during loan creation.
-     * @param proposalContract Address of a loan proposal contract.
-     * @param proposalData Encoded proposal data that is passed to the loan proposal contract.
-     */
-    struct ProposalSpec {
-        address proposalContract;
-        bytes proposalData;
-    }
-
-    /**
-     * @notice Lender specification during loan creation.
-     * @param sourceOfFunds Address of a source of funds. This can be the lenders address, if the loan is funded
-     * directly,
-     *                      or a pool address from with the funds are withdrawn on the lenders behalf.
-     * @param creditAmount Amount of credit tokens to lend.
-     * @param permitData Callers permit data for a loans credit asset.
-     */
-    struct LenderSpec {
-        address sourceOfFunds;
-        uint256 creditAmount;
-        bytes permitData;
-    }
-
-    /**
-     * @notice Struct defining a simple loan.
-     * @param status 0 == none/dead || 2 == running/accepted offer/accepted request || 3 == paid back || 4 == expired.
-     * @param creditAddress Address of an asset used as a loan credit.
-     * @param originalSourceOfFunds Address of a source of funds that was used to fund the loan.
-     * @param startTimestamp Unix timestamp (in seconds) of a start date.
-     * @param defaultTimestamp Unix timestamp (in seconds) of a default date.
-     * @param borrower Address of a borrower.
-     * @param originalLender Address of a lender that funded the loan.
-     * @param accruingInterestAPR Accruing interest APR with 2 decimals.
-     * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
-     *                            It is the minimum amount of interest which has to be paid by a borrower.
-     *                            This property is reused to store the final interest amount if the loan is repaid and
-     * waiting to be claimed.
-     * @param principalAmount Principal amount in credit asset tokens.
-     * @param collateral Address of a collateral asset.
-     * @param collateralAmount Amount of a collateral asset.
-     */
-    struct LOAN {
-        uint8 status;
-        address creditAddress;
-        address originalSourceOfFunds;
-        uint40 startTimestamp;
-        uint40 defaultTimestamp;
-        address borrower;
-        address originalLender;
-        uint24 accruingInterestAPR;
-        uint256 fixedInterestAmount;
-        uint256 principalAmount;
-        address collateral;
-        uint256 collateralAmount;
-    }
-
-    /**
      * Mapping of all LOAN data by loan id.
      */
     mapping(uint256 => LOAN) private LOANs;
-
-    /* ------------------------------------------------------------ */
-    /*                      EVENTS DEFINITIONS                      */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Emitted when a new loan in created.
-     */
-    event LOANCreated(
-        uint256 indexed loanId,
-        bytes32 indexed proposalHash,
-        address indexed proposalContract,
-        Terms terms,
-        LenderSpec lenderSpec,
-        bytes extra
-    );
-
-    /**
-     * @notice Emitted when a loan is paid back.
-     */
-    event LOANPaidBack(uint256 indexed loanId);
-
-    /**
-     * @notice Emitted when a repaid or defaulted loan is claimed.
-     */
-    event LOANClaimed(uint256 indexed loanId, bool indexed defaulted);
-
-    /* ------------------------------------------------------------ */
-    /*                      ERRORS DEFINITIONS                      */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Thrown when a caller is not a stated proposer.
-     */
-    error CallerIsNotStatedProposer(address addr);
-
-    /**
-     * @notice Thrown when managed loan is running.
-     */
-    error LoanNotRunning();
-
-    /**
-     * @notice Thrown when manged loan is still running.
-     */
-    error LoanRunning();
-
-    /**
-     * @notice Thrown when managed loan is defaulted.
-     */
-    error LoanDefaulted(uint40);
-
-    /**
-     * @notice Thrown when loan doesn't exist.
-     */
-    error NonExistingLoan();
-
-    /**
-     * @notice Thrown when caller is not a LOAN token holder.
-     */
-    error CallerNotLOANTokenHolder();
-
-    /**
-     * @notice Thrown when loan duration is below the minimum.
-     */
-    error InvalidDuration(uint256 current, uint256 limit);
-
-    /**
-     * @notice Thrown when accruing interest APR is above the maximum.
-     */
-    error InterestAPROutOfBounds(uint256 current, uint256 limit);
-
-    /**
-     * @notice Thrown when caller is not a vault.
-     */
-    error CallerNotVault();
-
-    /**
-     * @notice Thrown when caller is not the borrower/proposer
-     */
-    error CallerNotProposer();
-
-    /**
-     * @notice Thrown when pool based source of funds doesn't have a registered adapter.
-     */
-    error InvalidSourceOfFunds(address sourceOfFunds);
-
-    /**
-     * @notice Thrown when the loan credit address is different than the expected credit address.
-     */
-    error DifferentCreditAddress(address loanCreditAddress, address expectedCreditAddress);
 
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */

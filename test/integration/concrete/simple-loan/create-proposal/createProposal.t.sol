@@ -107,7 +107,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - feeAmount);
     }
 
-    function test_RevertWhen_InvalidDuration()
+    function test_RevertWhen_InvalidDurationStartTime()
         external
         proposalContractHasTag
         whenValidProposalData
@@ -129,7 +129,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
 
         vm.prank(borrower);
-        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanSimpleProposal.InvalidDuration.selector));
+        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanSimpleProposal.InvalidDurationStartTime.selector));
         deployment.simpleLoan.createProposal(proposalSpec);
     }
 }

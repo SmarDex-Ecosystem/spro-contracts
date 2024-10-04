@@ -7,13 +7,15 @@ import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable
 
 import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { IStateFingerprintComputer } from "src/interfaces/IStateFingerprintComputer.sol";
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 
 /**
  * @title PWN Config
  * @notice Contract holding configurable values of PWN protocol.
  * @dev Is intended to be used as a proxy via `TransparentUpgradeableProxy`.
  */
-contract SDConfig is Ownable2Step, Initializable {
+contract SDConfig is Ownable2Step, Initializable, ISproErrors, ISproEvents {
     string internal constant VERSION = "1.0";
 
     /* ------------------------------------------------------------ */
@@ -77,64 +79,6 @@ contract SDConfig is Ownable2Step, Initializable {
      * @notice Mapping holding registered pool adapter to a pool address.
      */
     mapping(address => address) private _poolAdapterRegistry;
-
-    /* ------------------------------------------------------------ */
-    /*                      EVENTS DEFINITIONS                      */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Emitted when new listed fee is set.
-     */
-    event FixFeeListedUpdated(uint256 oldFee, uint256 newFee);
-
-    /**
-     * @notice Emitted when new unlisted fee is set.
-     */
-    event FixFeeUnlistedUpdated(uint256 oldFee, uint256 newFee);
-
-    /**
-     * @notice Emitted when new variable factor is set.
-     */
-    event VariableFactorUpdated(uint256 oldFactor, uint256 newFactor);
-
-    /**
-     * @notice Emitted when a listed token factor is set.
-     */
-    event ListedTokenUpdated(address token, uint256 factor);
-
-    /**
-     * @notice Emitted when new LOAN token metadata uri is set.
-     */
-    event LOANMetadataUriUpdated(address indexed loanContract, string newUri);
-
-    /**
-     * @notice Emitted when new default LOAN token metadata uri is set.
-     */
-    event DefaultLOANMetadataUriUpdated(string newUri);
-
-    /* ------------------------------------------------------------ */
-    /*                      ERRORS DEFINITIONS                      */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Thrown when registering a computer which does not support the asset it is registered for.
-     */
-    error InvalidComputerContract(address computer, address asset);
-
-    /**
-     * @notice Thrown when trying to set a LOAN token metadata uri for zero address loan contract.
-     */
-    error ZeroLoanContract();
-
-    /**
-     * @notice Thrown when trying to set a percentage value higher than `PERCENTAGE`.
-     */
-    error ExcessivePercentageValue(uint16 percentage);
-
-    /**
-     * @notice Thrown when trying to set a percentage value equal to zero.
-     */
-    error ZeroPercentageValue();
 
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */

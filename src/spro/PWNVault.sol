@@ -7,61 +7,16 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { Permit } from "spro/Permit.sol";
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 
 /**
  * @title PWN Vault
  * @notice Base contract for transferring and managing collateral and loan assets in PWN protocol.
  * @dev Loan contracts inherits PWN Vault to act as a Vault for its loan type.
  */
-contract PWNVault {
+contract PWNVault is ISproErrors, ISproEvents {
     using SafeERC20 for IERC20Metadata;
-    /* ------------------------------------------------------------ */
-    /*                      EVENTS DEFINITIONS                      */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Emitted when asset transfer happens from an `origin` address to a vault.
-     */
-    event VaultPull(address asset, address indexed origin, uint256 amount);
-
-    /**
-     * @notice Emitted when asset transfer happens from a vault to a `beneficiary` address.
-     */
-    event VaultPush(address asset, address indexed beneficiary, uint256 amount);
-
-    /**
-     * @notice Emitted when asset transfer happens from an `origin` address to a `beneficiary` address.
-     */
-    event VaultPushFrom(address asset, address indexed origin, address indexed beneficiary, uint256 amount);
-
-    /**
-     * @notice Emitted when asset is withdrawn from a pool to an `owner` address.
-     */
-    event PoolWithdraw(
-        address asset, address indexed poolAdapter, address indexed pool, address indexed owner, uint256 amount
-    );
-
-    /**
-     * @notice Emitted when asset is supplied to a pool from a vault.
-     */
-    event PoolSupply(
-        address asset, address indexed poolAdapter, address indexed pool, address indexed owner, uint256 amount
-    );
-
-    /* ------------------------------------------------------------ */
-    /*                      ERRORS DEFINITIONS                      */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Thrown when the Vault receives an asset that is not transferred by the Vault itself.
-     */
-    error UnsupportedTransferFunction();
-
-    /**
-     * @notice Thrown when the Vault receives an invalid amount of an asset.
-     */
-    error InvalidAmountTransfer();
-
     /* ------------------------------------------------------------ */
     /*                      TRANSFER FUNCTIONS                      */
     /* ------------------------------------------------------------ */
