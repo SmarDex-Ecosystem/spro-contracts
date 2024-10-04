@@ -6,6 +6,7 @@ import { Test } from "forge-std/Test.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { SDListedFee } from "src/libraries/SDListedFee.sol";
+import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 contract SDFeeCalculator_CalculateFeeAmount_Test is Test {
     uint256 internal constant ff = 5e18;
@@ -48,10 +49,10 @@ contract SDFeeCalculator_CalculateFeeAmount_Test is Test {
         _loanAmount = bound(_loanAmount, 0, 1e30);
 
         uint256 feeAmount = SDListedFee.calculate(_ff, _vf, _tf, _loanAmount);
-        uint256 intermediate = (_vf * _tf) / SDListedFee.WAD;
+        uint256 intermediate = (_vf * _tf) / Constants.WAD;
         uint256 expectedFee = _ff + (intermediate * _loanAmount) / 1e18;
         assertApproxEqAbs(feeAmount, expectedFee, 1);
-        uint256 expectedFee2 = _ff + Math.mulDiv(intermediate, _loanAmount, SDListedFee.WAD, Math.Rounding.Ceil);
+        uint256 expectedFee2 = _ff + Math.mulDiv(intermediate, _loanAmount, Constants.WAD, Math.Rounding.Ceil);
         assertEq(feeAmount, expectedFee2);
     }
 }

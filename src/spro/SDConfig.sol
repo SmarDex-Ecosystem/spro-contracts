@@ -9,6 +9,7 @@ import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { IStateFingerprintComputer } from "src/interfaces/IStateFingerprintComputer.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
+import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 /**
  * @title PWN Config
@@ -16,16 +17,9 @@ import { ISproEvents } from "src/interfaces/ISproEvents.sol";
  * @dev Is intended to be used as a proxy via `TransparentUpgradeableProxy`.
  */
 contract SDConfig is Ownable2Step, Initializable, ISproErrors, ISproEvents {
-    string internal constant VERSION = "1.0";
-
     /* ------------------------------------------------------------ */
     /*              VARIABLES & CONSTANTS DEFINITIONS               */
     /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Fee sink address.
-     */
-    address public constant SINK = address(0xdead);
 
     /**
      * @notice SDEX token address.
@@ -36,9 +30,6 @@ contract SDConfig is Ownable2Step, Initializable, ISproErrors, ISproEvents {
      * @notice Percentage of a proposal's availableCreditLimit which can be used in partial lending.
      */
     uint16 public partialPositionPercentage;
-
-    /// @dev Percentage denominator (10_000 = 100%)
-    uint256 internal constant PERCENTAGE = 1e4;
 
     /**
      * @notice Protocol fixed fee for unlisted credit tokens.
@@ -100,7 +91,9 @@ contract SDConfig is Ownable2Step, Initializable, ISproErrors, ISproEvents {
         uint16 _percentage
     ) external initializer {
         require(_owner != address(0), "Owner is zero address");
-        require(_percentage > 0 && _percentage < PERCENTAGE / 2, "Partial percentage position value is invalid");
+        require(
+            _percentage > 0 && _percentage < Constants.PERCENTAGE / 2, "Partial percentage position value is invalid"
+        );
         _transferOwnership(_owner);
 
         fixFeeUnlisted = _fixFeeUnlisted;
@@ -161,7 +154,7 @@ contract SDConfig is Ownable2Step, Initializable, ISproErrors, ISproEvents {
      */
     function setPartialPositionPercentage(uint16 percentage) external onlyOwner {
         if (percentage == 0) revert ZeroPercentageValue();
-        if (percentage >= PERCENTAGE / 2) revert ExcessivePercentageValue(percentage);
+        if (percentage >= Constants.PERCENTAGE / 2) revert ExcessivePercentageValue(percentage);
         partialPositionPercentage = percentage;
     }
 

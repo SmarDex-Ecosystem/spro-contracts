@@ -17,6 +17,7 @@ import { SDSimpleLoanSimpleProposal } from "spro/SDSimpleLoanSimpleProposal.sol"
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
+import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 /**
  * @title SD Simple Loan -- forked from PWNSimpleLoan.sol
@@ -24,27 +25,15 @@ import { ISproTypes } from "src/interfaces/ISproTypes.sol";
  * @dev Acts as a vault for every loan created by this contract.
  */
 contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
-    string public constant VERSION = "1.0";
-
     /* ------------------------------------------------------------ */
-    /*  VARIABLES & CONSTANTS DEFINITIONS                        */
+    /*  VARIABLES & CONSTANTS DEFINITIONS                           */
     /* ------------------------------------------------------------ */
-
-    uint32 public constant MIN_LOAN_DURATION = 10 minutes;
-    uint40 public constant MAX_ACCRUING_INTEREST_APR = 16e6; // 160,000 APR (with 2 decimals)
-
-    uint256 public constant ACCRUING_INTEREST_APR_DECIMALS = 1e2;
-    uint256 public constant MINUTES_IN_YEAR = 525_600; // Note: Assuming 365 days in a year
-    uint256 public constant ACCRUING_INTEREST_APR_DENOMINATOR = ACCRUING_INTEREST_APR_DECIMALS * MINUTES_IN_YEAR * 100;
-
-    uint256 public constant MAX_EXTENSION_DURATION = 90 days;
-    uint256 public constant MIN_EXTENSION_DURATION = 1 days;
 
     bytes32 public immutable DOMAIN_SEPARATOR = keccak256(
         abi.encode(
             keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
             keccak256("SDSimpleLoan"),
-            keccak256(abi.encodePacked(VERSION)),
+            keccak256(abi.encodePacked(Constants.VERSION)),
             block.chainid,
             address(this)
         )
@@ -108,7 +97,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
 
         // Fees to sink (burned)
         if (feeAmount > 0) {
-            _pushFrom(config.SDEX(), feeAmount, msg.sender, config.SINK());
+            _pushFrom(config.SDEX(), feeAmount, msg.sender, Constants.SINK);
         }
     }
 
@@ -158,16 +147,19 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         });
 
         // Check minimum loan duration
-        if (loanTerms.defaultTimestamp - loanTerms.startTimestamp < MIN_LOAN_DURATION) {
+        if (loanTerms.defaultTimestamp - loanTerms.startTimestamp < Constants.MIN_LOAN_DURATION) {
             revert InvalidDuration({
                 current: loanTerms.defaultTimestamp - loanTerms.startTimestamp,
-                limit: MIN_LOAN_DURATION
+                limit: Constants.MIN_LOAN_DURATION
             });
         }
 
         // Check maximum accruing interest APR
-        if (loanTerms.accruingInterestAPR > MAX_ACCRUING_INTEREST_APR) {
-            revert InterestAPROutOfBounds({ current: loanTerms.accruingInterestAPR, limit: MAX_ACCRUING_INTEREST_APR });
+        if (loanTerms.accruingInterestAPR > Constants.MAX_ACCRUING_INTEREST_APR) {
+            revert InterestAPROutOfBounds({
+                current: loanTerms.accruingInterestAPR,
+                limit: Constants.MAX_ACCRUING_INTEREST_APR
+            });
         }
 
         // Create a new loan
@@ -497,7 +489,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         uint256 accruedInterest = Math.mulDiv(
             loan.principalAmount,
             uint256(loan.accruingInterestAPR) * accruingMinutes,
-            ACCRUING_INTEREST_APR_DENOMINATOR,
+            Constants.ACCRUING_INTEREST_APR_DENOMINATOR,
             Math.Rounding.Ceil
         );
         return loan.fixedInterestAmount + accruedInterest;

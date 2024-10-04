@@ -17,6 +17,7 @@ import {
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     function setUp() public override {
@@ -79,7 +80,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         );
         // sdex fees
         assertEq(
-            deployment.sdex.balanceOf(address(deployment.config.SINK())),
+            deployment.sdex.balanceOf(address(Constants.SINK)),
             deployment.config.fixFeeUnlisted(),
             "9: sink should contain the sdex unlisted fee"
         );
@@ -124,7 +125,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // assertEq(t20.balanceOf(address(deployment.simpleLoan)), 0);
         // assertEq(t20.balanceOf(lender), 0);
 
-        // assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        // assertEq(deployment.sdex.balanceOf(address(Constants.SINK)), deployment.config.fixFeeUnlisted());
         // assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
         // assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
     }
@@ -628,14 +629,14 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(t20.balanceOf(address(deployment.simpleLoan)), 0);
         assertEq(t20.balanceOf(lender), 0);
 
-        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(address(Constants.SINK)), deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
     }
 
     function testFuzz_loanAccruedInterest(uint256 amount, uint256 apr, uint256 future) external {
         amount = bound(amount, ((500 * CREDIT_LIMIT) / 1e4), ((9500 * CREDIT_LIMIT) / 1e4));
-        apr = bound(apr, 1, deployment.simpleLoan.MAX_ACCRUING_INTEREST_APR());
+        apr = bound(apr, 1, Constants.MAX_ACCRUING_INTEREST_APR);
         future = bound(future, 1 days, proposal.startTimestamp);
 
         proposal.accruingInterestAPR = uint24(apr);
@@ -666,7 +667,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         uint256 accruedInterest = Math.mulDiv(
             amount,
             uint256(loanInfo.accruingInterestAPR) * accruingMinutes,
-            deployment.simpleLoan.ACCRUING_INTEREST_APR_DENOMINATOR(),
+            Constants.ACCRUING_INTEREST_APR_DENOMINATOR,
             Math.Rounding.Ceil
         );
 

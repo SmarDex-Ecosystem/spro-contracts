@@ -12,6 +12,7 @@ import {
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationTest {
     modifier proposalContractHasTag() {
@@ -53,7 +54,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         assertEq(t20.balanceOf(address(deployment.simpleLoan)), COLLATERAL_AMOUNT);
         assertEq(t20.balanceOf(borrower), 0);
 
-        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(address(Constants.SINK)), deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
     }
 
@@ -90,7 +91,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
 
         uint256 feeAmount = lf + (((vf * tf) / 1e18) * proposal.availableCreditLimit) / 1e18;
 
-        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), feeAmount);
+        assertEq(deployment.sdex.balanceOf(address(Constants.SINK)), feeAmount);
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - feeAmount);
     }
 

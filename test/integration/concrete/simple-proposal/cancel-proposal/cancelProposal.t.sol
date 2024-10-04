@@ -11,6 +11,7 @@ import {
     PWNRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 import { SDSimpleLoanSimpleProposal } from "spro/SDSimpleLoanSimpleProposal.sol";
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract CancelProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SDBaseIntegrationTest {
     function test_RevertWhen_DataCannotBeDecoded() external {
@@ -20,7 +21,7 @@ contract CancelProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         deployment.simpleLoanSimpleProposal.cancelProposal(badData);
 
         bytes memory baseProposalData = abi.encode(
-            SDSimpleLoanSimpleProposal.ProposalBase({
+            ISproTypes.ProposalBase({
                 collateralAddress: address(t20),
                 checkCollateralStateFingerprint: false,
                 collateralStateFingerprint: bytes32(0),

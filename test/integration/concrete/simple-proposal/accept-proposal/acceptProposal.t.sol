@@ -12,6 +12,7 @@ import {
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 
 import { SDSimpleLoanSimpleProposal } from "spro/SDSimpleLoanSimpleProposal.sol";
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
 contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SDBaseIntegrationTest {
@@ -22,7 +23,7 @@ contract AcceptProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, badData);
 
         bytes memory baseProposalData = abi.encode(
-            SDSimpleLoanSimpleProposal.ProposalBase({
+            ISproTypes.ProposalBase({
                 collateralAddress: address(t20),
                 checkCollateralStateFingerprint: false,
                 collateralStateFingerprint: bytes32(0),

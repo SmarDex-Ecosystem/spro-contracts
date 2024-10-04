@@ -14,6 +14,7 @@ import {
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationTest {
     modifier proposalContractHasTag() {
@@ -22,7 +23,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
 
     function test_RevertWhen_InvalidLoanDuration() external proposalContractHasTag {
         // Set bad duration value
-        uint256 minDuration = deployment.simpleLoan.MIN_LOAN_DURATION();
+        uint256 minDuration = Constants.MIN_LOAN_DURATION;
         proposal.defaultTimestamp = proposal.startTimestamp + uint32(minDuration - 1);
 
         // Create proposal
@@ -43,7 +44,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
 
     function test_RevertWhen_InvalidMaxApr() external proposalContractHasTag {
         // Set bad max accruing interest apr
-        uint256 maxApr = deployment.simpleLoan.MAX_ACCRUING_INTEREST_APR();
+        uint256 maxApr = Constants.MAX_ACCRUING_INTEREST_APR;
         proposal.accruingInterestAPR = uint24(maxApr + 1);
 
         // Create proposal
@@ -81,7 +82,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
-        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(address(Constants.SINK)), deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
@@ -121,7 +122,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
-        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(address(Constants.SINK)), deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
@@ -182,7 +183,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
-        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(address(Constants.SINK)), deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 

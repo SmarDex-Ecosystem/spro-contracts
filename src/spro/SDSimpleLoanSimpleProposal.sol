@@ -10,25 +10,13 @@ import { SDSimpleLoan } from "spro/SDSimpleLoan.sol";
 import { PWNRevokedNonce } from "spro/PWNRevokedNonce.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
+import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 /**
  * @title SD Simple Loan Simple Proposal
  * @notice Contract for creating and accepting simple loan proposals.
  */
 contract SDSimpleLoanSimpleProposal is ISproErrors, ISproEvents {
-    /* ------------------------------------------------------------ */
-    /*  VARIABLES & CONSTANTS DEFINITIONS                        */
-    /* ------------------------------------------------------------ */
-
-    string public constant VERSION = "1.0";
-
-    /**
-     * @dev EIP-712 simple proposal struct type hash.
-     */
-    bytes32 public constant PROPOSAL_TYPEHASH = keccak256(
-        "Proposal(address collateralAddress,uint256 collateralAmount,bool checkCollateralStateFingerprint,bytes32 collateralStateFingerprint,address creditAddress,uint256 availableCreditLimit,uint256 fixedInterestAmount,uint40 accruingInterestAPR,uint32 duration,uint40 startTimestamp,address proposer,bytes32 proposerSpecHash,uint256 nonceSpace,uint256 nonce,address loanContract)"
-    );
-
     /**
      * @dev Mapping of proposals to the borrower's withdrawable collateral tokens
      *      (proposal hash => amount of collateral tokens)
@@ -39,24 +27,18 @@ contract SDSimpleLoanSimpleProposal is ISproErrors, ISproEvents {
     /*              VARIABLES & CONSTANTS DEFINITIONS               */
     /* ------------------------------------------------------------ */
 
-    bytes32 public immutable DOMAIN_SEPARATOR;
+    bytes32 public immutable DOMAIN_SEPARATOR = keccak256(
+        abi.encode(
+            keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+            keccak256(abi.encodePacked("SDSimpleLoanSimpleProposal")),
+            keccak256(abi.encodePacked(Constants.VERSION)),
+            block.chainid,
+            address(this)
+        )
+    );
 
     PWNRevokedNonce public immutable revokedNonce;
     SDConfig public immutable config;
-
-    uint256 internal constant PERCENTAGE = 1e4;
-
-    struct ProposalBase {
-        address collateralAddress;
-        bool checkCollateralStateFingerprint;
-        bytes32 collateralStateFingerprint;
-        uint256 availableCreditLimit;
-        uint40 startTimestamp;
-        address proposer;
-        uint256 nonceSpace;
-        uint256 nonce;
-        address loanContract;
-    }
 
     /**
      * @dev Mapping of proposals made via on-chain transactions.
@@ -77,16 +59,6 @@ contract SDSimpleLoanSimpleProposal is ISproErrors, ISproEvents {
     constructor(address _revokedNonce, address _config) {
         revokedNonce = PWNRevokedNonce(_revokedNonce);
         config = SDConfig(_config);
-
-        DOMAIN_SEPARATOR = keccak256(
-            abi.encode(
-                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-                keccak256(abi.encodePacked("SDSimpleLoanSimpleProposal")),
-                keccak256(abi.encodePacked(VERSION)),
-                block.chainid,
-                address(this)
-            )
-        );
     }
 
     /* ------------------------------------------------------------ */
@@ -108,7 +80,7 @@ contract SDSimpleLoanSimpleProposal is ISproErrors, ISproEvents {
      * @return Proposal struct hash.
      */
     function getProposalHash(Proposal calldata proposal) public view returns (bytes32) {
-        return _getProposalHash(PROPOSAL_TYPEHASH, abi.encode(proposal));
+        return _getProposalHash(Constants.PROPOSAL_TYPEHASH, abi.encode(proposal));
     }
 
     /**
@@ -176,7 +148,7 @@ contract SDSimpleLoanSimpleProposal is ISproErrors, ISproEvents {
         }
 
         // Make proposal hash
-        bytes32 proposalHash = _getProposalHash(PROPOSAL_TYPEHASH, abi.encode(proposal));
+        bytes32 proposalHash = _getProposalHash(Constants.PROPOSAL_TYPEHASH, abi.encode(proposal));
 
         // Try to make proposal
         _makeProposal(proposalHash);
@@ -207,7 +179,7 @@ contract SDSimpleLoanSimpleProposal is ISproErrors, ISproEvents {
         Proposal memory proposal = decodeProposalData(proposalData);
 
         // Make proposal hash
-        proposalHash = _getProposalHash(PROPOSAL_TYPEHASH, abi.encode(proposal));
+        proposalHash = _getProposalHash(Constants.PROPOSAL_TYPEHASH, abi.encode(proposal));
 
         // Try to accept proposal
         _acceptProposal(
@@ -264,7 +236,7 @@ contract SDSimpleLoanSimpleProposal is ISproErrors, ISproEvents {
         Proposal memory proposal = decodeProposalData(proposalData);
 
         // Make proposal hash
-        bytes32 proposalHash = _getProposalHash(PROPOSAL_TYPEHASH, abi.encode(proposal));
+        bytes32 proposalHash = _getProposalHash(Constants.PROPOSAL_TYPEHASH, abi.encode(proposal));
 
         proposer = proposal.proposer;
         collateral = proposal.collateralAddress;
@@ -343,13 +315,15 @@ contract SDSimpleLoanSimpleProposal is ISproErrors, ISproEvents {
         } else if (creditUsed[proposalHash] + creditAmount < proposal.availableCreditLimit) {
             // Credit may only be between min and max amounts if it is not exact
             uint256 minCreditAmount =
-                Math.mulDiv(proposal.availableCreditLimit, config.partialPositionPercentage(), PERCENTAGE);
+                Math.mulDiv(proposal.availableCreditLimit, config.partialPositionPercentage(), Constants.PERCENTAGE);
             if (creditAmount < minCreditAmount) {
                 revert CreditAmountTooSmall({ amount: creditAmount, minimum: minCreditAmount });
             }
 
             uint256 maxCreditAmount = Math.mulDiv(
-                proposal.availableCreditLimit, (PERCENTAGE - config.partialPositionPercentage()), PERCENTAGE
+                proposal.availableCreditLimit,
+                (Constants.PERCENTAGE - config.partialPositionPercentage()),
+                Constants.PERCENTAGE
             );
             if (creditAmount > maxCreditAmount) {
                 revert CreditAmountLeavesTooLittle({ amount: creditAmount, maximum: maxCreditAmount });

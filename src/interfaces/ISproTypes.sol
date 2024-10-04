@@ -166,4 +166,16 @@ interface ISproTypes {
         address originalSourceOfFunds;
         uint256 repaymentAmount;
     }
+
+    struct ProposalBase {
+        address collateralAddress;
+        bool checkCollateralStateFingerprint;
+        bytes32 collateralStateFingerprint;
+        uint256 availableCreditLimit;
+        uint40 startTimestamp;
+        address proposer;
+        uint256 nonceSpace;
+        uint256 nonce;
+        address loanContract;
+    }
 }
