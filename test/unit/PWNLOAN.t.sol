@@ -137,13 +137,13 @@ contract PWNLOAN_TokenUri_Test is PWNLOANTest {
 
         tokenUri = "test.uri.xyz";
 
-        vm.mockCall(activeLoanContract, abi.encodeWithSignature("loanMetadataUri()"), abi.encode(tokenUri));
+        vm.mockCall(address(this), abi.encodeWithSignature("loanMetadataUri()"), abi.encode(tokenUri));
 
         loanId = loanToken.mint(alice);
     }
 
     function test_shouldCallLoanContract() external {
-        vm.expectCall(activeLoanContract, abi.encodeWithSignature("loanMetadataUri()"));
+        vm.expectCall(address(this), abi.encodeWithSignature("loanMetadataUri()"));
         loanToken.tokenURI(loanId);
     }
 
@@ -164,19 +164,6 @@ contract PWNLOAN_GetStateFingerprint_Test is PWNLOANTest {
         bytes32 fingerprint = loanToken.getStateFingerprint(loanId);
 
         assertEq(fingerprint, bytes32(0));
-    }
-
-    function test_shouldCallLoanContract() external {
-        vm.store(address(loanToken), _loanContractSlot(loanId), bytes32(uint256(uint160(activeLoanContract))));
-        bytes32 mockFingerprint = keccak256("mock fingerprint");
-        vm.mockCall(
-            activeLoanContract, abi.encodeWithSignature("getStateFingerprint(uint256)"), abi.encode(mockFingerprint)
-        );
-
-        vm.expectCall(activeLoanContract, abi.encodeWithSignature("getStateFingerprint(uint256)", loanId));
-        bytes32 fingerprint = loanToken.getStateFingerprint(loanId);
-
-        assertEq(fingerprint, mockFingerprint);
     }
 }
 

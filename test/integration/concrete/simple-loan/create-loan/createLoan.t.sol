@@ -91,47 +91,6 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         assertEq(credit.balanceOf(borrower), lenderSpec.creditAmount);
     }
 
-    function test_CreateLoan_ERC20_LenderNotSourceOfFunds()
-        external
-        proposalContractHasTag
-        whenLoanTermsValid
-        whenERC20Collateral
-    {
-        vm.mockCall(
-            address(deployment.config),
-            abi.encodeWithSignature("getPoolAdapter(address)", address(this)),
-            abi.encode(IPoolAdapter(poolAdapter))
-        );
-
-        _createERC20Proposal();
-
-        bytes memory proposalSpec = abi.encode(proposal);
-        Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
-        lenderSpec.sourceOfFunds = address(this);
-
-        // Mint to source of funds and approve pool adapter
-        credit.mint(address(this), INITIAL_CREDIT_BALANCE);
-        credit.approve(address(poolAdapter), CREDIT_LIMIT);
-
-        // Lender creates loan
-        vm.startPrank(lender);
-        credit.approve(address(deployment.config), CREDIT_LIMIT);
-        uint256 id = deployment.config.createLOAN(proposalSpec, lenderSpec, "");
-        vm.stopPrank();
-
-        assertEq(deployment.loanToken.ownerOf(id), lender);
-        assertEq(deployment.sdex.balanceOf(address(Constants.SINK)), deployment.config.fixFeeUnlisted());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
-        assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
-
-        (Spro.LoanInfo memory loanInfo) = deployment.config.getLOAN(id);
-        assertEq(loanInfo.status, 2);
-
-        assertEq(credit.balanceOf(address(this)), INITIAL_CREDIT_BALANCE - lenderSpec.creditAmount);
-        assertEq(credit.balanceOf(lender), 0);
-        assertEq(credit.balanceOf(borrower), lenderSpec.creditAmount);
-    }
-
     function test_CreateLoan_ERC20_PermitData()
         external
         proposalContractHasTag

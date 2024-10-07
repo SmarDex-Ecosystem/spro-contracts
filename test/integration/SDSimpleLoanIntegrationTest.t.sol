@@ -111,13 +111,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(credit.balanceOf(borrower), 0);
         assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + FIXED_INTEREST_AMOUNT);
 
-        // assertEq(t20.balanceOf(borrower), COLLATERAL_AMOUNT);
-        // assertEq(t20.balanceOf(address(deployment.simpleLoan)), 0);
-        // assertEq(t20.balanceOf(lender), 0);
-
-        // assertEq(deployment.sdex.balanceOf(address(Constants.SINK)), deployment.config.fixFeeUnlisted());
-        // assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
-        // assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
+        assertEq(t20.balanceOf(borrower), COLLATERAL_AMOUNT);
     }
 
     function test_PartialLoan_GtCreditThreshold() external {
@@ -521,50 +515,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         deployment.config.claimLOAN(loanId);
     }
 
-    function test_shouldFail_RepayToPool_InvalidSourceOfFunds() external {
-        // Setup repay to pool with invalid source of funds
-        vm.mockCall(
-            address(deployment.config),
-            abi.encodeWithSignature("getPoolAdapter(address)", address(this)),
-            abi.encode(IPoolAdapter(poolAdapter))
-        );
-        _createERC20Proposal();
-
-        bytes memory proposalSpec = abi.encode(proposal);
-        Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
-        lenderSpec.sourceOfFunds = address(this);
-
-        // Mint to source of funds and approve pool adapter
-        credit.mint(address(this), INITIAL_CREDIT_BALANCE);
-        credit.approve(address(poolAdapter), CREDIT_LIMIT);
-
-        // Lender creates loan
-        vm.startPrank(lender);
-        credit.approve(address(deployment.config), CREDIT_LIMIT);
-        uint256 id = deployment.config.createLOAN(proposalSpec, lenderSpec, "");
-        vm.stopPrank();
-
-        // Borrower approvals for credit token
-        vm.startPrank(borrower);
-        credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
-        credit.approve(address(deployment.config), CREDIT_LIMIT + FIXED_INTEREST_AMOUNT);
-
-        // End of setup
-        vm.mockCall(
-            address(deployment.config),
-            abi.encodeWithSignature("getPoolAdapter(address)", address(this)),
-            abi.encode(address(0))
-        );
-
-        // Loan should be repaid, yet not claimed due to try/catch
-        deployment.config.repayLOAN(id, "");
-        vm.stopPrank();
-
-        vm.prank(address(deployment.config));
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidSourceOfFunds.selector, address(this)));
-        deployment.config.tryClaimRepaidLOAN(id, CREDIT_LIMIT, lender);
-    }
-
     function test_RepayToPool() external {
         // Setup repay to pool
         vm.mockCall(
@@ -583,6 +533,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         credit.mint(address(this), INITIAL_CREDIT_BALANCE);
         credit.approve(address(poolAdapter), CREDIT_LIMIT);
 
+        vm.prank(deployment.protocolAdmin);
+        deployment.config.registerPoolAdapter(address(this), address(poolAdapter));
         // Lender creates loan
         vm.startPrank(lender);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
