@@ -3,16 +3,33 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
-import { Spro, Math, Permit, PWNRevokedNonce, IPoolAdapter } from "spro/Spro.sol";
-
 import { T20 } from "test/helper/T20.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 
+import { Spro, Math, Permit, PWNRevokedNonce, IPoolAdapter } from "spro/Spro.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
 contract SDSimpleLoanHarness is Spro {
-    constructor(address _sx, address _lt, address _rn) Spro(_sx, _lt, _rn) { }
+    constructor(
+        address _sdex,
+        address _revokedNonce,
+        address _stateFingerprintComputer,
+        uint16 _defaultThreshold,
+        uint16 _percentage,
+        uint16 _partialPositionPercentage,
+        uint16 _variableFactor
+    )
+        Spro(
+            _sdex,
+            _revokedNonce,
+            _stateFingerprintComputer,
+            _defaultThreshold,
+            _percentage,
+            _partialPositionPercentage,
+            _variableFactor
+        )
+    { }
 
     function exposed_checkPermit(address caller, address creditAddress, Permit memory permit) external pure {
         _checkPermit(caller, creditAddress, permit);
@@ -38,6 +55,7 @@ contract SDSimpleLoanHarness is Spro {
 
 contract SDSimpleLoanTest is Test {
     address public hub = makeAddr("hub");
+    address public sdex = makeAddr("sdex");
     address public loanToken = makeAddr("loanToken");
     address public config = makeAddr("config");
     address public revokedNonce = makeAddr("revokedNonce");
@@ -51,13 +69,12 @@ contract SDSimpleLoanTest is Test {
 
     function setUp() public {
         vm.etch(config, bytes("data"));
-        simpleLoan = new SDSimpleLoanHarness(loanToken, config, revokedNonce);
+        simpleLoan = new SDSimpleLoanHarness(sdex, revokedNonce, address(this), 1, 1, 1, 1);
 
         vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(poolAdapter));
     }
 
     function test_constructor() external view {
-        assertEq(address(simpleLoan.loanToken()), loanToken);
         assertEq(address(simpleLoan.revokedNonce()), revokedNonce);
     }
 

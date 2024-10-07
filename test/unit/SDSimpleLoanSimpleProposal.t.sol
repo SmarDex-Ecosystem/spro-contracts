@@ -2,12 +2,31 @@
 pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
+
 import { Spro } from "spro/Spro.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
 contract SproHarness is Spro {
-    constructor(address _sdex, address _loanToken, address _revokedNonce) Spro(_sdex, _loanToken, _revokedNonce) { }
+    constructor(
+        address _sdex,
+        address _revokedNonce,
+        address _stateFingerprintComputer,
+        uint16 _defaultThreshold,
+        uint16 _percentage,
+        uint16 _partialPositionPercentage,
+        uint16 _variableFactor
+    )
+        Spro(
+            _sdex,
+            _revokedNonce,
+            _stateFingerprintComputer,
+            _defaultThreshold,
+            _percentage,
+            _partialPositionPercentage,
+            _variableFactor
+        )
+    { }
 
     function exposed_checkCompleteLoan(uint256 _creditAmount, uint256 _availableCreditLimit) external pure {
         _checkCompleteLoan(_creditAmount, _availableCreditLimit);
@@ -22,7 +41,7 @@ contract SDSimpleLoanSimpleProposalTest is Test {
     SproHarness harness;
 
     function setUp() public {
-        harness = new SproHarness(sdex, loanToken, revokedNonce);
+        harness = new SproHarness(sdex, revokedNonce, address(this), 1, 1, 1, 1);
     }
 
     function testFuzz_encodeProposalData(address addr) external view {

@@ -28,7 +28,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         _createERC20Proposal();
 
         // Specs
-        Spro.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        bytes memory proposalSpec = abi.encode(proposal);
         Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
 
         vm.prank(lender);
@@ -46,7 +46,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         proposal.accruingInterestAPR = uint24(maxApr + 1);
 
         // Create proposal
-        Spro.ProposalSpec memory proposalSpec = _createERC20Proposal();
+        bytes memory proposalSpec = _createERC20Proposal();
 
         // Specs
         Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
@@ -69,7 +69,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
     function test_CreateLoan_ERC20() external proposalContractHasTag whenLoanTermsValid whenERC20Collateral {
         _createERC20Proposal();
 
-        Spro.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        bytes memory proposalSpec = abi.encode(proposal);
         Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
 
         vm.startPrank(lender);
@@ -105,7 +105,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
 
         _createERC20Proposal();
 
-        Spro.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        bytes memory proposalSpec = abi.encode(proposal);
         Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
         lenderSpec.sourceOfFunds = address(this);
 
@@ -142,7 +142,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         proposal.creditAddress = address(creditPermit);
         _createERC20Proposal();
 
-        Spro.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        bytes memory proposalSpec = abi.encode(proposal);
         Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
 
         // Construct permit data for the lender

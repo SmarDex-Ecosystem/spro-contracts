@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { IERC5646 } from "src/interfaces/IERC5646.sol";
 import { IPWNLoanMetadataProvider } from "src/interfaces/IPWNLoanMetadataProvider.sol";
@@ -12,19 +13,15 @@ import { IPWNLoanMetadataProvider } from "src/interfaces/IPWNLoanMetadataProvide
  * @dev Token doesn't hold any loan logic, just an address of a loan contract that minted the LOAN token.
  *      PWN LOAN token is shared between all loan contracts.
  */
-contract PWNLOAN is ERC721, IERC5646 {
+contract PWNLOAN is ERC721, IERC5646, Ownable {
     /* ------------------------------------------------------------ */
     /*                VARIABLES & CONSTANTS DEFINITIONS             */
     /* ------------------------------------------------------------ */
 
-    /**
-     * @dev Last used LOAN id. First LOAN id is 1. This value is incremental.
-     */
+    /// @dev Last used LOAN id. First LOAN id is 1. This value is incremental.
     uint256 public lastLoanId;
 
-    /**
-     * @dev Mapping of a LOAN id to a loan contract that minted the LOAN token.
-     */
+    /// @dev Mapping of a LOAN id to a loan contract that minted the LOAN token.
     mapping(uint256 => address) public loanContract;
 
     /* ------------------------------------------------------------ */
@@ -50,16 +47,11 @@ contract PWNLOAN is ERC721, IERC5646 {
      */
     error InvalidLoanContractCaller();
 
-    /**
-     * @notice Thrown when caller is missing a PWN Hub tag.
-     */
-    error CallerMissingHubTag(bytes32 tag);
-
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
 
-    constructor() ERC721("PWN LOAN", "LOAN") { }
+    constructor(address creator) ERC721("PWN LOAN", "LOAN") Ownable(creator) { }
 
     /* ------------------------------------------------------------ */
     /*                       TOKEN LIFECYCLE                        */
@@ -67,15 +59,15 @@ contract PWNLOAN is ERC721, IERC5646 {
 
     /**
      * @notice Mint a new LOAN token.
-     * @dev Only an address with associated `ACTIVE_LOAN` tag in PWN Hub can call this function.
-     * @param owner Address of a LOAN token receiver.
+     * @dev Only owner can mint a new LOAN token.
+     * @param to Address of a LOAN token receiver.
      * @return loanId Id of a newly minted LOAN token.
      */
-    function mint(address owner) external returns (uint256 loanId) {
+    function mint(address to) external onlyOwner returns (uint256 loanId) {
         loanId = ++lastLoanId;
         loanContract[loanId] = msg.sender;
-        _mint(owner, loanId);
-        emit LOANMinted(loanId, msg.sender, owner);
+        _mint(to, loanId);
+        emit LOANMinted(loanId, msg.sender, to);
     }
 
     /**

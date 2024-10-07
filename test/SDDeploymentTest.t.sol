@@ -23,7 +23,6 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
         vm.label(deployment.proxyAdmin, "proxyAdmin");
         vm.label(deployment.protocolAdmin, "protocolAdmin");
         vm.label(address(deployment.sdex), "sdex");
-        vm.label(address(deployment.configSingleton), "configSingleton");
         vm.label(address(deployment.config), "config");
         vm.label(address(deployment.revokedNonce), "revokedNonce");
         vm.label(address(deployment.loanToken), "loanToken");
@@ -36,27 +35,20 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
         // Deploy SDEX token
         deployment.sdex = new T20();
 
-        vm.prank(deployment.protocolAdmin);
-
+        vm.startPrank(deployment.protocolAdmin);
         deployment.revokedNonce = new PWNRevokedNonce("tag");
 
-        deployment.loanToken = new PWNLOAN();
-
         // Deploy protocol
-        deployment.configSingleton =
-            new Spro(address(deployment.sdex), address(deployment.loanToken), address(deployment.revokedNonce));
-        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
-            address(deployment.configSingleton),
-            deployment.proxyAdmin,
-            abi.encodeWithSignature(
-                "initialize(address,uint256,uint256,uint256,uint16)",
-                deployment.protocolAdmin,
-                UNLISTED_FEE,
-                LISTED_FEE,
-                VARIABLE_FACTOR,
-                PARTIAL_POSITION_PERCENTAGE
-            )
+        deployment.config = new Spro(
+            address(deployment.sdex),
+            address(deployment.revokedNonce),
+            deployment.protocolAdmin,
+            UNLISTED_FEE,
+            LISTED_FEE,
+            VARIABLE_FACTOR,
+            PARTIAL_POSITION_PERCENTAGE
         );
-        deployment.config = Spro(address(proxy));
+        vm.stopPrank();
+        deployment.loanToken = deployment.config.loanToken();
     }
 }

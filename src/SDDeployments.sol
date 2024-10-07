@@ -24,7 +24,6 @@ abstract contract SDDeployments is CommonBase {
     // Properties need to be in alphabetical order
     struct Deployment {
         Spro config;
-        Spro configSingleton;
         IPWNDeployer deployer;
         PWNLOAN loanToken;
         address proxyAdmin;

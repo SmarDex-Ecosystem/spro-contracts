@@ -15,7 +15,7 @@ contract SproStorage is ISproErrors, ISproEvents {
     /**
      * @notice SDEX token address.
      */
-    address public immutable SDEX;
+    address public SDEX;
 
     /**
      * @notice Percentage of a proposal's availableCreditLimit which can be used in partial lending.
@@ -50,19 +50,19 @@ contract SproStorage is ISproErrors, ISproEvents {
      * @dev LOAN token minted by a loan contract will return metadata uri stored in this mapping.
      *      If there is no metadata uri for a loan contract, default metadata uri will be used stored under address(0).
      */
-    mapping(address => string) internal _loanMetadataUri;
+    mapping(address => string) public _loanMetadataUri;
 
     /**
      * @notice Mapping holding registered state fingerprint computer to an asset.
      */
-    mapping(address => address) internal _sfComputerRegistry;
+    mapping(address => address) public _sfComputerRegistry;
 
     /**
      * @notice Mapping holding registered pool adapter to a pool address.
      */
-    mapping(address => address) internal _poolAdapterRegistry;
+    mapping(address => address) public _poolAdapterRegistry;
 
-    PWNRevokedNonce public immutable revokedNonce;
+    PWNRevokedNonce public revokedNonce;
 
     /* -------------------------------------------------------------------------- */
     /*                                    LOAN                                    */
@@ -78,7 +78,7 @@ contract SproStorage is ISproErrors, ISproEvents {
         )
     );
 
-    PWNLOAN public immutable loanToken;
+    PWNLOAN public loanToken;
 
     /**
      * Mapping of all LOAN data by loan id.

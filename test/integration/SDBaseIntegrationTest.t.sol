@@ -131,23 +131,20 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     }
 
     // Make the proposal
-    function _createERC20Proposal() internal returns (Spro.ProposalSpec memory proposalSpec) {
+    function _createERC20Proposal() internal returns (bytes memory proposalSpec) {
         // Mint initial state & approve collateral
         t20.mint(borrower, proposal.collateralAmount);
         vm.prank(borrower);
         t20.approve(address(deployment.config), proposal.collateralAmount);
 
         // Create the proposal
-        proposalSpec = _buildProposalSpec(proposal);
+        proposalSpec = abi.encode(proposal);
 
         vm.prank(borrower);
         deployment.config.createProposal(proposalSpec);
     }
 
-    function _createLoan(Spro.ProposalSpec memory proposalSpec, bytes memory revertData)
-        internal
-        returns (uint256 loanId)
-    {
+    function _createLoan(bytes memory proposalSpec, bytes memory revertData) internal returns (uint256 loanId) {
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
         vm.prank(lender);
@@ -160,28 +157,17 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
 
         vm.prank(lender);
         return
-            deployment.config.createLOAN({ proposalSpec: proposalSpec, lenderSpec: _buildLenderSpec(false), extra: "" });
+            deployment.config.createLOAN({ proposalData: proposalSpec, lenderSpec: _buildLenderSpec(false), extra: "" });
     }
 
     function _cancelProposal(Spro.Proposal memory _proposal) internal {
-        deployment.config.cancelProposal(_buildProposalSpec(_proposal));
+        deployment.config.cancelProposal(abi.encode(_proposal));
     }
 
     function _buildLenderSpec(bool complete) internal view returns (ISproTypes.LenderSpec memory lenderSpec) {
         lenderSpec = complete
             ? ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: CREDIT_LIMIT, permitData: "" })
             : ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: CREDIT_AMOUNT, permitData: "" });
-    }
-
-    function _buildProposalSpec(Spro.Proposal memory _proposal)
-        internal
-        view
-        returns (Spro.ProposalSpec memory proposalSpec)
-    {
-        return ISproTypes.ProposalSpec({
-            proposalContract: address(deployment.config),
-            proposalData: abi.encode(_proposal)
-        });
     }
 
     function _mockERC5646Support(address asset, bool result) internal {

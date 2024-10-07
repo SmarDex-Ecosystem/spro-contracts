@@ -35,16 +35,6 @@ interface ISproTypes {
     }
 
     /**
-     * @notice Loan proposal specification during loan creation.
-     * @param proposalContract Address of a loan proposal contract.
-     * @param proposalData Encoded proposal data that is passed to the loan proposal contract.
-     */
-    struct ProposalSpec {
-        address proposalContract;
-        bytes proposalData;
-    }
-
-    /**
      * @notice Lender specification during loan creation.
      * @param sourceOfFunds Address of a source of funds. This can be the lenders address, if the loan is funded
      * directly,

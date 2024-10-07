@@ -18,7 +18,7 @@ contract CancelProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
 
     function test_RevertWhen_CallerNotProposer() external proposalContractHasTag {
         _createERC20Proposal();
-        Spro.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        bytes memory proposalSpec = abi.encode(proposal);
         vm.expectRevert(ISproErrors.CallerNotProposer.selector);
         deployment.config.cancelProposal(proposalSpec);
     }

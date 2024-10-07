@@ -17,14 +17,10 @@ import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
-    function setUp() public override {
-        super.setUp();
-    }
-
     function test_shouldCreateERC20Proposal_shouldCreatePartialLoan_shouldWithdrawRemainingCollateral() external {
         // Create the proposal
         vm.prank(borrower);
-        Spro.ProposalSpec memory proposalSpec = _createERC20Proposal();
+        bytes memory proposalSpec = _createERC20Proposal();
 
         // Create the loan
         vm.prank(lender);
@@ -85,7 +81,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
     function test_PartialLoan_ERC20Collateral_CancelProposal_RepayLoan() external {
         // Borrower: creates proposal
-        Spro.ProposalSpec memory proposalSpec = _createERC20Proposal();
+        bytes memory proposalSpec = _createERC20Proposal();
 
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
@@ -95,7 +91,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Lender: creates the loan
         vm.prank(lender);
         uint256 loanId =
-            deployment.config.createLOAN({ proposalSpec: proposalSpec, lenderSpec: _buildLenderSpec(false), extra: "" });
+            deployment.config.createLOAN({ proposalData: proposalSpec, lenderSpec: _buildLenderSpec(false), extra: "" });
 
         // Borrower: cancels proposal, withdrawing unused collateral
         vm.startPrank(borrower);
@@ -127,7 +123,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     function test_PartialLoan_GtCreditThreshold() external {
         // Create the proposal
         vm.prank(borrower);
-        ISproTypes.ProposalSpec memory proposalSpec = _createERC20Proposal();
+        bytes memory proposalSpec = _createERC20Proposal();
 
         // 97% of available credit limit
         uint256 amount = 9700 * CREDIT_LIMIT / 1e4;
@@ -148,7 +144,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
                 (PERCENTAGE - DEFAULT_THRESHOLD) * CREDIT_LIMIT / 1e4
             )
         );
-        deployment.config.createLOAN({ proposalSpec: proposalSpec, lenderSpec: lenderSpec, extra: "" });
+        deployment.config.createLOAN({ proposalData: proposalSpec, lenderSpec: lenderSpec, extra: "" });
         vm.stopPrank();
     }
 
@@ -161,7 +157,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         t20.approve(address(deployment.config), proposal.collateralAmount);
 
         // Create the proposal
-        Spro.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        bytes memory proposalSpec = abi.encode(proposal);
 
         vm.expectRevert(ISproErrors.ProposalAlreadyExists.selector);
         vm.prank(borrower);
@@ -343,7 +339,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
     function _setupMultipleRepay() internal returns (uint256[] memory loanIds) {
         vm.prank(borrower);
-        Spro.ProposalSpec memory proposalSpec = _createERC20Proposal();
+        bytes memory proposalSpec = _createERC20Proposal();
 
         // Setup lenders array
         address[] memory lenders = new address[](4);
@@ -370,7 +366,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
                 ISproTypes.LenderSpec({ sourceOfFunds: lenders[i], creditAmount: minCreditAmount, permitData: "" });
 
             // Create loan
-            loanIds[i] = deployment.config.createLOAN({ proposalSpec: proposalSpec, lenderSpec: lenderSpec, extra: "" });
+            loanIds[i] = deployment.config.createLOAN({ proposalData: proposalSpec, lenderSpec: lenderSpec, extra: "" });
             vm.stopPrank();
         }
 
@@ -388,7 +384,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         proposal.creditAddress = address(creditPermit);
 
         vm.prank(borrower);
-        Spro.ProposalSpec memory proposalSpec = _createERC20Proposal();
+        bytes memory proposalSpec = _createERC20Proposal();
 
         // Setup lenders array
         address[] memory lenders = new address[](4);
@@ -415,7 +411,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
                 ISproTypes.LenderSpec({ sourceOfFunds: lenders[i], creditAmount: minCreditAmount, permitData: "" });
 
             // Create loan
-            loanIds[i] = deployment.config.createLOAN({ proposalSpec: proposalSpec, lenderSpec: lenderSpec, extra: "" });
+            loanIds[i] = deployment.config.createLOAN({ proposalData: proposalSpec, lenderSpec: lenderSpec, extra: "" });
             vm.stopPrank();
         }
 
@@ -435,7 +431,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     }
 
     function test_shouldFail_claimLOAN_CallerNotLoanTokenHolder() external {
-        Spro.ProposalSpec memory proposalSpec = _createERC20Proposal();
+        bytes memory proposalSpec = _createERC20Proposal();
 
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
@@ -445,7 +441,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Lender: creates the loan
         vm.prank(lender);
         uint256 loanId =
-            deployment.config.createLOAN({ proposalSpec: proposalSpec, lenderSpec: _buildLenderSpec(false), extra: "" });
+            deployment.config.createLOAN({ proposalData: proposalSpec, lenderSpec: _buildLenderSpec(false), extra: "" });
 
         vm.startPrank(borrower);
         // Borrower approvals for credit token
@@ -468,7 +464,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     }
 
     function test_shouldFail_claimLOAN_RunningAndExpired() external {
-        ISproTypes.ProposalSpec memory proposalSpec = _createERC20Proposal();
+        bytes memory proposalSpec = _createERC20Proposal();
 
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
@@ -478,7 +474,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Lender: creates the loan
         vm.prank(lender);
         uint256 loanId =
-            deployment.config.createLOAN({ proposalSpec: proposalSpec, lenderSpec: _buildLenderSpec(true), extra: "" });
+            deployment.config.createLOAN({ proposalData: proposalSpec, lenderSpec: _buildLenderSpec(true), extra: "" });
 
         // Borrower approvals for credit token
         vm.startPrank(borrower);
@@ -501,7 +497,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     }
 
     function test_shouldFail_claimLOAN_LoanRunning() external {
-        Spro.ProposalSpec memory proposalSpec = _createERC20Proposal();
+        bytes memory proposalSpec = _createERC20Proposal();
 
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
@@ -511,7 +507,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Lender: creates the loan
         vm.prank(lender);
         uint256 loanId =
-            deployment.config.createLOAN({ proposalSpec: proposalSpec, lenderSpec: _buildLenderSpec(false), extra: "" });
+            deployment.config.createLOAN({ proposalData: proposalSpec, lenderSpec: _buildLenderSpec(false), extra: "" });
 
         vm.startPrank(borrower);
         // Borrower approvals for credit token
@@ -534,7 +530,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         );
         _createERC20Proposal();
 
-        Spro.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        bytes memory proposalSpec = abi.encode(proposal);
         Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
         lenderSpec.sourceOfFunds = address(this);
 
@@ -579,7 +575,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         _createERC20Proposal();
 
-        Spro.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        bytes memory proposalSpec = abi.encode(proposal);
         Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
         lenderSpec.sourceOfFunds = address(this);
 
@@ -624,7 +620,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Create the proposal
         vm.prank(borrower);
-        ISproTypes.ProposalSpec memory proposalSpec = _createERC20Proposal();
+        bytes memory proposalSpec = _createERC20Proposal();
 
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
@@ -635,7 +631,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         ISproTypes.LenderSpec memory lenderSpec =
             ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: amount, permitData: "" });
 
-        uint256 loanId = deployment.config.createLOAN({ proposalSpec: proposalSpec, lenderSpec: lenderSpec, extra: "" });
+        uint256 loanId = deployment.config.createLOAN({ proposalData: proposalSpec, lenderSpec: lenderSpec, extra: "" });
 
         // skip to the future
         skip(future);

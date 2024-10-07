@@ -22,7 +22,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
     }
 
     function test_RevertWhen_CallerIsNotProposer() external proposalContractHasTag whenValidProposalData {
-        Spro.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        bytes memory proposalSpec = abi.encode(proposal);
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.CallerIsNotStatedProposer.selector, borrower));
         deployment.config.createProposal(proposalSpec);
     }
@@ -112,7 +112,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         t20.approve(address(deployment.config), proposal.collateralAmount);
 
         // Create the proposal
-        Spro.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        bytes memory proposalSpec = abi.encode(proposal);
 
         vm.prank(borrower);
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidDurationStartTime.selector));

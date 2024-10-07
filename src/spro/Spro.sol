@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { IPWNLoanMetadataProvider } from "src/interfaces/IPWNLoanMetadataProvider.sol";
@@ -24,34 +23,29 @@ import { SproListedFee } from "src/libraries/SproListedFee.sol";
  * @notice Contract holding configurable values of PWN protocol.
  * @dev Is intended to be used as a proxy via `TransparentUpgradeableProxy`.
  */
-contract Spro is PWNVault, SproStorage, Ownable2Step, Initializable, IERC5646, IPWNLoanMetadataProvider {
+contract Spro is PWNVault, SproStorage, Ownable2Step, IERC5646, IPWNLoanMetadataProvider {
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
-
-    constructor(address _sdex, address _loanToken, address _revokedNonce) Ownable(msg.sender) {
-        // PWNConfig is used as a proxy. Use initializer to setup initial properties.
-        _disableInitializers();
-        _transferOwnership(address(0));
-        require(_sdex != address(0), "SDEX is zero address");
-        SDEX = _sdex;
-        loanToken = PWNLOAN(_loanToken);
-        revokedNonce = PWNRevokedNonce(_revokedNonce);
-    }
-
-    function initialize(
+    constructor(
+        address _sdex,
+        address _revokedNonce,
         address _owner,
         uint256 _fixFeeUnlisted,
         uint256 _fixFeeListed,
         uint256 _variableFactor,
         uint16 _percentage
-    ) external initializer {
+    ) Ownable(msg.sender) {
         require(_owner != address(0), "Owner is zero address");
+        require(_sdex != address(0), "SDEX is zero address");
         require(
             _percentage > 0 && _percentage < Constants.PERCENTAGE / 2, "Partial percentage position value is invalid"
         );
         _transferOwnership(_owner);
 
+        SDEX = _sdex;
+        loanToken = new PWNLOAN(address(this));
+        revokedNonce = PWNRevokedNonce(_revokedNonce);
         fixFeeUnlisted = _fixFeeUnlisted;
         fixFeeListed = _fixFeeListed;
         variableFactor = _variableFactor;
@@ -227,12 +221,12 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, Initializable, IERC5646, I
 
     /**
      * @notice Create a borrow request proposal and transfers collateral to the vault and SDEX to fee sink.
-     * @param proposalSpec Proposal specification struct.
+     * @param proposalData Proposal data.
      */
-    function createProposal(ProposalSpec calldata proposalSpec) external {
+    function createProposal(bytes calldata proposalData) external {
         // Make the proposal
         (address proposer, address collateral, uint256 collateralAmount, address creditAddress, uint256 creditLimit) =
-            makeProposal(proposalSpec.proposalData);
+            makeProposal(proposalData);
 
         // Check caller is the proposer
         if (msg.sender != proposer) {
@@ -259,10 +253,10 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, Initializable, IERC5646, I
      * @notice A borrower can cancel their proposal and withdraw unused collateral.
      * @dev Resets withdrawable collateral, revokes the nonce if needed, transfers unused collateral to the proposer.
      * @dev Fungible withdrawable collateral with amount == 0 calls should not revert, should transfer 0 tokens.
-     * @param proposalSpec Proposal specification struct.
+     * @param proposalData Proposal data.
      */
-    function cancelProposal(ProposalSpec calldata proposalSpec) external {
-        (address proposer, address collateral, uint256 collateralAmount) = cancelProposal(proposalSpec.proposalData);
+    function cancelProposal(bytes calldata proposalData) external {
+        (address proposer, address collateral, uint256 collateralAmount) = _cancelProposal(proposalData);
 
         // The caller must be the proposer
         if (msg.sender != proposer) revert CallerNotProposer();
@@ -278,21 +272,18 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, Initializable, IERC5646, I
     /**
      * @notice Create a new loan.
      * @dev The function assumes a prior token approval to a contract address or signed permits.
-     * @param proposalSpec Proposal specification struct.
+     * @param proposalData Proposal data.
      * @param lenderSpec Lender specification struct.
      * @param extra Auxiliary data that are emitted in the loan creation event. They are not used in the contract logic.
      * @return loanId Id of the created LOAN token.
      */
-    function createLOAN(ProposalSpec calldata proposalSpec, LenderSpec calldata lenderSpec, bytes calldata extra)
+    function createLOAN(bytes calldata proposalData, LenderSpec calldata lenderSpec, bytes calldata extra)
         external
         returns (uint256 loanId)
     {
         // Accept proposal and get loan terms
-        (bytes32 proposalHash, Terms memory loanTerms) = acceptProposal({
-            acceptor: msg.sender,
-            creditAmount: lenderSpec.creditAmount,
-            proposalData: proposalSpec.proposalData
-        });
+        (bytes32 proposalHash, Terms memory loanTerms) =
+            acceptProposal({ acceptor: msg.sender, creditAmount: lenderSpec.creditAmount, proposalData: proposalData });
 
         // Check minimum loan duration
         if (loanTerms.defaultTimestamp - loanTerms.startTimestamp < Constants.MIN_LOAN_DURATION) {
@@ -316,7 +307,6 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, Initializable, IERC5646, I
         emit LOANCreated({
             loanId: loanId,
             proposalHash: proposalHash,
-            proposalContract: proposalSpec.proposalContract,
             terms: loanTerms,
             lenderSpec: lenderSpec,
             extra: extra
@@ -1022,7 +1012,7 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, Initializable, IERC5646, I
      * @return collateral Address or the token.
      * @return collateralAmount Amount of collateral tokens that can be withdrawn.
      */
-    function cancelProposal(bytes calldata proposalData)
+    function _cancelProposal(bytes calldata proposalData)
         internal
         returns (address proposer, address collateral, uint256 collateralAmount)
     {

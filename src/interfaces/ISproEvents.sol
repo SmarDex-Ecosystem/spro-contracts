@@ -71,12 +71,7 @@ interface ISproEvents is ISproTypes {
      * @notice Emitted when a new loan in created.
      */
     event LOANCreated(
-        uint256 indexed loanId,
-        bytes32 indexed proposalHash,
-        address indexed proposalContract,
-        Terms terms,
-        LenderSpec lenderSpec,
-        bytes extra
+        uint256 indexed loanId, bytes32 indexed proposalHash, Terms terms, LenderSpec lenderSpec, bytes extra
     );
 
     /**
