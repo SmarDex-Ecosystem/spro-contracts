@@ -157,6 +157,24 @@ interface ISproTypes {
         uint256 repaymentAmount;
     }
 
+    /**
+     * @notice Base struct for a proposal.
+     * @param collateralAddress Address of an asset used as a collateral.
+     * @param checkCollateralStateFingerprint If true, the collateral state fingerprint will be checked during proposal
+     * acceptance.
+     * @param collateralStateFingerprint Fingerprint of a collateral state defined by ERC5646.
+     * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
+     * be borrowed using the proposal. If non-zero, proposal can be accepted more than once, until the credit limit is
+     * reached.
+     * @param startTimestamp Proposal start timestamp in seconds.
+     * @param proposer Address of a proposal signer. If `isOffer` is true, the proposer is the lender. If `isOffer` is
+     * false, the proposer is the borrower.
+     * @param nonceSpace Nonce space of a proposal nonce. All nonces in the same space can be revoked at once.
+     * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
+     * again proposal, which was once revoked. Can be used to create a group of proposals, where accepting one proposal
+     * will make other proposals in the group revoked.
+     * @param loanContract Address of a loan contract that will create a loan from the proposal.
+     */
     struct ProposalBase {
         address collateralAddress;
         bool checkCollateralStateFingerprint;

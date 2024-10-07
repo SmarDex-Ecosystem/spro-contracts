@@ -12,14 +12,10 @@ contract SproStorage is ISproErrors, ISproEvents {
     /*                                   CONFIG                                   */
     /* -------------------------------------------------------------------------- */
 
-    /**
-     * @notice SDEX token address.
-     */
-    address public SDEX;
+    /// @notice SDEX token address.
+    address public immutable SDEX;
 
-    /**
-     * @notice Percentage of a proposal's availableCreditLimit which can be used in partial lending.
-     */
+    /// @notice Percentage of a proposal's availableCreditLimit which can be used in partial lending.
     uint16 public partialPositionPercentage;
 
     /**
@@ -40,9 +36,7 @@ contract SproStorage is ISproErrors, ISproEvents {
      */
     uint256 public variableFactor;
 
-    /**
-     * @notice Mapping holding token factor to a listed credit token.
-     */
+    /// @notice Mapping holding token factor to a listed credit token.
     mapping(address => uint256) public tokenFactors;
 
     /**
@@ -52,17 +46,13 @@ contract SproStorage is ISproErrors, ISproEvents {
      */
     mapping(address => string) public _loanMetadataUri;
 
-    /**
-     * @notice Mapping holding registered state fingerprint computer to an asset.
-     */
+    /// @notice Mapping holding registered state fingerprint computer to an asset.
     mapping(address => address) public _sfComputerRegistry;
 
-    /**
-     * @notice Mapping holding registered pool adapter to a pool address.
-     */
+    /// @notice Mapping holding registered pool adapter to a pool address.
     mapping(address => address) public _poolAdapterRegistry;
 
-    PWNRevokedNonce public revokedNonce;
+    PWNRevokedNonce public immutable revokedNonce;
 
     /* -------------------------------------------------------------------------- */
     /*                                    LOAN                                    */
@@ -78,11 +68,9 @@ contract SproStorage is ISproErrors, ISproEvents {
         )
     );
 
-    PWNLOAN public loanToken;
+    PWNLOAN public immutable loanToken;
 
-    /**
-     * Mapping of all LOAN data by loan id.
-     */
+    /// @notice  Mapping of all LOAN data by loan id.
     mapping(uint256 => LOAN) internal LOANs;
 
     /* -------------------------------------------------------------------------- */

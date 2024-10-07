@@ -18,15 +18,22 @@ import { SproStorage } from "spro/SproStorage.sol";
 import { Permit } from "spro/Permit.sol";
 import { SproListedFee } from "src/libraries/SproListedFee.sol";
 
-/**
- * @title PWN Config
- * @notice Contract holding configurable values of PWN protocol.
- * @dev Is intended to be used as a proxy via `TransparentUpgradeableProxy`.
- */
+/// @title Spro - Spro Protocol
 contract Spro is PWNVault, SproStorage, Ownable2Step, IERC5646, IPWNLoanMetadataProvider {
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
+
+    /**
+     * @notice Initialize Spro contract.
+     * @param _sdex Address of SDEX token.
+     * @param _revokedNonce Address of RevokedNonce contract.
+     * @param _owner Address of the owner.
+     * @param _fixFeeUnlisted Fixed fee for unlisted assets.
+     * @param _fixFeeListed Fixed fee for listed assets.
+     * @param _variableFactor Variable factor for listed assets.
+     * @param _percentage Partial position percentage.
+     */
     constructor(
         address _sdex,
         address _revokedNonce,
@@ -35,13 +42,12 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, IERC5646, IPWNLoanMetadata
         uint256 _fixFeeListed,
         uint256 _variableFactor,
         uint16 _percentage
-    ) Ownable(msg.sender) {
+    ) Ownable(_owner) {
         require(_owner != address(0), "Owner is zero address");
         require(_sdex != address(0), "SDEX is zero address");
         require(
             _percentage > 0 && _percentage < Constants.PERCENTAGE / 2, "Partial percentage position value is invalid"
         );
-        _transferOwnership(_owner);
 
         SDEX = _sdex;
         loanToken = new PWNLOAN(address(this));
