@@ -5,7 +5,7 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { SproConstantsLibrary as Constants } from "./SproConstantsLibrary.sol";
 
-library SDListedFee {
+library SproListedFee {
     /**
      * @notice Compute list fee amount.
      * @param fixFeeListed Fixed fee value in units of fee token (basis 1e18)

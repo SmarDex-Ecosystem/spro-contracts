@@ -1,62 +1,212 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-import { SDConfig } from "spro/SDConfig.sol";
-import { IERC5646 } from "src/interfaces/IERC5646.sol";
 import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { IPWNLoanMetadataProvider } from "src/interfaces/IPWNLoanMetadataProvider.sol";
-import { SDListedFee } from "src/libraries/SDListedFee.sol";
+import { IStateFingerprintComputer } from "src/interfaces/IStateFingerprintComputer.sol";
+import { IERC5646 } from "src/interfaces/IERC5646.sol";
 import { PWNLOAN } from "spro/PWNLOAN.sol";
-import { Permit, InvalidPermitOwner, InvalidPermitAsset } from "spro/Permit.sol";
 import { PWNVault } from "spro/PWNVault.sol";
 import { PWNRevokedNonce } from "spro/PWNRevokedNonce.sol";
-import { SDSimpleLoanSimpleProposal } from "spro/SDSimpleLoanSimpleProposal.sol";
-import { ISproErrors } from "src/interfaces/ISproErrors.sol";
-import { ISproEvents } from "src/interfaces/ISproEvents.sol";
-import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
+import { SproStorage } from "spro/SproStorage.sol";
+import { Permit } from "spro/Permit.sol";
+import { SproListedFee } from "src/libraries/SproListedFee.sol";
 
 /**
- * @title SD Simple Loan -- forked from PWNSimpleLoan.sol
- * @notice Contract managing a simple loan in PWN protocol.
- * @dev Acts as a vault for every loan created by this contract.
+ * @title PWN Config
+ * @notice Contract holding configurable values of PWN protocol.
+ * @dev Is intended to be used as a proxy via `TransparentUpgradeableProxy`.
  */
-contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
-    /* ------------------------------------------------------------ */
-    /*  VARIABLES & CONSTANTS DEFINITIONS                           */
-    /* ------------------------------------------------------------ */
-
-    bytes32 public immutable DOMAIN_SEPARATOR = keccak256(
-        abi.encode(
-            keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-            keccak256("SDSimpleLoan"),
-            keccak256(abi.encodePacked(Constants.VERSION)),
-            block.chainid,
-            address(this)
-        )
-    );
-
-    PWNLOAN public immutable loanToken;
-    SDConfig public immutable config;
-    PWNRevokedNonce public immutable revokedNonce;
-
-    /**
-     * Mapping of all LOAN data by loan id.
-     */
-    mapping(uint256 => LOAN) private LOANs;
-
+contract Spro is PWNVault, SproStorage, Ownable2Step, Initializable, IERC5646, IPWNLoanMetadataProvider {
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
 
-    constructor(address _loanToken, address _config, address _revokedNonce) {
+    constructor(address _sdex, address _loanToken, address _revokedNonce) Ownable(msg.sender) {
+        // PWNConfig is used as a proxy. Use initializer to setup initial properties.
+        _disableInitializers();
+        _transferOwnership(address(0));
+        require(_sdex != address(0), "SDEX is zero address");
+        SDEX = _sdex;
         loanToken = PWNLOAN(_loanToken);
-        config = SDConfig(_config);
         revokedNonce = PWNRevokedNonce(_revokedNonce);
     }
+
+    function initialize(
+        address _owner,
+        uint256 _fixFeeUnlisted,
+        uint256 _fixFeeListed,
+        uint256 _variableFactor,
+        uint16 _percentage
+    ) external initializer {
+        require(_owner != address(0), "Owner is zero address");
+        require(
+            _percentage > 0 && _percentage < Constants.PERCENTAGE / 2, "Partial percentage position value is invalid"
+        );
+        _transferOwnership(_owner);
+
+        fixFeeUnlisted = _fixFeeUnlisted;
+        fixFeeListed = _fixFeeListed;
+        variableFactor = _variableFactor;
+        partialPositionPercentage = _percentage;
+    }
+
+    /* ------------------------------------------------------------ */
+    /*                      FEE MANAGEMENT                          */
+    /* ------------------------------------------------------------ */
+
+    /**
+     * @notice Set new protocol listed fee value.
+     * @param fee New listed fee value in amount SDEX tokens (units 1e18)
+     */
+    function setFixFeeListed(uint256 fee) external onlyOwner {
+        emit FixFeeListedUpdated(fixFeeListed, fee);
+        fixFeeListed = fee;
+    }
+
+    /**
+     * @notice Set new protocol unlisted fee value.
+     * @param fee New unlisted fee value in amount SDEX tokens (units 1e18)
+     */
+    function setFixFeeUnlisted(uint256 fee) external onlyOwner {
+        emit FixFeeUnlistedUpdated(fixFeeUnlisted, fee);
+        fixFeeUnlisted = fee;
+    }
+
+    /**
+     * @notice Set new protocol variable factor
+     * @param factor New variable factor value (units 1e18)
+     */
+    function setVariableFactor(uint256 factor) external onlyOwner {
+        emit VariableFactorUpdated(variableFactor, factor);
+        variableFactor = factor;
+    }
+
+    /**
+     * @notice Set new protocol token factor for credit asset
+     * @param token Credit token address.
+     * @param factor New token factor value (units 1e18)
+     * @dev Token is unlisted for `factor == 0` and listed for `factor != 0`.
+     */
+    function setListedToken(address token, uint256 factor) external onlyOwner {
+        emit ListedTokenUpdated(token, factor);
+        tokenFactors[token] = factor;
+    }
+
+    /* ------------------------------------------------------------ */
+    /*                  PARTIAL LENDING THRESHOLDS                  */
+    /* ------------------------------------------------------------ */
+
+    /**
+     * @notice Set percentage of a proposal's availableCreditLimit which can be used in partial lending.
+     * @param percentage New percentage value.
+     */
+    function setPartialPositionPercentage(uint16 percentage) external onlyOwner {
+        if (percentage == 0) revert ZeroPercentageValue();
+        if (percentage >= Constants.PERCENTAGE / 2) revert ExcessivePercentageValue(percentage);
+        partialPositionPercentage = percentage;
+    }
+
+    /* ------------------------------------------------------------ */
+    /*                          LOAN METADATA                       */
+    /* ------------------------------------------------------------ */
+
+    /**
+     * @notice Set a LOAN token metadata uri for a specific loan contract.
+     * @param loanContract Address of a loan contract.
+     * @param metadataUri New value of LOAN token metadata uri for given `loanContract`.
+     */
+    function setLOANMetadataUri(address loanContract, string memory metadataUri) external onlyOwner {
+        if (loanContract == address(0)) {
+            // address(0) is used as a default metadata uri. Use `setDefaultLOANMetadataUri` to set default metadata
+            // uri.
+            revert ZeroLoanContract();
+        }
+
+        _loanMetadataUri[loanContract] = metadataUri;
+        emit LOANMetadataUriUpdated(loanContract, metadataUri);
+    }
+
+    /**
+     * @notice Set a default LOAN token metadata uri.
+     * @param metadataUri New value of default LOAN token metadata uri.
+     */
+    function setDefaultLOANMetadataUri(string memory metadataUri) external onlyOwner {
+        _loanMetadataUri[address(0)] = metadataUri;
+        emit DefaultLOANMetadataUriUpdated(metadataUri);
+    }
+
+    /**
+     * @notice Return a LOAN token metadata uri base on a loan contract that minted the token.
+     * @param loanContract Address of a loan contract.
+     * @return uri Metadata uri for given loan contract.
+     */
+    function loanMetadataUri(address loanContract) public view returns (string memory uri) {
+        uri = _loanMetadataUri[loanContract];
+        // If there is no metadata uri for a loan contract, use default metadata uri.
+        if (bytes(uri).length == 0) uri = _loanMetadataUri[address(0)];
+    }
+
+    /* ------------------------------------------------------------ */
+    /*                  STATE FINGERPRINT COMPUTER                  */
+    /* ------------------------------------------------------------ */
+
+    /**
+     * @notice Returns the state fingerprint computer for a given asset.
+     * @param asset The asset for which the computer is requested.
+     * @return The computer for the given asset.
+     */
+    function getStateFingerprintComputer(address asset) public view returns (IStateFingerprintComputer) {
+        return IStateFingerprintComputer(_sfComputerRegistry[asset]);
+    }
+
+    /**
+     * @notice Registers a state fingerprint computer for a given asset.
+     * @param asset The asset for which the computer is registered.
+     * @param computer The computer to be registered. Use address(0) to remove a computer.
+     */
+    function registerStateFingerprintComputer(address asset, address computer) external onlyOwner {
+        if (computer != address(0)) {
+            if (!IStateFingerprintComputer(computer).supportsToken(asset)) {
+                revert InvalidComputerContract({ computer: computer, asset: asset });
+            }
+        }
+
+        _sfComputerRegistry[asset] = computer;
+    }
+
+    /* ------------------------------------------------------------ */
+    /*                          POOL ADAPTER                        */
+    /* ------------------------------------------------------------ */
+
+    /**
+     * @notice Returns the pool adapter for a given pool.
+     * @param pool The pool for which the adapter is requested.
+     * @return The adapter for the given pool.
+     */
+    function getPoolAdapter(address pool) public view returns (IPoolAdapter) {
+        return IPoolAdapter(_poolAdapterRegistry[pool]);
+    }
+
+    /**
+     * @notice Registers a pool adapter for a given pool.
+     * @param pool The pool for which the adapter is registered.
+     * @param adapter The adapter to be registered.
+     */
+    function registerPoolAdapter(address pool, address adapter) external onlyOwner {
+        _poolAdapterRegistry[pool] = adapter;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                    LOAN                                    */
+    /* -------------------------------------------------------------------------- */
 
     /* ------------------------------------------------------------ */
     /*                      LENDER SPEC                             */
@@ -82,7 +232,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
     function createProposal(ProposalSpec calldata proposalSpec) external {
         // Make the proposal
         (address proposer, address collateral, uint256 collateralAmount, address creditAddress, uint256 creditLimit) =
-            SDSimpleLoanSimpleProposal(proposalSpec.proposalContract).makeProposal(proposalSpec.proposalData);
+            makeProposal(proposalSpec.proposalData);
 
         // Check caller is the proposer
         if (msg.sender != proposer) {
@@ -97,7 +247,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
 
         // Fees to sink (burned)
         if (feeAmount > 0) {
-            _pushFrom(config.SDEX(), feeAmount, msg.sender, Constants.SINK);
+            _pushFrom(SDEX, feeAmount, msg.sender, Constants.SINK);
         }
     }
 
@@ -112,8 +262,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
      * @param proposalSpec Proposal specification struct.
      */
     function cancelProposal(ProposalSpec calldata proposalSpec) external {
-        (address proposer, address collateral, uint256 collateralAmount) =
-            SDSimpleLoanSimpleProposal(proposalSpec.proposalContract).cancelProposal(proposalSpec.proposalData);
+        (address proposer, address collateral, uint256 collateralAmount) = cancelProposal(proposalSpec.proposalData);
 
         // The caller must be the proposer
         if (msg.sender != proposer) revert CallerNotProposer();
@@ -139,8 +288,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         returns (uint256 loanId)
     {
         // Accept proposal and get loan terms
-        (bytes32 proposalHash, Terms memory loanTerms) = SDSimpleLoanSimpleProposal(proposalSpec.proposalContract)
-            .acceptProposal({
+        (bytes32 proposalHash, Terms memory loanTerms) = acceptProposal({
             acceptor: msg.sender,
             creditAmount: lenderSpec.creditAmount,
             proposalData: proposalSpec.proposalData
@@ -233,10 +381,10 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
      * @param amount Amount of an asset to be used.
      */
     function getLoanFee(address assetAddress, uint256 amount) public view returns (uint256) {
-        uint256 tokenFactor = config.tokenFactors(assetAddress);
+        uint256 tokenFactor = tokenFactors[assetAddress];
         return (tokenFactor == 0)
-            ? config.fixFeeUnlisted()
-            : SDListedFee.calculate(config.fixFeeListed(), config.variableFactor(), tokenFactor, amount);
+            ? fixFeeUnlisted
+            : SproListedFee.calculate(fixFeeListed, variableFactor, tokenFactor, amount);
     }
 
     /**
@@ -269,7 +417,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         Terms memory loanTerms,
         LenderSpec calldata lenderSpec
     ) internal {
-        IPoolAdapter poolAdapter = config.getPoolAdapter(lenderSpec.sourceOfFunds);
+        IPoolAdapter poolAdapter = getPoolAdapter(lenderSpec.sourceOfFunds);
         if (address(poolAdapter) == address(0)) {
             revert InvalidSourceOfFunds({ sourceOfFunds: lenderSpec.sourceOfFunds });
         }
@@ -581,7 +729,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
         if (destinationOfFunds == loanOwner) {
             _push(credit, creditAmount, loanOwner);
         } else {
-            IPoolAdapter poolAdapter = config.getPoolAdapter(destinationOfFunds);
+            IPoolAdapter poolAdapter = getPoolAdapter(destinationOfFunds);
             // Check that pool has registered adapter
             if (address(poolAdapter) == address(0)) {
                 // Note: Adapter can be unregistered during the loan lifetime, so the pool might not have an adapter.
@@ -675,7 +823,7 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
      * @inheritdoc IPWNLoanMetadataProvider
      */
     function loanMetadataUri() external view override returns (string memory) {
-        return config.loanMetadataUri(address(this));
+        return loanMetadataUri(address(this));
     }
 
     /* ------------------------------------------------------------ */
@@ -701,5 +849,321 @@ contract SDSimpleLoan is PWNVault, IERC5646, IPWNLoanMetadataProvider {
                 _getLOANStatus(tokenId), loan.defaultTimestamp, loan.fixedInterestAmount, loan.accruingInterestAPR
             )
         );
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                  PROPOSAL                                  */
+    /* -------------------------------------------------------------------------- */
+
+    /* ------------------------------------------------------------ */
+    /*                          EXTERNALS                           */
+    /* ------------------------------------------------------------ */
+
+    /**
+     * @notice Helper function for revoking a proposal nonce on behalf of a caller.
+     * @param nonceSpace Nonce space of a proposal nonce to be revoked.
+     * @param nonce Proposal nonce to be revoked.
+     */
+    function revokeNonce(uint256 nonceSpace, uint256 nonce) external {
+        revokedNonce.revokeNonce(msg.sender, nonceSpace, nonce);
+    }
+
+    /**
+     * @notice Get an proposal hash according to EIP-712
+     * @param proposal Proposal struct to be hashed.
+     * @return Proposal struct hash.
+     */
+    function getProposalHash(Proposal calldata proposal) public view returns (bytes32) {
+        return _getProposalHash(Constants.PROPOSAL_TYPEHASH, abi.encode(proposal));
+    }
+
+    /**
+     * @notice Encode proposal data.
+     * @param proposal Proposal struct to be encoded.
+     * @return Encoded proposal data.
+     */
+    function encodeProposalData(Proposal memory proposal) public pure returns (bytes memory) {
+        return abi.encode(proposal);
+    }
+
+    /**
+     * @notice Decode proposal data.
+     * @param proposalData Encoded proposal data.
+     * @return Decoded proposal struct.
+     */
+    function decodeProposalData(bytes memory proposalData) public pure returns (Proposal memory) {
+        return abi.decode(proposalData, (Proposal));
+    }
+
+    /**
+     * @notice Getter for credit used and credit remaining for a proposal.
+     * @param proposal Proposal struct.
+     * @return used Credit used for the proposal.
+     * @return remaining Credit remaining for the proposal.
+     */
+    function getProposalCreditStatus(Proposal calldata proposal)
+        external
+        view
+        returns (uint256 used, uint256 remaining)
+    {
+        bytes32 proposalHash = getProposalHash(proposal);
+        if (proposalsMade[proposalHash]) {
+            used = creditUsed[proposalHash];
+            remaining = proposal.availableCreditLimit - used;
+        } else {
+            revert ProposalNotMade();
+        }
+    }
+
+    /**
+     * @notice Make an on-chain proposal.
+     * @dev Function will mark a proposal hash as proposed.
+     * @param proposalData Encoded proposal data.
+     * @return proposer Address of the borrower/proposer
+     * @return collateral Address of the collateral token.
+     * @return collateralAmount Amount of the collateral token.
+     * @return creditAddress Address of the credit token.
+     * @return creditLimit Credit limit.
+     */
+    function makeProposal(bytes calldata proposalData)
+        internal
+        returns (
+            address proposer,
+            address collateral,
+            uint256 collateralAmount,
+            address creditAddress,
+            uint256 creditLimit
+        )
+    {
+        // Decode proposal data
+        Proposal memory proposal = decodeProposalData(proposalData);
+        if (proposal.startTimestamp > proposal.defaultTimestamp) {
+            revert InvalidDurationStartTime();
+        }
+
+        // Make proposal hash
+        bytes32 proposalHash = _getProposalHash(Constants.PROPOSAL_TYPEHASH, abi.encode(proposal));
+
+        // Try to make proposal
+        _makeProposal(proposalHash);
+
+        collateral = proposal.collateralAddress;
+        collateralAmount = proposal.collateralAmount;
+        withdrawableCollateral[proposalHash] = collateralAmount;
+        creditAddress = proposal.creditAddress;
+        creditLimit = proposal.availableCreditLimit;
+
+        emit ProposalMade(proposalHash, proposer = proposal.proposer, proposal);
+    }
+
+    /**
+     * @notice Accept a proposal and create new loan terms.
+     * @dev Function can be called only by a loan contract with appropriate PWN Hub tag.
+     * @param acceptor Address of a proposal acceptor.
+     * @param creditAmount Amount of credit to lend.
+     * @param proposalData Encoded proposal data with signature.
+     * @return proposalHash Proposal hash.
+     * @return loanTerms Loan terms.
+     */
+    function acceptProposal(address acceptor, uint256 creditAmount, bytes calldata proposalData)
+        internal
+        returns (bytes32 proposalHash, Terms memory loanTerms)
+    {
+        // Decode proposal data
+        Proposal memory proposal = decodeProposalData(proposalData);
+
+        // Make proposal hash
+        proposalHash = _getProposalHash(Constants.PROPOSAL_TYPEHASH, abi.encode(proposal));
+
+        // Try to accept proposal
+        _acceptProposal(
+            acceptor,
+            creditAmount,
+            proposalHash,
+            ProposalBase({
+                collateralAddress: proposal.collateralAddress,
+                checkCollateralStateFingerprint: proposal.checkCollateralStateFingerprint,
+                collateralStateFingerprint: proposal.collateralStateFingerprint,
+                availableCreditLimit: proposal.availableCreditLimit,
+                startTimestamp: proposal.startTimestamp,
+                proposer: proposal.proposer,
+                nonceSpace: proposal.nonceSpace,
+                nonce: proposal.nonce,
+                loanContract: proposal.loanContract
+            })
+        );
+
+        // Create loan terms object
+        uint256 collateralUsed_ = (creditAmount * proposal.collateralAmount) / proposal.availableCreditLimit;
+
+        loanTerms = Terms({
+            lender: acceptor,
+            borrower: proposal.proposer,
+            startTimestamp: proposal.startTimestamp,
+            defaultTimestamp: proposal.defaultTimestamp,
+            collateral: proposal.collateralAddress,
+            collateralAmount: collateralUsed_,
+            credit: proposal.creditAddress,
+            creditAmount: creditAmount,
+            fixedInterestAmount: proposal.fixedInterestAmount,
+            accruingInterestAPR: proposal.accruingInterestAPR,
+            lenderSpecHash: bytes32(0),
+            borrowerSpecHash: proposal.proposerSpecHash
+        });
+
+        withdrawableCollateral[proposalHash] -= collateralUsed_;
+    }
+
+    /**
+     * @notice Cancels a proposal and resets withdrawable collateral.
+     * @dev Revokes the nonce if still usable and block.timestamp is < proposal startTimestamp.
+     * @param proposalData Encoded proposal data.
+     * @return proposer Address of the borrower/proposer.
+     * @return collateral Address or the token.
+     * @return collateralAmount Amount of collateral tokens that can be withdrawn.
+     */
+    function cancelProposal(bytes calldata proposalData)
+        internal
+        returns (address proposer, address collateral, uint256 collateralAmount)
+    {
+        // Decode proposal data
+        Proposal memory proposal = decodeProposalData(proposalData);
+
+        // Make proposal hash
+        bytes32 proposalHash = _getProposalHash(Constants.PROPOSAL_TYPEHASH, abi.encode(proposal));
+
+        proposer = proposal.proposer;
+        collateral = proposal.collateralAddress;
+        collateralAmount = withdrawableCollateral[proposalHash];
+        delete withdrawableCollateral[proposalHash];
+
+        // Revokes nonce if nonce is still usable
+        if (block.timestamp < proposal.startTimestamp) {
+            if (revokedNonce.isNonceUsable(proposal.proposer, proposal.nonceSpace, proposal.nonce)) {
+                revokedNonce.revokeNonce(proposal.proposer, proposal.nonceSpace, proposal.nonce);
+            }
+        }
+    }
+
+    /* ------------------------------------------------------------ */
+    /*                          INTERNALS                           */
+    /* ------------------------------------------------------------ */
+
+    /**
+     * @notice Get a proposal hash according to EIP-712.
+     * @param encodedProposal Encoded proposal struct.
+     * @return Struct hash.
+     */
+    function _getProposalHash(bytes32 proposalTypehash, bytes memory encodedProposal) internal view returns (bytes32) {
+        return keccak256(
+            abi.encodePacked(
+                hex"1901", DOMAIN_SEPARATOR_PROPOSAL, keccak256(abi.encodePacked(proposalTypehash, encodedProposal))
+            )
+        );
+    }
+
+    /**
+     * @notice Make an on-chain proposal.
+     * @dev Function will mark a proposal hash as proposed.
+     * @param proposalHash Proposal hash.
+     */
+    function _makeProposal(bytes32 proposalHash) internal {
+        if (proposalsMade[proposalHash]) revert ProposalAlreadyExists();
+
+        proposalsMade[proposalHash] = true;
+    }
+
+    /**
+     * @notice Try to accept proposal base.
+     * @param acceptor Address of a proposal acceptor.
+     * @param proposalHash Proposal hash.
+     * @param proposal Proposal base struct.
+     */
+    function _acceptProposal(address acceptor, uint256 creditAmount, bytes32 proposalHash, ProposalBase memory proposal)
+        internal
+    {
+        // Check that the proposal was made on-chain
+        if (!proposalsMade[proposalHash]) revert ProposalNotMade();
+
+        // Check proposer is not acceptor
+        if (proposal.proposer == acceptor) {
+            revert AcceptorIsProposer({ addr: acceptor });
+        }
+
+        // Check proposal is not expired
+        if (block.timestamp >= proposal.startTimestamp) {
+            revert Expired({ current: block.timestamp, expiration: proposal.startTimestamp });
+        }
+
+        // Check proposal is not revoked
+        if (!revokedNonce.isNonceUsable(proposal.proposer, proposal.nonceSpace, proposal.nonce)) {
+            revert PWNRevokedNonce.NonceNotUsable({
+                addr: proposal.proposer,
+                nonceSpace: proposal.nonceSpace,
+                nonce: proposal.nonce
+            });
+        }
+
+        if (proposal.availableCreditLimit == 0) {
+            revert AvailableCreditLimitZero();
+        } else if (creditUsed[proposalHash] + creditAmount < proposal.availableCreditLimit) {
+            // Credit may only be between min and max amounts if it is not exact
+            uint256 minCreditAmount =
+                Math.mulDiv(proposal.availableCreditLimit, partialPositionPercentage, Constants.PERCENTAGE);
+            if (creditAmount < minCreditAmount) {
+                revert CreditAmountTooSmall({ amount: creditAmount, minimum: minCreditAmount });
+            }
+
+            uint256 maxCreditAmount = Math.mulDiv(
+                proposal.availableCreditLimit, (Constants.PERCENTAGE - partialPositionPercentage), Constants.PERCENTAGE
+            );
+            if (creditAmount > maxCreditAmount) {
+                revert CreditAmountLeavesTooLittle({ amount: creditAmount, maximum: maxCreditAmount });
+            }
+        } else if (creditUsed[proposalHash] + creditAmount > proposal.availableCreditLimit) {
+            // Revert, credit limit is exceeded
+            revert AvailableCreditLimitExceeded({
+                used: creditUsed[proposalHash] + creditAmount,
+                limit: proposal.availableCreditLimit
+            });
+        }
+
+        // Apply increase if credit amount checks pass
+        creditUsed[proposalHash] += creditAmount;
+
+        // Check collateral state fingerprint if needed
+        if (proposal.checkCollateralStateFingerprint) {
+            bytes32 currentFingerprint;
+            IStateFingerprintComputer computer = getStateFingerprintComputer(proposal.collateralAddress);
+            if (address(computer) != address(0)) {
+                // Asset has registered computer
+                currentFingerprint = computer.computeStateFingerprint({ token: proposal.collateralAddress, tokenId: 0 });
+            } else if (ERC165Checker.supportsInterface(proposal.collateralAddress, type(IERC5646).interfaceId)) {
+                // Asset implements ERC5646
+                currentFingerprint = IERC5646(proposal.collateralAddress).getStateFingerprint(0);
+            } else {
+                // Asset is not implementing ERC5646 and no computer is registered
+                revert MissingStateFingerprintComputer();
+            }
+
+            if (proposal.collateralStateFingerprint != currentFingerprint) {
+                // Fingerprint mismatch
+                revert InvalidCollateralStateFingerprint({
+                    current: currentFingerprint,
+                    proposed: proposal.collateralStateFingerprint
+                });
+            }
+        }
+    }
+
+    /**
+     * @notice Checks for a complete loan with credit amount equal to available credit limit
+     * @param _creditAmount Credit amount of the proposal.
+     * @param _availableCreditLimit Available credit limit of the proposal.
+     */
+    function _checkCompleteLoan(uint256 _creditAmount, uint256 _availableCreditLimit) internal pure {
+        if (_creditAmount != _availableCreditLimit) {
+            revert OnlyCompleteLendingForNFTs(_creditAmount, _availableCreditLimit);
+        }
     }
 }

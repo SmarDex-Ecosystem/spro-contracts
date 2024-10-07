@@ -6,10 +6,8 @@ import { CommonBase } from "forge-std/Base.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { SDConfig } from "spro/SDConfig.sol";
+import { Spro } from "spro/Spro.sol";
 import { IPWNDeployer } from "src/interfaces/IPWNDeployer.sol";
-import { SDSimpleLoan } from "spro/SDSimpleLoan.sol";
-import { SDSimpleLoanSimpleProposal } from "spro/SDSimpleLoanSimpleProposal.sol";
 import { PWNLOAN } from "spro/PWNLOAN.sol";
 import { PWNRevokedNonce } from "spro/PWNRevokedNonce.sol";
 import { T20 } from "test/helper/T20.sol";
@@ -25,16 +23,14 @@ abstract contract SDDeployments is CommonBase {
 
     // Properties need to be in alphabetical order
     struct Deployment {
-        SDConfig config;
-        SDConfig configSingleton;
+        Spro config;
+        Spro configSingleton;
         IPWNDeployer deployer;
         PWNLOAN loanToken;
         address proxyAdmin;
         address protocolAdmin;
         PWNRevokedNonce revokedNonce;
         T20 sdex;
-        SDSimpleLoan simpleLoan;
-        SDSimpleLoanSimpleProposal simpleLoanSimpleProposal;
     }
 
     function _loadDeployedAddresses() internal {

@@ -3,15 +3,7 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
-import {
-    SDSimpleLoan,
-    InvalidPermitOwner,
-    InvalidPermitAsset,
-    Math,
-    Permit,
-    PWNRevokedNonce,
-    IPoolAdapter
-} from "spro/SDSimpleLoan.sol";
+import { Spro, Math, Permit, PWNRevokedNonce, IPoolAdapter } from "spro/Spro.sol";
 
 import { T20 } from "test/helper/T20.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
@@ -19,8 +11,8 @@ import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
-contract SDSimpleLoanHarness is SDSimpleLoan {
-    constructor(address _lt, address _c, address _rn) SDSimpleLoan(_lt, _c, _rn) { }
+contract SDSimpleLoanHarness is Spro {
+    constructor(address _sx, address _lt, address _rn) Spro(_sx, _lt, _rn) { }
 
     function exposed_checkPermit(address caller, address creditAddress, Permit memory permit) external pure {
         _checkPermit(caller, creditAddress, permit);
@@ -66,12 +58,11 @@ contract SDSimpleLoanTest is Test {
 
     function test_constructor() external view {
         assertEq(address(simpleLoan.loanToken()), loanToken);
-        assertEq(address(simpleLoan.config()), config);
         assertEq(address(simpleLoan.revokedNonce()), revokedNonce);
     }
 
     function testFuzz_getLenderSpecHash(address source, uint256 amount, bytes memory data) external view {
-        SDSimpleLoan.LenderSpec memory ls =
+        Spro.LenderSpec memory ls =
             ISproTypes.LenderSpec({ sourceOfFunds: source, creditAmount: amount, permitData: data });
         bytes32 lenderSpecHash = keccak256(abi.encode(ls));
 
@@ -82,7 +73,7 @@ contract SDSimpleLoanTest is Test {
         Permit memory permit;
         permit.asset = permitAsset;
 
-        vm.expectRevert(abi.encodeWithSelector(InvalidPermitOwner.selector, permit.owner, address(this)));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidPermitOwner.selector, permit.owner, address(this)));
         simpleLoan.exposed_checkPermit(address(this), credit, permit);
     }
 
@@ -91,7 +82,7 @@ contract SDSimpleLoanTest is Test {
         permit.asset = permitAsset;
         permit.owner = address(this);
 
-        vm.expectRevert(abi.encodeWithSelector(InvalidPermitAsset.selector, permit.asset, address(this)));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidPermitAsset.selector, permit.asset, address(this)));
         simpleLoan.exposed_checkPermit({ caller: address(this), creditAddress: address(this), permit: permit });
     }
 
@@ -101,8 +92,8 @@ contract SDSimpleLoanTest is Test {
         bytes memory data
     ) external {
         address credit_;
-        SDSimpleLoan.Terms memory loanTerms;
-        SDSimpleLoan.LenderSpec memory lenderSpec =
+        Spro.Terms memory loanTerms;
+        Spro.LenderSpec memory lenderSpec =
             ISproTypes.LenderSpec({ sourceOfFunds: source, creditAmount: amount, permitData: data });
 
         vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(address(0)));

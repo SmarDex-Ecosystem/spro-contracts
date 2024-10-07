@@ -2,12 +2,12 @@
 pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
-import { SDSimpleLoanSimpleProposal, SDSimpleLoan } from "spro/SDSimpleLoanSimpleProposal.sol";
+import { Spro } from "spro/Spro.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
-contract SDSimpleLoanSimpleProposalHarness is SDSimpleLoanSimpleProposal {
-    constructor(address _revokedNonce, address _config) SDSimpleLoanSimpleProposal(_revokedNonce, _config) { }
+contract SproHarness is Spro {
+    constructor(address _sdex, address _loanToken, address _revokedNonce) Spro(_sdex, _loanToken, _revokedNonce) { }
 
     function exposed_checkCompleteLoan(uint256 _creditAmount, uint256 _availableCreditLimit) external pure {
         _checkCompleteLoan(_creditAmount, _availableCreditLimit);
@@ -15,17 +15,18 @@ contract SDSimpleLoanSimpleProposalHarness is SDSimpleLoanSimpleProposal {
 }
 
 contract SDSimpleLoanSimpleProposalTest is Test {
-    address public config = makeAddr("config");
+    address public sdex = makeAddr("sdex");
+    address public loanToken = makeAddr("loanToken");
     address public revokedNonce = makeAddr("revokedNonce");
 
-    SDSimpleLoanSimpleProposalHarness harness;
+    SproHarness harness;
 
     function setUp() public {
-        harness = new SDSimpleLoanSimpleProposalHarness(config, revokedNonce);
+        harness = new SproHarness(sdex, loanToken, revokedNonce);
     }
 
     function testFuzz_encodeProposalData(address addr) external view {
-        SDSimpleLoanSimpleProposal.Proposal memory proposal = ISproTypes.Proposal({
+        Spro.Proposal memory proposal = ISproTypes.Proposal({
             collateralAddress: addr,
             collateralAmount: 1e20,
             checkCollateralStateFingerprint: false,

@@ -3,10 +3,8 @@ pragma solidity ^0.8.26;
 
 import {
     SDBaseIntegrationTest,
-    SDConfig,
+    Spro,
     IPWNDeployer,
-    SDSimpleLoan,
-    SDSimpleLoanSimpleProposal,
     PWNLOAN,
     PWNRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
@@ -24,9 +22,9 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
     }
 
     function test_RevertWhen_CallerIsNotProposer() external proposalContractHasTag whenValidProposalData {
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        Spro.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.CallerIsNotStatedProposer.selector, borrower));
-        deployment.simpleLoan.createProposal(proposalSpec);
+        deployment.config.createProposal(proposalSpec);
     }
 
     modifier whenCallerIsProposer() {
@@ -51,7 +49,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
     {
         _createERC20Proposal();
 
-        assertEq(t20.balanceOf(address(deployment.simpleLoan)), COLLATERAL_AMOUNT);
+        assertEq(t20.balanceOf(address(deployment.config)), COLLATERAL_AMOUNT);
         assertEq(t20.balanceOf(borrower), 0);
 
         assertEq(deployment.sdex.balanceOf(address(Constants.SINK)), deployment.config.fixFeeUnlisted());
@@ -82,7 +80,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         // Create proposal
         _createERC20Proposal();
 
-        assertEq(t20.balanceOf(address(deployment.simpleLoan)), COLLATERAL_AMOUNT);
+        assertEq(t20.balanceOf(address(deployment.config)), COLLATERAL_AMOUNT);
         assertEq(t20.balanceOf(borrower), 0);
 
         uint256 lf = deployment.config.fixFeeListed();
@@ -111,13 +109,13 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         // Mint initial state & approve collateral
         t20.mint(borrower, proposal.collateralAmount);
         vm.prank(borrower);
-        t20.approve(address(deployment.simpleLoan), proposal.collateralAmount);
+        t20.approve(address(deployment.config), proposal.collateralAmount);
 
         // Create the proposal
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        Spro.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
 
         vm.prank(borrower);
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidDurationStartTime.selector));
-        deployment.simpleLoan.createProposal(proposalSpec);
+        deployment.config.createProposal(proposalSpec);
     }
 }

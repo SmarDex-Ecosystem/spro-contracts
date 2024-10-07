@@ -6,12 +6,12 @@ import { Test } from "forge-std/Test.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-import { SDConfig } from "spro/SDConfig.sol";
+import { Spro } from "spro/Spro.sol";
 
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
-// forge inspect src/config/SDConfig.sol:SDConfig storage --pretty
+// forge inspect src/config/Spro.sol:Spro storage --pretty
 
 abstract contract SDConfigTest is Test {
     bytes32 internal constant OWNER_SLOT = bytes32(uint256(0)); // `_owner` property position
@@ -30,14 +30,14 @@ abstract contract SDConfigTest is Test {
     bytes32 internal constant POOL_ADAPTER_REGISTRY_SLOT = bytes32(uint256(8)); // `_poolAdapterRegistry` mapping
         // position
 
-    SDConfig config;
+    Spro config;
     address owner = makeAddr("owner");
     address sdex = makeAddr("sdex");
     address sink = makeAddr("sink");
     address creditToken = makeAddr("creditToken");
 
     function setUp() public virtual {
-        config = new SDConfig(sdex);
+        config = new Spro(sdex);
     }
 
     function _initialize() internal {

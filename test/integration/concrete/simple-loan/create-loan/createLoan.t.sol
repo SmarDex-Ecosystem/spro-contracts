@@ -5,10 +5,8 @@ import { SigUtils } from "test/utils/SigUtils.sol";
 import { IPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import {
     SDBaseIntegrationTest,
-    SDConfig,
+    Spro,
     IPWNDeployer,
-    SDSimpleLoan,
-    SDSimpleLoanSimpleProposal,
     PWNLOAN,
     PWNRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
@@ -30,8 +28,8 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         _createERC20Proposal();
 
         // Specs
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
-        SDSimpleLoan.LenderSpec memory lenderSpec = _buildLenderSpec(true);
+        Spro.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
 
         vm.prank(lender);
         vm.expectRevert(
@@ -39,7 +37,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
                 ISproErrors.InvalidDuration.selector, proposal.defaultTimestamp - proposal.startTimestamp, minDuration
             )
         );
-        deployment.simpleLoan.createLOAN(proposalSpec, lenderSpec, "");
+        deployment.config.createLOAN(proposalSpec, lenderSpec, "");
     }
 
     function test_RevertWhen_InvalidMaxApr() external proposalContractHasTag {
@@ -48,16 +46,16 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         proposal.accruingInterestAPR = uint24(maxApr + 1);
 
         // Create proposal
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _createERC20Proposal();
+        Spro.ProposalSpec memory proposalSpec = _createERC20Proposal();
 
         // Specs
-        SDSimpleLoan.LenderSpec memory lenderSpec = _buildLenderSpec(true);
+        Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
 
         vm.prank(lender);
         vm.expectRevert(
             abi.encodeWithSelector(ISproErrors.InterestAPROutOfBounds.selector, proposal.accruingInterestAPR, maxApr)
         );
-        deployment.simpleLoan.createLOAN(proposalSpec, lenderSpec, "");
+        deployment.config.createLOAN(proposalSpec, lenderSpec, "");
     }
 
     modifier whenLoanTermsValid() {
@@ -71,14 +69,14 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
     function test_CreateLoan_ERC20() external proposalContractHasTag whenLoanTermsValid whenERC20Collateral {
         _createERC20Proposal();
 
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
-        SDSimpleLoan.LenderSpec memory lenderSpec = _buildLenderSpec(true);
+        Spro.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
 
         vm.startPrank(lender);
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
-        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
+        credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        uint256 id = deployment.simpleLoan.createLOAN(proposalSpec, lenderSpec, "");
+        uint256 id = deployment.config.createLOAN(proposalSpec, lenderSpec, "");
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
@@ -86,7 +84,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
-        (SDSimpleLoan.LoanInfo memory loanInfo) = deployment.simpleLoan.getLOAN(id);
+        (Spro.LoanInfo memory loanInfo) = deployment.config.getLOAN(id);
         assertEq(loanInfo.status, 2);
 
         assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE - lenderSpec.creditAmount);
@@ -107,8 +105,8 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
 
         _createERC20Proposal();
 
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
-        SDSimpleLoan.LenderSpec memory lenderSpec = _buildLenderSpec(true);
+        Spro.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
         lenderSpec.sourceOfFunds = address(this);
 
         // Mint to source of funds and approve pool adapter
@@ -117,8 +115,8 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
 
         // Lender creates loan
         vm.startPrank(lender);
-        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
-        uint256 id = deployment.simpleLoan.createLOAN(proposalSpec, lenderSpec, "");
+        credit.approve(address(deployment.config), CREDIT_LIMIT);
+        uint256 id = deployment.config.createLOAN(proposalSpec, lenderSpec, "");
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
@@ -126,7 +124,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
-        (SDSimpleLoan.LoanInfo memory loanInfo) = deployment.simpleLoan.getLOAN(id);
+        (Spro.LoanInfo memory loanInfo) = deployment.config.getLOAN(id);
         assertEq(loanInfo.status, 2);
 
         assertEq(credit.balanceOf(address(this)), INITIAL_CREDIT_BALANCE - lenderSpec.creditAmount);
@@ -144,8 +142,8 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         proposal.creditAddress = address(creditPermit);
         _createERC20Proposal();
 
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
-        SDSimpleLoan.LenderSpec memory lenderSpec = _buildLenderSpec(true);
+        Spro.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
 
         // Construct permit data for the lender
         permit.asset = address(creditPermit);
@@ -155,7 +153,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
 
         SigUtils.Permit memory p = SigUtils.Permit({
             owner: permit.owner,
-            spender: address(deployment.simpleLoan),
+            spender: address(deployment.config),
             value: permit.amount,
             nonce: creditPermit.nonces(lender),
             deadline: permit.deadline
@@ -174,12 +172,12 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         permit.s = s;
 
         // Zero the approvals before the repayment, tokens should be transferred via permit
-        creditPermit.approve(address(deployment.simpleLoan), 0);
+        creditPermit.approve(address(deployment.config), 0);
 
         // Set the permit data
         lenderSpec.permitData = abi.encode(permit);
 
-        uint256 id = deployment.simpleLoan.createLOAN(proposalSpec, lenderSpec, "");
+        uint256 id = deployment.config.createLOAN(proposalSpec, lenderSpec, "");
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
@@ -187,7 +185,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
-        (SDSimpleLoan.LoanInfo memory loanInfo) = deployment.simpleLoan.getLOAN(id);
+        (Spro.LoanInfo memory loanInfo) = deployment.config.getLOAN(id);
         assertEq(loanInfo.status, 2);
 
         assertEq(creditPermit.balanceOf(lender), INITIAL_CREDIT_BALANCE - lenderSpec.creditAmount);

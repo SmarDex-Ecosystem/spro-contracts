@@ -3,10 +3,8 @@ pragma solidity ^0.8.26;
 
 import {
     SDBaseIntegrationTest,
-    SDConfig,
+    Spro,
     IPWNDeployer,
-    SDSimpleLoan,
-    SDSimpleLoanSimpleProposal,
     PWNLOAN,
     PWNRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
@@ -20,8 +18,8 @@ contract CancelProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
 
     function test_RevertWhen_CallerNotProposer() external proposalContractHasTag {
         _createERC20Proposal();
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        Spro.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
         vm.expectRevert(ISproErrors.CallerNotProposer.selector);
-        deployment.simpleLoan.cancelProposal(proposalSpec);
+        deployment.config.cancelProposal(proposalSpec);
     }
 }

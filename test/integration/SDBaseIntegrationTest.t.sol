@@ -6,17 +6,9 @@ import { SigUtils } from "test/utils/SigUtils.sol";
 import { CreditPermit } from "test/helper/CreditPermit.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import { IERC5646 } from "spro/SDSimpleLoanSimpleProposal.sol";
+import { IERC5646 } from "spro/Spro.sol";
 import { T20 } from "test/helper/T20.sol";
-import {
-    SDDeploymentTest,
-    SDConfig,
-    IPWNDeployer,
-    SDSimpleLoan,
-    SDSimpleLoanSimpleProposal,
-    PWNLOAN,
-    PWNRevokedNonce
-} from "test/SDDeploymentTest.t.sol";
+import { SDDeploymentTest, Spro, IPWNDeployer, PWNLOAN, PWNRevokedNonce } from "test/SDDeploymentTest.t.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
@@ -28,7 +20,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     address lender = vm.addr(lenderPK);
     uint256 borrowerPK = uint256(888);
     address borrower = vm.addr(borrowerPK);
-    SDSimpleLoanSimpleProposal.Proposal proposal;
+    Spro.Proposal proposal;
     Permit permit;
 
     address public stateFingerprintComputer = makeAddr("stateFingerprintComputer");
@@ -95,20 +87,20 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
             proposerSpecHash: keccak256(abi.encode(borrower)),
             nonceSpace: 0,
             nonce: 0,
-            loanContract: address(deployment.simpleLoan)
+            loanContract: address(deployment.config)
         });
 
         // Mint and approve SDEX
         deployment.sdex.mint(lender, INITIAL_SDEX_BALANCE);
         vm.prank(lender);
-        deployment.sdex.approve(address(deployment.simpleLoan), type(uint256).max);
+        deployment.sdex.approve(address(deployment.config), type(uint256).max);
         deployment.sdex.mint(borrower, INITIAL_SDEX_BALANCE);
         vm.prank(borrower);
-        deployment.sdex.approve(address(deployment.simpleLoan), type(uint256).max);
+        deployment.sdex.approve(address(deployment.config), type(uint256).max);
 
         // Set thresholds in config
         vm.startPrank(deployment.protocolAdmin);
-        SDConfig(deployment.config).setPartialPositionPercentage(DEFAULT_THRESHOLD);
+        Spro(deployment.config).setPartialPositionPercentage(DEFAULT_THRESHOLD);
         vm.stopPrank();
 
         // Add labels
@@ -139,27 +131,27 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     }
 
     // Make the proposal
-    function _createERC20Proposal() internal returns (SDSimpleLoan.ProposalSpec memory proposalSpec) {
+    function _createERC20Proposal() internal returns (Spro.ProposalSpec memory proposalSpec) {
         // Mint initial state & approve collateral
         t20.mint(borrower, proposal.collateralAmount);
         vm.prank(borrower);
-        t20.approve(address(deployment.simpleLoan), proposal.collateralAmount);
+        t20.approve(address(deployment.config), proposal.collateralAmount);
 
         // Create the proposal
         proposalSpec = _buildProposalSpec(proposal);
 
         vm.prank(borrower);
-        deployment.simpleLoan.createProposal(proposalSpec);
+        deployment.config.createProposal(proposalSpec);
     }
 
-    function _createLoan(SDSimpleLoan.ProposalSpec memory proposalSpec, bytes memory revertData)
+    function _createLoan(Spro.ProposalSpec memory proposalSpec, bytes memory revertData)
         internal
         returns (uint256 loanId)
     {
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
         vm.prank(lender);
-        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
+        credit.approve(address(deployment.config), CREDIT_LIMIT);
 
         // Create LOAN
         if (keccak256(revertData) != keccak256("")) {
@@ -167,15 +159,12 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         }
 
         vm.prank(lender);
-        return deployment.simpleLoan.createLOAN({
-            proposalSpec: proposalSpec,
-            lenderSpec: _buildLenderSpec(false),
-            extra: ""
-        });
+        return
+            deployment.config.createLOAN({ proposalSpec: proposalSpec, lenderSpec: _buildLenderSpec(false), extra: "" });
     }
 
-    function _cancelProposal(SDSimpleLoanSimpleProposal.Proposal memory _proposal) internal {
-        deployment.simpleLoan.cancelProposal(_buildProposalSpec(_proposal));
+    function _cancelProposal(Spro.Proposal memory _proposal) internal {
+        deployment.config.cancelProposal(_buildProposalSpec(_proposal));
     }
 
     function _buildLenderSpec(bool complete) internal view returns (ISproTypes.LenderSpec memory lenderSpec) {
@@ -184,13 +173,13 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
             : ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: CREDIT_AMOUNT, permitData: "" });
     }
 
-    function _buildProposalSpec(SDSimpleLoanSimpleProposal.Proposal memory _proposal)
+    function _buildProposalSpec(Spro.Proposal memory _proposal)
         internal
         view
-        returns (SDSimpleLoan.ProposalSpec memory proposalSpec)
+        returns (Spro.ProposalSpec memory proposalSpec)
     {
         return ISproTypes.ProposalSpec({
-            proposalContract: address(deployment.simpleLoanSimpleProposal),
+            proposalContract: address(deployment.config),
             proposalData: abi.encode(_proposal)
         });
     }

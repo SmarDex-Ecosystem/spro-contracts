@@ -6,15 +6,7 @@ import { T20 } from "test/helper/T20.sol";
 
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import {
-    SDDeployments,
-    SDConfig,
-    IPWNDeployer,
-    SDSimpleLoan,
-    SDSimpleLoanSimpleProposal,
-    PWNLOAN,
-    PWNRevokedNonce
-} from "src/SDDeployments.sol";
+import { SDDeployments, Spro, IPWNDeployer, PWNLOAN, PWNRevokedNonce } from "src/SDDeployments.sol";
 
 abstract contract SDDeploymentTest is SDDeployments, Test {
     uint256 public constant UNLISTED_FEE = 50e18;
@@ -35,8 +27,6 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
         vm.label(address(deployment.config), "config");
         vm.label(address(deployment.revokedNonce), "revokedNonce");
         vm.label(address(deployment.loanToken), "loanToken");
-        vm.label(address(deployment.simpleLoan), "simpleLoan");
-        vm.label(address(deployment.simpleLoanSimpleProposal), "simpleLoanSimpleProposal");
     }
 
     function _protocolNotDeployedOnSelectedChain() internal override {
@@ -46,8 +36,15 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
         // Deploy SDEX token
         deployment.sdex = new T20();
 
+        vm.prank(deployment.protocolAdmin);
+
+        deployment.revokedNonce = new PWNRevokedNonce("tag");
+
+        deployment.loanToken = new PWNLOAN();
+
         // Deploy protocol
-        deployment.configSingleton = new SDConfig(address(deployment.sdex));
+        deployment.configSingleton =
+            new Spro(address(deployment.sdex), address(deployment.loanToken), address(deployment.revokedNonce));
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
             address(deployment.configSingleton),
             deployment.proxyAdmin,
@@ -60,26 +57,6 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
                 PARTIAL_POSITION_PERCENTAGE
             )
         );
-        deployment.config = SDConfig(address(proxy));
-
-        vm.prank(deployment.protocolAdmin);
-
-        deployment.revokedNonce = new PWNRevokedNonce("tag");
-
-        deployment.loanToken = new PWNLOAN();
-        deployment.simpleLoan = new SDSimpleLoan(
-            address(deployment.loanToken), address(deployment.config), address(deployment.revokedNonce)
-        );
-
-        deployment.simpleLoanSimpleProposal =
-            new SDSimpleLoanSimpleProposal(address(deployment.revokedNonce), address(deployment.config));
-
-        // Set hub tags
-        address[] memory addrs = new address[](10);
-        addrs[0] = address(deployment.simpleLoan);
-        addrs[1] = address(deployment.simpleLoan);
-
-        addrs[2] = address(deployment.simpleLoanSimpleProposal);
-        addrs[3] = address(deployment.simpleLoanSimpleProposal);
+        deployment.config = Spro(address(proxy));
     }
 }

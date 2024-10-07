@@ -160,4 +160,18 @@ interface ISproErrors {
      * @notice Thrown when the start timestamp is greater than the default timestamp.
      */
     error InvalidDurationStartTime();
+
+    /* -------------------------------------------------------------------------- */
+    /*                                   PERMIT                                   */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Thrown when the permit owner is not matching.
+     */
+    error InvalidPermitOwner(address current, address expected);
+
+    /**
+     * @notice Thrown when the permit asset is not matching.
+     */
+    error InvalidPermitAsset(address current, address expected);
 }

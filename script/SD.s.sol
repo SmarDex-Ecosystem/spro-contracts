@@ -9,15 +9,7 @@ import {
     ITransparentUpgradeableProxy
 } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
-import {
-    SDDeployments,
-    SDConfig,
-    IPWNDeployer,
-    SDSimpleLoan,
-    SDSimpleLoanSimpleProposal,
-    PWNLOAN,
-    PWNRevokedNonce
-} from "src/SDDeployments.sol";
+import { SDDeployments, Spro, IPWNDeployer, PWNLOAN, PWNRevokedNonce } from "src/SDDeployments.sol";
 
 library SDContractDeployerParams {
     string internal constant VERSION = "1.0";
@@ -27,7 +19,7 @@ library SDContractDeployerParams {
     //////////////////////////////////////////////////////////////////////////*/
 
     // Singletons
-    bytes32 internal constant CONFIG = keccak256("SDConfig");
+    bytes32 internal constant CONFIG = keccak256("Spro");
     bytes32 internal constant CONFIG_PROXY = keccak256("SDConfigProxy");
     bytes32 internal constant HUB = keccak256("SDHub");
     bytes32 internal constant LOAN = keccak256("SDLOAN");
@@ -43,7 +35,7 @@ library SDContractDeployerParams {
                                      CONSTRUCTOR ARGS
     //////////////////////////////////////////////////////////////////////////*/
 
-    // SDConfig @note arbitrarily set here, please change.
+    // Spro @note arbitrarily set here, please change.
     uint256 internal constant UNLISTED_FEE = 50e18;
     uint256 internal constant LISTED_FEE = 30e18;
     uint256 internal constant VARIABLE_FACTOR = 1e16;
@@ -101,7 +93,7 @@ contract Deploy is ScriptUtils, SDDeployments {
         // the config proxy is deployed first with Deployer implementation that has the same address on all chains.
         // Proxy implementation is then upgraded to the correct one in the next transaction.
 
-        deployment.config = SDConfig(
+        deployment.config = Spro(
             _deploy({
                 salt: SDContractDeployerParams.CONFIG_PROXY,
                 bytecode: abi.encodePacked(
@@ -111,7 +103,7 @@ contract Deploy is ScriptUtils, SDDeployments {
         );
         address configSingleton = _deploy({
             salt: SDContractDeployerParams.CONFIG,
-            bytecode: abi.encodePacked(type(SDConfig).creationCode, abi.encode(deployment.sdex))
+            bytecode: abi.encodePacked(type(Spro).creationCode, abi.encode(deployment.sdex))
         });
         vm.stopBroadcast();
 
@@ -119,7 +111,7 @@ contract Deploy is ScriptUtils, SDDeployments {
         ITransparentUpgradeableProxy(address(deployment.config)).upgradeToAndCall(
             configSingleton,
             abi.encodeWithSelector(
-                SDConfig.initialize.selector,
+                Spro.initialize.selector,
                 deployment.protocolAdmin,
                 SDContractDeployerParams.UNLISTED_FEE,
                 SDContractDeployerParams.LISTED_FEE,
@@ -145,47 +137,21 @@ contract Deploy is ScriptUtils, SDDeployments {
             })
         );
 
-        // - Loan types
-        deployment.simpleLoan = SDSimpleLoan(
-            _deploy({
-                salt: SDContractDeployerParams.SIMPLE_LOAN,
-                bytecode: abi.encodePacked(
-                    type(SDSimpleLoan).creationCode,
-                    abi.encode(address(deployment.loanToken), address(deployment.config), address(deployment.revokedNonce))
-                )
-            })
-        );
-
-        // - Proposals
-        deployment.simpleLoanSimpleProposal = SDSimpleLoanSimpleProposal(
-            _deploy({
-                salt: SDContractDeployerParams.SIMPLE_LOAN_SIMPLE_PROPOSAL,
-                bytecode: abi.encodePacked(
-                    type(SDSimpleLoanSimpleProposal).creationCode,
-                    abi.encode(address(deployment.revokedNonce), address(deployment.config))
-                )
-            })
-        );
-
         vm.stopBroadcast();
 
         console2.log("Deployer:", address(deployment.deployer));
         console2.log("ProxyAdmin:", deployment.proxyAdmin);
         console2.log("ProtocolAdmin:", deployment.protocolAdmin);
         console2.log("SDEX:", address(deployment.sdex));
-        console2.log("SDConfig - singleton:", configSingleton);
-        console2.log("SDConfig - proxy:", address(deployment.config));
+        console2.log("Spro - singleton:", configSingleton);
+        console2.log("Spro - proxy:", address(deployment.config));
         console2.log("PWNLOAN:", address(deployment.loanToken));
         console2.log("PWNRevokedNonce:", address(deployment.revokedNonce));
-        console2.log("SDSimpleLoan:", address(deployment.simpleLoan));
-        console2.log("SDSimpleLoanSimpleProposal:", address(deployment.simpleLoanSimpleProposal));
 
         // Writes deployment addresses to deployments JSON - @note currently points to sdLatest.json
         _writeDeploymentAddress(configSingleton, ".configSingleton");
         _writeDeploymentAddress(address(deployment.config), ".config");
         _writeDeploymentAddress(address(deployment.loanToken), ".loanToken");
         _writeDeploymentAddress(address(deployment.revokedNonce), ".revokedNonce");
-        _writeDeploymentAddress(address(deployment.simpleLoan), ".simpleLoan");
-        _writeDeploymentAddress(address(deployment.simpleLoanSimpleProposal), ".simpleLoanSimpleProposal");
     }
 }
