@@ -15,6 +15,9 @@ contract SproStorage is ISproErrors, ISproEvents {
     /// @notice SDEX token address.
     address public immutable SDEX;
 
+    /// @notice PWNRevokedNonce contract address.
+    PWNRevokedNonce public immutable revokedNonce;
+
     /// @notice Percentage of a proposal's availableCreditLimit which can be used in partial lending.
     uint16 public partialPositionPercentage;
 
@@ -51,8 +54,6 @@ contract SproStorage is ISproErrors, ISproEvents {
 
     /// @notice Mapping holding registered pool adapter to a pool address.
     mapping(address => address) public _poolAdapterRegistry;
-
-    PWNRevokedNonce public immutable revokedNonce;
 
     /* -------------------------------------------------------------------------- */
     /*                                    LOAN                                    */

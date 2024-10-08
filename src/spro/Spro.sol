@@ -27,7 +27,6 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, IERC5646, IPWNLoanMetadata
     /**
      * @notice Initialize Spro contract.
      * @param _sdex Address of SDEX token.
-     * @param _revokedNonce Address of RevokedNonce contract.
      * @param _owner Address of the owner.
      * @param _fixFeeUnlisted Fixed fee for unlisted assets.
      * @param _fixFeeListed Fixed fee for listed assets.
@@ -36,7 +35,6 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, IERC5646, IPWNLoanMetadata
      */
     constructor(
         address _sdex,
-        address _revokedNonce,
         address _owner,
         uint256 _fixFeeUnlisted,
         uint256 _fixFeeListed,
@@ -50,8 +48,8 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, IERC5646, IPWNLoanMetadata
         );
 
         SDEX = _sdex;
+        revokedNonce = new PWNRevokedNonce(address(this));
         loanToken = new SproLOAN(address(this));
-        revokedNonce = PWNRevokedNonce(_revokedNonce);
         fixFeeUnlisted = _fixFeeUnlisted;
         fixFeeListed = _fixFeeListed;
         variableFactor = _variableFactor;

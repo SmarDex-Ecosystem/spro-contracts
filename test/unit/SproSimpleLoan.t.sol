@@ -14,7 +14,6 @@ import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 contract SproSimpleLoanTest is Test {
     address public sdex = makeAddr("sdex");
     address public config = makeAddr("config");
-    address public revokedNonce = makeAddr("revokedNonce");
 
     address public permitAsset = makeAddr("permitAsset");
     address public credit = makeAddr("credit");
@@ -25,13 +24,9 @@ contract SproSimpleLoanTest is Test {
 
     function setUp() public {
         vm.etch(config, bytes("data"));
-        sproHandler = new SproHandler(sdex, revokedNonce, address(this), 1, 1, 1, 1);
+        sproHandler = new SproHandler(sdex, address(this), 1, 1, 1, 1);
 
         vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(poolAdapter));
-    }
-
-    function test_constructor() external view {
-        assertEq(address(sproHandler.revokedNonce()), revokedNonce);
     }
 
     function testFuzz_getLenderSpecHash(address source, uint256 amount, bytes memory data) external view {

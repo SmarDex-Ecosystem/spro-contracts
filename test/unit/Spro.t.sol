@@ -33,7 +33,6 @@ abstract contract SproTest is Test {
     address owner = makeAddr("owner");
     address sdex = makeAddr("sdex");
     address creditToken = makeAddr("creditToken");
-    address revokedNonce = makeAddr("revokedNonce");
 
     uint256 fixFeeUnlisted = 500e18;
     uint256 fixFeeListed = 30e18;
@@ -42,8 +41,7 @@ abstract contract SproTest is Test {
     uint16 PERCENTAGE = 1e4;
 
     function setUp() public virtual {
-        config =
-            new Spro(sdex, revokedNonce, owner, fixFeeUnlisted, fixFeeListed, variableFactor, partialPositionPercentage);
+        config = new Spro(sdex, owner, fixFeeUnlisted, fixFeeListed, variableFactor, partialPositionPercentage);
     }
 
     function _mockSupportsToken(address computer, address token, bool result) internal {
@@ -63,22 +61,6 @@ contract TestSproConstructor is SproTest {
         assertEq(config.fixFeeListed(), fixFeeListed);
         assertEq(config.variableFactor(), variableFactor);
         assertEq(sdex, config.SDEX());
-    }
-}
-
-/* ------------------------------------------------------------ */
-/*  INITIALIZE                                               */
-/* ------------------------------------------------------------ */
-
-contract TestSproInitialize is SproTest {
-    function test_shouldSetValues() external {
-        assertEq(config.partialPositionPercentage(), partialPositionPercentage);
-
-        assertEq(config.fixFeeUnlisted(), fixFeeUnlisted);
-
-        assertEq(config.fixFeeListed(), fixFeeListed);
-
-        assertEq(config.variableFactor(), variableFactor);
     }
 }
 

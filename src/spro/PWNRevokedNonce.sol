@@ -1,31 +1,27 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+
 /**
  * @title PWN Revoked Nonce
  * @notice Contract holding revoked nonces.
  */
-contract PWNRevokedNonce {
+contract PWNRevokedNonce is Ownable {
     /* ------------------------------------------------------------ */
     /*                VARIABLES & CONSTANTS DEFINITIONS             */
     /* ------------------------------------------------------------ */
 
     /**
-     * @notice Access tag that needs to be assigned to a caller in PWN Hub
-     *         to call functions that revoke nonces on behalf of an owner.
-     */
-    bytes32 public immutable accessTag;
-
-    /**
      * @notice Mapping of revoked nonces by an address. Every address has its own nonce space.
      *         (owner => nonce space => nonce => is revoked)
      */
-    mapping(address => mapping(uint256 => mapping(uint256 => bool))) private _revokedNonce;
+    mapping(address => mapping(uint256 => mapping(uint256 => bool))) internal _revokedNonce;
 
     /**
      * @notice Mapping of current nonce space for an address.
      */
-    mapping(address => uint256) private _nonceSpace;
+    mapping(address => uint256) internal _nonceSpace;
 
     /* ------------------------------------------------------------ */
     /*                      EVENTS DEFINITIONS                      */
@@ -60,9 +56,7 @@ contract PWNRevokedNonce {
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
 
-    constructor(bytes32 _accessTag) {
-        accessTag = _accessTag;
-    }
+    constructor(address creator) Ownable(creator) { }
 
     /* ------------------------------------------------------------ */
     /*                              NONCE                           */
@@ -101,7 +95,7 @@ contract PWNRevokedNonce {
      * @param owner Owner address of a revoking nonce.
      * @param nonce Nonce to be revoked.
      */
-    function revokeNonce(address owner, uint256 nonce) external {
+    function revokeNonce(address owner, uint256 nonce) external onlyOwner {
         _revokeNonce(owner, _nonceSpace[owner], nonce);
     }
 
@@ -112,7 +106,7 @@ contract PWNRevokedNonce {
      * @param nonceSpace Nonce space where a nonce will be revoked.
      * @param nonce Nonce to be revoked.
      */
-    function revokeNonce(address owner, uint256 nonceSpace, uint256 nonce) external {
+    function revokeNonce(address owner, uint256 nonceSpace, uint256 nonce) external onlyOwner {
         _revokeNonce(owner, nonceSpace, nonce);
     }
 

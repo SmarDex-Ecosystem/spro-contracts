@@ -36,12 +36,10 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
         deployment.sdex = new T20();
 
         vm.startPrank(deployment.protocolAdmin);
-        deployment.revokedNonce = new PWNRevokedNonce("tag");
 
         // Deploy protocol
         deployment.config = new Spro(
             address(deployment.sdex),
-            address(deployment.revokedNonce),
             deployment.protocolAdmin,
             UNLISTED_FEE,
             LISTED_FEE,
@@ -49,6 +47,7 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
             PARTIAL_POSITION_PERCENTAGE
         );
         vm.stopPrank();
+        deployment.revokedNonce = deployment.config.revokedNonce();
         deployment.loanToken = deployment.config.loanToken();
     }
 }

@@ -8,22 +8,13 @@ import { Spro, Permit } from "src/spro/Spro.sol";
 contract SproHandler is Spro {
     constructor(
         address _sdex,
-        address _revokedNonce,
         address _stateFingerprintComputer,
         uint16 _defaultThreshold,
         uint16 _percentage,
         uint16 _partialPositionPercentage,
         uint16 _variableFactor
     )
-        Spro(
-            _sdex,
-            _revokedNonce,
-            _stateFingerprintComputer,
-            _defaultThreshold,
-            _percentage,
-            _partialPositionPercentage,
-            _variableFactor
-        )
+        Spro(_sdex, _stateFingerprintComputer, _defaultThreshold, _percentage, _partialPositionPercentage, _variableFactor)
     { }
 
     function exposed_checkPermit(address caller, address creditAddress, Permit memory permit) external pure {
