@@ -5,63 +5,18 @@ import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { IPoolAdapter } from "pwn/interfaces/IPoolAdapter.sol";
-import { Permit } from "pwn/loan/vault/Permit.sol";
+import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
+import { Permit } from "src/spro/Permit.sol";
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 
 /**
- * @title PWN Vault
- * @notice Base contract for transferring and managing collateral and loan assets in PWN protocol.
- * @dev Loan contracts inherits PWN Vault to act as a Vault for its loan type.
+ * @title Spro Vault
+ * @notice Base contract for transferring and managing collateral and loan assets in Spro protocol.
+ * @dev Loan contracts inherits Spro Vault to act as a Vault for its loan type.
  */
-abstract contract PWNVault {
+contract SproVault is ISproErrors, ISproEvents {
     using SafeERC20 for IERC20Metadata;
-    /* ------------------------------------------------------------ */
-    /*                      EVENTS DEFINITIONS                      */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Emitted when asset transfer happens from an `origin` address to a vault.
-     */
-    event VaultPull(address asset, address indexed origin, uint256 amount);
-
-    /**
-     * @notice Emitted when asset transfer happens from a vault to a `beneficiary` address.
-     */
-    event VaultPush(address asset, address indexed beneficiary, uint256 amount);
-
-    /**
-     * @notice Emitted when asset transfer happens from an `origin` address to a `beneficiary` address.
-     */
-    event VaultPushFrom(address asset, address indexed origin, address indexed beneficiary, uint256 amount);
-
-    /**
-     * @notice Emitted when asset is withdrawn from a pool to an `owner` address.
-     */
-    event PoolWithdraw(
-        address asset, address indexed poolAdapter, address indexed pool, address indexed owner, uint256 amount
-    );
-
-    /**
-     * @notice Emitted when asset is supplied to a pool from a vault.
-     */
-    event PoolSupply(
-        address asset, address indexed poolAdapter, address indexed pool, address indexed owner, uint256 amount
-    );
-
-    /* ------------------------------------------------------------ */
-    /*                      ERRORS DEFINITIONS                      */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Thrown when the Vault receives an asset that is not transferred by the Vault itself.
-     */
-    error UnsupportedTransferFunction();
-
-    /**
-     * @notice Thrown when the Vault receives an invalid amount of an asset.
-     */
-    error InvalidAmountTransfer();
-
     /* ------------------------------------------------------------ */
     /*                      TRANSFER FUNCTIONS                      */
     /* ------------------------------------------------------------ */

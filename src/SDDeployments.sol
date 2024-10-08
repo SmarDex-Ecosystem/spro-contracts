@@ -6,14 +6,10 @@ import { CommonBase } from "forge-std/Base.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { SDConfig } from "pwn/config/SDConfig.sol";
-import { PWNHub } from "pwn/hub/PWNHub.sol";
-import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
-import { IPWNDeployer } from "pwn/interfaces/IPWNDeployer.sol";
-import { SDSimpleLoan } from "pwn/loan/terms/simple/loan/SDSimpleLoan.sol";
-import { SDSimpleLoanSimpleProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanSimpleProposal.sol";
-import { PWNLOAN } from "pwn/loan/token/PWNLOAN.sol";
-import { PWNRevokedNonce } from "pwn/nonce/PWNRevokedNonce.sol";
+import { Spro } from "src/spro/Spro.sol";
+import { IPWNDeployer } from "src/interfaces/IPWNDeployer.sol";
+import { SproLOAN } from "src/spro/SproLOAN.sol";
+import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 import { T20 } from "test/helper/T20.sol";
 
 abstract contract SDDeployments is CommonBase {
@@ -27,17 +23,13 @@ abstract contract SDDeployments is CommonBase {
 
     // Properties need to be in alphabetical order
     struct Deployment {
-        SDConfig config;
-        SDConfig configSingleton;
+        Spro config;
         IPWNDeployer deployer;
-        PWNHub hub;
-        PWNLOAN loanToken;
+        SproLOAN loanToken;
         address proxyAdmin;
         address protocolAdmin;
-        PWNRevokedNonce revokedNonce;
+        SproRevokedNonce revokedNonce;
         T20 sdex;
-        SDSimpleLoan simpleLoan;
-        SDSimpleLoanSimpleProposal simpleLoanSimpleProposal;
     }
 
     function _loadDeployedAddresses() internal {

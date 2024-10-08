@@ -3,19 +3,31 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
-import { PWNRevokedNonce, PWNHubTags, AddressMissingHubTag } from "pwn/nonce/PWNRevokedNonce.sol";
+import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 
-abstract contract PWNRevokedNonceTest is Test {
-    bytes32 internal constant REVOKED_NONCE_SLOT = bytes32(uint256(0)); // `_revokedNonce` mapping position
-    bytes32 internal constant NONCE_SPACE_SLOT = bytes32(uint256(1)); // `_nonceSpace` mapping position
+contract HandleSproRevokedNonce is SproRevokedNonce {
+    constructor(address _owner) SproRevokedNonce(_owner) { }
 
-    PWNRevokedNonce revokedNonce;
-    bytes32 accessTag = keccak256("Some nice pwn tag");
-    address hub = address(0x80b);
+    function getRevokedNonce(address _owner, uint256 nonceSpace, uint256 _nonce) external view returns (bool) {
+        return _revokedNonce[_owner][nonceSpace][_nonce];
+    }
+
+    function getNonceSpace(address _owner) external view returns (uint256) {
+        return _nonceSpace[_owner];
+    }
+}
+
+// forge inspect src/spro/SproRevokedNonce.sol:SproRevokedNonce storage --pretty
+
+abstract contract SproRevokedNonceTest is Test {
+    bytes32 internal constant REVOKED_NONCE_SLOT = bytes32(uint256(1)); // `_revokedNonce` mapping position
+    bytes32 internal constant NONCE_SPACE_SLOT = bytes32(uint256(2)); // `_nonceSpace` mapping position
+
+    SproRevokedNonce revokedNonce;
     address alice = address(0xa11ce);
 
     function setUp() public virtual {
-        revokedNonce = new PWNRevokedNonce(hub, accessTag);
+        revokedNonce = new SproRevokedNonce(address(this));
     }
 
     function _revokedNonceSlot(address _owner, uint256 _nonceSpace, uint256 _nonce) internal pure returns (bytes32) {
@@ -33,17 +45,17 @@ abstract contract PWNRevokedNonceTest is Test {
 /*                                REVOKE NONCE                                */
 /* -------------------------------------------------------------------------- */
 
-contract PWNRevokedNonce_RevokeNonce_Test is PWNRevokedNonceTest {
+contract SproRevokedNonce_RevokeNonce_Test is SproRevokedNonceTest {
     function testFuzz_shouldFail_whenNonceAlreadyRevoked(uint256 nonceSpace, uint256 nonce) external {
         vm.store(address(revokedNonce), _nonceSpaceSlot(alice), bytes32(nonceSpace));
         vm.store(address(revokedNonce), _revokedNonceSlot(alice, nonceSpace, nonce), bytes32(uint256(1)));
 
-        vm.expectRevert(abi.encodeWithSelector(PWNRevokedNonce.NonceAlreadyRevoked.selector, alice, nonceSpace, nonce));
+        vm.expectRevert(abi.encodeWithSelector(SproRevokedNonce.NonceAlreadyRevoked.selector, alice, nonceSpace, nonce));
         vm.prank(alice);
         revokedNonce.revokeNonce(nonce);
     }
 
-    function testFuzz_shouldStoreNonceAsRevoked(uint256 nonceSpace, uint256 nonce) external {
+    function testFuzz_shouldStoreNonceAsRevoked_1(uint256 nonceSpace, uint256 nonce) external {
         vm.store(address(revokedNonce), _nonceSpaceSlot(alice), bytes32(nonceSpace));
 
         vm.prank(alice);
@@ -56,7 +68,7 @@ contract PWNRevokedNonce_RevokeNonce_Test is PWNRevokedNonceTest {
         vm.store(address(revokedNonce), _nonceSpaceSlot(alice), bytes32(nonceSpace));
 
         vm.expectEmit();
-        emit PWNRevokedNonce.NonceRevoked(alice, nonceSpace, nonce);
+        emit SproRevokedNonce.NonceRevoked(alice, nonceSpace, nonce);
 
         vm.prank(alice);
         revokedNonce.revokeNonce(nonce);
@@ -67,7 +79,7 @@ contract PWNRevokedNonce_RevokeNonce_Test is PWNRevokedNonceTest {
 /*                                REVOKE NONCES                               */
 /* -------------------------------------------------------------------------- */
 
-contract PWNRevokedNonce_RevokeNonces_Test is PWNRevokedNonceTest {
+contract SproRevokedNonce_RevokeNonces_Test is SproRevokedNonceTest {
     uint256[] nonces;
 
     function testFuzz_shouldFail_whenAnyNonceAlreadyRevoked(uint256 nonceSpace, uint256 nonce) external {
@@ -79,7 +91,7 @@ contract PWNRevokedNonce_RevokeNonces_Test is PWNRevokedNonceTest {
         nonces[0] = nonce;
         nonces[1] = nonce + 1;
 
-        vm.expectRevert(abi.encodeWithSelector(PWNRevokedNonce.NonceAlreadyRevoked.selector, alice, nonceSpace, nonce));
+        vm.expectRevert(abi.encodeWithSelector(SproRevokedNonce.NonceAlreadyRevoked.selector, alice, nonceSpace, nonce));
         vm.prank(alice);
         revokedNonce.revokeNonces(nonces);
     }
@@ -116,7 +128,7 @@ contract PWNRevokedNonce_RevokeNonces_Test is PWNRevokedNonceTest {
 
         for (uint256 i; i < nonces.length; ++i) {
             vm.expectEmit();
-            emit PWNRevokedNonce.NonceRevoked(alice, nonceSpace, nonces[i]);
+            emit SproRevokedNonce.NonceRevoked(alice, nonceSpace, nonces[i]);
         }
 
         vm.prank(alice);
@@ -128,16 +140,16 @@ contract PWNRevokedNonce_RevokeNonces_Test is PWNRevokedNonceTest {
 /*                        REVOKE NONCE WITH NONCE SPACE                       */
 /* -------------------------------------------------------------------------- */
 
-contract PWNRevokedNonce_RevokeNonceWithNonceSpace_Test is PWNRevokedNonceTest {
+contract SproRevokedNonce_RevokeNonceWithNonceSpace_Test is SproRevokedNonceTest {
     function testFuzz_shouldFail_whenNonceAlreadyRevoked(uint256 nonceSpace, uint256 nonce) external {
         vm.store(address(revokedNonce), _revokedNonceSlot(alice, nonceSpace, nonce), bytes32(uint256(1)));
 
-        vm.expectRevert(abi.encodeWithSelector(PWNRevokedNonce.NonceAlreadyRevoked.selector, alice, nonceSpace, nonce));
+        vm.expectRevert(abi.encodeWithSelector(SproRevokedNonce.NonceAlreadyRevoked.selector, alice, nonceSpace, nonce));
         vm.prank(alice);
         revokedNonce.revokeNonce(nonceSpace, nonce);
     }
 
-    function testFuzz_shouldStoreNonceAsRevoked(uint256 nonceSpace, uint256 nonce) external {
+    function testFuzz_shouldStoreNonceAsRevoked_2(uint256 nonceSpace, uint256 nonce) external {
         vm.prank(alice);
         revokedNonce.revokeNonce(nonceSpace, nonce);
 
@@ -146,7 +158,7 @@ contract PWNRevokedNonce_RevokeNonceWithNonceSpace_Test is PWNRevokedNonceTest {
 
     function testFuzz_shouldEmit_NonceRevoked(uint256 nonceSpace, uint256 nonce) external {
         vm.expectEmit();
-        emit PWNRevokedNonce.NonceRevoked(alice, nonceSpace, nonce);
+        emit SproRevokedNonce.NonceRevoked(alice, nonceSpace, nonce);
 
         vm.prank(alice);
         revokedNonce.revokeNonce(nonceSpace, nonce);
@@ -157,36 +169,19 @@ contract PWNRevokedNonce_RevokeNonceWithNonceSpace_Test is PWNRevokedNonceTest {
 /*                           REVOKE NONCE WITH OWNER                          */
 /* -------------------------------------------------------------------------- */
 
-contract PWNRevokedNonce_RevokeNonceWithOwner_Test is PWNRevokedNonceTest {
-    address accessEnabledAddress = address(0x01);
-
-    function setUp() public override {
-        super.setUp();
-
-        vm.mockCall(hub, abi.encodeWithSignature("hasTag(address,bytes32)"), abi.encode(false));
-        vm.mockCall(
-            hub, abi.encodeWithSignature("hasTag(address,bytes32)", accessEnabledAddress, accessTag), abi.encode(true)
-        );
-    }
-
-    function testFuzz_shouldFail_whenCallerIsDoesNotHaveAccessTag(address caller) external {
-        vm.assume(caller != accessEnabledAddress);
-
-        vm.expectRevert(abi.encodeWithSelector(AddressMissingHubTag.selector, caller, accessTag));
-        vm.prank(caller);
-        revokedNonce.revokeNonce(caller, 1);
-    }
+contract SproRevokedNonce_RevokeNonceWithOwner_Test is SproRevokedNonceTest {
+    address accessEnabledAddress = address(this);
 
     function testFuzz_shouldFail_whenNonceAlreadyRevoked(address owner, uint256 nonceSpace, uint256 nonce) external {
         vm.store(address(revokedNonce), _nonceSpaceSlot(owner), bytes32(nonceSpace));
         vm.store(address(revokedNonce), _revokedNonceSlot(owner, nonceSpace, nonce), bytes32(uint256(1)));
 
-        vm.expectRevert(abi.encodeWithSelector(PWNRevokedNonce.NonceAlreadyRevoked.selector, owner, nonceSpace, nonce));
+        vm.expectRevert(abi.encodeWithSelector(SproRevokedNonce.NonceAlreadyRevoked.selector, owner, nonceSpace, nonce));
         vm.prank(accessEnabledAddress);
         revokedNonce.revokeNonce(owner, nonce);
     }
 
-    function testFuzz_shouldStoreNonceAsRevoked(address owner, uint256 nonceSpace, uint256 nonce) external {
+    function testFuzz_shouldStoreNonceAsRevoked_3(address owner, uint256 nonceSpace, uint256 nonce) external {
         vm.store(address(revokedNonce), _nonceSpaceSlot(owner), bytes32(nonceSpace));
 
         vm.prank(accessEnabledAddress);
@@ -199,7 +194,7 @@ contract PWNRevokedNonce_RevokeNonceWithOwner_Test is PWNRevokedNonceTest {
         vm.store(address(revokedNonce), _nonceSpaceSlot(owner), bytes32(nonceSpace));
 
         vm.expectEmit();
-        emit PWNRevokedNonce.NonceRevoked(owner, nonceSpace, nonce);
+        emit SproRevokedNonce.NonceRevoked(owner, nonceSpace, nonce);
 
         vm.prank(accessEnabledAddress);
         revokedNonce.revokeNonce(owner, nonce);
@@ -210,35 +205,18 @@ contract PWNRevokedNonce_RevokeNonceWithOwner_Test is PWNRevokedNonceTest {
 /*                   REVOKE NONCE WITH NONCE SPACE AND OWNER                  */
 /* -------------------------------------------------------------------------- */
 
-contract PWNRevokedNonce_RevokeNonceWithNonceSpaceAndOwner_Test is PWNRevokedNonceTest {
-    address accessEnabledAddress = address(0x01);
-
-    function setUp() public override {
-        super.setUp();
-
-        vm.mockCall(hub, abi.encodeWithSignature("hasTag(address,bytes32)"), abi.encode(false));
-        vm.mockCall(
-            hub, abi.encodeWithSignature("hasTag(address,bytes32)", accessEnabledAddress, accessTag), abi.encode(true)
-        );
-    }
-
-    function testFuzz_shouldFail_whenCallerIsDoesNotHaveAccessTag(address caller) external {
-        vm.assume(caller != accessEnabledAddress);
-
-        vm.expectRevert(abi.encodeWithSelector(AddressMissingHubTag.selector, caller, accessTag));
-        vm.prank(caller);
-        revokedNonce.revokeNonce(caller, 1, 1);
-    }
+contract SproRevokedNonce_RevokeNonceWithNonceSpaceAndOwner_Test is SproRevokedNonceTest {
+    address accessEnabledAddress = address(this);
 
     function testFuzz_shouldFail_whenNonceAlreadyRevoked(address owner, uint256 nonceSpace, uint256 nonce) external {
         vm.store(address(revokedNonce), _revokedNonceSlot(owner, nonceSpace, nonce), bytes32(uint256(1)));
 
-        vm.expectRevert(abi.encodeWithSelector(PWNRevokedNonce.NonceAlreadyRevoked.selector, owner, nonceSpace, nonce));
+        vm.expectRevert(abi.encodeWithSelector(SproRevokedNonce.NonceAlreadyRevoked.selector, owner, nonceSpace, nonce));
         vm.prank(accessEnabledAddress);
         revokedNonce.revokeNonce(owner, nonceSpace, nonce);
     }
 
-    function testFuzz_shouldStoreNonceAsRevoked(address owner, uint256 nonceSpace, uint256 nonce) external {
+    function testFuzz_shouldStoreNonceAsRevoked_4(address owner, uint256 nonceSpace, uint256 nonce) external {
         vm.prank(accessEnabledAddress);
         revokedNonce.revokeNonce(owner, nonceSpace, nonce);
 
@@ -247,7 +225,7 @@ contract PWNRevokedNonce_RevokeNonceWithNonceSpaceAndOwner_Test is PWNRevokedNon
 
     function testFuzz_shouldEmit_NonceRevoked(address owner, uint256 nonceSpace, uint256 nonce) external {
         vm.expectEmit();
-        emit PWNRevokedNonce.NonceRevoked(owner, nonceSpace, nonce);
+        emit SproRevokedNonce.NonceRevoked(owner, nonceSpace, nonce);
 
         vm.prank(accessEnabledAddress);
         revokedNonce.revokeNonce(owner, nonceSpace, nonce);
@@ -258,7 +236,7 @@ contract PWNRevokedNonce_RevokeNonceWithNonceSpaceAndOwner_Test is PWNRevokedNon
 /*                              IS NONCE REVOKED                              */
 /* -------------------------------------------------------------------------- */
 
-contract PWNRevokedNonce_IsNonceRevoked_Test is PWNRevokedNonceTest {
+contract SproRevokedNonce_IsNonceRevoked_Test is SproRevokedNonceTest {
     function testFuzz_shouldReturnStoredValue(uint256 nonceSpace, uint256 nonce, bool revoked) external {
         vm.store(address(revokedNonce), _revokedNonceSlot(alice, nonceSpace, nonce), bytes32(uint256(revoked ? 1 : 0)));
 
@@ -270,7 +248,7 @@ contract PWNRevokedNonce_IsNonceRevoked_Test is PWNRevokedNonceTest {
 /*                               IS NONCE USABLE                              */
 /* -------------------------------------------------------------------------- */
 
-contract PWNRevokedNonce_IsNonceUsable_Test is PWNRevokedNonceTest {
+contract SproRevokedNonce_IsNonceUsable_Test is SproRevokedNonceTest {
     function testFuzz_shouldReturnFalse_whenNonceSpaceIsNotEqualToCurrentNonceSpace(
         uint256 currentNonceSpace,
         uint256 nonceSpace,
@@ -303,7 +281,7 @@ contract PWNRevokedNonce_IsNonceUsable_Test is PWNRevokedNonceTest {
 /*                             REVOKE NONCE SPACE                             */
 /* -------------------------------------------------------------------------- */
 
-contract PWNRevokedNonce_RevokeNonceSpace_Test is PWNRevokedNonceTest {
+contract SproRevokedNonce_RevokeNonceSpace_Test is SproRevokedNonceTest {
     function testFuzz_shouldIncrementCurrentNonceSpace(uint256 nonceSpace) external {
         nonceSpace = bound(nonceSpace, 0, type(uint256).max - 1);
         bytes32 nonceSpaceSlot = _nonceSpaceSlot(alice);
@@ -321,7 +299,7 @@ contract PWNRevokedNonce_RevokeNonceSpace_Test is PWNRevokedNonceTest {
         vm.store(address(revokedNonce), nonceSpaceSlot, bytes32(nonceSpace));
 
         vm.expectEmit();
-        emit PWNRevokedNonce.NonceSpaceRevoked(alice, nonceSpace);
+        emit SproRevokedNonce.NonceSpaceRevoked(alice, nonceSpace);
 
         vm.prank(alice);
         revokedNonce.revokeNonceSpace();
@@ -343,7 +321,7 @@ contract PWNRevokedNonce_RevokeNonceSpace_Test is PWNRevokedNonceTest {
 /*                             CURRENT NONCE SPACE                            */
 /* -------------------------------------------------------------------------- */
 
-contract PWNRevokedNonce_CurrentNonceSpace_Test is PWNRevokedNonceTest {
+contract SproRevokedNonce_CurrentNonceSpace_Test is SproRevokedNonceTest {
     function testFuzz_shouldReturnCurrentNonceSpace(uint256 nonceSpace) external {
         vm.store(address(revokedNonce), _nonceSpaceSlot(alice), bytes32(nonceSpace));
 

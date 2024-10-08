@@ -2,41 +2,13 @@
 pragma solidity ^0.8.26;
 
 import {
-    SDBaseIntegrationTest,
-    SDConfig,
-    IPWNDeployer,
-    PWNHub,
-    PWNHubTags,
-    SDSimpleLoan,
-    SDSimpleLoanSimpleProposal,
-    PWNLOAN,
-    PWNRevokedNonce
+    SDBaseIntegrationTest, Spro, IPWNDeployer, SproRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 
-import { SDSimpleLoanProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
-import { Expired, AddressMissingHubTag } from "pwn/PWNErrors.sol";
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationTest {
-    function test_RevertWhen_NoProposalLoanTag() external {
-        // Remove LOAN_PROPOSAL tag for proposal contract
-        address[] memory addrs = new address[](1);
-        addrs[0] = address(deployment.simpleLoanSimpleProposal);
-        bytes32[] memory tags = new bytes32[](1);
-        tags[0] = PWNHubTags.LOAN_PROPOSAL;
-
-        vm.prank(deployment.protocolAdmin);
-        deployment.hub.setTags(addrs, tags, false);
-
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
-        vm.prank(borrower);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                AddressMissingHubTag.selector, address(deployment.simpleLoanSimpleProposal), PWNHubTags.LOAN_PROPOSAL
-            )
-        );
-        deployment.simpleLoan.createProposal(proposalSpec);
-    }
-
     modifier proposalContractHasTag() {
         _;
     }
@@ -46,9 +18,9 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
     }
 
     function test_RevertWhen_CallerIsNotProposer() external proposalContractHasTag whenValidProposalData {
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
-        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoan.CallerIsNotStatedProposer.selector, borrower));
-        deployment.simpleLoan.createProposal(proposalSpec);
+        bytes memory proposalSpec = abi.encode(proposal);
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.CallerIsNotStatedProposer.selector, borrower));
+        deployment.config.createProposal(proposalSpec);
     }
 
     modifier whenCallerIsProposer() {
@@ -73,10 +45,10 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
     {
         _createERC20Proposal();
 
-        assertEq(t20.balanceOf(address(deployment.simpleLoan)), COLLATERAL_AMOUNT);
+        assertEq(t20.balanceOf(address(deployment.config)), COLLATERAL_AMOUNT);
         assertEq(t20.balanceOf(borrower), 0);
 
-        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(address(Constants.SINK)), deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
     }
 
@@ -104,7 +76,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         // Create proposal
         _createERC20Proposal();
 
-        assertEq(t20.balanceOf(address(deployment.simpleLoan)), COLLATERAL_AMOUNT);
+        assertEq(t20.balanceOf(address(deployment.config)), COLLATERAL_AMOUNT);
         assertEq(t20.balanceOf(borrower), 0);
 
         uint256 lf = deployment.config.fixFeeListed();
@@ -113,11 +85,11 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
 
         uint256 feeAmount = lf + (((vf * tf) / 1e18) * proposal.availableCreditLimit) / 1e18;
 
-        assertEq(deployment.sdex.balanceOf(address(deployment.config.SINK())), feeAmount);
+        assertEq(deployment.sdex.balanceOf(address(Constants.SINK)), feeAmount);
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - feeAmount);
     }
 
-    function test_RevertWhen_InvalidDuration()
+    function test_RevertWhen_InvalidDurationStartTime()
         external
         proposalContractHasTag
         whenValidProposalData
@@ -133,13 +105,13 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         // Mint initial state & approve collateral
         t20.mint(borrower, proposal.collateralAmount);
         vm.prank(borrower);
-        t20.approve(address(deployment.simpleLoan), proposal.collateralAmount);
+        t20.approve(address(deployment.config), proposal.collateralAmount);
 
         // Create the proposal
-        SDSimpleLoan.ProposalSpec memory proposalSpec = _buildProposalSpec(proposal);
+        bytes memory proposalSpec = abi.encode(proposal);
 
         vm.prank(borrower);
-        vm.expectRevert(abi.encodeWithSelector(SDSimpleLoanSimpleProposal.InvalidDuration.selector));
-        deployment.simpleLoan.createProposal(proposalSpec);
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidDurationStartTime.selector));
+        deployment.config.createProposal(proposalSpec);
     }
 }

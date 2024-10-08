@@ -2,94 +2,63 @@
 pragma solidity ^0.8.26;
 
 import {
-    SDBaseIntegrationTest,
-    SDConfig,
-    IPWNDeployer,
-    PWNHub,
-    PWNHubTags,
-    SDSimpleLoan,
-    SDSimpleLoanSimpleProposal,
-    PWNLOAN,
-    PWNRevokedNonce
+    SDBaseIntegrationTest, Spro, IPWNDeployer, SproRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 
-import { SDSimpleLoanProposal } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
-import { AddressMissingHubTag } from "pwn/PWNErrors.sol";
+import { ISproEvents } from "src/interfaces/ISproEvents.sol";
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract MakeProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SDBaseIntegrationTest {
-    function test_RevertWhen_DataCannotBeDecoded() external {
-        bytes memory badData = abi.encode("cannot be decoded");
+    // function test_RevertWhen_DataCannotBeDecoded() external {
+    //     bytes memory badData = abi.encode("cannot be decoded");
 
-        vm.expectRevert();
-        deployment.simpleLoanSimpleProposal.makeProposal(badData);
+    //     vm.expectRevert();
+    //     deployment.config.makeProposal(badData);
 
-        bytes memory baseProposalData = abi.encode(
-            SDSimpleLoanProposal.ProposalBase({
-                collateralAddress: address(t20),
-                checkCollateralStateFingerprint: false,
-                collateralStateFingerprint: bytes32(0),
-                availableCreditLimit: CREDIT_LIMIT,
-                startTimestamp: uint40(block.timestamp + 5 days),
-                proposer: borrower,
-                nonceSpace: 0,
-                nonce: 0,
-                loanContract: address(deployment.simpleLoan)
-            })
-        );
+    //     bytes memory baseProposalData = abi.encode(
+    //         ISproTypes.ProposalBase({
+    //             collateralAddress: address(t20),
+    //             checkCollateralStateFingerprint: false,
+    //             collateralStateFingerprint: bytes32(0),
+    //             availableCreditLimit: CREDIT_LIMIT,
+    //             startTimestamp: uint40(block.timestamp + 5 days),
+    //             proposer: borrower,
+    //             nonceSpace: 0,
+    //             nonce: 0,
+    //             loanContract: address(deployment.simpleLoan)
+    //         })
+    //     );
 
-        vm.expectRevert();
-        deployment.simpleLoanSimpleProposal.makeProposal(baseProposalData);
-    }
+    //     vm.expectRevert();
+    //     deployment.config.makeProposal(baseProposalData);
+    // }
 
     modifier whenProposalDataDecodes() {
         _;
-    }
-
-    function test_RevertWhen_CallerNotLoanContract() external whenProposalDataDecodes {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                SDSimpleLoanProposal.CallerNotLoanContract.selector, address(this), proposal.loanContract
-            )
-        );
-        deployment.simpleLoanSimpleProposal.makeProposal(abi.encode(proposal));
     }
 
     modifier loanContractIsCaller() {
         _;
     }
 
-    function test_RevertWhen_LoanContractNotActiveLoanTag() external whenProposalDataDecodes loanContractIsCaller {
-        vm.prank(deployment.hub.owner());
-        deployment.hub.setTag(proposal.loanContract, PWNHubTags.ACTIVE_LOAN, false);
-
-        vm.expectRevert(
-            abi.encodeWithSelector(AddressMissingHubTag.selector, proposal.loanContract, PWNHubTags.ACTIVE_LOAN)
-        );
-        vm.prank(proposal.loanContract);
-        deployment.simpleLoanSimpleProposal.makeProposal(abi.encode(proposal));
-    }
-
     modifier loanContractHasActiveLoanTag() {
         _;
     }
 
-    function test_makeProposal() external whenProposalDataDecodes loanContractIsCaller loanContractHasActiveLoanTag {
-        bytes32 proposalHash = deployment.simpleLoanSimpleProposal.getProposalHash(proposal);
+    // function test_makeProposal() external whenProposalDataDecodes loanContractIsCaller loanContractHasActiveLoanTag {
+    //     bytes32 proposalHash = deployment.config.getProposalHash(proposal);
 
-        // Emit event
-        vm.expectEmit(true, true, true, false);
-        emit SDSimpleLoanSimpleProposal.ProposalMade(proposalHash, proposal.proposer, proposal);
+    //     // Emit event
+    //     vm.expectEmit(true, true, true, false);
+    //     emit ISproEvents.ProposalMade(proposalHash, proposal.proposer, proposal);
 
-        vm.prank(proposal.loanContract);
-        deployment.simpleLoanSimpleProposal.makeProposal(abi.encode(proposal));
+    //     vm.prank(proposal.loanContract);
+    //     deployment.config.makeProposal(abi.encode(proposal));
 
-        // Assert that the proposalMade mapping for this proposal was set
-        uint256 proposalMadeBool = uint256(
-            vm.load(
-                address(deployment.simpleLoanSimpleProposal), keccak256(abi.encode(proposalHash, SLOT_PROPOSALS_MADE))
-            )
-        );
-        assertEq(proposalMadeBool, 1, "proposalMade not set");
-        assertEq(deployment.simpleLoanSimpleProposal.proposalsMade(proposalHash), true, "proposalMade not set");
-    }
+    //     // Assert that the proposalMade mapping for this proposal was set
+    //     uint256 proposalMadeBool =
+    //         uint256(vm.load(address(deployment.config), keccak256(abi.encode(proposalHash, SLOT_PROPOSALS_MADE))));
+    //     assertEq(proposalMadeBool, 1, "proposalMade not set");
+    //     assertEq(deployment.config.proposalsMade(proposalHash), true, "proposalMade not set");
+    // }
 }

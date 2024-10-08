@@ -1,41 +1,27 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
-import { PWNHub } from "pwn/hub/PWNHub.sol";
-import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
-import { AddressMissingHubTag } from "pwn/PWNErrors.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title PWN Revoked Nonce
+ * @title SPRO Revoked Nonce
  * @notice Contract holding revoked nonces.
  */
-contract PWNRevokedNonce {
+contract SproRevokedNonce is Ownable {
     /* ------------------------------------------------------------ */
     /*                VARIABLES & CONSTANTS DEFINITIONS             */
     /* ------------------------------------------------------------ */
 
     /**
-     * @notice Access tag that needs to be assigned to a caller in PWN Hub
-     *         to call functions that revoke nonces on behalf of an owner.
-     */
-    bytes32 public immutable accessTag;
-
-    /**
-     * @notice PWN Hub contract.
-     * @dev Addresses revoking nonces on behalf of an owner need to have an access tag in PWN Hub.
-     */
-    PWNHub public immutable hub;
-
-    /**
      * @notice Mapping of revoked nonces by an address. Every address has its own nonce space.
      *         (owner => nonce space => nonce => is revoked)
      */
-    mapping(address => mapping(uint256 => mapping(uint256 => bool))) private _revokedNonce;
+    mapping(address => mapping(uint256 => mapping(uint256 => bool))) internal _revokedNonce;
 
     /**
      * @notice Mapping of current nonce space for an address.
      */
-    mapping(address => uint256) private _nonceSpace;
+    mapping(address => uint256) internal _nonceSpace;
 
     /* ------------------------------------------------------------ */
     /*                      EVENTS DEFINITIONS                      */
@@ -43,11 +29,16 @@ contract PWNRevokedNonce {
 
     /**
      * @notice Emitted when a nonce is revoked.
+     * @param owner Address of a nonce owner.
+     * @param nonceSpace Value of a nonce space.
+     * @param nonce Value of a nonce.
      */
     event NonceRevoked(address indexed owner, uint256 indexed nonceSpace, uint256 indexed nonce);
 
     /**
      * @notice Emitted when a nonce is revoked.
+     * @param owner Address of a nonce owner.
+     * @param nonceSpace Value of a nonce space.
      */
     event NonceSpaceRevoked(address indexed owner, uint256 indexed nonceSpace);
 
@@ -57,34 +48,31 @@ contract PWNRevokedNonce {
 
     /**
      * @notice Thrown when trying to revoke a nonce that is already revoked.
+     * @dev Nonce cannot be revoked twice.
+     * @param addr Address of a nonce owner.
+     * @param nonceSpace Value of a nonce space.
+     * @param nonce Value of a nonce.
      */
     error NonceAlreadyRevoked(address addr, uint256 nonceSpace, uint256 nonce);
 
     /**
      * @notice Thrown when nonce is currently not usable.
      * @dev Maybe nonce is revoked or not in the current nonce space.
+     * @param addr Address of a nonce owner.
+     * @param nonceSpace Value of a nonce space.
+     * @param nonce Value of a nonce.
      */
     error NonceNotUsable(address addr, uint256 nonceSpace, uint256 nonce);
-
-    /* ------------------------------------------------------------ */
-    /*                          MODIFIERS                           */
-    /* ------------------------------------------------------------ */
-
-    modifier onlyWithHubTag() {
-        if (!hub.hasTag(msg.sender, accessTag)) {
-            revert AddressMissingHubTag({ addr: msg.sender, tag: accessTag });
-        }
-        _;
-    }
 
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
 
-    constructor(address _hub, bytes32 _accessTag) {
-        accessTag = _accessTag;
-        hub = PWNHub(_hub);
-    }
+    /**
+     * @notice Construct a new Spro Revoked Nonce contract.
+     * @param creator Address of the creator.
+     */
+    constructor(address creator) Ownable(creator) { }
 
     /* ------------------------------------------------------------ */
     /*                              NONCE                           */
@@ -119,27 +107,30 @@ contract PWNRevokedNonce {
 
     /**
      * @notice Revoke a nonce in the current nonce space on behalf of an owner.
-     * @dev Only an address with associated access tag in PWN Hub can call this function.
+     * @dev Only owner can call this function.
      * @param owner Owner address of a revoking nonce.
      * @param nonce Nonce to be revoked.
      */
-    function revokeNonce(address owner, uint256 nonce) external onlyWithHubTag {
+    function revokeNonce(address owner, uint256 nonce) external onlyOwner {
         _revokeNonce(owner, _nonceSpace[owner], nonce);
     }
 
     /**
      * @notice Revoke a nonce in a nonce space on behalf of an owner.
-     * @dev Only an address with associated access tag in PWN Hub can call this function.
+     * @dev Only owner can call this function.
      * @param owner Owner address of a revoking nonce.
      * @param nonceSpace Nonce space where a nonce will be revoked.
      * @param nonce Nonce to be revoked.
      */
-    function revokeNonce(address owner, uint256 nonceSpace, uint256 nonce) external onlyWithHubTag {
+    function revokeNonce(address owner, uint256 nonceSpace, uint256 nonce) external onlyOwner {
         _revokeNonce(owner, nonceSpace, nonce);
     }
 
     /**
      * @notice Internal function to revoke a nonce in a nonce space.
+     * @param owner Address of a nonce owner.
+     * @param nonceSpace Value of a nonce space.
+     * @param nonce Value of a nonce.
      */
     function _revokeNonce(address owner, uint256 nonceSpace, uint256 nonce) private {
         if (_revokedNonce[owner][nonceSpace][nonce]) {

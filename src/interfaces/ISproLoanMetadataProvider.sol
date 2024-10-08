@@ -2,11 +2,11 @@
 pragma solidity ^0.8.26;
 
 /**
- * @title IPWNLoanMetadataProvider
+ * @title ISproLoanMetadataProvider
  * @notice Interface for a provider of a LOAN token metadata.
  * @dev Loan contracts should implement this interface.
  */
-interface IPWNLoanMetadataProvider {
+interface ISproLoanMetadataProvider {
     /**
      * @notice Get a loan metadata uri for a LOAN token minted by this contract.
      * @return LOAN token metadata uri.

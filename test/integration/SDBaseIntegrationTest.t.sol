@@ -1,24 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
-import { Permit } from "pwn/loan/vault/Permit.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import { SigUtils } from "test/utils/SigUtils.sol";
 import { CreditPermit } from "test/helper/CreditPermit.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import { IERC5646 } from "pwn/loan/terms/simple/proposal/SDSimpleLoanProposal.sol";
 import { T20 } from "test/helper/T20.sol";
-import {
-    SDDeploymentTest,
-    SDConfig,
-    IPWNDeployer,
-    PWNHub,
-    PWNHubTags,
-    SDSimpleLoan,
-    SDSimpleLoanSimpleProposal,
-    PWNLOAN,
-    PWNRevokedNonce
-} from "test/SDDeploymentTest.t.sol";
+import { SDDeploymentTest, Spro, IPWNDeployer, SproRevokedNonce } from "test/SDDeploymentTest.t.sol";
+
+import { IERC5646 } from "src/spro/Spro.sol";
+import { Permit } from "src/spro/Permit.sol";
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     T20 t20;
@@ -28,7 +21,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     address lender = vm.addr(lenderPK);
     uint256 borrowerPK = uint256(888);
     address borrower = vm.addr(borrowerPK);
-    SDSimpleLoanSimpleProposal.Proposal proposal;
+    Spro.Proposal proposal;
     Permit permit;
 
     address public stateFingerprintComputer = makeAddr("stateFingerprintComputer");
@@ -80,7 +73,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         vm.label(address(poolAdapter), "poolAdapter");
 
         // Deploy protocol contracts
-        proposal = SDSimpleLoanSimpleProposal.Proposal({
+        proposal = ISproTypes.Proposal({
             collateralAddress: address(t20),
             collateralAmount: COLLATERAL_AMOUNT,
             checkCollateralStateFingerprint: false,
@@ -95,20 +88,20 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
             proposerSpecHash: keccak256(abi.encode(borrower)),
             nonceSpace: 0,
             nonce: 0,
-            loanContract: address(deployment.simpleLoan)
+            loanContract: address(deployment.config)
         });
 
         // Mint and approve SDEX
         deployment.sdex.mint(lender, INITIAL_SDEX_BALANCE);
         vm.prank(lender);
-        deployment.sdex.approve(address(deployment.simpleLoan), type(uint256).max);
+        deployment.sdex.approve(address(deployment.config), type(uint256).max);
         deployment.sdex.mint(borrower, INITIAL_SDEX_BALANCE);
         vm.prank(borrower);
-        deployment.sdex.approve(address(deployment.simpleLoan), type(uint256).max);
+        deployment.sdex.approve(address(deployment.config), type(uint256).max);
 
         // Set thresholds in config
         vm.startPrank(deployment.protocolAdmin);
-        SDConfig(deployment.config).setPartialPositionPercentage(DEFAULT_THRESHOLD);
+        Spro(deployment.config).setPartialPositionPercentage(DEFAULT_THRESHOLD);
         vm.stopPrank();
 
         // Add labels
@@ -139,27 +132,24 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     }
 
     // Make the proposal
-    function _createERC20Proposal() internal returns (SDSimpleLoan.ProposalSpec memory proposalSpec) {
+    function _createERC20Proposal() internal returns (bytes memory proposalSpec) {
         // Mint initial state & approve collateral
         t20.mint(borrower, proposal.collateralAmount);
         vm.prank(borrower);
-        t20.approve(address(deployment.simpleLoan), proposal.collateralAmount);
+        t20.approve(address(deployment.config), proposal.collateralAmount);
 
         // Create the proposal
-        proposalSpec = _buildProposalSpec(proposal);
+        proposalSpec = abi.encode(proposal);
 
         vm.prank(borrower);
-        deployment.simpleLoan.createProposal(proposalSpec);
+        deployment.config.createProposal(proposalSpec);
     }
 
-    function _createLoan(SDSimpleLoan.ProposalSpec memory proposalSpec, bytes memory revertData)
-        internal
-        returns (uint256 loanId)
-    {
+    function _createLoan(bytes memory proposalSpec, bytes memory revertData) internal returns (uint256 loanId) {
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
         vm.prank(lender);
-        credit.approve(address(deployment.simpleLoan), CREDIT_LIMIT);
+        credit.approve(address(deployment.config), CREDIT_LIMIT);
 
         // Create LOAN
         if (keccak256(revertData) != keccak256("")) {
@@ -167,32 +157,18 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         }
 
         vm.prank(lender);
-        return deployment.simpleLoan.createLOAN({
-            proposalSpec: proposalSpec,
-            lenderSpec: _buildLenderSpec(false),
-            extra: ""
-        });
+        return
+            deployment.config.createLOAN({ proposalData: proposalSpec, lenderSpec: _buildLenderSpec(false), extra: "" });
     }
 
-    function _cancelProposal(SDSimpleLoanSimpleProposal.Proposal memory _proposal) internal {
-        deployment.simpleLoan.cancelProposal(_buildProposalSpec(_proposal));
+    function _cancelProposal(Spro.Proposal memory _proposal) internal {
+        deployment.config.cancelProposal(abi.encode(_proposal));
     }
 
-    function _buildLenderSpec(bool complete) internal view returns (SDSimpleLoan.LenderSpec memory lenderSpec) {
+    function _buildLenderSpec(bool complete) internal view returns (ISproTypes.LenderSpec memory lenderSpec) {
         lenderSpec = complete
-            ? SDSimpleLoan.LenderSpec({ sourceOfFunds: lender, creditAmount: CREDIT_LIMIT, permitData: "" })
-            : SDSimpleLoan.LenderSpec({ sourceOfFunds: lender, creditAmount: CREDIT_AMOUNT, permitData: "" });
-    }
-
-    function _buildProposalSpec(SDSimpleLoanSimpleProposal.Proposal memory _proposal)
-        internal
-        view
-        returns (SDSimpleLoan.ProposalSpec memory proposalSpec)
-    {
-        return SDSimpleLoan.ProposalSpec({
-            proposalContract: address(deployment.simpleLoanSimpleProposal),
-            proposalData: abi.encode(_proposal)
-        });
+            ? ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: CREDIT_LIMIT, permitData: "" })
+            : ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: CREDIT_AMOUNT, permitData: "" });
     }
 
     function _mockERC5646Support(address asset, bool result) internal {

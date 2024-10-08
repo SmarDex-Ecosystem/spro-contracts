@@ -10,8 +10,6 @@ import "@openzeppelin/contracts/utils/Create2.sol";
  * chains.
  */
 contract SDDeployer is Ownable {
-    string internal constant VERSION = "1.0";
-
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */

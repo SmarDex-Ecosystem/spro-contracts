@@ -3,12 +3,14 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
-import { PWNVault, IPoolAdapter, Permit } from "pwn/loan/vault/PWNVault.sol";
-
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { T20 } from "test/helper/T20.sol";
 
-contract PWNVaultHarness is PWNVault {
+import { SproVault, IPoolAdapter, Permit } from "src/spro/SproVault.sol";
+import { ISproEvents } from "src/interfaces/ISproEvents.sol";
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+
+contract SproVaultHarness is SproVault {
     function pull(address asset, uint256 amount, address origin) external {
         _pull(asset, amount, origin);
     }
@@ -38,8 +40,8 @@ contract PWNVaultHarness is PWNVault {
     }
 }
 
-abstract contract PWNVaultTest is Test {
-    PWNVaultHarness vault;
+abstract contract SproVaultTest is Test {
+    SproVaultHarness vault;
     address token = makeAddr("token");
     address alice = makeAddr("alice");
     address bob = makeAddr("bob");
@@ -51,7 +53,7 @@ abstract contract PWNVaultTest is Test {
     }
 
     function setUp() public virtual {
-        vault = new PWNVaultHarness();
+        vault = new SproVaultHarness();
         t20 = new T20();
     }
 }
@@ -60,10 +62,10 @@ abstract contract PWNVaultTest is Test {
 /*  PULL                                                     */
 /* ------------------------------------------------------------ */
 
-contract PWNVault_Pull_Test is PWNVaultTest {
+contract SproVault_Pull_Test is SproVaultTest {
     function test_pullEmitEvent() external {
         vm.expectEmit(true, true, true, true);
-        emit PWNVault.VaultPull(token, alice, 42);
+        emit ISproEvents.VaultPull(token, alice, 42);
         vault.pull(token, 42, alice);
     }
 }
@@ -72,10 +74,10 @@ contract PWNVault_Pull_Test is PWNVaultTest {
 /*  PUSH                                                     */
 /* ------------------------------------------------------------ */
 
-contract PWNVault_Push_Test is PWNVaultTest {
+contract SproVault_Push_Test is SproVaultTest {
     function test_pushEmitEvent() external {
         vm.expectEmit(true, true, true, true);
-        emit PWNVault.VaultPush(token, alice, 99_999_999);
+        emit ISproEvents.VaultPush(token, alice, 99_999_999);
         vault.push(token, 99_999_999, alice);
     }
 }
@@ -84,10 +86,10 @@ contract PWNVault_Push_Test is PWNVaultTest {
 /*  PUSH FROM                                                */
 /* ------------------------------------------------------------ */
 
-contract PWNVault_PushFrom_Test is PWNVaultTest {
+contract SproVault_PushFrom_Test is SproVaultTest {
     function test_pushFromEmitEvent() external {
         vm.expectEmit(true, true, true, true);
-        emit PWNVault.VaultPushFrom(token, alice, bob, 42);
+        emit ISproEvents.VaultPushFrom(token, alice, bob, 42);
         vault.pushFrom(token, 42, alice, bob);
     }
 }
@@ -96,7 +98,7 @@ contract PWNVault_PushFrom_Test is PWNVaultTest {
 /*  WITHDRAW FROM POOL                                       */
 /* ------------------------------------------------------------ */
 
-contract PWNVault_WithdrawFromPool_Test is PWNVaultTest {
+contract SproVault_WithdrawFromPool_Test is SproVaultTest {
     IPoolAdapter poolAdapter = IPoolAdapter(new DummyPoolAdapter());
     address pool = makeAddr("pool");
     address asset;
@@ -123,13 +125,13 @@ contract PWNVault_WithdrawFromPool_Test is PWNVaultTest {
 
     function test_shouldFail_whenIncompleteTransaction() external {
         vm.mockCall(asset, abi.encodeWithSignature("balanceOf(address)", alice), abi.encode(amount));
-        vm.expectRevert(abi.encodeWithSelector(PWNVault.InvalidAmountTransfer.selector));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidAmountTransfer.selector));
         vault.withdrawFromPool(asset, amount, poolAdapter, pool, alice);
     }
 
     function test_shouldEmitEvent_PoolWithdraw() external {
         vm.expectEmit();
-        emit PWNVault.PoolWithdraw(asset, address(poolAdapter), pool, alice, amount);
+        emit ISproEvents.PoolWithdraw(asset, address(poolAdapter), pool, alice, amount);
 
         vault.withdrawFromPool(asset, amount, poolAdapter, pool, alice);
     }
@@ -139,7 +141,7 @@ contract PWNVault_WithdrawFromPool_Test is PWNVaultTest {
 /*  SUPPLY TO POOL                                           */
 /* ------------------------------------------------------------ */
 
-contract PWNVault_SupplyToPool_Test is PWNVaultTest {
+contract SproVault_SupplyToPool_Test is SproVaultTest {
     IPoolAdapter poolAdapter = IPoolAdapter(new DummyPoolAdapter());
     address pool = makeAddr("pool");
     address asset;
@@ -170,13 +172,13 @@ contract PWNVault_SupplyToPool_Test is PWNVaultTest {
 
     function test_shouldFail_whenIncompleteTransaction() external {
         vm.mockCall(asset, abi.encodeWithSignature("balanceOf(address)", address(vault)), abi.encode(amount));
-        vm.expectRevert(abi.encodeWithSelector(PWNVault.InvalidAmountTransfer.selector));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidAmountTransfer.selector));
         vault.supplyToPool(asset, amount, poolAdapter, pool, alice);
     }
 
     function test_shouldEmitEvent_PoolSupply() external {
         vm.expectEmit();
-        emit PWNVault.PoolSupply(asset, address(poolAdapter), pool, alice, amount);
+        emit ISproEvents.PoolSupply(asset, address(poolAdapter), pool, alice, amount);
 
         vault.supplyToPool(asset, amount, poolAdapter, pool, alice);
     }
@@ -186,7 +188,7 @@ contract PWNVault_SupplyToPool_Test is PWNVaultTest {
 /*  TRY PERMIT                                               */
 /* ------------------------------------------------------------ */
 
-contract PWNVault_TryPermit_Test is PWNVaultTest {
+contract SproVault_TryPermit_Test is SproVaultTest {
     Permit permit;
     string permitSignature = "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)";
 

@@ -6,11 +6,13 @@ import { Test } from "forge-std/Test.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-import { SDConfig } from "pwn/config/SDConfig.sol";
+import { Spro } from "src/spro/Spro.sol";
+import { ISproEvents } from "src/interfaces/ISproEvents.sol";
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
-// forge inspect src/config/SDConfig.sol:SDConfig storage --pretty
+// forge inspect src/config/Spro.sol:Spro storage --pretty
 
-abstract contract SDConfigTest is Test {
+abstract contract SproTest is Test {
     bytes32 internal constant OWNER_SLOT = bytes32(uint256(0)); // `_owner` property position
     bytes32 internal constant PENDING_OWNER_SLOT = bytes32(uint256(1)); // `_pendingOwner` property position
     bytes32 internal constant INITIALIZED_SLOT =
@@ -27,19 +29,19 @@ abstract contract SDConfigTest is Test {
     bytes32 internal constant POOL_ADAPTER_REGISTRY_SLOT = bytes32(uint256(8)); // `_poolAdapterRegistry` mapping
         // position
 
-    SDConfig config;
+    Spro config;
     address owner = makeAddr("owner");
     address sdex = makeAddr("sdex");
-    address sink = makeAddr("sink");
     address creditToken = makeAddr("creditToken");
 
-    function setUp() public virtual {
-        config = new SDConfig(sdex);
-    }
+    uint256 fixFeeUnlisted = 500e18;
+    uint256 fixFeeListed = 30e18;
+    uint256 variableFactor = 1e13;
+    uint16 partialPositionPercentage = 900;
+    uint16 PERCENTAGE = 1e4;
 
-    function _initialize() internal {
-        // initialize variables
-        vm.store(address(config), OWNER_SLOT, bytes32(uint256(uint160(owner))));
+    function setUp() public virtual {
+        config = new Spro(sdex, owner, fixFeeUnlisted, fixFeeListed, variableFactor, partialPositionPercentage);
     }
 
     function _mockSupportsToken(address computer, address token, bool result) internal {
@@ -47,86 +49,18 @@ abstract contract SDConfigTest is Test {
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  CONSTRUCTOR                                              */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                                 CONSTRUCTOR                                */
+/* -------------------------------------------------------------------------- */
 
-contract SDConfig_Constructor_Test is SDConfigTest {
+contract TestSproConstructor is SproTest {
     function test_shouldInitializeWithCorrectValues() external view {
-        bytes32 ownerValue = vm.load(address(config), OWNER_SLOT);
-        assertEq(address(uint160(uint256(ownerValue))), address(0));
-
-        bytes32 partialPositionValue = vm.load(address(config), PARTIAL_POSITION_PERCENTAGE_SLOT);
-        assertEq(uint16(uint256(partialPositionValue >> PARTIAL_POSITION_PERCENTAGE_OFFSET)), 0);
-
-        bytes32 unlistedFeeValue = vm.load(address(config), UNLISTED_FEE_SLOT);
-        assertEq(uint256(unlistedFeeValue), 0);
-
-        bytes32 listedFeeValue = vm.load(address(config), LISTED_FEE_SLOT);
-        assertEq(uint256(listedFeeValue), 0);
-
-        bytes32 variableFactorValue = vm.load(address(config), VARIABLE_FACTOR_SLOT);
-        assertEq(uint256(variableFactorValue), 0);
-
-        // SDEX token address should be initialised in constructor
-        assertEq(sdex, config.SDEX());
-    }
-}
-
-/* ------------------------------------------------------------ */
-/*  INITIALIZE                                               */
-/* ------------------------------------------------------------ */
-
-contract SDConfig_Initialize_Test is SDConfigTest {
-    uint256 fixFeeUnlisted = 500e18;
-    uint256 fixFeeListed = 30e18;
-    uint256 variableFactor = 1e13;
-    uint16 partialPositionPercentage = 900;
-    uint16 PERCENTAGE = 1e4;
-
-    function setUp() public override {
-        super.setUp();
-
-        // mock that contract is not initialized
-        vm.store(address(config), INITIALIZED_SLOT, bytes32(0));
-    }
-
-    function test_shouldSetValues() external {
-        config.initialize(owner, fixFeeUnlisted, fixFeeListed, variableFactor, partialPositionPercentage);
-
-        bytes32 ownerValue = vm.load(address(config), OWNER_SLOT);
-        assertEq(address(uint160(uint256(ownerValue))), owner);
-
+        assertEq(config.owner(), owner);
         assertEq(config.partialPositionPercentage(), partialPositionPercentage);
-
-        bytes32 unlistedFeeValue = vm.load(address(config), UNLISTED_FEE_SLOT);
-        assertEq(uint256(unlistedFeeValue), fixFeeUnlisted);
-
-        bytes32 listedFeeValue = vm.load(address(config), LISTED_FEE_SLOT);
-        assertEq(uint256(listedFeeValue), fixFeeListed);
-
-        bytes32 variableFactorValue = vm.load(address(config), VARIABLE_FACTOR_SLOT);
-        assertEq(uint256(variableFactorValue), variableFactor);
-    }
-
-    function test_shouldFail_whenCalledSecondTime() external {
-        config.initialize(owner, fixFeeUnlisted, fixFeeListed, variableFactor, partialPositionPercentage);
-
-        vm.expectRevert(abi.encodeWithSelector(Initializable.InvalidInitialization.selector));
-        config.initialize(owner, fixFeeUnlisted, fixFeeListed, variableFactor, partialPositionPercentage);
-    }
-
-    function test_shouldFail_whenOwnerIsZeroAddress() external {
-        vm.expectRevert("Owner is zero address");
-        config.initialize(address(0), fixFeeUnlisted, fixFeeListed, variableFactor, partialPositionPercentage);
-    }
-
-    function test_shouldFail_whenPartialPositionPercentageIsInvalid() external {
-        vm.expectRevert("Partial percentage position value is invalid");
-        config.initialize(owner, fixFeeUnlisted, fixFeeListed, variableFactor, 0);
-
-        vm.expectRevert("Partial percentage position value is invalid");
-        config.initialize(owner, fixFeeUnlisted, fixFeeListed, variableFactor, PERCENTAGE + 1);
+        assertEq(config.fixFeeUnlisted(), fixFeeUnlisted);
+        assertEq(config.fixFeeListed(), fixFeeListed);
+        assertEq(config.variableFactor(), variableFactor);
+        assertEq(sdex, config.SDEX());
     }
 }
 
@@ -134,14 +68,8 @@ contract SDConfig_Initialize_Test is SDConfigTest {
 /*  SET FIX FEE UNLISTED                                     */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_SetUnlistedFee_Test is SDConfigTest {
+contract TestSproSetUnlistedFee is SproTest {
     uint256 fee = 90e18;
-
-    function setUp() public override {
-        super.setUp();
-
-        _initialize();
-    }
 
     function test_shouldFail_whenCallerIsNotOwner() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
@@ -152,13 +80,12 @@ contract SDConfig_SetUnlistedFee_Test is SDConfigTest {
         vm.prank(owner);
         config.setFixFeeUnlisted(fee);
 
-        bytes32 unlistedFeeValue = vm.load(address(config), UNLISTED_FEE_SLOT);
-        assertEq(uint256(unlistedFeeValue), fee);
+        assertEq(config.fixFeeUnlisted(), fee);
     }
 
     function test_shouldEmitEvent_FeeUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit SDConfig.FixFeeUnlistedUpdated(0, fee);
+        emit ISproEvents.FixFeeUnlistedUpdated(fixFeeUnlisted, fee);
 
         vm.prank(owner);
         config.setFixFeeUnlisted(fee);
@@ -169,14 +96,8 @@ contract SDConfig_SetUnlistedFee_Test is SDConfigTest {
 /*  SET FIX FEE LISTED                                       */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_SetListedFee_Test is SDConfigTest {
+contract TestSproSetListedFee is SproTest {
     uint256 fee = 90e18;
-
-    function setUp() public override {
-        super.setUp();
-
-        _initialize();
-    }
 
     function test_shouldFail_whenCallerIsNotOwner() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
@@ -187,13 +108,12 @@ contract SDConfig_SetListedFee_Test is SDConfigTest {
         vm.prank(owner);
         config.setFixFeeListed(fee);
 
-        bytes32 listedFeeValue = vm.load(address(config), LISTED_FEE_SLOT);
-        assertEq(uint256(listedFeeValue), fee);
+        assertEq(config.fixFeeListed(), fee);
     }
 
     function test_shouldEmitEvent_FeeUpdated() external {
         vm.expectEmit(true, true, false, false);
-        emit SDConfig.FixFeeListedUpdated(0, fee);
+        emit ISproEvents.FixFeeListedUpdated(fixFeeListed, fee);
 
         vm.prank(owner);
         config.setFixFeeListed(fee);
@@ -204,14 +124,8 @@ contract SDConfig_SetListedFee_Test is SDConfigTest {
 /*  SET LISTED TOKEN                                         */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_SetListedToken_Test is SDConfigTest {
+contract TestSproSetListedToken is SproTest {
     uint256 factor = 1e14;
-
-    function setUp() public override {
-        super.setUp();
-
-        _initialize();
-    }
 
     function test_shouldFail_whenCallerIsNotOwner() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
@@ -222,28 +136,25 @@ contract SDConfig_SetListedToken_Test is SDConfigTest {
         vm.prank(owner);
         config.setListedToken(creditToken, factor);
 
-        bytes32 tokenFactorValue = vm.load(address(config), keccak256(abi.encode(creditToken, TOKEN_FACTORS_SLOT)));
-        assertEq(uint256(tokenFactorValue), factor);
+        assertEq(config.tokenFactors(creditToken), factor);
     }
 
     function test_shouldSetListedTokenValue_ResetToZero() external {
         vm.prank(owner);
         config.setListedToken(creditToken, factor);
 
-        bytes32 tokenFactorValue = vm.load(address(config), keccak256(abi.encode(creditToken, TOKEN_FACTORS_SLOT)));
-        assertEq(uint256(tokenFactorValue), factor);
+        assertEq(config.tokenFactors(creditToken), factor);
 
         // Reset
         vm.prank(owner);
         config.setListedToken(creditToken, 0);
 
-        tokenFactorValue = vm.load(address(config), keccak256(abi.encode(creditToken, TOKEN_FACTORS_SLOT)));
-        assertEq(uint256(tokenFactorValue), 0);
+        assertEq(config.tokenFactors(creditToken), 0);
     }
 
     function test_shouldEmitEvent_TokenFactorUpdated() external {
         vm.expectEmit(true, true, false, false);
-        emit SDConfig.ListedTokenUpdated(creditToken, factor);
+        emit ISproEvents.ListedTokenUpdated(creditToken, factor);
 
         vm.prank(owner);
         config.setListedToken(creditToken, factor);
@@ -254,14 +165,11 @@ contract SDConfig_SetListedToken_Test is SDConfigTest {
 /*  PARTIAL LENDING THRESHOLDS                               */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_PartialLendingThresholds_Test is SDConfigTest {
-    uint16 internal constant PERCENTAGE = 1e4;
+contract TestSproPartialLendingThresholds is SproTest {
     uint16 internal constant DEFAULT_THRESHOLD = 500;
 
     function setUp() public override {
         super.setUp();
-
-        _initialize();
 
         vm.startPrank(owner);
         config.setPartialPositionPercentage(DEFAULT_THRESHOLD);
@@ -276,7 +184,7 @@ contract SDConfig_PartialLendingThresholds_Test is SDConfigTest {
     function test_shouldFail_whenZeroPercentage() external {
         vm.startPrank(owner);
 
-        vm.expectRevert(SDConfig.ZeroPercentageValue.selector);
+        vm.expectRevert(ISproErrors.ZeroPercentageValue.selector);
         config.setPartialPositionPercentage(0);
     }
 
@@ -284,7 +192,7 @@ contract SDConfig_PartialLendingThresholds_Test is SDConfigTest {
         vm.assume(percentage > PERCENTAGE);
         vm.startPrank(owner);
 
-        vm.expectRevert(abi.encodeWithSelector(SDConfig.ExcessivePercentageValue.selector, percentage));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.ExcessivePercentageValue.selector, percentage));
         config.setPartialPositionPercentage(percentage);
     }
 }
@@ -293,15 +201,9 @@ contract SDConfig_PartialLendingThresholds_Test is SDConfigTest {
 /*  SET LOAN METADATA URI                                    */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_SetLOANMetadataUri_Test is SDConfigTest {
+contract TestSproSetLOANMetadataUri is SproTest {
     string tokenUri = "test.token.uri";
     address loanContract = address(0x63);
-
-    function setUp() public override {
-        super.setUp();
-
-        _initialize();
-    }
 
     function test_shouldFail_whenCallerIsNotOwner() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
@@ -309,7 +211,7 @@ contract SDConfig_SetLOANMetadataUri_Test is SDConfigTest {
     }
 
     function test_shouldFail_whenZeroLoanContract() external {
-        vm.expectRevert(abi.encodeWithSelector(SDConfig.ZeroLoanContract.selector));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.ZeroLoanContract.selector));
         vm.prank(owner);
         config.setLOANMetadataUri(address(0), tokenUri);
     }
@@ -321,19 +223,12 @@ contract SDConfig_SetLOANMetadataUri_Test is SDConfigTest {
         vm.prank(owner);
         config.setLOANMetadataUri(loanContract, tokenUri);
 
-        bytes32 tokenUriValue = vm.load(address(config), keccak256(abi.encode(loanContract, LOAN_METADATA_URI_SLOT)));
-        bytes memory memoryTokenUri = bytes(tokenUri);
-        bytes32 _tokenUri;
-        assembly {
-            _tokenUri := mload(add(memoryTokenUri, 0x20))
-        }
-        // Remove string length
-        assertEq(keccak256(abi.encodePacked(tokenUriValue >> 8)), keccak256(abi.encodePacked(_tokenUri >> 8)));
+        assertEq(config._loanMetadataUri(loanContract), tokenUri);
     }
 
     function test_shouldEmitEvent_LOANMetadataUriUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit SDConfig.LOANMetadataUriUpdated(loanContract, tokenUri);
+        emit ISproEvents.LOANMetadataUriUpdated(loanContract, tokenUri);
 
         vm.prank(owner);
         config.setLOANMetadataUri(loanContract, tokenUri);
@@ -344,14 +239,8 @@ contract SDConfig_SetLOANMetadataUri_Test is SDConfigTest {
 /*  SET DEFAULT LOAN METADATA URI                            */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_SetDefaultLOANMetadataUri_Test is SDConfigTest {
+contract TestSproSetDefaultLOANMetadataUri is SproTest {
     string tokenUri = "test.token.uri";
-
-    function setUp() public override {
-        super.setUp();
-
-        _initialize();
-    }
 
     function test_shouldFail_whenCallerIsNotOwner() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
@@ -362,19 +251,12 @@ contract SDConfig_SetDefaultLOANMetadataUri_Test is SDConfigTest {
         vm.prank(owner);
         config.setDefaultLOANMetadataUri(tokenUri);
 
-        bytes32 tokenUriValue = vm.load(address(config), keccak256(abi.encode(address(0), LOAN_METADATA_URI_SLOT)));
-        bytes memory memoryTokenUri = bytes(tokenUri);
-        bytes32 _tokenUri;
-        assembly {
-            _tokenUri := mload(add(memoryTokenUri, 0x20))
-        }
-        // Remove string length
-        assertEq(keccak256(abi.encodePacked(tokenUriValue >> 8)), keccak256(abi.encodePacked(_tokenUri >> 8)));
+        assertEq(config._loanMetadataUri(address(0)), tokenUri);
     }
 
     function test_shouldEmitEvent_DefaultLOANMetadataUriUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit SDConfig.DefaultLOANMetadataUriUpdated(tokenUri);
+        emit ISproEvents.DefaultLOANMetadataUriUpdated(tokenUri);
 
         vm.prank(owner);
         config.setDefaultLOANMetadataUri(tokenUri);
@@ -385,13 +267,7 @@ contract SDConfig_SetDefaultLOANMetadataUri_Test is SDConfigTest {
 /*  LOAN METADATA URI                                        */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_LoanMetadataUri_Test is SDConfigTest {
-    function setUp() public override {
-        super.setUp();
-
-        _initialize();
-    }
-
+contract TestSproLoanMetadataUri is SproTest {
     function testFuzz_shouldReturnDefaultLoanMetadataUri_whenNoStoreValueForLoanContract(address loanContract)
         external
     {
@@ -417,35 +293,10 @@ contract SDConfig_LoanMetadataUri_Test is SDConfigTest {
 }
 
 /* ------------------------------------------------------------ */
-/*  GET STATE FINGERPRINT COMPUTER                           */
-/* ------------------------------------------------------------ */
-
-contract SDConfig_GetStateFingerprintComputer_Test is SDConfigTest {
-    function setUp() public override {
-        super.setUp();
-
-        _initialize();
-    }
-
-    function testFuzz_shouldReturnStoredComputer_whenIsRegistered(address asset, address computer) external {
-        bytes32 assetSlot = keccak256(abi.encode(asset, SFC_REGISTRY_SLOT));
-        vm.store(address(config), assetSlot, bytes32(uint256(uint160(computer))));
-
-        assertEq(address(config.getStateFingerprintComputer(asset)), computer);
-    }
-}
-
-/* ------------------------------------------------------------ */
 /*  REGISTER STATE FINGERPRINT COMPUTER                      */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_RegisterStateFingerprintComputer_Test is SDConfigTest {
-    function setUp() public override {
-        super.setUp();
-
-        _initialize();
-    }
-
+contract TestSproRegisterStateFingerprintComputer is SproTest {
     function testFuzz_shouldFail_whenCallerIsNotOwner(address caller) external {
         vm.assume(caller != owner);
 
@@ -469,7 +320,7 @@ contract SDConfig_RegisterStateFingerprintComputer_Test is SDConfigTest {
         assumeAddressIsNot(computer, AddressType.ForgeAddress, AddressType.Precompile, AddressType.ZeroAddress);
         _mockSupportsToken(computer, asset, false);
 
-        vm.expectRevert(abi.encodeWithSelector(SDConfig.InvalidComputerContract.selector, computer, asset));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidComputerContract.selector, computer, asset));
         vm.prank(owner);
         config.registerStateFingerprintComputer(asset, computer);
     }
@@ -489,16 +340,10 @@ contract SDConfig_RegisterStateFingerprintComputer_Test is SDConfigTest {
 /*  GET POOL ADAPTER                                         */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_GetPoolAdapter_Test is SDConfigTest {
-    function setUp() public override {
-        super.setUp();
-
-        _initialize();
-    }
-
+contract TestSproGetPoolAdapter is SproTest {
     function testFuzz_shouldReturnStoredAdapter_whenIsRegistered(address pool, address adapter) external {
-        bytes32 poolSlot = keccak256(abi.encode(pool, POOL_ADAPTER_REGISTRY_SLOT));
-        vm.store(address(config), poolSlot, bytes32(uint256(uint160(adapter))));
+        vm.prank(owner);
+        config.registerPoolAdapter(pool, adapter);
 
         assertEq(address(config.getPoolAdapter(pool)), adapter);
     }
@@ -508,13 +353,7 @@ contract SDConfig_GetPoolAdapter_Test is SDConfigTest {
 /*  REGISTER POOL ADAPTER                                    */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_RegisterPoolAdapter_Test is SDConfigTest {
-    function setUp() public override {
-        super.setUp();
-
-        _initialize();
-    }
-
+contract TestSproRegisterPoolAdapter is SproTest {
     function testFuzz_shouldFail_whenCallerIsNotOwner(address caller) external {
         vm.assume(caller != owner);
 

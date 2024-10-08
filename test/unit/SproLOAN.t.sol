@@ -4,33 +4,21 @@ pragma solidity ^0.8.26;
 import { Test } from "forge-std/Test.sol";
 
 import { IERC721Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { PWNHubTags } from "pwn/hub/PWNHubTags.sol";
-import { IERC5646 } from "pwn/interfaces/IERC5646.sol";
-import { PWNLOAN } from "pwn/loan/token/PWNLOAN.sol";
+import { IERC5646 } from "src/interfaces/IERC5646.sol";
+import { SproLOAN } from "src/spro/SproLOAN.sol";
 
-abstract contract PWNLOANTest is Test {
+contract SproLOANTest is Test {
     bytes32 internal constant LAST_LOAN_ID_SLOT = bytes32(uint256(6)); // `lastLoanId` property position
     bytes32 internal constant LOAN_CONTRACT_SLOT = bytes32(uint256(7)); // `loanContract` mapping position
 
-    PWNLOAN loanToken;
-    address hub = address(0x80b);
+    SproLOAN loanToken;
     address alice = address(0xa11ce);
     address activeLoanContract = address(0x01);
 
-    constructor() {
-        vm.etch(hub, bytes("data"));
-    }
-
     function setUp() public virtual {
-        loanToken = new PWNLOAN(hub);
-
-        vm.mockCall(hub, abi.encodeWithSignature("hasTag(address,bytes32)"), abi.encode(false));
-        vm.mockCall(
-            hub,
-            abi.encodeWithSignature("hasTag(address,bytes32)", activeLoanContract, PWNHubTags.ACTIVE_LOAN),
-            abi.encode(true)
-        );
+        loanToken = new SproLOAN(address(this));
     }
 
     function _loanContractSlot(uint256 loanId) internal pure returns (bytes32) {
@@ -42,9 +30,9 @@ abstract contract PWNLOANTest is Test {
 /*  CONSTRUCTOR                                              */
 /* ------------------------------------------------------------ */
 
-contract PWNLOAN_Constructor_Test is PWNLOANTest {
+contract SproLOAN_Constructor_Test is SproLOANTest {
     function test_shouldHaveCorrectNameAndSymbol() external view {
-        assertTrue(keccak256(abi.encodePacked(loanToken.name())) == keccak256("PWN LOAN"));
+        assertTrue(keccak256(abi.encodePacked(loanToken.name())) == keccak256("Spro LOAN"));
         assertTrue(keccak256(abi.encodePacked(loanToken.symbol())) == keccak256("LOAN"));
     }
 }
@@ -53,57 +41,45 @@ contract PWNLOAN_Constructor_Test is PWNLOANTest {
 /*  MINT                                                     */
 /* ------------------------------------------------------------ */
 
-contract PWNLOAN_Mint_Test is PWNLOANTest {
+contract SproLOAN_Mint_Test is SproLOANTest {
     function test_shouldFail_whenCallerIsNotActiveLoanContract() external {
-        vm.expectRevert(abi.encodeWithSelector(PWNLOAN.CallerMissingHubTag.selector, PWNHubTags.ACTIVE_LOAN));
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(alice)));
         vm.prank(alice);
         loanToken.mint(alice);
     }
 
     function test_shouldIncreaseLastLoanId() external {
-        uint256 lastLoanId = 3123;
-        vm.store(address(loanToken), LAST_LOAN_ID_SLOT, bytes32(lastLoanId));
+        uint256 lastLoanId = loanToken.lastLoanId();
 
-        vm.prank(activeLoanContract);
         loanToken.mint(alice);
 
-        bytes32 lastLoanIdValue = vm.load(address(loanToken), LAST_LOAN_ID_SLOT);
-        assertTrue(uint256(lastLoanIdValue) == lastLoanId + 1);
+        uint256 lastLoanIdValue = loanToken.lastLoanId();
+        assertTrue(lastLoanIdValue == lastLoanId + 1);
     }
 
     function test_shouldStoreLoanContractUnderLoanId() external {
-        vm.prank(activeLoanContract);
         uint256 loanId = loanToken.mint(alice);
+        address loanContract = loanToken.loanContract(loanId);
 
-        bytes32 loanContractValue = vm.load(address(loanToken), _loanContractSlot(loanId));
-        assertTrue(loanContractValue == bytes32(uint256(uint160(activeLoanContract))));
+        assertTrue(loanContract == address(this));
     }
 
     function test_shouldMintLOANToken() external {
-        vm.prank(activeLoanContract);
+        vm.prank(address(this));
         uint256 loanId = loanToken.mint(alice);
 
         assertTrue(loanToken.ownerOf(loanId) == alice);
     }
 
     function test_shouldReturnLoanId() external {
-        uint256 lastLoanId = 3123;
-        vm.store(address(loanToken), LAST_LOAN_ID_SLOT, bytes32(lastLoanId));
-
-        vm.prank(activeLoanContract);
         uint256 loanId = loanToken.mint(alice);
-
-        assertTrue(loanId == lastLoanId + 1);
+        assertTrue(loanId == 1);
     }
 
     function test_shouldEmitEvent_LOANMinted() external {
-        uint256 lastLoanId = 3123;
-        vm.store(address(loanToken), LAST_LOAN_ID_SLOT, bytes32(lastLoanId));
-
         vm.expectEmit(true, true, true, false);
-        emit PWNLOAN.LOANMinted(lastLoanId + 1, activeLoanContract, alice);
+        emit SproLOAN.LOANMinted(1, address(this), alice);
 
-        vm.prank(activeLoanContract);
         loanToken.mint(alice);
     }
 }
@@ -112,32 +88,28 @@ contract PWNLOAN_Mint_Test is PWNLOANTest {
 /*  BURN                                                     */
 /* ------------------------------------------------------------ */
 
-contract PWNLOAN_Burn_Test is PWNLOANTest {
+contract SproLOAN_Burn_Test is SproLOANTest {
     uint256 loanId;
 
     function setUp() public override {
         super.setUp();
 
-        vm.prank(activeLoanContract);
         loanId = loanToken.mint(alice);
     }
 
     function test_shouldFail_whenCallerIsNotStoredLoanContractForGivenLoanId() external {
-        vm.expectRevert(abi.encodeWithSelector(PWNLOAN.InvalidLoanContractCaller.selector));
+        vm.expectRevert(abi.encodeWithSelector(SproLOAN.InvalidLoanContractCaller.selector));
         vm.prank(alice);
         loanToken.burn(loanId);
     }
 
     function test_shouldDeleteStoredLoanContract() external {
-        vm.prank(activeLoanContract);
         loanToken.burn(loanId);
 
-        bytes32 loanContractValue = vm.load(address(loanToken), _loanContractSlot(loanId));
-        assertTrue(loanContractValue == bytes32(0));
+        assertTrue(loanToken.loanContract(loanId) == address(0));
     }
 
     function test_shouldBurnLOANToken() external {
-        vm.prank(activeLoanContract);
         loanToken.burn(loanId);
 
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, loanId));
@@ -146,9 +118,8 @@ contract PWNLOAN_Burn_Test is PWNLOANTest {
 
     function test_shouldEmitEvent_LOANBurned() external {
         vm.expectEmit(true, false, false, false);
-        emit PWNLOAN.LOANBurned(loanId);
+        emit SproLOAN.LOANBurned(loanId);
 
-        vm.prank(activeLoanContract);
         loanToken.burn(loanId);
     }
 }
@@ -157,7 +128,7 @@ contract PWNLOAN_Burn_Test is PWNLOANTest {
 /*  TOKEN URI                                                */
 /* ------------------------------------------------------------ */
 
-contract PWNLOAN_TokenUri_Test is PWNLOANTest {
+contract SproLOAN_TokenUri_Test is SproLOANTest {
     string tokenUri;
     uint256 loanId;
 
@@ -166,21 +137,18 @@ contract PWNLOAN_TokenUri_Test is PWNLOANTest {
 
         tokenUri = "test.uri.xyz";
 
-        vm.mockCall(activeLoanContract, abi.encodeWithSignature("loanMetadataUri()"), abi.encode(tokenUri));
+        vm.mockCall(address(this), abi.encodeWithSignature("loanMetadataUri()"), abi.encode(tokenUri));
 
-        vm.prank(activeLoanContract);
         loanId = loanToken.mint(alice);
     }
 
     function test_shouldCallLoanContract() external {
-        vm.expectCall(activeLoanContract, abi.encodeWithSignature("loanMetadataUri()"));
-
+        vm.expectCall(address(this), abi.encodeWithSignature("loanMetadataUri()"));
         loanToken.tokenURI(loanId);
     }
 
     function test_shouldReturnCorrectValue() external view {
         string memory _tokenUri = loanToken.tokenURI(loanId);
-
         assertEq(tokenUri, _tokenUri);
     }
 }
@@ -189,7 +157,7 @@ contract PWNLOAN_TokenUri_Test is PWNLOANTest {
 /*  ERC5646                                                  */
 /* ------------------------------------------------------------ */
 
-contract PWNLOAN_GetStateFingerprint_Test is PWNLOANTest {
+contract SproLOAN_GetStateFingerprint_Test is SproLOANTest {
     uint256 loanId = 42;
 
     function test_shouldReturnZeroIfLoanDoesNotExist() external view {
@@ -197,26 +165,13 @@ contract PWNLOAN_GetStateFingerprint_Test is PWNLOANTest {
 
         assertEq(fingerprint, bytes32(0));
     }
-
-    function test_shouldCallLoanContract() external {
-        vm.store(address(loanToken), _loanContractSlot(loanId), bytes32(uint256(uint160(activeLoanContract))));
-        bytes32 mockFingerprint = keccak256("mock fingerprint");
-        vm.mockCall(
-            activeLoanContract, abi.encodeWithSignature("getStateFingerprint(uint256)"), abi.encode(mockFingerprint)
-        );
-
-        vm.expectCall(activeLoanContract, abi.encodeWithSignature("getStateFingerprint(uint256)", loanId));
-        bytes32 fingerprint = loanToken.getStateFingerprint(loanId);
-
-        assertEq(fingerprint, mockFingerprint);
-    }
 }
 
 /* ------------------------------------------------------------ */
 /*  ERC165                                                   */
 /* ------------------------------------------------------------ */
 
-contract PWNLOAN_SupportsInterface_Test is PWNLOANTest {
+contract SproLOAN_SupportsInterface_Test is SproLOANTest {
     function test_shouldSupportERC5646() external view {
         assertTrue(loanToken.supportsInterface(type(IERC5646).interfaceId));
     }

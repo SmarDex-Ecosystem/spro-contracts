@@ -3,10 +3,9 @@ pragma solidity ^0.8.26;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-library SDListedFee {
-    string internal constant VERSION = "1.0";
-    uint256 internal constant WAD = 1e18;
+import { SproConstantsLibrary as Constants } from "./SproConstantsLibrary.sol";
 
+library SproListedFee {
     /**
      * @notice Compute list fee amount.
      * @param fixFeeListed Fixed fee value in units of fee token (basis 1e18)
@@ -20,7 +19,7 @@ library SDListedFee {
         pure
         returns (uint256 feeAmount)
     {
-        feeAmount =
-            fixFeeListed + Math.mulDiv((variableFactor * tokenFactor) / WAD, loanAmount, WAD, Math.Rounding.Ceil);
+        feeAmount = fixFeeListed
+            + Math.mulDiv((variableFactor * tokenFactor) / Constants.WAD, loanAmount, Constants.WAD, Math.Rounding.Ceil);
     }
 }
