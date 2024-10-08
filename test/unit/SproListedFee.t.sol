@@ -8,7 +8,7 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { SproListedFee } from "src/libraries/SproListedFee.sol";
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
-contract SDFeeCalculator_CalculateFeeAmount_Test is Test {
+contract SproFeeCalculator_CalculateFeeAmount_Test is Test {
     uint256 internal constant ff = 5e18;
     uint256 internal constant vf = 1e13;
     uint256 internal constant tf = 4e23;

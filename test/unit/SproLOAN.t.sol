@@ -7,18 +7,18 @@ import { IERC721Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { IERC5646 } from "src/interfaces/IERC5646.sol";
-import { PWNLOAN } from "spro/PWNLOAN.sol";
+import { SproLOAN } from "src/spro/SproLOAN.sol";
 
-contract PWNLOANTest is Test {
+contract SproLOANTest is Test {
     bytes32 internal constant LAST_LOAN_ID_SLOT = bytes32(uint256(6)); // `lastLoanId` property position
     bytes32 internal constant LOAN_CONTRACT_SLOT = bytes32(uint256(7)); // `loanContract` mapping position
 
-    PWNLOAN loanToken;
+    SproLOAN loanToken;
     address alice = address(0xa11ce);
     address activeLoanContract = address(0x01);
 
     function setUp() public virtual {
-        loanToken = new PWNLOAN(address(this));
+        loanToken = new SproLOAN(address(this));
     }
 
     function _loanContractSlot(uint256 loanId) internal pure returns (bytes32) {
@@ -30,9 +30,9 @@ contract PWNLOANTest is Test {
 /*  CONSTRUCTOR                                              */
 /* ------------------------------------------------------------ */
 
-contract PWNLOAN_Constructor_Test is PWNLOANTest {
+contract SproLOAN_Constructor_Test is SproLOANTest {
     function test_shouldHaveCorrectNameAndSymbol() external view {
-        assertTrue(keccak256(abi.encodePacked(loanToken.name())) == keccak256("PWN LOAN"));
+        assertTrue(keccak256(abi.encodePacked(loanToken.name())) == keccak256("Spro LOAN"));
         assertTrue(keccak256(abi.encodePacked(loanToken.symbol())) == keccak256("LOAN"));
     }
 }
@@ -41,7 +41,7 @@ contract PWNLOAN_Constructor_Test is PWNLOANTest {
 /*  MINT                                                     */
 /* ------------------------------------------------------------ */
 
-contract PWNLOAN_Mint_Test is PWNLOANTest {
+contract SproLOAN_Mint_Test is SproLOANTest {
     function test_shouldFail_whenCallerIsNotActiveLoanContract() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(alice)));
         vm.prank(alice);
@@ -78,7 +78,7 @@ contract PWNLOAN_Mint_Test is PWNLOANTest {
 
     function test_shouldEmitEvent_LOANMinted() external {
         vm.expectEmit(true, true, true, false);
-        emit PWNLOAN.LOANMinted(1, address(this), alice);
+        emit SproLOAN.LOANMinted(1, address(this), alice);
 
         loanToken.mint(alice);
     }
@@ -88,7 +88,7 @@ contract PWNLOAN_Mint_Test is PWNLOANTest {
 /*  BURN                                                     */
 /* ------------------------------------------------------------ */
 
-contract PWNLOAN_Burn_Test is PWNLOANTest {
+contract SproLOAN_Burn_Test is SproLOANTest {
     uint256 loanId;
 
     function setUp() public override {
@@ -98,7 +98,7 @@ contract PWNLOAN_Burn_Test is PWNLOANTest {
     }
 
     function test_shouldFail_whenCallerIsNotStoredLoanContractForGivenLoanId() external {
-        vm.expectRevert(abi.encodeWithSelector(PWNLOAN.InvalidLoanContractCaller.selector));
+        vm.expectRevert(abi.encodeWithSelector(SproLOAN.InvalidLoanContractCaller.selector));
         vm.prank(alice);
         loanToken.burn(loanId);
     }
@@ -118,7 +118,7 @@ contract PWNLOAN_Burn_Test is PWNLOANTest {
 
     function test_shouldEmitEvent_LOANBurned() external {
         vm.expectEmit(true, false, false, false);
-        emit PWNLOAN.LOANBurned(loanId);
+        emit SproLOAN.LOANBurned(loanId);
 
         loanToken.burn(loanId);
     }
@@ -128,7 +128,7 @@ contract PWNLOAN_Burn_Test is PWNLOANTest {
 /*  TOKEN URI                                                */
 /* ------------------------------------------------------------ */
 
-contract PWNLOAN_TokenUri_Test is PWNLOANTest {
+contract SproLOAN_TokenUri_Test is SproLOANTest {
     string tokenUri;
     uint256 loanId;
 
@@ -157,7 +157,7 @@ contract PWNLOAN_TokenUri_Test is PWNLOANTest {
 /*  ERC5646                                                  */
 /* ------------------------------------------------------------ */
 
-contract PWNLOAN_GetStateFingerprint_Test is PWNLOANTest {
+contract SproLOAN_GetStateFingerprint_Test is SproLOANTest {
     uint256 loanId = 42;
 
     function test_shouldReturnZeroIfLoanDoesNotExist() external view {
@@ -171,7 +171,7 @@ contract PWNLOAN_GetStateFingerprint_Test is PWNLOANTest {
 /*  ERC165                                                   */
 /* ------------------------------------------------------------ */
 
-contract PWNLOAN_SupportsInterface_Test is PWNLOANTest {
+contract SproLOAN_SupportsInterface_Test is SproLOANTest {
     function test_shouldSupportERC5646() external view {
         assertTrue(loanToken.supportsInterface(type(IERC5646).interfaceId));
     }

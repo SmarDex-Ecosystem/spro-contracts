@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
-import { Permit } from "spro/Permit.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import { SigUtils } from "test/utils/SigUtils.sol";
 import { CreditPermit } from "test/helper/CreditPermit.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import { IERC5646 } from "spro/Spro.sol";
 import { T20 } from "test/helper/T20.sol";
-import { SDDeploymentTest, Spro, IPWNDeployer, PWNLOAN, PWNRevokedNonce } from "test/SDDeploymentTest.t.sol";
+import { SDDeploymentTest, Spro, IPWNDeployer, PWNRevokedNonce } from "test/SDDeploymentTest.t.sol";
 
+import { IERC5646 } from "src/spro/Spro.sol";
+import { Permit } from "src/spro/Permit.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 abstract contract SDBaseIntegrationTest is SDDeploymentTest {

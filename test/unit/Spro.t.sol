@@ -6,14 +6,13 @@ import { Test } from "forge-std/Test.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-import { Spro } from "spro/Spro.sol";
-
+import { Spro } from "src/spro/Spro.sol";
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
 // forge inspect src/config/Spro.sol:Spro storage --pretty
 
-abstract contract SDConfigTest is Test {
+abstract contract SproTest is Test {
     bytes32 internal constant OWNER_SLOT = bytes32(uint256(0)); // `_owner` property position
     bytes32 internal constant PENDING_OWNER_SLOT = bytes32(uint256(1)); // `_pendingOwner` property position
     bytes32 internal constant INITIALIZED_SLOT =
@@ -33,7 +32,6 @@ abstract contract SDConfigTest is Test {
     Spro config;
     address owner = makeAddr("owner");
     address sdex = makeAddr("sdex");
-    address sink = makeAddr("sink");
     address creditToken = makeAddr("creditToken");
     address revokedNonce = makeAddr("revokedNonce");
 
@@ -57,7 +55,7 @@ abstract contract SDConfigTest is Test {
 /*                                 CONSTRUCTOR                                */
 /* -------------------------------------------------------------------------- */
 
-contract SDConfig_Constructor_Test is SDConfigTest {
+contract TestSproConstructor is SproTest {
     function test_shouldInitializeWithCorrectValues() external view {
         assertEq(config.owner(), owner);
         assertEq(config.partialPositionPercentage(), partialPositionPercentage);
@@ -72,7 +70,7 @@ contract SDConfig_Constructor_Test is SDConfigTest {
 /*  INITIALIZE                                               */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_Initialize_Test is SDConfigTest {
+contract TestSproInitialize is SproTest {
     function test_shouldSetValues() external {
         assertEq(config.partialPositionPercentage(), partialPositionPercentage);
 
@@ -88,7 +86,7 @@ contract SDConfig_Initialize_Test is SDConfigTest {
 /*  SET FIX FEE UNLISTED                                     */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_SetUnlistedFee_Test is SDConfigTest {
+contract TestSproSetUnlistedFee is SproTest {
     uint256 fee = 90e18;
 
     function test_shouldFail_whenCallerIsNotOwner() external {
@@ -116,7 +114,7 @@ contract SDConfig_SetUnlistedFee_Test is SDConfigTest {
 /*  SET FIX FEE LISTED                                       */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_SetListedFee_Test is SDConfigTest {
+contract TestSproSetListedFee is SproTest {
     uint256 fee = 90e18;
 
     function test_shouldFail_whenCallerIsNotOwner() external {
@@ -144,7 +142,7 @@ contract SDConfig_SetListedFee_Test is SDConfigTest {
 /*  SET LISTED TOKEN                                         */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_SetListedToken_Test is SDConfigTest {
+contract TestSproSetListedToken is SproTest {
     uint256 factor = 1e14;
 
     function test_shouldFail_whenCallerIsNotOwner() external {
@@ -185,7 +183,7 @@ contract SDConfig_SetListedToken_Test is SDConfigTest {
 /*  PARTIAL LENDING THRESHOLDS                               */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_PartialLendingThresholds_Test is SDConfigTest {
+contract TestSproPartialLendingThresholds is SproTest {
     uint16 internal constant DEFAULT_THRESHOLD = 500;
 
     function setUp() public override {
@@ -221,7 +219,7 @@ contract SDConfig_PartialLendingThresholds_Test is SDConfigTest {
 /*  SET LOAN METADATA URI                                    */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_SetLOANMetadataUri_Test is SDConfigTest {
+contract TestSproSetLOANMetadataUri is SproTest {
     string tokenUri = "test.token.uri";
     address loanContract = address(0x63);
 
@@ -259,7 +257,7 @@ contract SDConfig_SetLOANMetadataUri_Test is SDConfigTest {
 /*  SET DEFAULT LOAN METADATA URI                            */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_SetDefaultLOANMetadataUri_Test is SDConfigTest {
+contract TestSproSetDefaultLOANMetadataUri is SproTest {
     string tokenUri = "test.token.uri";
 
     function test_shouldFail_whenCallerIsNotOwner() external {
@@ -287,7 +285,7 @@ contract SDConfig_SetDefaultLOANMetadataUri_Test is SDConfigTest {
 /*  LOAN METADATA URI                                        */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_LoanMetadataUri_Test is SDConfigTest {
+contract TestSproLoanMetadataUri is SproTest {
     function testFuzz_shouldReturnDefaultLoanMetadataUri_whenNoStoreValueForLoanContract(address loanContract)
         external
     {
@@ -316,7 +314,7 @@ contract SDConfig_LoanMetadataUri_Test is SDConfigTest {
 /*  REGISTER STATE FINGERPRINT COMPUTER                      */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_RegisterStateFingerprintComputer_Test is SDConfigTest {
+contract TestSproRegisterStateFingerprintComputer is SproTest {
     function testFuzz_shouldFail_whenCallerIsNotOwner(address caller) external {
         vm.assume(caller != owner);
 
@@ -360,7 +358,7 @@ contract SDConfig_RegisterStateFingerprintComputer_Test is SDConfigTest {
 /*  GET POOL ADAPTER                                         */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_GetPoolAdapter_Test is SDConfigTest {
+contract TestSproGetPoolAdapter is SproTest {
     function testFuzz_shouldReturnStoredAdapter_whenIsRegistered(address pool, address adapter) external {
         vm.prank(owner);
         config.registerPoolAdapter(pool, adapter);
@@ -373,7 +371,7 @@ contract SDConfig_GetPoolAdapter_Test is SDConfigTest {
 /*  REGISTER POOL ADAPTER                                    */
 /* ------------------------------------------------------------ */
 
-contract SDConfig_RegisterPoolAdapter_Test is SDConfigTest {
+contract TestSproRegisterPoolAdapter is SproTest {
     function testFuzz_shouldFail_whenCallerIsNotOwner(address caller) external {
         vm.assume(caller != owner);
 

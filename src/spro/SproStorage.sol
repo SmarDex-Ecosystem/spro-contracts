@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
-import { PWNLOAN } from "spro/PWNLOAN.sol";
-import { PWNRevokedNonce } from "spro/PWNRevokedNonce.sol";
+import { SproLOAN } from "src/spro/SproLOAN.sol";
+import { PWNRevokedNonce } from "src/spro/PWNRevokedNonce.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
@@ -68,7 +68,7 @@ contract SproStorage is ISproErrors, ISproEvents {
         )
     );
 
-    PWNLOAN public immutable loanToken;
+    SproLOAN public immutable loanToken;
 
     /// @notice  Mapping of all LOAN data by loan id.
     mapping(uint256 => LOAN) internal LOANs;

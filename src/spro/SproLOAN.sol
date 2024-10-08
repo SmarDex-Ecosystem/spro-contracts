@@ -8,12 +8,12 @@ import { IERC5646 } from "src/interfaces/IERC5646.sol";
 import { IPWNLoanMetadataProvider } from "src/interfaces/IPWNLoanMetadataProvider.sol";
 
 /**
- * @title PWN LOAN token
- * @notice A LOAN token representing a loan in PWN protocol.
+ * @title Spro LOAN token
+ * @notice A LOAN token representing a loan in Spro protocol.
  * @dev Token doesn't hold any loan logic, just an address of a loan contract that minted the LOAN token.
- *      PWN LOAN token is shared between all loan contracts.
+ *      Spro LOAN token is shared between all loan contracts.
  */
-contract PWNLOAN is ERC721, IERC5646, Ownable {
+contract SproLOAN is ERC721, IERC5646, Ownable {
     /* ------------------------------------------------------------ */
     /*                VARIABLES & CONSTANTS DEFINITIONS             */
     /* ------------------------------------------------------------ */
@@ -43,7 +43,7 @@ contract PWNLOAN is ERC721, IERC5646, Ownable {
     /* ------------------------------------------------------------ */
 
     /**
-     * @notice Thrown when `PWNLOAN.burn` caller is not a loan contract that minted the LOAN token.
+     * @notice Thrown when `SproLOAN.burn` caller is not a loan contract that minted the LOAN token.
      */
     error InvalidLoanContractCaller();
 
@@ -51,7 +51,7 @@ contract PWNLOAN is ERC721, IERC5646, Ownable {
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
 
-    constructor(address creator) ERC721("PWN LOAN", "LOAN") Ownable(creator) { }
+    constructor(address creator) ERC721("Spro LOAN", "LOAN") Ownable(creator) { }
 
     /* ------------------------------------------------------------ */
     /*                       TOKEN LIFECYCLE                        */

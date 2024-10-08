@@ -2,11 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {
-    SDBaseIntegrationTest,
-    Spro,
-    IPWNDeployer,
-    PWNLOAN,
-    PWNRevokedNonce
+    SDBaseIntegrationTest, Spro, IPWNDeployer, PWNRevokedNonce
 } from "test/integration/SDBaseIntegrationTest.t.sol";
 
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";

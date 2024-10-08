@@ -5,58 +5,14 @@ import { Test } from "forge-std/Test.sol";
 
 import { T20 } from "test/helper/T20.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
+import { SproHandler } from "test/helper/SproHandler.sol";
 
-import { Spro, Math, Permit, PWNRevokedNonce, IPoolAdapter } from "spro/Spro.sol";
+import { Spro, Math, Permit, PWNRevokedNonce, IPoolAdapter } from "src/spro/Spro.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
-contract SDSimpleLoanHarness is Spro {
-    constructor(
-        address _sdex,
-        address _revokedNonce,
-        address _stateFingerprintComputer,
-        uint16 _defaultThreshold,
-        uint16 _percentage,
-        uint16 _partialPositionPercentage,
-        uint16 _variableFactor
-    )
-        Spro(
-            _sdex,
-            _revokedNonce,
-            _stateFingerprintComputer,
-            _defaultThreshold,
-            _percentage,
-            _partialPositionPercentage,
-            _variableFactor
-        )
-    { }
-
-    function exposed_checkPermit(address caller, address creditAddress, Permit memory permit) external pure {
-        _checkPermit(caller, creditAddress, permit);
-    }
-
-    function exposed_checkLoanCanBeRepaid(uint8 status, uint40 defaultTimestamp) external view {
-        _checkLoanCanBeRepaid(status, defaultTimestamp);
-    }
-
-    function exposed_checkLoanCreditAddress(address loanCreditAddress, address expectedCreditAddress) external pure {
-        _checkLoanCreditAddress(loanCreditAddress, expectedCreditAddress);
-    }
-
-    function exposed_withdrawCreditFromPool(
-        address credit,
-        uint256 creditAmount,
-        Terms memory loanTerms,
-        LenderSpec calldata lenderSpec
-    ) external {
-        _withdrawCreditFromPool(credit, creditAmount, loanTerms, lenderSpec);
-    }
-}
-
-contract SDSimpleLoanTest is Test {
-    address public hub = makeAddr("hub");
+contract SproSimpleLoanTest is Test {
     address public sdex = makeAddr("sdex");
-    address public loanToken = makeAddr("loanToken");
     address public config = makeAddr("config");
     address public revokedNonce = makeAddr("revokedNonce");
 
@@ -65,17 +21,17 @@ contract SDSimpleLoanTest is Test {
 
     address poolAdapter = address(new DummyPoolAdapter());
 
-    SDSimpleLoanHarness simpleLoan;
+    SproHandler sproHandler;
 
     function setUp() public {
         vm.etch(config, bytes("data"));
-        simpleLoan = new SDSimpleLoanHarness(sdex, revokedNonce, address(this), 1, 1, 1, 1);
+        sproHandler = new SproHandler(sdex, revokedNonce, address(this), 1, 1, 1, 1);
 
         vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(poolAdapter));
     }
 
     function test_constructor() external view {
-        assertEq(address(simpleLoan.revokedNonce()), revokedNonce);
+        assertEq(address(sproHandler.revokedNonce()), revokedNonce);
     }
 
     function testFuzz_getLenderSpecHash(address source, uint256 amount, bytes memory data) external view {
@@ -83,7 +39,7 @@ contract SDSimpleLoanTest is Test {
             ISproTypes.LenderSpec({ sourceOfFunds: source, creditAmount: amount, permitData: data });
         bytes32 lenderSpecHash = keccak256(abi.encode(ls));
 
-        assertEq(simpleLoan.getLenderSpecHash(ls), lenderSpecHash);
+        assertEq(sproHandler.getLenderSpecHash(ls), lenderSpecHash);
     }
 
     function test_shouldFail_checkPermit_whenInvalidPermitOwner() external {
@@ -91,7 +47,7 @@ contract SDSimpleLoanTest is Test {
         permit.asset = permitAsset;
 
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidPermitOwner.selector, permit.owner, address(this)));
-        simpleLoan.exposed_checkPermit(address(this), credit, permit);
+        sproHandler.exposed_checkPermit(address(this), credit, permit);
     }
 
     function test_shouldFail_checkPermit_whenInvalidPermitAsset() external {
@@ -100,7 +56,7 @@ contract SDSimpleLoanTest is Test {
         permit.owner = address(this);
 
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidPermitAsset.selector, permit.asset, address(this)));
-        simpleLoan.exposed_checkPermit({ caller: address(this), creditAddress: address(this), permit: permit });
+        sproHandler.exposed_checkPermit({ caller: address(this), creditAddress: address(this), permit: permit });
     }
 
     function testFuzz_shouldFail_withdrawCreditFromPool_InvalidSourceOfFunds(
@@ -116,33 +72,33 @@ contract SDSimpleLoanTest is Test {
         vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(address(0)));
 
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidSourceOfFunds.selector, lenderSpec.sourceOfFunds));
-        simpleLoan.exposed_withdrawCreditFromPool(credit_, amount, loanTerms, lenderSpec);
+        sproHandler.exposed_withdrawCreditFromPool(credit_, amount, loanTerms, lenderSpec);
     }
 
     function test_loanRepaymentAmount_shouldReturnZeroForNonExistingLoan() external view {
-        uint256 amount = simpleLoan.loanRepaymentAmount(0);
+        uint256 amount = sproHandler.loanRepaymentAmount(0);
 
         assertEq(amount, 0);
     }
 
     function test_shouldFail_checkLoanCanBeRepaid_NonExistingLoan() external {
         vm.expectRevert(ISproErrors.NonExistingLoan.selector);
-        simpleLoan.exposed_checkLoanCanBeRepaid(0, 0);
+        sproHandler.exposed_checkLoanCanBeRepaid(0, 0);
 
         vm.expectRevert(ISproErrors.LoanNotRunning.selector);
-        simpleLoan.exposed_checkLoanCanBeRepaid(1, 0);
+        sproHandler.exposed_checkLoanCanBeRepaid(1, 0);
     }
 
     function test_shouldFail_checkLoanCanBeRepaid_LoanNotRunning() external {
         vm.expectRevert(ISproErrors.LoanNotRunning.selector);
-        simpleLoan.exposed_checkLoanCanBeRepaid(1, 0);
+        sproHandler.exposed_checkLoanCanBeRepaid(1, 0);
     }
 
     function test_shouldFail_checkLoanCanBeRepaid_LoanDefaulted() external {
         skip(30 days);
         uint40 ts = uint40(block.timestamp - 1);
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.LoanDefaulted.selector, ts));
-        simpleLoan.exposed_checkLoanCanBeRepaid(2, ts);
+        sproHandler.exposed_checkLoanCanBeRepaid(2, ts);
     }
 
     function test_shouldFail_DifferentCreditAddress(address loanCreditAddress, address expectedCreditAddress)
@@ -155,6 +111,35 @@ contract SDSimpleLoanTest is Test {
                 ISproErrors.DifferentCreditAddress.selector, loanCreditAddress, expectedCreditAddress
             )
         );
-        simpleLoan.exposed_checkLoanCreditAddress(loanCreditAddress, expectedCreditAddress);
+        sproHandler.exposed_checkLoanCreditAddress(loanCreditAddress, expectedCreditAddress);
+    }
+
+    function testFuzz_encodeProposalData(address addr) external view {
+        Spro.Proposal memory proposal = ISproTypes.Proposal({
+            collateralAddress: addr,
+            collateralAmount: 1e20,
+            checkCollateralStateFingerprint: false,
+            collateralStateFingerprint: bytes32(0),
+            creditAddress: addr,
+            availableCreditLimit: 20e22,
+            fixedInterestAmount: 1e14,
+            accruingInterestAPR: 0,
+            startTimestamp: uint40(block.timestamp),
+            defaultTimestamp: uint40(block.timestamp) + 5 days,
+            proposer: addr,
+            proposerSpecHash: keccak256(abi.encode(addr)),
+            nonceSpace: 0,
+            nonce: 0,
+            loanContract: addr
+        });
+        bytes memory x = abi.encode(proposal);
+        assertEq(sproHandler.encodeProposalData(proposal), x);
+    }
+
+    function testFuzz_shouldFail_partialLoan(uint256 a, uint256 l) external {
+        vm.assume(a != l);
+
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.OnlyCompleteLendingForNFTs.selector, a, l));
+        sproHandler.exposed_checkCompleteLoan(a, l);
     }
 }

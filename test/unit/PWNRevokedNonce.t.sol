@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
-import { PWNRevokedNonce } from "spro/PWNRevokedNonce.sol";
+import { PWNRevokedNonce } from "src/spro/PWNRevokedNonce.sol";
 
 abstract contract PWNRevokedNonceTest is Test {
     bytes32 internal constant REVOKED_NONCE_SLOT = bytes32(uint256(0)); // `_revokedNonce` mapping position

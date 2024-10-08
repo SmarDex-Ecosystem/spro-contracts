@@ -6,10 +6,10 @@ import { CommonBase } from "forge-std/Base.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { Spro } from "spro/Spro.sol";
+import { Spro } from "src/spro/Spro.sol";
 import { IPWNDeployer } from "src/interfaces/IPWNDeployer.sol";
-import { PWNLOAN } from "spro/PWNLOAN.sol";
-import { PWNRevokedNonce } from "spro/PWNRevokedNonce.sol";
+import { SproLOAN } from "src/spro/SproLOAN.sol";
+import { PWNRevokedNonce } from "src/spro/PWNRevokedNonce.sol";
 import { T20 } from "test/helper/T20.sol";
 
 abstract contract SDDeployments is CommonBase {
@@ -25,7 +25,7 @@ abstract contract SDDeployments is CommonBase {
     struct Deployment {
         Spro config;
         IPWNDeployer deployer;
-        PWNLOAN loanToken;
+        SproLOAN loanToken;
         address proxyAdmin;
         address protocolAdmin;
         PWNRevokedNonce revokedNonce;

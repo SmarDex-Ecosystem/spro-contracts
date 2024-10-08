@@ -3,12 +3,12 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
-import { PWNVault, IPoolAdapter, Permit } from "spro/PWNVault.sol";
-import { ISproEvents } from "src/interfaces/ISproEvents.sol";
-import { ISproErrors } from "src/interfaces/ISproErrors.sol";
-
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { T20 } from "test/helper/T20.sol";
+
+import { PWNVault, IPoolAdapter, Permit } from "src/spro/PWNVault.sol";
+import { ISproEvents } from "src/interfaces/ISproEvents.sol";
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
 contract PWNVaultHarness is PWNVault {
     function pull(address asset, uint256 amount, address origin) external {

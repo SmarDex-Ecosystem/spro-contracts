@@ -10,12 +10,12 @@ import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { IPWNLoanMetadataProvider } from "src/interfaces/IPWNLoanMetadataProvider.sol";
 import { IStateFingerprintComputer } from "src/interfaces/IStateFingerprintComputer.sol";
 import { IERC5646 } from "src/interfaces/IERC5646.sol";
-import { PWNLOAN } from "spro/PWNLOAN.sol";
-import { PWNVault } from "spro/PWNVault.sol";
-import { PWNRevokedNonce } from "spro/PWNRevokedNonce.sol";
+import { SproLOAN } from "src/spro/SproLOAN.sol";
+import { PWNVault } from "src/spro/PWNVault.sol";
+import { PWNRevokedNonce } from "src/spro/PWNRevokedNonce.sol";
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
-import { SproStorage } from "spro/SproStorage.sol";
-import { Permit } from "spro/Permit.sol";
+import { SproStorage } from "src/spro/SproStorage.sol";
+import { Permit } from "src/spro/Permit.sol";
 import { SproListedFee } from "src/libraries/SproListedFee.sol";
 
 /// @title Spro - Spro Protocol
@@ -50,7 +50,7 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, IERC5646, IPWNLoanMetadata
         );
 
         SDEX = _sdex;
-        loanToken = new PWNLOAN(address(this));
+        loanToken = new SproLOAN(address(this));
         revokedNonce = PWNRevokedNonce(_revokedNonce);
         fixFeeUnlisted = _fixFeeUnlisted;
         fixFeeListed = _fixFeeListed;
