@@ -12,7 +12,7 @@ import { IStateFingerprintComputer } from "src/interfaces/IStateFingerprintCompu
 import { IERC5646 } from "src/interfaces/IERC5646.sol";
 import { SproLOAN } from "src/spro/SproLOAN.sol";
 import { PWNVault } from "src/spro/PWNVault.sol";
-import { PWNRevokedNonce } from "src/spro/PWNRevokedNonce.sol";
+import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 import { SproStorage } from "src/spro/SproStorage.sol";
 import { Permit } from "src/spro/Permit.sol";
@@ -48,7 +48,7 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, IERC5646, IPWNLoanMetadata
         );
 
         SDEX = _sdex;
-        revokedNonce = new PWNRevokedNonce(address(this));
+        revokedNonce = new SproRevokedNonce(address(this));
         loanToken = new SproLOAN(address(this));
         fixFeeUnlisted = _fixFeeUnlisted;
         fixFeeListed = _fixFeeListed;
@@ -1095,7 +1095,7 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, IERC5646, IPWNLoanMetadata
 
         // Check proposal is not revoked
         if (!revokedNonce.isNonceUsable(proposal.proposer, proposal.nonceSpace, proposal.nonce)) {
-            revert PWNRevokedNonce.NonceNotUsable({
+            revert SproRevokedNonce.NonceNotUsable({
                 addr: proposal.proposer,
                 nonceSpace: proposal.nonceSpace,
                 nonce: proposal.nonce

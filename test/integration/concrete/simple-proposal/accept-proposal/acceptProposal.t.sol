@@ -6,7 +6,7 @@
 //     Spro,
 //     IPWNDeployer,
 //     PWNLOAN,
-//     PWNRevokedNonce
+//     SproRevokedNonce
 // } from "test/integration/SDBaseIntegrationTest.t.sol";
 
 // import { ISproTypes } from "src/interfaces/ISproTypes.sol";
@@ -121,7 +121,7 @@
 //         vm.prank(proposal.loanContract);
 //         vm.expectRevert(
 //             abi.encodeWithSelector(
-//                 PWNRevokedNonce.NonceNotUsable.selector, borrower, proposal.nonceSpace, proposal.nonce
+//                 SproRevokedNonce.NonceNotUsable.selector, borrower, proposal.nonceSpace, proposal.nonce
 //             )
 //         );
 //         deployment.simpleLoanSimpleProposal.acceptProposal(lender, CREDIT_AMOUNT, abi.encode(proposal));

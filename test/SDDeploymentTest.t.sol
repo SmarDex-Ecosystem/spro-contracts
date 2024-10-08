@@ -6,7 +6,7 @@ import { T20 } from "test/helper/T20.sol";
 
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import { SDDeployments, Spro, IPWNDeployer, SproLOAN, PWNRevokedNonce } from "src/SDDeployments.sol";
+import { SDDeployments, Spro, IPWNDeployer, SproLOAN, SproRevokedNonce } from "src/SDDeployments.sol";
 
 abstract contract SDDeploymentTest is SDDeployments, Test {
     uint256 public constant UNLISTED_FEE = 50e18;

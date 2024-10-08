@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 import { SproLOAN } from "src/spro/SproLOAN.sol";
-import { PWNRevokedNonce } from "src/spro/PWNRevokedNonce.sol";
+import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
@@ -15,8 +15,8 @@ contract SproStorage is ISproErrors, ISproEvents {
     /// @notice SDEX token address.
     address public immutable SDEX;
 
-    /// @notice PWNRevokedNonce contract address.
-    PWNRevokedNonce public immutable revokedNonce;
+    /// @notice SproRevokedNonce contract address.
+    SproRevokedNonce public immutable revokedNonce;
 
     /// @notice Percentage of a proposal's availableCreditLimit which can be used in partial lending.
     uint16 public partialPositionPercentage;

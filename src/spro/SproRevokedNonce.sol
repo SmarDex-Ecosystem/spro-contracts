@@ -7,7 +7,7 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
  * @title PWN Revoked Nonce
  * @notice Contract holding revoked nonces.
  */
-contract PWNRevokedNonce is Ownable {
+contract SproRevokedNonce is Ownable {
     /* ------------------------------------------------------------ */
     /*                VARIABLES & CONSTANTS DEFINITIONS             */
     /* ------------------------------------------------------------ */

@@ -9,7 +9,7 @@
 //     ITransparentUpgradeableProxy
 // } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 // import "@openzeppelin/contracts/utils/Create2.sol";
-// import { SDDeployments, Spro, IPWNDeployer, PWNLOAN, PWNRevokedNonce } from "src/SDDeployments.sol";
+// import { SDDeployments, Spro, IPWNDeployer, PWNLOAN, SproRevokedNonce } from "src/SDDeployments.sol";
 
 // library SDContractDeployerParams {
 //     string internal constant VERSION = "1.0";
@@ -130,10 +130,10 @@
 //         );
 
 //         // - Revoked nonces
-//         deployment.revokedNonce = PWNRevokedNonce(
+//         deployment.revokedNonce = SproRevokedNonce(
 //             _deploy({
 //                 salt: SDContractDeployerParams.REVOKED_NONCE,
-//                 bytecode: abi.encodePacked(type(PWNRevokedNonce).creationCode)
+//                 bytecode: abi.encodePacked(type(SproRevokedNonce).creationCode)
 //             })
 //         );
 
@@ -146,7 +146,7 @@
 //         console2.log("Spro - singleton:", configSingleton);
 //         console2.log("Spro - proxy:", address(deployment.config));
 //         console2.log("PWNLOAN:", address(deployment.loanToken));
-//         console2.log("PWNRevokedNonce:", address(deployment.revokedNonce));
+//         console2.log("SproRevokedNonce:", address(deployment.revokedNonce));
 
 //         // Writes deployment addresses to deployments JSON - @note currently points to sdLatest.json
 //         _writeDeploymentAddress(configSingleton, ".configSingleton");

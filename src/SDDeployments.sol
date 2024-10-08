@@ -9,7 +9,7 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Spro } from "src/spro/Spro.sol";
 import { IPWNDeployer } from "src/interfaces/IPWNDeployer.sol";
 import { SproLOAN } from "src/spro/SproLOAN.sol";
-import { PWNRevokedNonce } from "src/spro/PWNRevokedNonce.sol";
+import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 import { T20 } from "test/helper/T20.sol";
 
 abstract contract SDDeployments is CommonBase {
@@ -28,7 +28,7 @@ abstract contract SDDeployments is CommonBase {
         SproLOAN loanToken;
         address proxyAdmin;
         address protocolAdmin;
-        PWNRevokedNonce revokedNonce;
+        SproRevokedNonce revokedNonce;
         T20 sdex;
     }
 
