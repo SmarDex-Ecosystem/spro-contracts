@@ -9,9 +9,9 @@ contract SproHandler is Spro {
     constructor(
         address _sdex,
         address _stateFingerprintComputer,
-        uint16 _defaultThreshold,
-        uint16 _percentage,
-        uint16 _partialPositionPercentage,
+        uint256 _defaultThreshold,
+        uint256 _percentage,
+        uint256 _partialPositionPercentage,
         uint16 _variableFactor
     )
         Spro(_sdex, _stateFingerprintComputer, _defaultThreshold, _percentage, _partialPositionPercentage, _variableFactor)

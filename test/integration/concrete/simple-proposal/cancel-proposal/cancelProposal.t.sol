@@ -8,7 +8,7 @@ import {
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract CancelProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is SDBaseIntegrationTest {
-    function test_RevertWhen_DataCannotBeDecoded() external {
+    function test_RevertWhen_DataCannotBeDecoded_cancel() external {
         bytes memory badData = abi.encode("cannot be decoded");
 
         vm.expectRevert();
