@@ -348,6 +348,7 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, IERC5646, IPWNLoanMetadata
      * @notice Mint LOAN token and store loan data under loan id.
      * @param loanTerms Loan terms struct.
      * @param lenderSpec Lender specification struct.
+     * @return loanId Id of the created LOAN token.
      */
     function _createLoan(Terms memory loanTerms, LenderSpec calldata lenderSpec) private returns (uint256 loanId) {
         // Mint LOAN token for lender
@@ -385,6 +386,7 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, IERC5646, IPWNLoanMetadata
      * @notice Transfers credit to borrower
      * @dev The function assumes a prior token approval to a contract address or signed permits.
      * @param loanTerms Loan terms struct.
+     * @param lenderSpec Lender specification struct.
      */
     function _settleNewLoan(Terms memory loanTerms, LenderSpec calldata lenderSpec) private {
         // Lender is not the source of funds
@@ -1045,6 +1047,7 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, IERC5646, IPWNLoanMetadata
 
     /**
      * @notice Get a proposal hash according to EIP-712.
+     * @param proposalTypehash Proposal typehash.
      * @param encodedProposal Encoded proposal struct.
      * @return Struct hash.
      */
@@ -1070,6 +1073,7 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, IERC5646, IPWNLoanMetadata
     /**
      * @notice Try to accept proposal base.
      * @param acceptor Address of a proposal acceptor.
+     * @param creditAmount Amount of credit to lend.
      * @param proposalHash Proposal hash.
      * @param proposal Proposal base struct.
      */

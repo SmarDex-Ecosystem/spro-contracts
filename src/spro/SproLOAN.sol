@@ -30,11 +30,15 @@ contract SproLOAN is ERC721, IERC5646, Ownable {
 
     /**
      * @notice Emitted when a new LOAN token is minted.
+     * @param loanId Id of a newly minted LOAN token.
+     * @param loanContract Address of a loan contract that minted the LOAN token.
+     * @param owner Address of a LOAN token receiver.
      */
     event LOANMinted(uint256 indexed loanId, address indexed loanContract, address indexed owner);
 
     /**
      * @notice Emitted when a LOAN token is burned.
+     * @param loanId Id of a burned LOAN token.
      */
     event LOANBurned(uint256 indexed loanId);
 
@@ -42,15 +46,17 @@ contract SproLOAN is ERC721, IERC5646, Ownable {
     /*                      ERRORS DEFINITIONS                      */
     /* ------------------------------------------------------------ */
 
-    /**
-     * @notice Thrown when `SproLOAN.burn` caller is not a loan contract that minted the LOAN token.
-     */
+    /// @notice Thrown when `SproLOAN.burn` caller is not a loan contract that minted the LOAN token.
     error InvalidLoanContractCaller();
 
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
 
+    /**
+     * @notice Initialize SproLoan contract.
+     * @param creator Address of the creator.
+     */
     constructor(address creator) ERC721("Spro LOAN", "LOAN") Ownable(creator) { }
 
     /* ------------------------------------------------------------ */

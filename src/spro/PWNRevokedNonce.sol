@@ -29,11 +29,16 @@ contract PWNRevokedNonce is Ownable {
 
     /**
      * @notice Emitted when a nonce is revoked.
+     * @param owner Address of a nonce owner.
+     * @param nonceSpace Value of a nonce space.
+     * @param nonce Value of a nonce.
      */
     event NonceRevoked(address indexed owner, uint256 indexed nonceSpace, uint256 indexed nonce);
 
     /**
      * @notice Emitted when a nonce is revoked.
+     * @param owner Address of a nonce owner.
+     * @param nonceSpace Value of a nonce space.
      */
     event NonceSpaceRevoked(address indexed owner, uint256 indexed nonceSpace);
 
@@ -43,12 +48,19 @@ contract PWNRevokedNonce is Ownable {
 
     /**
      * @notice Thrown when trying to revoke a nonce that is already revoked.
+     * @dev Nonce cannot be revoked twice.
+     * @param addr Address of a nonce owner.
+     * @param nonceSpace Value of a nonce space.
+     * @param nonce Value of a nonce.
      */
     error NonceAlreadyRevoked(address addr, uint256 nonceSpace, uint256 nonce);
 
     /**
      * @notice Thrown when nonce is currently not usable.
      * @dev Maybe nonce is revoked or not in the current nonce space.
+     * @param addr Address of a nonce owner.
+     * @param nonceSpace Value of a nonce space.
+     * @param nonce Value of a nonce.
      */
     error NonceNotUsable(address addr, uint256 nonceSpace, uint256 nonce);
 
@@ -56,6 +68,10 @@ contract PWNRevokedNonce is Ownable {
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
 
+    /**
+     * @notice Construct a new Spro Revoked Nonce contract.
+     * @param creator Address of the creator.
+     */
     constructor(address creator) Ownable(creator) { }
 
     /* ------------------------------------------------------------ */
@@ -112,6 +128,9 @@ contract PWNRevokedNonce is Ownable {
 
     /**
      * @notice Internal function to revoke a nonce in a nonce space.
+     * @param owner Address of a nonce owner.
+     * @param nonceSpace Value of a nonce space.
+     * @param nonce Value of a nonce.
      */
     function _revokeNonce(address owner, uint256 nonceSpace, uint256 nonce) private {
         if (_revokedNonce[owner][nonceSpace][nonce]) {
