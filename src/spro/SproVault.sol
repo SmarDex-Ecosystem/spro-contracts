@@ -11,11 +11,11 @@ import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 
 /**
- * @title PWN Vault
- * @notice Base contract for transferring and managing collateral and loan assets in PWN protocol.
- * @dev Loan contracts inherits PWN Vault to act as a Vault for its loan type.
+ * @title Spro Vault
+ * @notice Base contract for transferring and managing collateral and loan assets in Spro protocol.
+ * @dev Loan contracts inherits Spro Vault to act as a Vault for its loan type.
  */
-contract PWNVault is ISproErrors, ISproEvents {
+contract SproVault is ISproErrors, ISproEvents {
     using SafeERC20 for IERC20Metadata;
     /* ------------------------------------------------------------ */
     /*                      TRANSFER FUNCTIONS                      */

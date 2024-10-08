@@ -7,11 +7,11 @@ import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
-import { IPWNLoanMetadataProvider } from "src/interfaces/IPWNLoanMetadataProvider.sol";
+import { ISproLoanMetadataProvider } from "src/interfaces/ISproLoanMetadataProvider.sol";
 import { IStateFingerprintComputer } from "src/interfaces/IStateFingerprintComputer.sol";
 import { IERC5646 } from "src/interfaces/IERC5646.sol";
 import { SproLOAN } from "src/spro/SproLOAN.sol";
-import { PWNVault } from "src/spro/PWNVault.sol";
+import { SproVault } from "src/spro/SproVault.sol";
 import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 import { SproStorage } from "src/spro/SproStorage.sol";
@@ -19,7 +19,7 @@ import { Permit } from "src/spro/Permit.sol";
 import { SproListedFee } from "src/libraries/SproListedFee.sol";
 
 /// @title Spro - Spro Protocol
-contract Spro is PWNVault, SproStorage, Ownable2Step, IERC5646, IPWNLoanMetadataProvider {
+contract Spro is SproVault, SproStorage, Ownable2Step, IERC5646, ISproLoanMetadataProvider {
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
@@ -812,11 +812,11 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, IERC5646, IPWNLoanMetadata
     }
 
     /* ------------------------------------------------------------ */
-    /*                      IPWNLoanMetadataProvider                */
+    /*                      ISproLoanMetadataProvider                */
     /* ------------------------------------------------------------ */
 
     /**
-     * @inheritdoc IPWNLoanMetadataProvider
+     * @inheritdoc ISproLoanMetadataProvider
      */
     function loanMetadataUri() external view override returns (string memory) {
         return loanMetadataUri(address(this));
@@ -954,7 +954,6 @@ contract Spro is PWNVault, SproStorage, Ownable2Step, IERC5646, IPWNLoanMetadata
 
     /**
      * @notice Accept a proposal and create new loan terms.
-     * @dev Function can be called only by a loan contract with appropriate PWN Hub tag.
      * @param acceptor Address of a proposal acceptor.
      * @param creditAmount Amount of credit to lend.
      * @param proposalData Encoded proposal data with signature.

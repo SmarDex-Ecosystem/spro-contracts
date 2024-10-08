@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title PWN Revoked Nonce
+ * @title SPRO Revoked Nonce
  * @notice Contract holding revoked nonces.
  */
 contract SproRevokedNonce is Ownable {
@@ -107,7 +107,7 @@ contract SproRevokedNonce is Ownable {
 
     /**
      * @notice Revoke a nonce in the current nonce space on behalf of an owner.
-     * @dev Only an address with associated access tag in PWN Hub can call this function.
+     * @dev Only owner can call this function.
      * @param owner Owner address of a revoking nonce.
      * @param nonce Nonce to be revoked.
      */
@@ -117,7 +117,7 @@ contract SproRevokedNonce is Ownable {
 
     /**
      * @notice Revoke a nonce in a nonce space on behalf of an owner.
-     * @dev Only an address with associated access tag in PWN Hub can call this function.
+     * @dev Only owner can call this function.
      * @param owner Owner address of a revoking nonce.
      * @param nonceSpace Nonce space where a nonce will be revoked.
      * @param nonce Nonce to be revoked.

@@ -5,7 +5,7 @@ import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { IERC5646 } from "src/interfaces/IERC5646.sol";
-import { IPWNLoanMetadataProvider } from "src/interfaces/IPWNLoanMetadataProvider.sol";
+import { ISproLoanMetadataProvider } from "src/interfaces/ISproLoanMetadataProvider.sol";
 
 /**
  * @title Spro LOAN token
@@ -104,7 +104,7 @@ contract SproLOAN is ERC721, IERC5646, Ownable {
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         _requireOwned(tokenId);
 
-        return IPWNLoanMetadataProvider(loanContract[tokenId]).loanMetadataUri();
+        return ISproLoanMetadataProvider(loanContract[tokenId]).loanMetadataUri();
     }
 
     /* ------------------------------------------------------------ */
