@@ -6,7 +6,6 @@ import { Test } from "forge-std/Test.sol";
 import { IERC721Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { IERC5646 } from "src/interfaces/IERC5646.sol";
 import { SproLOAN } from "src/spro/SproLOAN.sol";
 
 contract SproLOANTest is Test {
@@ -150,29 +149,5 @@ contract SproLOAN_TokenUri_Test is SproLOANTest {
     function test_shouldReturnCorrectValue() external view {
         string memory _tokenUri = loanToken.tokenURI(loanId);
         assertEq(tokenUri, _tokenUri);
-    }
-}
-
-/* ------------------------------------------------------------ */
-/*  ERC5646                                                  */
-/* ------------------------------------------------------------ */
-
-contract SproLOAN_GetStateFingerprint_Test is SproLOANTest {
-    uint256 loanId = 42;
-
-    function test_shouldReturnZeroIfLoanDoesNotExist() external view {
-        bytes32 fingerprint = loanToken.getStateFingerprint(loanId);
-
-        assertEq(fingerprint, bytes32(0));
-    }
-}
-
-/* ------------------------------------------------------------ */
-/*  ERC165                                                   */
-/* ------------------------------------------------------------ */
-
-contract SproLOAN_SupportsInterface_Test is SproLOANTest {
-    function test_shouldSupportERC5646() external view {
-        assertTrue(loanToken.supportsInterface(type(IERC5646).interfaceId));
     }
 }

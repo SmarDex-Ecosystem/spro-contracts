@@ -9,7 +9,6 @@ import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { T20 } from "test/helper/T20.sol";
 import { SDDeploymentTest, Spro, IPWNDeployer, SproRevokedNonce } from "test/SDDeploymentTest.t.sol";
 
-import { IERC5646 } from "src/spro/Spro.sol";
 import { Permit } from "src/spro/Permit.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
@@ -23,9 +22,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     address borrower = vm.addr(borrowerPK);
     Spro.Proposal proposal;
     Permit permit;
-
-    address public stateFingerprintComputer = makeAddr("stateFingerprintComputer");
-    bytes32 public collateralStateFingerprint = keccak256("some state fingerprint");
 
     // Additional lenders
     address alice;
@@ -76,8 +72,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         proposal = ISproTypes.Proposal({
             collateralAddress: address(t20),
             collateralAmount: COLLATERAL_AMOUNT,
-            checkCollateralStateFingerprint: false,
-            collateralStateFingerprint: bytes32(0),
             creditAddress: address(credit),
             availableCreditLimit: CREDIT_LIMIT,
             fixedInterestAmount: FIXED_INTEREST_AMOUNT,
@@ -117,18 +111,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         vm.label(bob, "bob");
         charlee = makeAddr("charlee");
         vm.label(charlee, "charlee");
-
-        // Mock state fingerprint calls
-        vm.mockCall(
-            address(deployment.config),
-            abi.encodeWithSignature("getStateFingerprintComputer(address)"),
-            abi.encode(stateFingerprintComputer)
-        );
-        vm.mockCall(
-            stateFingerprintComputer,
-            abi.encodeWithSignature("computeStateFingerprint(address,uint256)"),
-            abi.encode(collateralStateFingerprint)
-        );
     }
 
     // Make the proposal
@@ -169,15 +151,5 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         lenderSpec = complete
             ? ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: CREDIT_LIMIT, permitData: "" })
             : ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: CREDIT_AMOUNT, permitData: "" });
-    }
-
-    function _mockERC5646Support(address asset, bool result) internal {
-        _mockERC165Call(asset, type(IERC165).interfaceId, true);
-        _mockERC165Call(asset, hex"ffffffff", false);
-        _mockERC165Call(asset, type(IERC5646).interfaceId, result);
-    }
-
-    function _mockERC165Call(address asset, bytes4 interfaceId, bool result) internal {
-        vm.mockCall(asset, abi.encodeWithSignature("supportsInterface(bytes4)", interfaceId), abi.encode(result));
     }
 }

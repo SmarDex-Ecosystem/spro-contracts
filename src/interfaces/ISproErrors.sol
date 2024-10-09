@@ -116,18 +116,6 @@ interface ISproErrors {
     error DifferentCreditAddress(address loanCreditAddress, address expectedCreditAddress);
 
     /**
-     * @notice Thrown when a state fingerprint computer is not registered.
-     */
-    error MissingStateFingerprintComputer();
-
-    /**
-     * @notice Thrown when a proposed collateral state fingerprint doesn't match the current state.
-     * @param current The current state fingerprint.
-     * @param proposed The proposed state fingerprint.
-     */
-    error InvalidCollateralStateFingerprint(bytes32 current, bytes32 proposed);
-
-    /**
      * @notice Thrown when proposal acceptor and proposer are the same.
      * @param addr The address of the acceptor/proposer.
      */

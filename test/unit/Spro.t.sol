@@ -293,50 +293,6 @@ contract TestSproLoanMetadataUri is SproTest {
 }
 
 /* ------------------------------------------------------------ */
-/*  REGISTER STATE FINGERPRINT COMPUTER                      */
-/* ------------------------------------------------------------ */
-
-contract TestSproRegisterStateFingerprintComputer is SproTest {
-    function testFuzz_shouldFail_whenCallerIsNotOwner(address caller) external {
-        vm.assume(caller != owner);
-
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, caller));
-        vm.prank(caller);
-        config.registerStateFingerprintComputer(address(0), address(0));
-    }
-
-    function testFuzz_shouldUnregisterComputer_whenComputerIsZeroAddress(address asset) external {
-        address computer = makeAddr("computer");
-        bytes32 assetSlot = keccak256(abi.encode(asset, SFC_REGISTRY_SLOT));
-        vm.store(address(config), assetSlot, bytes32(uint256(uint160(computer))));
-
-        vm.prank(owner);
-        config.registerStateFingerprintComputer(asset, address(0));
-
-        assertEq(address(config.getStateFingerprintComputer(asset)), address(0));
-    }
-
-    function testFuzz_shouldFail_whenComputerDoesNotSupportToken(address asset, address computer) external {
-        assumeAddressIsNot(computer, AddressType.ForgeAddress, AddressType.Precompile, AddressType.ZeroAddress);
-        _mockSupportsToken(computer, asset, false);
-
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidComputerContract.selector, computer, asset));
-        vm.prank(owner);
-        config.registerStateFingerprintComputer(asset, computer);
-    }
-
-    function testFuzz_shouldRegisterComputer(address asset, address computer) external {
-        assumeAddressIsNot(computer, AddressType.ForgeAddress, AddressType.Precompile, AddressType.ZeroAddress);
-        _mockSupportsToken(computer, asset, true);
-
-        vm.prank(owner);
-        config.registerStateFingerprintComputer(asset, computer);
-
-        assertEq(address(config.getStateFingerprintComputer(asset)), computer);
-    }
-}
-
-/* ------------------------------------------------------------ */
 /*  GET POOL ADAPTER                                         */
 /* ------------------------------------------------------------ */
 

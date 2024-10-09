@@ -17,8 +17,6 @@ contract CancelProposal_SDSimpleLoanSimpleProposal_Integration_Concrete_Test is 
         bytes memory baseProposalData = abi.encode(
             ISproTypes.ProposalBase({
                 collateralAddress: address(t20),
-                checkCollateralStateFingerprint: false,
-                collateralStateFingerprint: bytes32(0),
                 availableCreditLimit: CREDIT_LIMIT,
                 startTimestamp: uint40(block.timestamp + 5 days),
                 proposer: borrower,

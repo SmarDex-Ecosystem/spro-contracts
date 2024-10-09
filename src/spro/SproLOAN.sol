@@ -4,7 +4,6 @@ pragma solidity ^0.8.26;
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { IERC5646 } from "src/interfaces/IERC5646.sol";
 import { ISproLoanMetadataProvider } from "src/interfaces/ISproLoanMetadataProvider.sol";
 
 /**
@@ -13,7 +12,7 @@ import { ISproLoanMetadataProvider } from "src/interfaces/ISproLoanMetadataProvi
  * @dev Token doesn't hold any loan logic, just an address of a loan contract that minted the LOAN token.
  *      Spro LOAN token is shared between all loan contracts.
  */
-contract SproLOAN is ERC721, IERC5646, Ownable {
+contract SproLOAN is ERC721, Ownable {
     /* ------------------------------------------------------------ */
     /*                VARIABLES & CONSTANTS DEFINITIONS             */
     /* ------------------------------------------------------------ */
@@ -105,31 +104,5 @@ contract SproLOAN is ERC721, IERC5646, Ownable {
         _requireOwned(tokenId);
 
         return ISproLoanMetadataProvider(loanContract[tokenId]).loanMetadataUri();
-    }
-
-    /* ------------------------------------------------------------ */
-    /*                          ERC5646                             */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @dev See {IERC5646-getStateFingerprint}.
-     */
-    function getStateFingerprint(uint256 tokenId) external view virtual override returns (bytes32) {
-        address _loanContract = loanContract[tokenId];
-
-        if (_loanContract == address(0)) return bytes32(0);
-
-        return IERC5646(_loanContract).getStateFingerprint(tokenId);
-    }
-
-    /* ------------------------------------------------------------ */
-    /*                          ERC165                              */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return super.supportsInterface(interfaceId) || interfaceId == type(IERC5646).interfaceId;
     }
 }
