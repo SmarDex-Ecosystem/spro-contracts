@@ -95,20 +95,20 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /**
      * @notice Getter for credit used and credit remaining for a proposal.
      * @param proposal Proposal struct.
-     * @return used Credit used for the proposal.
-     * @return remaining Credit remaining for the proposal.
+     * @return used_ Credit used for the proposal.
+     * @return remaining_ Credit remaining for the proposal.
      */
     function getProposalCreditStatus(ISproTypes.Proposal memory proposal)
         external
         view
-        returns (uint256 used, uint256 remaining);
+        returns (uint256 used_, uint256 remaining_);
 
     /**
      * @notice Return a LOAN data struct associated with a loan id.
      * @param loanId Id of a loan in question.
-     * @return loanInfo Loan information struct.
+     * @return loanInfo_ Loan information struct.
      */
-    function getLOAN(uint256 loanId) external view returns (ISproTypes.LoanInfo memory loanInfo);
+    function getLOAN(uint256 loanId) external view returns (ISproTypes.LoanInfo memory loanInfo_);
 
     /* -------------------------------------------------------------------------- */
     /*                                    VIEW                                    */
@@ -124,9 +124,9 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /**
      * @notice Return a LOAN token metadata uri base on a loan contract that minted the token.
      * @param loanContract Address of a loan contract.
-     * @return uri Metadata uri for given loan contract.
+     * @return uri_ Metadata uri for given loan contract.
      */
-    function loanMetadataUri(address loanContract) external view returns (string memory);
+    function loanMetadataUri(address loanContract) external view returns (string memory uri_);
 
     /**
      * @notice Calculate the loan repayment amount with fixed and accrued interest.
@@ -140,12 +140,12 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @dev Intended to be used to build permit data or credit token approvals
      * @param loanIds Array of loan ids.
      * @param creditAddress Expected credit address for all loan ids.
-     * @return amount
+     * @return amount_ Total repayment amount for loan.
      */
     function totalLoanRepaymentAmount(uint256[] memory loanIds, address creditAddress)
         external
         view
-        returns (uint256 amount);
+        returns (uint256 amount_);
 
     /* ------------------------------------------------------------ */
     /*                          POOL ADAPTER                        */
@@ -197,11 +197,11 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param proposalData Proposal data.
      * @param lenderSpec Lender specification struct.
      * @param extra Auxiliary data that are emitted in the loan creation event. They are not used in the contract logic.
-     * @return loanId Id of the created LOAN token.
+     * @return loanId_ Id of the created LOAN token.
      */
     function createLOAN(bytes memory proposalData, ISproTypes.LenderSpec memory lenderSpec, bytes memory extra)
         external
-        returns (uint256 loanId);
+        returns (uint256 loanId_);
 
     /* ------------------------------------------------------------ */
     /*                          REPAY LOAN                          */

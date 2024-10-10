@@ -133,34 +133,34 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     function getProposalCreditStatus(Proposal calldata proposal)
         external
         view
-        returns (uint256 used, uint256 remaining)
+        returns (uint256 used_, uint256 remaining_)
     {
         bytes32 proposalHash = getProposalHash(proposal);
         if (proposalsMade[proposalHash]) {
-            used = creditUsed[proposalHash];
-            remaining = proposal.availableCreditLimit - used;
+            used_ = creditUsed[proposalHash];
+            remaining_ = proposal.availableCreditLimit - used_;
         } else {
             revert ProposalNotMade();
         }
     }
 
     /// @inheritdoc ISpro
-    function getLOAN(uint256 loanId) external view returns (LoanInfo memory loanInfo) {
+    function getLOAN(uint256 loanId) external view returns (LoanInfo memory loanInfo_) {
         LOAN storage loan = LOANs[loanId];
 
-        loanInfo.status = _getLOANStatus(loanId);
-        loanInfo.startTimestamp = loan.startTimestamp;
-        loanInfo.defaultTimestamp = loan.defaultTimestamp;
-        loanInfo.borrower = loan.borrower;
-        loanInfo.originalLender = loan.originalLender;
-        loanInfo.loanOwner = loan.status != 0 ? loanToken.ownerOf(loanId) : address(0);
-        loanInfo.accruingInterestAPR = loan.accruingInterestAPR;
-        loanInfo.fixedInterestAmount = loan.fixedInterestAmount;
-        loanInfo.credit = loan.creditAddress;
-        loanInfo.collateral = loan.collateral;
-        loanInfo.collateralAmount = loan.collateralAmount;
-        loanInfo.originalSourceOfFunds = loan.originalSourceOfFunds;
-        loanInfo.repaymentAmount = loanRepaymentAmount(loanId);
+        loanInfo_.status = _getLOANStatus(loanId);
+        loanInfo_.startTimestamp = loan.startTimestamp;
+        loanInfo_.defaultTimestamp = loan.defaultTimestamp;
+        loanInfo_.borrower = loan.borrower;
+        loanInfo_.originalLender = loan.originalLender;
+        loanInfo_.loanOwner = loan.status != 0 ? loanToken.ownerOf(loanId) : address(0);
+        loanInfo_.accruingInterestAPR = loan.accruingInterestAPR;
+        loanInfo_.fixedInterestAmount = loan.fixedInterestAmount;
+        loanInfo_.credit = loan.creditAddress;
+        loanInfo_.collateral = loan.collateral;
+        loanInfo_.collateralAmount = loan.collateralAmount;
+        loanInfo_.originalSourceOfFunds = loan.originalSourceOfFunds;
+        loanInfo_.repaymentAmount = loanRepaymentAmount(loanId);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -176,10 +176,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     }
 
     /// @inheritdoc ISpro
-    function loanMetadataUri(address loanContract) public view returns (string memory uri) {
-        uri = _loanMetadataUri[loanContract];
+    function loanMetadataUri(address loanContract) public view returns (string memory uri_) {
+        uri_ = _loanMetadataUri[loanContract];
         // If there is no metadata uri for a loan contract, use default metadata uri.
-        if (bytes(uri).length == 0) uri = _loanMetadataUri[address(0)];
+        if (bytes(uri_).length == 0) uri_ = _loanMetadataUri[address(0)];
     }
 
     /// @inheritdoc ISpro
@@ -197,7 +197,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     function totalLoanRepaymentAmount(uint256[] calldata loanIds, address creditAddress)
         external
         view
-        returns (uint256 amount)
+        returns (uint256 amount_)
     {
         for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
@@ -207,7 +207,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             if (loan.status == 0) return 0;
 
             // Add loan principal with accrued interest
-            amount += loan.principalAmount + _loanAccruedInterest(loan);
+            amount_ += loan.principalAmount + _loanAccruedInterest(loan);
         }
     }
 
@@ -275,7 +275,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /// @inheritdoc ISpro
     function createLOAN(bytes calldata proposalData, LenderSpec calldata lenderSpec, bytes calldata extra)
         external
-        returns (uint256 loanId)
+        returns (uint256 loanId_)
     {
         // Accept proposal and get loan terms
         (bytes32 proposalHash, Terms memory loanTerms) =
@@ -298,10 +298,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         }
 
         // Create a new loan
-        loanId = _createLoan({ loanTerms: loanTerms, lenderSpec: lenderSpec });
+        loanId_ = _createLoan({ loanTerms: loanTerms, lenderSpec: lenderSpec });
 
         emit LOANCreated({
-            loanId: loanId,
+            loanId: loanId_,
             proposalHash: proposalHash,
             terms: loanTerms,
             lenderSpec: lenderSpec,
@@ -645,20 +645,20 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @notice Make an on-chain proposal.
      * @dev Function will mark a proposal hash as proposed.
      * @param proposalData Encoded proposal data.
-     * @return proposer Address of the borrower/proposer
-     * @return collateral Address of the collateral token.
-     * @return collateralAmount Amount of the collateral token.
-     * @return creditAddress Address of the credit token.
-     * @return creditLimit Credit limit.
+     * @return proposer_ Address of the borrower/proposer
+     * @return collateral_ Address of the collateral token.
+     * @return collateralAmount_ Amount of the collateral token.
+     * @return creditAddress_ Address of the credit token.
+     * @return creditLimit_ Credit limit.
      */
     function makeProposal(bytes calldata proposalData)
         private
         returns (
-            address proposer,
-            address collateral,
-            uint256 collateralAmount,
-            address creditAddress,
-            uint256 creditLimit
+            address proposer_,
+            address collateral_,
+            uint256 collateralAmount_,
+            address creditAddress_,
+            uint256 creditLimit_
         )
     {
         // Decode proposal data
@@ -673,13 +673,13 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Try to make proposal
         _makeProposal(proposalHash);
 
-        collateral = proposal.collateralAddress;
-        collateralAmount = proposal.collateralAmount;
-        withdrawableCollateral[proposalHash] = collateralAmount;
-        creditAddress = proposal.creditAddress;
-        creditLimit = proposal.availableCreditLimit;
+        collateral_ = proposal.collateralAddress;
+        collateralAmount_ = proposal.collateralAmount;
+        withdrawableCollateral[proposalHash] = collateralAmount_;
+        creditAddress_ = proposal.creditAddress;
+        creditLimit_ = proposal.availableCreditLimit;
 
-        emit ProposalMade(proposalHash, proposer = proposal.proposer, proposal);
+        emit ProposalMade(proposalHash, proposer_ = proposal.proposer, proposal);
     }
 
     /**
@@ -687,24 +687,24 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @param acceptor Address of a proposal acceptor.
      * @param creditAmount Amount of credit to lend.
      * @param proposalData Encoded proposal data with signature.
-     * @return proposalHash Proposal hash.
-     * @return loanTerms Loan terms.
+     * @return proposalHash_ Proposal hash.
+     * @return loanTerms_ Loan terms.
      */
     function acceptProposal(address acceptor, uint256 creditAmount, bytes calldata proposalData)
         private
-        returns (bytes32 proposalHash, Terms memory loanTerms)
+        returns (bytes32 proposalHash_, Terms memory loanTerms_)
     {
         // Decode proposal data
         Proposal memory proposal = decodeProposalData(proposalData);
 
         // Make proposal hash
-        proposalHash = _getProposalHash(Constants.PROPOSAL_TYPEHASH, abi.encode(proposal));
+        proposalHash_ = _getProposalHash(Constants.PROPOSAL_TYPEHASH, abi.encode(proposal));
 
         // Try to accept proposal
         _acceptProposal(
             acceptor,
             creditAmount,
-            proposalHash,
+            proposalHash_,
             ProposalBase({
                 collateralAddress: proposal.collateralAddress,
                 availableCreditLimit: proposal.availableCreditLimit,
@@ -719,7 +719,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Create loan terms object
         uint256 collateralUsed_ = (creditAmount * proposal.collateralAmount) / proposal.availableCreditLimit;
 
-        loanTerms = Terms({
+        loanTerms_ = Terms({
             lender: acceptor,
             borrower: proposal.proposer,
             startTimestamp: proposal.startTimestamp,
@@ -734,29 +734,29 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             borrowerSpecHash: proposal.proposerSpecHash
         });
 
-        withdrawableCollateral[proposalHash] -= collateralUsed_;
+        withdrawableCollateral[proposalHash_] -= collateralUsed_;
     }
 
     /**
      * @notice Cancels a proposal and resets withdrawable collateral.
      * @dev Revokes the nonce if still usable and block.timestamp is < proposal startTimestamp.
      * @param proposalData Encoded proposal data.
-     * @return proposal Proposal struct.
+     * @return proposal_ Proposal struct.
      */
-    function _cancelProposal(bytes calldata proposalData) internal returns (Proposal memory proposal) {
+    function _cancelProposal(bytes calldata proposalData) internal returns (Proposal memory proposal_) {
         // Decode proposal data
-        proposal = decodeProposalData(proposalData);
+        proposal_ = decodeProposalData(proposalData);
 
         // Make proposal hash
-        bytes32 proposalHash = _getProposalHash(Constants.PROPOSAL_TYPEHASH, abi.encode(proposal));
+        bytes32 proposalHash = _getProposalHash(Constants.PROPOSAL_TYPEHASH, abi.encode(proposal_));
 
-        proposal.collateralAmount = withdrawableCollateral[proposalHash];
+        proposal_.collateralAmount = withdrawableCollateral[proposalHash];
         delete withdrawableCollateral[proposalHash];
 
         // Revokes nonce if nonce is still usable
-        if (block.timestamp < proposal.startTimestamp) {
-            if (revokedNonce.isNonceUsable(proposal.proposer, proposal.nonceSpace, proposal.nonce)) {
-                revokedNonce.revokeNonce(proposal.proposer, proposal.nonceSpace, proposal.nonce);
+        if (block.timestamp < proposal_.startTimestamp) {
+            if (revokedNonce.isNonceUsable(proposal_.proposer, proposal_.nonceSpace, proposal_.nonce)) {
+                revokedNonce.revokeNonce(proposal_.proposer, proposal_.nonceSpace, proposal_.nonce);
             }
         }
     }
@@ -854,14 +854,14 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @notice Mint LOAN token and store loan data under loan id.
      * @param loanTerms Loan terms struct.
      * @param lenderSpec Lender specification struct.
-     * @return loanId Id of the created LOAN token.
+     * @return loanId_ Id of the created LOAN token.
      */
-    function _createLoan(Terms memory loanTerms, LenderSpec calldata lenderSpec) private returns (uint256 loanId) {
+    function _createLoan(Terms memory loanTerms, LenderSpec calldata lenderSpec) private returns (uint256 loanId_) {
         // Mint LOAN token for lender
-        loanId = loanToken.mint(loanTerms.lender);
+        loanId_ = loanToken.mint(loanTerms.lender);
 
         // Store loan data under loan id
-        LOAN storage loan = LOANs[loanId];
+        LOAN storage loan = LOANs[loanId_];
         loan.status = 2;
         loan.creditAddress = loanTerms.credit;
         loan.originalSourceOfFunds = lenderSpec.sourceOfFunds;
