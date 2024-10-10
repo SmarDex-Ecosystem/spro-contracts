@@ -64,9 +64,9 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         );
         // sdex fees
         assertEq(
-            deployment.sdex.balanceOf(address(Constants.SINK)),
+            deployment.sdex.balanceOf(address(address(0xdead))),
             deployment.config.fixFeeUnlisted(),
-            "9: sink should contain the sdex unlisted fee"
+            "9: address(0xdead) should contain the sdex unlisted fee"
         );
     }
 
@@ -549,7 +549,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(t20.balanceOf(address(deployment.config)), 0);
         assertEq(t20.balanceOf(lender), 0);
 
-        assertEq(deployment.sdex.balanceOf(address(Constants.SINK)), deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(address(address(0xdead))), deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
     }

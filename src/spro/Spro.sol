@@ -241,9 +241,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Calculate fee amount
         uint256 feeAmount = getLoanFee(creditAddress, creditLimit);
 
-        // Fees to sink (burned)
+        // Fees to address(0xdead)(burned)
         if (feeAmount > 0) {
-            _pushFrom(SDEX, feeAmount, msg.sender, Constants.SINK);
+            _pushFrom(SDEX, feeAmount, msg.sender, address(0xdead));
         }
     }
 

@@ -6,8 +6,6 @@ library SproConstantsLibrary {
     uint256 internal constant WAD = 1e18;
     /// @dev Percentage denominator (10_000 = 100%)
     uint256 internal constant PERCENTAGE = 1e4;
-    /// @notice Fee sink address.
-    address public constant SINK = address(0xdead);
 
     /* -------------------------------------------------------------------------- */
     /*                                    LOAN                                    */

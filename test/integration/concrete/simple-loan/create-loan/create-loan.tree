@@ -11,12 +11,12 @@ createLoan.t.sol
                     ├── it should store the loan data under the loan id, and return the loan id
                     ├── it should emit a {LOANCreated} event
                     ├── when the lender spec permit data is empty
-                    │   ├── it should transfer the SDEX fees to the sink address
+                    │   ├── it should transfer the SDEX fees to the 0xdead address
                     │   └── it should transfer the credit tokens from the lender to the borrower
                     └── when the lender spec permit data is not empty
                         ├── when the permit data is invalid
                         │   └── it should revert
                         └── when the permit data is valid
                             ├── it should try to execute the permit for the caller
-                            ├── it should transfer the SDEX fees to the sink address
+                            ├── it should transfer the SDEX fees to the 0xdead address
                             └── it should transfer the credit tokens from the lender to the borrower
