@@ -52,13 +52,13 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param loanContract Address of a loan contract.
      * @param metadataUri New value of LOAN token metadata uri for given `loanContract`.
      */
-    function setLOANMetadataUri(address loanContract, string memory metadataUri) external;
+    function setLoanMetadataUri(address loanContract, string memory metadataUri) external;
 
     /**
      * @notice Set a default LOAN token metadata uri.
      * @param metadataUri New value of default LOAN token metadata uri.
      */
-    function setDefaultLOANMetadataUri(string memory metadataUri) external;
+    function setDefaultLoanMetadataUri(string memory metadataUri) external;
 
     /* -------------------------------------------------------------------------- */
     /*                                   GETTER                                   */

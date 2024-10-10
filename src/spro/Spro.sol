@@ -88,9 +88,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     }
 
     /// @inheritdoc ISpro
-    function setLOANMetadataUri(address loanContract, string memory metadataUri) external onlyOwner {
+    function setLoanMetadataUri(address loanContract, string memory metadataUri) external onlyOwner {
         if (loanContract == address(0)) {
-            // address(0) is used as a default metadata uri. Use `setDefaultLOANMetadataUri` to set default metadata
+            // address(0) is used as a default metadata uri. Use `setDefaultLoanMetadataUri` to set default metadata
             // uri.
             revert ZeroLoanContract();
         }
@@ -100,7 +100,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     }
 
     /// @inheritdoc ISpro
-    function setDefaultLOANMetadataUri(string memory metadataUri) external onlyOwner {
+    function setDefaultLoanMetadataUri(string memory metadataUri) external onlyOwner {
         _loanMetadataUri[address(0)] = metadataUri;
         emit DefaultLOANMetadataUriUpdated(metadataUri);
     }
