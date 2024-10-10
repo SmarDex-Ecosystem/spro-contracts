@@ -23,7 +23,6 @@ contract Spro is SproVault, SproStorage, Ownable2Step, ISproLoanMetadataProvider
     /* ------------------------------------------------------------ */
 
     /**
-     * @notice Initialize Spro contract.
      * @param _sdex Address of SDEX token.
      * @param _owner Address of the owner.
      * @param _fixFeeUnlisted Fixed fee for unlisted assets.
