@@ -7,7 +7,7 @@ import { T20 } from "test/helper/T20.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { SproHandler } from "test/helper/SproHandler.sol";
 
-import { Spro, Math, Permit, SproRevokedNonce, IPoolAdapter } from "src/spro/Spro.sol";
+import { Spro, Math, SproRevokedNonce, IPoolAdapter } from "src/spro/Spro.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
@@ -38,7 +38,7 @@ contract SproSimpleLoanTest is Test {
     }
 
     function test_shouldFail_checkPermit_whenInvalidPermitOwner() external {
-        Permit memory permit;
+        Spro.Permit memory permit;
         permit.asset = permitAsset;
 
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidPermitOwner.selector, permit.owner, address(this)));
@@ -46,7 +46,7 @@ contract SproSimpleLoanTest is Test {
     }
 
     function test_shouldFail_checkPermit_whenInvalidPermitAsset() external {
-        Permit memory permit;
+        Spro.Permit memory permit;
         permit.asset = permitAsset;
         permit.owner = address(this);
 

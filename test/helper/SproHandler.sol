@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import { Spro, Permit } from "src/spro/Spro.sol";
+import { Spro } from "src/spro/Spro.sol";
 
 contract SproHandler is Spro {
     constructor(

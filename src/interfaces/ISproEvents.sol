@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0;
+pragma solidity ^0.8.26;
 
 import { ISproTypes } from "./ISproTypes.sol";
 
@@ -8,55 +8,6 @@ import { ISproTypes } from "./ISproTypes.sol";
  * @notice Events for the Spro Protocol
  */
 interface ISproEvents is ISproTypes {
-    /**
-     * @notice Emitted when asset transfer happens from an `origin` address to a vault.
-     * @param asset The address of the asset.
-     * @param origin The address of the origin.
-     * @param amount The amount of the asset.
-     */
-    event VaultPull(address asset, address indexed origin, uint256 amount);
-
-    /**
-     * @notice Emitted when asset transfer happens from a vault to a `beneficiary` address.
-     * @param asset The address of the asset.
-     * @param beneficiary The address of the beneficiary.
-     * @param amount The amount of the asset.
-     */
-    event VaultPush(address asset, address indexed beneficiary, uint256 amount);
-
-    /**
-     * @notice Emitted when asset transfer happens from an `origin` address to a `beneficiary` address.
-     * @param asset The address of the asset.
-     * @param origin The address of the origin.
-     * @param beneficiary The address of the beneficiary.
-     * @param amount The amount of the asset.
-     */
-    event VaultPushFrom(address asset, address indexed origin, address indexed beneficiary, uint256 amount);
-
-    /**
-     * @notice Emitted when asset is withdrawn from a pool to an `owner` address.
-     * @param asset The address of the asset.
-     * @param poolAdapter The address of the pool adapter.
-     * @param pool The address of the pool.
-     * @param owner The address of the owner.
-     * @param amount The amount of the asset.
-     */
-    event PoolWithdraw(
-        address asset, address indexed poolAdapter, address indexed pool, address indexed owner, uint256 amount
-    );
-
-    /**
-     * @notice Emitted when asset is supplied to a pool from a vault.
-     * @param asset The address of the asset.
-     * @param poolAdapter The address of the pool adapter.
-     * @param pool The address of the pool.
-     * @param owner The address of the owner.
-     * @param amount The amount of the asset.
-     */
-    event PoolSupply(
-        address asset, address indexed poolAdapter, address indexed pool, address indexed owner, uint256 amount
-    );
-
     /**
      * @notice Emitted when new listed fee is set.
      * @param oldFee The old fee.

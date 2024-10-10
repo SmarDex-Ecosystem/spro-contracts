@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0;
+pragma solidity ^0.8.26;
 
 interface ISproTypes {
     /**
@@ -175,5 +175,25 @@ interface ISproTypes {
         uint256 nonceSpace;
         uint256 nonce;
         address loanContract;
+    }
+
+    /**
+     * @notice Struct to hold the permit data.
+     * @param asset The address of the ERC20 token.
+     * @param owner The owner of the tokens.
+     * @param amount The amount of tokens.
+     * @param deadline The deadline for the permit.
+     * @param v The v value of the signature.
+     * @param r The r value of the signature.
+     * @param s The s value of the signature.
+     */
+    struct Permit {
+        address asset;
+        address owner;
+        uint256 amount;
+        uint256 deadline;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
     }
 }

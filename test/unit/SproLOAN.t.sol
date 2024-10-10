@@ -7,6 +7,7 @@ import { IERC721Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { SproLOAN } from "src/spro/SproLOAN.sol";
+import { ISproLOAN } from "src/interfaces/ISproLOAN.sol";
 
 contract SproLOANTest is Test {
     bytes32 internal constant LAST_LOAN_ID_SLOT = bytes32(uint256(6)); // `lastLoanId` property position
@@ -66,7 +67,7 @@ contract SproLOAN_Mint_Test is SproLOANTest {
 
     function test_shouldEmitEvent_LOANMinted() external {
         vm.expectEmit(true, true, true, false);
-        emit SproLOAN.LOANMinted(1, alice);
+        emit ISproLOAN.LOANMinted(1, alice);
 
         loanToken.mint(alice);
     }
@@ -100,7 +101,7 @@ contract SproLOAN_Burn_Test is SproLOANTest {
 
     function test_shouldEmitEvent_LOANBurned() external {
         vm.expectEmit(true, false, false, false);
-        emit SproLOAN.LOANBurned(loanId);
+        emit ISproLOAN.LOANBurned(loanId);
 
         loanToken.burn(loanId);
     }

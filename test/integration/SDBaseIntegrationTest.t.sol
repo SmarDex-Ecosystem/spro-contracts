@@ -9,7 +9,6 @@ import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { T20 } from "test/helper/T20.sol";
 import { SDDeploymentTest, Spro, IPWNDeployer, SproRevokedNonce } from "test/SDDeploymentTest.t.sol";
 
-import { Permit } from "src/spro/Permit.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 abstract contract SDBaseIntegrationTest is SDDeploymentTest {
@@ -21,7 +20,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     uint256 borrowerPK = uint256(888);
     address borrower = vm.addr(borrowerPK);
     Spro.Proposal proposal;
-    Permit permit;
+    Spro.Permit permit;
 
     // Additional lenders
     address alice;

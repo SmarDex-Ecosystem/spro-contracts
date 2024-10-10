@@ -19,11 +19,6 @@ interface ISproErrors {
     error UnsupportedTransferFunction();
 
     /**
-     * @notice Thrown when the Vault receives an invalid amount of an asset.
-     */
-    error InvalidAmountTransfer();
-
-    /**
      * @notice Thrown when registering a computer which does not support the asset it is registered for.
      * @param computer The address of the computer.
      * @param asset The address of the asset.
