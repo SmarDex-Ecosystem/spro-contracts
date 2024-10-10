@@ -257,15 +257,15 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /// @inheritdoc ISpro
     function cancelProposal(bytes calldata proposalData) external {
-        (address proposer, address collateral, uint256 collateralAmount) = _cancelProposal(proposalData);
+        Proposal memory proposal = _cancelProposal(proposalData);
 
         // The caller must be the proposer
-        if (msg.sender != proposer) {
+        if (msg.sender != proposal.proposer) {
             revert CallerNotProposer();
         }
 
         // Transfers withdrawable collateral to the proposer/borrower
-        _push(collateral, collateralAmount, proposer);
+        _push(proposal.collateralAddress, proposal.collateralAmount, proposal.proposer);
     }
 
     /* ------------------------------------------------------------ */
@@ -741,23 +741,16 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @notice Cancels a proposal and resets withdrawable collateral.
      * @dev Revokes the nonce if still usable and block.timestamp is < proposal startTimestamp.
      * @param proposalData Encoded proposal data.
-     * @return proposer Address of the borrower/proposer.
-     * @return collateral Address or the token.
-     * @return collateralAmount Amount of collateral tokens that can be withdrawn.
+     * @return proposal Proposal struct.
      */
-    function _cancelProposal(bytes calldata proposalData)
-        internal
-        returns (address proposer, address collateral, uint256 collateralAmount)
-    {
+    function _cancelProposal(bytes calldata proposalData) internal returns (Proposal memory proposal) {
         // Decode proposal data
-        Proposal memory proposal = decodeProposalData(proposalData);
+        proposal = decodeProposalData(proposalData);
 
         // Make proposal hash
         bytes32 proposalHash = _getProposalHash(Constants.PROPOSAL_TYPEHASH, abi.encode(proposal));
 
-        proposer = proposal.proposer;
-        collateral = proposal.collateralAddress;
-        collateralAmount = withdrawableCollateral[proposalHash];
+        proposal.collateralAmount = withdrawableCollateral[proposalHash];
         delete withdrawableCollateral[proposalHash];
 
         // Revokes nonce if nonce is still usable
