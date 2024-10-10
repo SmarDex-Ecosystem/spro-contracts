@@ -78,8 +78,12 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /// @inheritdoc ISpro
     function setPartialPositionPercentage(uint16 percentage) external onlyOwner {
-        if (percentage == 0) revert ZeroPercentageValue();
-        if (percentage >= Constants.PERCENTAGE / 2) revert ExcessivePercentageValue(percentage);
+        if (percentage == 0) {
+            revert ZeroPercentageValue();
+        }
+        if (percentage >= Constants.PERCENTAGE / 2) {
+            revert ExcessivePercentageValue(percentage);
+        }
         partialPositionPercentage = percentage;
     }
 
@@ -256,7 +260,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         (address proposer, address collateral, uint256 collateralAmount) = _cancelProposal(proposalData);
 
         // The caller must be the proposer
-        if (msg.sender != proposer) revert CallerNotProposer();
+        if (msg.sender != proposer) {
+            revert CallerNotProposer();
+        }
 
         // Transfers withdrawable collateral to the proposer/borrower
         _push(collateral, collateralAmount, proposer);
@@ -436,7 +442,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /// @inheritdoc ISpro
     function tryClaimRepaidLOAN(uint256 loanId, uint256 creditAmount, address loanOwner) external {
-        if (msg.sender != address(this)) revert CallerNotVault();
+        if (msg.sender != address(this)) {
+            revert CallerNotVault();
+        }
 
         LOAN storage loan = LOANs[loanId];
 
@@ -570,9 +578,13 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      */
     function _checkLoanCanBeRepaid(uint8 status, uint40 defaultTimestamp) internal view {
         // Check that loan exists and is not from a different loan contract
-        if (status == 0) revert NonExistingLoan();
+        if (status == 0) {
+            revert NonExistingLoan();
+        }
         // Check that loan is running
-        if (status != 2) revert LoanNotRunning();
+        if (status != 2) {
+            revert LoanNotRunning();
+        }
         // Check that loan is not defaulted
         if (defaultTimestamp <= block.timestamp) {
             revert LoanDefaulted(defaultTimestamp);
@@ -776,7 +788,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @param proposalHash Proposal hash.
      */
     function _makeProposal(bytes32 proposalHash) private {
-        if (proposalsMade[proposalHash]) revert ProposalAlreadyExists();
+        if (proposalsMade[proposalHash]) {
+            revert ProposalAlreadyExists();
+        }
 
         proposalsMade[proposalHash] = true;
     }
