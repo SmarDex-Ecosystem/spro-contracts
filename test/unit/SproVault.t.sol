@@ -6,9 +6,11 @@ import { Test } from "forge-std/Test.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { T20 } from "test/helper/T20.sol";
 
-import { SproVault, IPoolAdapter, Permit } from "src/spro/SproVault.sol";
+import { SproVault, IPoolAdapter } from "src/spro/SproVault.sol";
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
+import { Spro } from "src/spro/Spro.sol";
 
 contract SproVaultHarness is SproVault {
     function pull(address asset, uint256 amount, address origin) external {
@@ -189,7 +191,7 @@ contract SproVault_SupplyToPool_Test is SproVaultTest {
 /* ------------------------------------------------------------ */
 
 contract SproVault_TryPermit_Test is SproVaultTest {
-    Permit permit;
+    Spro.Permit permit;
     string permitSignature = "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)";
 
     function setUp() public override {
@@ -201,7 +203,7 @@ contract SproVault_TryPermit_Test is SproVaultTest {
             abi.encode("")
         );
 
-        permit = Permit({
+        permit = ISproTypes.Permit({
             asset: token,
             owner: alice,
             amount: 100,

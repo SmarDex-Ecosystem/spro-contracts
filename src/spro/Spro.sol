@@ -13,7 +13,6 @@ import { SproVault } from "src/spro/SproVault.sol";
 import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 import { SproStorage } from "src/spro/SproStorage.sol";
-import { Permit } from "src/spro/Permit.sol";
 import { SproListedFee } from "src/libraries/SproListedFee.sol";
 
 /// @title Spro - Spro Protocol
