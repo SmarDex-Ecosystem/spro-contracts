@@ -62,12 +62,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             false,
             "7: nonce for borrower should not be usable"
         );
-        // loan id
-        assertEq(
-            deployment.loanToken.loanContract(loanId),
-            address(deployment.config),
-            "8: loan contract should be mapped to loanId"
-        );
         // sdex fees
         assertEq(
             deployment.sdex.balanceOf(address(Constants.SINK)),

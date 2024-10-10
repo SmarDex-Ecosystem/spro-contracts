@@ -49,9 +49,6 @@ contract SproStorage is ISproErrors, ISproEvents {
      */
     mapping(address => string) public _loanMetadataUri;
 
-    /// @notice Mapping holding registered state fingerprint computer to an asset.
-    mapping(address => address) public _sfComputerRegistry;
-
     /// @notice Mapping holding registered pool adapter to a pool address.
     mapping(address => address) public _poolAdapterRegistry;
 

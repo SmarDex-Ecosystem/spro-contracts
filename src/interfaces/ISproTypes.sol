@@ -85,9 +85,6 @@ interface ISproTypes {
      * @notice Construct defining a simple proposal.
      * @param collateralAddress Address of an asset used as a collateral.
      * @param collateralAmount Amount of tokens used as a collateral, in case of ERC721 should be 0.
-     * @param checkCollateralStateFingerprint If true, the collateral state fingerprint will be checked during proposal
-     * acceptance.
-     * @param collateralStateFingerprint Fingerprint of a collateral state defined by ERC5646.
      * @param creditAddress Address of an asset which is lended to a borrower.
      * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
      * be borrowed using the proposal. If non-zero, proposal can be accepted more than once, until the credit limit is
@@ -109,8 +106,6 @@ interface ISproTypes {
     struct Proposal {
         address collateralAddress;
         uint256 collateralAmount;
-        bool checkCollateralStateFingerprint;
-        bytes32 collateralStateFingerprint;
         address creditAddress;
         uint256 availableCreditLimit;
         uint256 fixedInterestAmount;
@@ -160,9 +155,6 @@ interface ISproTypes {
     /**
      * @notice Base struct for a proposal.
      * @param collateralAddress Address of an asset used as a collateral.
-     * @param checkCollateralStateFingerprint If true, the collateral state fingerprint will be checked during proposal
-     * acceptance.
-     * @param collateralStateFingerprint Fingerprint of a collateral state defined by ERC5646.
      * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
      * be borrowed using the proposal. If non-zero, proposal can be accepted more than once, until the credit limit is
      * reached.
@@ -177,8 +169,6 @@ interface ISproTypes {
      */
     struct ProposalBase {
         address collateralAddress;
-        bool checkCollateralStateFingerprint;
-        bytes32 collateralStateFingerprint;
         uint256 availableCreditLimit;
         uint40 startTimestamp;
         address proposer;

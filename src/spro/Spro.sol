@@ -8,8 +8,6 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { ISproLoanMetadataProvider } from "src/interfaces/ISproLoanMetadataProvider.sol";
-import { IStateFingerprintComputer } from "src/interfaces/IStateFingerprintComputer.sol";
-import { IERC5646 } from "src/interfaces/IERC5646.sol";
 import { SproLOAN } from "src/spro/SproLOAN.sol";
 import { SproVault } from "src/spro/SproVault.sol";
 import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
@@ -19,13 +17,12 @@ import { Permit } from "src/spro/Permit.sol";
 import { SproListedFee } from "src/libraries/SproListedFee.sol";
 
 /// @title Spro - Spro Protocol
-contract Spro is SproVault, SproStorage, Ownable2Step, IERC5646, ISproLoanMetadataProvider {
+contract Spro is SproVault, SproStorage, Ownable2Step, ISproLoanMetadataProvider {
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
 
     /**
-     * @notice Initialize Spro contract.
      * @param _sdex Address of SDEX token.
      * @param _owner Address of the owner.
      * @param _fixFeeUnlisted Fixed fee for unlisted assets.
@@ -153,34 +150,6 @@ contract Spro is SproVault, SproStorage, Ownable2Step, IERC5646, ISproLoanMetada
     }
 
     /* ------------------------------------------------------------ */
-    /*                  STATE FINGERPRINT COMPUTER                  */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Returns the state fingerprint computer for a given asset.
-     * @param asset The asset for which the computer is requested.
-     * @return The computer for the given asset.
-     */
-    function getStateFingerprintComputer(address asset) public view returns (IStateFingerprintComputer) {
-        return IStateFingerprintComputer(_sfComputerRegistry[asset]);
-    }
-
-    /**
-     * @notice Registers a state fingerprint computer for a given asset.
-     * @param asset The asset for which the computer is registered.
-     * @param computer The computer to be registered. Use address(0) to remove a computer.
-     */
-    function registerStateFingerprintComputer(address asset, address computer) external onlyOwner {
-        if (computer != address(0)) {
-            if (!IStateFingerprintComputer(computer).supportsToken(asset)) {
-                revert InvalidComputerContract({ computer: computer, asset: asset });
-            }
-        }
-
-        _sfComputerRegistry[asset] = computer;
-    }
-
-    /* ------------------------------------------------------------ */
     /*                          POOL ADAPTER                        */
     /* ------------------------------------------------------------ */
 
@@ -201,10 +170,6 @@ contract Spro is SproVault, SproStorage, Ownable2Step, IERC5646, ISproLoanMetada
     function registerPoolAdapter(address pool, address adapter) external onlyOwner {
         _poolAdapterRegistry[pool] = adapter;
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                                    LOAN                                    */
-    /* -------------------------------------------------------------------------- */
 
     /* ------------------------------------------------------------ */
     /*                      LENDER SPEC                             */
@@ -823,35 +788,6 @@ contract Spro is SproVault, SproStorage, Ownable2Step, IERC5646, ISproLoanMetada
     }
 
     /* ------------------------------------------------------------ */
-    /*                            ERC5646                           */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @inheritdoc IERC5646
-     */
-    function getStateFingerprint(uint256 tokenId) external view virtual override returns (bytes32) {
-        LOAN storage loan = LOANs[tokenId];
-
-        if (loan.status == 0) return bytes32(0);
-
-        // The only mutable state properties are:
-        // - status: updated for expired loans based on block.timestamp
-        // - defaultTimestamp: updated when the loan is extended
-        // - fixedInterestAmount: updated when the loan is repaid and waiting to be claimed
-        // - accruingInterestAPR: updated when the loan is repaid and waiting to be claimed
-        // Others don't have to be part of the state fingerprint as it does not act as a token identification.
-        return keccak256(
-            abi.encode(
-                _getLOANStatus(tokenId), loan.defaultTimestamp, loan.fixedInterestAmount, loan.accruingInterestAPR
-            )
-        );
-    }
-
-    /* -------------------------------------------------------------------------- */
-    /*                                  PROPOSAL                                  */
-    /* -------------------------------------------------------------------------- */
-
-    /* ------------------------------------------------------------ */
     /*                          EXTERNALS                           */
     /* ------------------------------------------------------------ */
 
@@ -977,8 +913,6 @@ contract Spro is SproVault, SproStorage, Ownable2Step, IERC5646, ISproLoanMetada
             proposalHash,
             ProposalBase({
                 collateralAddress: proposal.collateralAddress,
-                checkCollateralStateFingerprint: proposal.checkCollateralStateFingerprint,
-                collateralStateFingerprint: proposal.collateralStateFingerprint,
                 availableCreditLimit: proposal.availableCreditLimit,
                 startTimestamp: proposal.startTimestamp,
                 proposer: proposal.proposer,
@@ -1080,7 +1014,9 @@ contract Spro is SproVault, SproStorage, Ownable2Step, IERC5646, ISproLoanMetada
         internal
     {
         // Check that the proposal was made on-chain
-        if (!proposalsMade[proposalHash]) revert ProposalNotMade();
+        if (!proposalsMade[proposalHash]) {
+            revert ProposalNotMade();
+        }
 
         // Check proposer is not acceptor
         if (proposal.proposer == acceptor) {
@@ -1127,30 +1063,6 @@ contract Spro is SproVault, SproStorage, Ownable2Step, IERC5646, ISproLoanMetada
 
         // Apply increase if credit amount checks pass
         creditUsed[proposalHash] += creditAmount;
-
-        // Check collateral state fingerprint if needed
-        if (proposal.checkCollateralStateFingerprint) {
-            bytes32 currentFingerprint;
-            IStateFingerprintComputer computer = getStateFingerprintComputer(proposal.collateralAddress);
-            if (address(computer) != address(0)) {
-                // Asset has registered computer
-                currentFingerprint = computer.computeStateFingerprint({ token: proposal.collateralAddress, tokenId: 0 });
-            } else if (ERC165Checker.supportsInterface(proposal.collateralAddress, type(IERC5646).interfaceId)) {
-                // Asset implements ERC5646
-                currentFingerprint = IERC5646(proposal.collateralAddress).getStateFingerprint(0);
-            } else {
-                // Asset is not implementing ERC5646 and no computer is registered
-                revert MissingStateFingerprintComputer();
-            }
-
-            if (proposal.collateralStateFingerprint != currentFingerprint) {
-                // Fingerprint mismatch
-                revert InvalidCollateralStateFingerprint({
-                    current: currentFingerprint,
-                    proposed: proposal.collateralStateFingerprint
-                });
-            }
-        }
     }
 
     /**

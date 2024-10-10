@@ -113,8 +113,6 @@ contract SproSimpleLoanTest is Test {
         Spro.Proposal memory proposal = ISproTypes.Proposal({
             collateralAddress: addr,
             collateralAmount: 1e20,
-            checkCollateralStateFingerprint: false,
-            collateralStateFingerprint: bytes32(0),
             creditAddress: addr,
             availableCreditLimit: 20e22,
             fixedInterestAmount: 1e14,
