@@ -16,8 +16,7 @@ contract Deploy is Script {
         address deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         vm.startBroadcast(deployerAddress);
 
-        Spro spro =
-            new Spro(SDEX_MAINNET, deployerAddress, FIX_FEE_UNLISTED, FIX_FEE_LISTED, VARIABLE_FACTOR, PERCENTAGE);
+        Spro spro = new Spro(SDEX_MAINNET, FIX_FEE_UNLISTED, FIX_FEE_LISTED, VARIABLE_FACTOR, PERCENTAGE);
 
         console.log("Spro address", address(spro));
         console.log("revokedNonce address", address(spro.revokedNonce()));

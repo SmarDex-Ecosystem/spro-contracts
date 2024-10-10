@@ -22,7 +22,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /**
      * @param _sdex Address of SDEX token.
-     * @param _owner Address of the owner.
      * @param _fixFeeUnlisted Fixed fee for unlisted assets.
      * @param _fixFeeListed Fixed fee for listed assets.
      * @param _variableFactor Variable factor for listed assets.
@@ -30,13 +29,11 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      */
     constructor(
         address _sdex,
-        address _owner,
         uint256 _fixFeeUnlisted,
         uint256 _fixFeeListed,
         uint256 _variableFactor,
         uint16 _percentage
-    ) Ownable(_owner) {
-        require(_owner != address(0), "Owner is zero address");
+    ) Ownable(msg.sender) {
         require(_sdex != address(0), "SDEX is zero address");
         require(
             _percentage > 0 && _percentage < Constants.PERCENTAGE / 2, "Partial percentage position value is invalid"

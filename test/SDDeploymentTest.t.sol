@@ -35,7 +35,7 @@ abstract contract SDDeploymentTest is Test {
 
     function setUp() public virtual {
         deployment.proxyAdmin = makeAddr("proxyAdmin");
-        deployment.protocolAdmin = makeAddr("protocolAdmin");
+        deployment.protocolAdmin = address(this);
 
         // Deploy SDEX token
         deployment.sdex = new T20();
@@ -43,14 +43,8 @@ abstract contract SDDeploymentTest is Test {
         vm.startPrank(deployment.protocolAdmin);
 
         // Deploy protocol
-        deployment.config = new Spro(
-            address(deployment.sdex),
-            deployment.protocolAdmin,
-            UNLISTED_FEE,
-            LISTED_FEE,
-            VARIABLE_FACTOR,
-            PARTIAL_POSITION_PERCENTAGE
-        );
+        deployment.config =
+            new Spro(address(deployment.sdex), UNLISTED_FEE, LISTED_FEE, VARIABLE_FACTOR, PARTIAL_POSITION_PERCENTAGE);
         vm.stopPrank();
         deployment.revokedNonce = deployment.config.revokedNonce();
         deployment.loanToken = deployment.config.loanToken();

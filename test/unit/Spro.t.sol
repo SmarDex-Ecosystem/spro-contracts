@@ -30,8 +30,9 @@ abstract contract SproTest is Test {
         // position
 
     Spro config;
-    address owner = makeAddr("owner");
+    address owner = address(this);
     address sdex = makeAddr("sdex");
+    address alice = makeAddr("alice");
     address creditToken = makeAddr("creditToken");
 
     uint256 fixFeeUnlisted = 500e18;
@@ -41,7 +42,7 @@ abstract contract SproTest is Test {
     uint16 PERCENTAGE = 1e4;
 
     function setUp() public virtual {
-        config = new Spro(sdex, owner, fixFeeUnlisted, fixFeeListed, variableFactor, partialPositionPercentage);
+        config = new Spro(sdex, fixFeeUnlisted, fixFeeListed, variableFactor, partialPositionPercentage);
     }
 
     function _mockSupportsToken(address computer, address token, bool result) internal {
@@ -72,7 +73,8 @@ contract TestSproSetUnlistedFee is SproTest {
     uint256 fee = 90e18;
 
     function test_shouldFail_whenCallerIsNotOwner() external {
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
+        vm.prank(alice);
         config.setFixFeeUnlisted(fee);
     }
 
@@ -100,7 +102,8 @@ contract TestSproSetListedFee is SproTest {
     uint256 fee = 90e18;
 
     function test_shouldFail_whenCallerIsNotOwner() external {
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
+        vm.prank(alice);
         config.setFixFeeListed(fee);
     }
 
@@ -128,7 +131,8 @@ contract TestSproSetListedToken is SproTest {
     uint256 factor = 1e14;
 
     function test_shouldFail_whenCallerIsNotOwner() external {
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
+        vm.prank(alice);
         config.setListedToken(creditToken, factor);
     }
 
@@ -177,7 +181,8 @@ contract TestSproPartialLendingThresholds is SproTest {
     }
 
     function test_shouldFail_whenCallerIsNotOwner() external {
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
+        vm.prank(alice);
         config.setPartialPositionPercentage(2000);
     }
 
@@ -206,7 +211,8 @@ contract TestSproSetLOANMetadataUri is SproTest {
     address loanContract = address(0x63);
 
     function test_shouldFail_whenCallerIsNotOwner() external {
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
+        vm.prank(alice);
         config.setLOANMetadataUri(loanContract, tokenUri);
     }
 
@@ -243,7 +249,8 @@ contract TestSproSetDefaultLOANMetadataUri is SproTest {
     string tokenUri = "test.token.uri";
 
     function test_shouldFail_whenCallerIsNotOwner() external {
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
+        vm.prank(alice);
         config.setDefaultLOANMetadataUri(tokenUri);
     }
 
