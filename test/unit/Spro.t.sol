@@ -217,7 +217,7 @@ contract TestSprosetLoanMetadataUri is SproTest {
     }
 
     function test_shouldFail_whenZeroLoanContract() external {
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.ZeroLoanContract.selector));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.DefaultLoanContract.selector));
         vm.prank(owner);
         config.setLoanMetadataUri(address(0), tokenUri);
     }

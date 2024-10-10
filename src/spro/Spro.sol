@@ -92,7 +92,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         if (loanContract == address(0)) {
             // address(0) is used as a default metadata uri. Use `setDefaultLoanMetadataUri` to set default metadata
             // uri.
-            revert ZeroLoanContract();
+            revert DefaultLoanContract();
         }
 
         _loanMetadataUri[loanContract] = metadataUri;

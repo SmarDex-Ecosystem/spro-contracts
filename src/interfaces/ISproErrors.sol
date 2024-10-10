@@ -28,7 +28,7 @@ interface ISproErrors {
     /**
      * @notice Thrown when trying to set a LOAN token metadata uri for zero address loan contract.
      */
-    error ZeroLoanContract();
+    error DefaultLoanContract();
 
     /**
      * @notice Thrown when trying to set a percentage value higher than `PERCENTAGE`.
