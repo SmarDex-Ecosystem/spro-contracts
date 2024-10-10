@@ -116,7 +116,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /// @inheritdoc ISpro
     function getProposalHash(Proposal calldata proposal) public view returns (bytes32) {
-        return _getProposalHash(Constants.PROPOSAL_TYPEHASH, abi.encode(proposal));
+        return _getProposalHash(abi.encode(proposal));
     }
 
     /// @inheritdoc ISpro
@@ -668,7 +668,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         }
 
         // Make proposal hash
-        bytes32 proposalHash = _getProposalHash(Constants.PROPOSAL_TYPEHASH, abi.encode(proposal));
+        bytes32 proposalHash = _getProposalHash(abi.encode(proposal));
 
         // Try to make proposal
         _makeProposal(proposalHash);
@@ -698,7 +698,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         Proposal memory proposal = decodeProposalData(proposalData);
 
         // Make proposal hash
-        proposalHash_ = _getProposalHash(Constants.PROPOSAL_TYPEHASH, abi.encode(proposal));
+        proposalHash_ = _getProposalHash(abi.encode(proposal));
 
         // Try to accept proposal
         _acceptProposal(
@@ -748,7 +748,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         proposal_ = decodeProposalData(proposalData);
 
         // Make proposal hash
-        bytes32 proposalHash = _getProposalHash(Constants.PROPOSAL_TYPEHASH, abi.encode(proposal_));
+        bytes32 proposalHash = _getProposalHash(abi.encode(proposal_));
 
         proposal_.collateralAmount = withdrawableCollateral[proposalHash];
         delete withdrawableCollateral[proposalHash];
@@ -763,14 +763,15 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /**
      * @notice Get a proposal hash according to EIP-712.
-     * @param proposalTypehash Proposal typehash.
      * @param encodedProposal Encoded proposal struct.
      * @return Struct hash.
      */
-    function _getProposalHash(bytes32 proposalTypehash, bytes memory encodedProposal) private view returns (bytes32) {
+    function _getProposalHash(bytes memory encodedProposal) private view returns (bytes32) {
         return keccak256(
             abi.encodePacked(
-                hex"1901", DOMAIN_SEPARATOR_PROPOSAL, keccak256(abi.encodePacked(proposalTypehash, encodedProposal))
+                hex"1901",
+                DOMAIN_SEPARATOR_PROPOSAL,
+                keccak256(abi.encodePacked(Constants.PROPOSAL_TYPEHASH, encodedProposal))
             )
         );
     }
