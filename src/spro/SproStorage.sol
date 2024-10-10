@@ -4,7 +4,6 @@ pragma solidity ^0.8.26;
 import { SproLOAN } from "src/spro/SproLOAN.sol";
 import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 import { ISproStorage } from "src/interfaces/ISproStorage.sol";
-import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract SproStorage is ISproStorage {
