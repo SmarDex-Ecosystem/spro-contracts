@@ -1022,7 +1022,9 @@ contract Spro is SproVault, SproStorage, Ownable2Step, ISproLoanMetadataProvider
         internal
     {
         // Check that the proposal was made on-chain
-        if (!proposalsMade[proposalHash]) revert ProposalNotMade();
+        if (!proposalsMade[proposalHash]) {
+            revert ProposalNotMade();
+        }
 
         // Check proposer is not acceptor
         if (proposal.proposer == acceptor) {
