@@ -6,15 +6,10 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
-import { ISproErrors } from "src/interfaces/ISproErrors.sol";
-import { ISproEvents } from "src/interfaces/ISproEvents.sol";
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
+import { ISproVault } from "src/interfaces/ISproVault.sol";
 
-/**
- * @title Spro Vault
- * @notice Base contract for transferring and managing collateral and loan assets in Spro protocol.
- * @dev Loan contracts inherits Spro Vault to act as a Vault for its loan type.
- */
-contract SproVault is ISproErrors, ISproEvents {
+contract SproVault is ISproVault {
     using SafeERC20 for IERC20Metadata;
     /* ------------------------------------------------------------ */
     /*                      TRANSFER FUNCTIONS                      */
@@ -116,7 +111,7 @@ contract SproVault is ISproErrors, ISproEvents {
      * @dev If the permit execution fails, the function will not revert.
      * @param permit The permit data.
      */
-    function _tryPermit(Permit memory permit) internal {
+    function _tryPermit(ISproTypes.Permit memory permit) internal {
         if (permit.asset != address(0)) {
             try IERC20Permit(permit.asset).permit({
                 owner: permit.owner,

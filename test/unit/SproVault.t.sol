@@ -10,6 +10,7 @@ import { SproVault, IPoolAdapter } from "src/spro/SproVault.sol";
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
+import { ISproVault } from "src/interfaces/ISproVault.sol";
 import { Spro } from "src/spro/Spro.sol";
 
 contract SproVaultHarness is SproVault {
@@ -37,7 +38,7 @@ contract SproVaultHarness is SproVault {
         _supplyToPool(asset, amount, poolAdapter, pool, owner);
     }
 
-    function exposed_tryPermit(Permit calldata permit) external {
+    function exposed_tryPermit(ISproTypes.Permit calldata permit) external {
         _tryPermit(permit);
     }
 }
@@ -67,7 +68,7 @@ abstract contract SproVaultTest is Test {
 contract SproVault_Pull_Test is SproVaultTest {
     function test_pullEmitEvent() external {
         vm.expectEmit(true, true, true, true);
-        emit ISproEvents.VaultPull(token, alice, 42);
+        emit ISproVault.VaultPull(token, alice, 42);
         vault.pull(token, 42, alice);
     }
 }
@@ -79,7 +80,7 @@ contract SproVault_Pull_Test is SproVaultTest {
 contract SproVault_Push_Test is SproVaultTest {
     function test_pushEmitEvent() external {
         vm.expectEmit(true, true, true, true);
-        emit ISproEvents.VaultPush(token, alice, 99_999_999);
+        emit ISproVault.VaultPush(token, alice, 99_999_999);
         vault.push(token, 99_999_999, alice);
     }
 }
@@ -91,7 +92,7 @@ contract SproVault_Push_Test is SproVaultTest {
 contract SproVault_PushFrom_Test is SproVaultTest {
     function test_pushFromEmitEvent() external {
         vm.expectEmit(true, true, true, true);
-        emit ISproEvents.VaultPushFrom(token, alice, bob, 42);
+        emit ISproVault.VaultPushFrom(token, alice, bob, 42);
         vault.pushFrom(token, 42, alice, bob);
     }
 }
@@ -127,13 +128,13 @@ contract SproVault_WithdrawFromPool_Test is SproVaultTest {
 
     function test_shouldFail_whenIncompleteTransaction() external {
         vm.mockCall(asset, abi.encodeWithSignature("balanceOf(address)", alice), abi.encode(amount));
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidAmountTransfer.selector));
+        vm.expectRevert(abi.encodeWithSelector(ISproVault.InvalidAmountTransfer.selector));
         vault.withdrawFromPool(asset, amount, poolAdapter, pool, alice);
     }
 
     function test_shouldEmitEvent_PoolWithdraw() external {
         vm.expectEmit();
-        emit ISproEvents.PoolWithdraw(asset, address(poolAdapter), pool, alice, amount);
+        emit ISproVault.PoolWithdraw(asset, address(poolAdapter), pool, alice, amount);
 
         vault.withdrawFromPool(asset, amount, poolAdapter, pool, alice);
     }
@@ -174,13 +175,13 @@ contract SproVault_SupplyToPool_Test is SproVaultTest {
 
     function test_shouldFail_whenIncompleteTransaction() external {
         vm.mockCall(asset, abi.encodeWithSignature("balanceOf(address)", address(vault)), abi.encode(amount));
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidAmountTransfer.selector));
+        vm.expectRevert(abi.encodeWithSelector(ISproVault.InvalidAmountTransfer.selector));
         vault.supplyToPool(asset, amount, poolAdapter, pool, alice);
     }
 
     function test_shouldEmitEvent_PoolSupply() external {
         vm.expectEmit();
-        emit ISproEvents.PoolSupply(asset, address(poolAdapter), pool, alice, amount);
+        emit ISproVault.PoolSupply(asset, address(poolAdapter), pool, alice, amount);
 
         vault.supplyToPool(asset, amount, poolAdapter, pool, alice);
     }
