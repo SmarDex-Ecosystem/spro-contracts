@@ -135,7 +135,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         view
         returns (uint256 used_, uint256 remaining_)
     {
-        bytes32 proposalHash = getProposalHash(proposal);
+        bytes32 proposalHash = _getProposalHash(abi.encode(proposal));
         if (proposalsMade[proposalHash]) {
             used_ = creditUsed[proposalHash];
             remaining_ = proposal.availableCreditLimit - used_;
