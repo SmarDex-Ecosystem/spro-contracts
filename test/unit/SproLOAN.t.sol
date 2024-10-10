@@ -19,10 +19,6 @@ contract SproLOANTest is Test {
     function setUp() public virtual {
         loanToken = new SproLOAN(address(this));
     }
-
-    function _loanContractSlot(uint256 loanId) internal pure returns (bytes32) {
-        return keccak256(abi.encode(loanId, LOAN_CONTRACT_SLOT));
-    }
 }
 
 /* ------------------------------------------------------------ */
@@ -56,13 +52,6 @@ contract SproLOAN_Mint_Test is SproLOANTest {
         assertTrue(lastLoanIdValue == lastLoanId + 1);
     }
 
-    function test_shouldStoreLoanContractUnderLoanId() external {
-        uint256 loanId = loanToken.mint(alice);
-        address loanContract = loanToken.loanContract(loanId);
-
-        assertTrue(loanContract == address(this));
-    }
-
     function test_shouldMintLOANToken() external {
         vm.prank(address(this));
         uint256 loanId = loanToken.mint(alice);
@@ -77,7 +66,7 @@ contract SproLOAN_Mint_Test is SproLOANTest {
 
     function test_shouldEmitEvent_LOANMinted() external {
         vm.expectEmit(true, true, true, false);
-        emit SproLOAN.LOANMinted(1, address(this), alice);
+        emit SproLOAN.LOANMinted(1, alice);
 
         loanToken.mint(alice);
     }
@@ -97,15 +86,9 @@ contract SproLOAN_Burn_Test is SproLOANTest {
     }
 
     function test_shouldFail_whenCallerIsNotStoredLoanContractForGivenLoanId() external {
-        vm.expectRevert(abi.encodeWithSelector(SproLOAN.InvalidLoanContractCaller.selector));
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         vm.prank(alice);
         loanToken.burn(loanId);
-    }
-
-    function test_shouldDeleteStoredLoanContract() external {
-        loanToken.burn(loanId);
-
-        assertTrue(loanToken.loanContract(loanId) == address(0));
     }
 
     function test_shouldBurnLOANToken() external {

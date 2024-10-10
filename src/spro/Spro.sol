@@ -171,10 +171,6 @@ contract Spro is SproVault, SproStorage, Ownable2Step, ISproLoanMetadataProvider
         _poolAdapterRegistry[pool] = adapter;
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                                    LOAN                                    */
-    /* -------------------------------------------------------------------------- */
-
     /* ------------------------------------------------------------ */
     /*                      LENDER SPEC                             */
     /* ------------------------------------------------------------ */
@@ -790,10 +786,6 @@ contract Spro is SproVault, SproStorage, Ownable2Step, ISproLoanMetadataProvider
     function loanMetadataUri() external view override returns (string memory) {
         return loanMetadataUri(address(this));
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                                  PROPOSAL                                  */
-    /* -------------------------------------------------------------------------- */
 
     /* ------------------------------------------------------------ */
     /*                          EXTERNALS                           */
