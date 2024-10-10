@@ -30,38 +30,5 @@ acceptProposal.t.sol
                                     │   └── it should revert
                                     └── when the credit amount is greater than or equal to the minimum credit amount
                                         ├── increment the used credit for the proposal
-                                        ├── given the used credit exceeds the upper available credit threshold
-                                        │   └── it should revoke the proposer's nonce
-                                        ├── when the proposal checkCollateralStateFingerprint is true
-                                        │   ├── given the current fingerprint does not match the proposal collateral state fingerprint
-                                        │   │   └── it should revert
-                                        │   └── given the current fingerprint matches the proposal collateral state fingerprint
-                                        │       ├── it should return a loan terms object with collateral amount equal to the collateral used by the credit amount supplied by the lender
-                                        │       ├── when the proposal collateral category is ERC-20
-                                        │       │   └── it should decrement the withdrawable collateral amount by the amount of collateral locked in the loan
-                                        │       ├── when the proposal collateral category is ERC-721
-                                        │       │   ├── when the credit amount is less than the available credit limit
-                                        │       │   │   └── it should revert
-                                        │       │   └── when the credit amount is equal to the available credit limit
-                                        │       │       └── it should set the withdrawable collateral amount to a non-zero value
-                                        │       └── when the proposal collateral category is ERC-1155
-                                        │           └── when the proposal collateral amount is equal to 1
-                                        │               ├── when the credit amount is less than the available credit limit
-                                        │               │   └── it should revert
-                                        │               └── when the credit amount is equal to the available credit limit
-                                        │                   └── it should decrement the withdrawable collateral amount by the amount of collateral locked in the loan
-                                        └── when the proposal checkCollateralStateFingerprint is false
-                                            ├── it should return a loan terms object with collateral amount equal to the collateral used by the credit amount supplied by the lender
-                                            ├── when the proposal collateral category is ERC-20
-                                            │   └── it should decrement the withdrawable collateral amount by the amount of collateral locked in the loan
-                                            ├── when the proposal collateral category is ERC-721
-                                            │   ├── when the credit amount is less than the available credit limit
-                                            │   │   └── it should revert
-                                            │   └── when the credit amount is equal to the available credit limit
-                                            │       └── it should set the withdrawable collateral amount to a non-zero value
-                                            └── when the proposal collateral category is ERC-1155
-                                                ├── when the proposal collateral amount is equal to 1
-                                                │   └── when the credit amount is less than the available credit limit
-                                                │       └── it should revert
-                                                └── when the credit amount is greater than 1
-                                                    └── it should decrement the withdrawable collateral amount by the amount of collateral locked in the loan
+                                        └── given the used credit exceeds the upper available credit threshold
+                                            └── it should revoke the proposer's nonce
