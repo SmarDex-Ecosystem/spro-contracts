@@ -4,6 +4,10 @@ pragma solidity 0.8.26;
 import { SproLOAN } from "src/spro/SproLOAN.sol";
 import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 
+/**
+ * @title ISproStorage
+ * @notice Interface for the storage layer of the Spro protocol
+ */
 interface ISproStorage {
     /* -------------------------------------------------------------------------- */
     /*                                   CONFIG                                   */
