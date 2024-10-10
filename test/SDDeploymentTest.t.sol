@@ -6,29 +6,34 @@ import { T20 } from "test/helper/T20.sol";
 
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import { SDDeployments, Spro, IPWNDeployer, SproLOAN, SproRevokedNonce } from "src/SDDeployments.sol";
+import { IPWNDeployer } from "src/interfaces/IPWNDeployer.sol";
+import { Spro } from "src/spro/Spro.sol";
+import { SproLOAN } from "src/spro/SproLOAN.sol";
+import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 
-abstract contract SDDeploymentTest is SDDeployments, Test {
+abstract contract SDDeploymentTest is Test {
     uint256 public constant UNLISTED_FEE = 50e18;
     uint256 public constant LISTED_FEE = 20e18;
     uint256 public constant VARIABLE_FACTOR = 1e13;
     uint16 public constant PARTIAL_POSITION_PERCENTAGE = 500;
 
-    function setUp() public virtual {
-        // _loadDeployedAddresses();
-        _protocolNotDeployedOnSelectedChain(); // @note keep this until block.chainid == 31337 removed from
-            // sdLatest.json, or deployments JSON pointed elsewhere
+    string public deploymentsSubpath;
 
-        // Labels
-        vm.label(deployment.proxyAdmin, "proxyAdmin");
-        vm.label(deployment.protocolAdmin, "protocolAdmin");
-        vm.label(address(deployment.sdex), "sdex");
-        vm.label(address(deployment.config), "config");
-        vm.label(address(deployment.revokedNonce), "revokedNonce");
-        vm.label(address(deployment.loanToken), "loanToken");
+    uint256[] deployedChains;
+    Deployment deployment;
+
+    // Properties need to be in alphabetical order
+    struct Deployment {
+        Spro config;
+        IPWNDeployer deployer;
+        SproLOAN loanToken;
+        address proxyAdmin;
+        address protocolAdmin;
+        SproRevokedNonce revokedNonce;
+        T20 sdex;
     }
 
-    function _protocolNotDeployedOnSelectedChain() internal override {
+    function setUp() public virtual {
         deployment.proxyAdmin = makeAddr("proxyAdmin");
         deployment.protocolAdmin = makeAddr("protocolAdmin");
 
@@ -49,5 +54,13 @@ abstract contract SDDeploymentTest is SDDeployments, Test {
         vm.stopPrank();
         deployment.revokedNonce = deployment.config.revokedNonce();
         deployment.loanToken = deployment.config.loanToken();
+
+        // Labels
+        vm.label(deployment.proxyAdmin, "proxyAdmin");
+        vm.label(deployment.protocolAdmin, "protocolAdmin");
+        vm.label(address(deployment.sdex), "sdex");
+        vm.label(address(deployment.config), "config");
+        vm.label(address(deployment.revokedNonce), "revokedNonce");
+        vm.label(address(deployment.loanToken), "loanToken");
     }
 }
