@@ -12,14 +12,14 @@ library SproListedFee {
      * @param variableFactor Variable factor (basis 1e18)
      * @param tokenFactor Listed credit token factor (basis 1e18)
      * @param loanAmount Amount of an asset used as a loan credit.
-     * @return feeAmount Amount of SDEX that represents a protocol fee.
+     * @return feeAmount_ Amount of SDEX that represents a protocol fee.
      */
     function calculate(uint256 fixFeeListed, uint256 variableFactor, uint256 tokenFactor, uint256 loanAmount)
         internal
         pure
-        returns (uint256 feeAmount)
+        returns (uint256 feeAmount_)
     {
-        feeAmount = fixFeeListed
+        feeAmount_ = fixFeeListed
             + Math.mulDiv((variableFactor * tokenFactor) / Constants.WAD, loanAmount, Constants.WAD, Math.Rounding.Ceil);
     }
 }

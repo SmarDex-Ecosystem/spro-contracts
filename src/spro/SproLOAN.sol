@@ -30,10 +30,10 @@ contract SproLOAN is ISproLOAN, ERC721, Ownable {
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISproLOAN
-    function mint(address to) external onlyOwner returns (uint256 loanId) {
-        loanId = ++lastLoanId;
-        _mint(to, loanId);
-        emit LOANMinted(loanId, to);
+    function mint(address to) external onlyOwner returns (uint256 loanId_) {
+        loanId_ = ++lastLoanId;
+        _mint(to, loanId_);
+        emit LOANMinted(loanId_, to);
     }
 
     /// @inheritdoc ISproLOAN
