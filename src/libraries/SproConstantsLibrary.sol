@@ -2,8 +2,6 @@
 pragma solidity 0.8.26;
 
 library SproConstantsLibrary {
-    /// @dev The Spro protocol version.
-    string internal constant VERSION = "1.0";
     /// @dev The decimal precision.
     uint256 internal constant WAD = 1e18;
     /// @dev Percentage denominator (10_000 = 100%)

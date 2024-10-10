@@ -48,7 +48,6 @@ contract SproStorage is ISproStorage {
         abi.encode(
             keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
             keccak256("SDSimpleLoan"),
-            keccak256(abi.encodePacked(Constants.VERSION)),
             block.chainid,
             address(this)
         )
@@ -69,7 +68,6 @@ contract SproStorage is ISproStorage {
         abi.encode(
             keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
             keccak256(abi.encodePacked("SDSimpleLoanSimpleProposal")),
-            keccak256(abi.encodePacked(Constants.VERSION)),
             block.chainid,
             address(this)
         )
