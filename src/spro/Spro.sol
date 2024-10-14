@@ -232,7 +232,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     function createProposal(bytes calldata proposalData) external {
         // Make the proposal
         (address proposer, address collateral, uint256 collateralAmount, address creditAddress, uint256 creditLimit) =
-            makeProposal(proposalData);
+            _makeProposal(proposalData);
 
         // Check caller is the proposer
         if (msg.sender != proposer) {
@@ -279,7 +279,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     {
         // Accept proposal and get loan terms
         (bytes32 proposalHash, Terms memory loanTerms) =
-            acceptProposal(msg.sender, lenderSpec.creditAmount, proposalData);
+            _acceptProposal(msg.sender, lenderSpec.creditAmount, proposalData);
 
         // Check minimum loan duration
         if (loanTerms.defaultTimestamp - loanTerms.startTimestamp < Constants.MIN_LOAN_DURATION) {
@@ -639,7 +639,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @return creditAddress_ Address of the credit token.
      * @return creditLimit_ Credit limit.
      */
-    function makeProposal(bytes calldata proposalData)
+    function _makeProposal(bytes calldata proposalData)
         private
         returns (
             address proposer_,
@@ -678,7 +678,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @return proposalHash_ Proposal hash.
      * @return loanTerms_ Loan terms.
      */
-    function acceptProposal(address acceptor, uint256 creditAmount, bytes calldata proposalData)
+    function _acceptProposal(address acceptor, uint256 creditAmount, bytes calldata proposalData)
         private
         returns (bytes32 proposalHash_, Terms memory loanTerms_)
     {
