@@ -176,7 +176,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /// @inheritdoc ISpro
     function loanRepaymentAmount(uint256 loanId) public view returns (uint256) {
-        LOAN storage loan = LOANs[loanId];
+        LOAN memory loan = LOANs[loanId];
 
         // Check non-existent loan
         if (loan.status == 0) return 0;
@@ -193,7 +193,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     {
         for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
-            LOAN storage loan = LOANs[loanId];
+            LOAN memory loan = LOANs[loanId];
             _checkLoanCreditAddress(loan.creditAddress, creditAddress);
             // Check non-existent loan
             if (loan.status == 0) return 0;
@@ -304,7 +304,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /// @inheritdoc ISpro
     function repayLOAN(uint256 loanId, bytes calldata permitData) external {
-        LOAN storage loan = LOANs[loanId];
+        LOAN memory loan = LOANs[loanId];
 
         _checkLoanCanBeRepaid(loan.status, loan.loanExpiration);
 
@@ -342,7 +342,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
         for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
-            LOAN storage loan = LOANs[loanId];
+            LOAN memory loan = LOANs[loanId];
 
             // Checks: loan can be repaid & credit address is the same for all loanIds
             _checkLoanCanBeRepaid(loan.status, loan.loanExpiration);
@@ -366,7 +366,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
         for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
-            LOAN storage loan = LOANs[loanId];
+            LOAN memory loan = LOANs[loanId];
 
             // Transfer collateral back to the borrower
             _push(loan.collateral, loan.collateralAmount, loan.borrower);
@@ -388,7 +388,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /// @inheritdoc ISpro
     function claimLOAN(uint256 loanId) public {
-        LOAN storage loan = LOANs[loanId];
+        LOAN memory loan = LOANs[loanId];
 
         // Check that caller is LOAN token holder
         if (loanToken.ownerOf(loanId) != msg.sender) {
@@ -425,7 +425,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             revert CallerNotVault();
         }
 
-        LOAN storage loan = LOANs[loanId];
+        LOAN memory loan = LOANs[loanId];
 
         if (loan.status != 3) return;
 
@@ -476,7 +476,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @param defaulted If the loan is defaulted.
      */
     function _settleLoanClaim(uint256 loanId, address loanOwner, bool defaulted) private {
-        LOAN storage loan = LOANs[loanId];
+        LOAN memory loan = LOANs[loanId];
 
         // Store in memory before deleting the loan
         address asset = defaulted ? loan.collateral : loan.creditAddress;
@@ -506,7 +506,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @return status LOAN status.
      */
     function _getLOANStatus(uint256 loanId) private view returns (uint8) {
-        LOAN storage loan = LOANs[loanId];
+        LOAN memory loan = LOANs[loanId];
         return (loan.status == 2 && loan.loanExpiration <= block.timestamp) ? 4 : loan.status;
     }
 
@@ -883,7 +883,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @param loan Loan data struct.
      * @return Accrued interest amount.
      */
-    function _loanAccruedInterest(LOAN storage loan) private view returns (uint256) {
+    function _loanAccruedInterest(LOAN memory loan) private view returns (uint256) {
         if (loan.accruingInterestAPR == 0) return loan.fixedInterestAmount;
 
         uint256 accruingMinutes = (loan.loanExpiration - loan.startTimestamp) / 1 minutes;
