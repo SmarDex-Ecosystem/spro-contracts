@@ -68,21 +68,21 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         vm.label(address(poolAdapter), "poolAdapter");
 
         // Deploy protocol contracts
-        proposal = ISproTypes.Proposal({
-            collateralAddress: address(t20),
-            collateralAmount: COLLATERAL_AMOUNT,
-            creditAddress: address(credit),
-            availableCreditLimit: CREDIT_LIMIT,
-            fixedInterestAmount: FIXED_INTEREST_AMOUNT,
-            accruingInterestAPR: 0,
-            startTimestamp: uint40(block.timestamp) + 5 days,
-            defaultTimestamp: uint40(block.timestamp) + 10 days,
-            proposer: borrower,
-            proposerSpecHash: keccak256(abi.encode(borrower)),
-            nonceSpace: 0,
-            nonce: 0,
-            loanContract: address(deployment.config)
-        });
+        proposal = ISproTypes.Proposal(
+            address(t20),
+            COLLATERAL_AMOUNT,
+            address(credit),
+            CREDIT_LIMIT,
+            FIXED_INTEREST_AMOUNT,
+            0,
+            uint40(block.timestamp) + 5 days,
+            uint40(block.timestamp) + 10 days,
+            borrower,
+            keccak256(abi.encode(borrower)),
+            0,
+            0,
+            address(deployment.config)
+        );
 
         // Mint and approve SDEX
         deployment.sdex.mint(lender, INITIAL_SDEX_BALANCE);
@@ -138,8 +138,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         }
 
         vm.prank(lender);
-        return
-            deployment.config.createLOAN({ proposalData: proposalSpec, lenderSpec: _buildLenderSpec(false), extra: "" });
+        return deployment.config.createLOAN(proposalSpec, _buildLenderSpec(false), "");
     }
 
     function _cancelProposal(Spro.Proposal memory _proposal) internal {
@@ -148,7 +147,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
 
     function _buildLenderSpec(bool complete) internal view returns (ISproTypes.LenderSpec memory lenderSpec) {
         lenderSpec = complete
-            ? ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: CREDIT_LIMIT, permitData: "" })
-            : ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: CREDIT_AMOUNT, permitData: "" });
+            ? ISproTypes.LenderSpec(lender, CREDIT_LIMIT, "")
+            : ISproTypes.LenderSpec(lender, CREDIT_AMOUNT, "");
     }
 }

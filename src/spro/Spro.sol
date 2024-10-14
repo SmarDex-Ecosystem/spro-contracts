@@ -236,7 +236,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
         // Check caller is the proposer
         if (msg.sender != proposer) {
-            revert CallerIsNotStatedProposer({ addr: proposer });
+            revert CallerIsNotStatedProposer(proposer);
         }
 
         // Transfer collateral to Vault
@@ -279,34 +279,22 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     {
         // Accept proposal and get loan terms
         (bytes32 proposalHash, Terms memory loanTerms) =
-            acceptProposal({ acceptor: msg.sender, creditAmount: lenderSpec.creditAmount, proposalData: proposalData });
+            acceptProposal(msg.sender, lenderSpec.creditAmount, proposalData);
 
         // Check minimum loan duration
         if (loanTerms.defaultTimestamp - loanTerms.startTimestamp < Constants.MIN_LOAN_DURATION) {
-            revert InvalidDuration({
-                current: loanTerms.defaultTimestamp - loanTerms.startTimestamp,
-                limit: Constants.MIN_LOAN_DURATION
-            });
+            revert InvalidDuration(loanTerms.defaultTimestamp - loanTerms.startTimestamp, Constants.MIN_LOAN_DURATION);
         }
 
         // Check maximum accruing interest APR
         if (loanTerms.accruingInterestAPR > Constants.MAX_ACCRUING_INTEREST_APR) {
-            revert InterestAPROutOfBounds({
-                current: loanTerms.accruingInterestAPR,
-                limit: Constants.MAX_ACCRUING_INTEREST_APR
-            });
+            revert InterestAPROutOfBounds(loanTerms.accruingInterestAPR, Constants.MAX_ACCRUING_INTEREST_APR);
         }
 
         // Create a new loan
-        loanId_ = _createLoan({ loanTerms: loanTerms, lenderSpec: lenderSpec });
+        loanId_ = _createLoan(loanTerms, lenderSpec);
 
-        emit LOANCreated({
-            loanId: loanId_,
-            proposalHash: proposalHash,
-            terms: loanTerms,
-            lenderSpec: lenderSpec,
-            extra: extra
-        });
+        emit LOANCreated(loanId_, proposalHash, loanTerms, lenderSpec, extra);
 
         // Execute permit for the caller
         if (lenderSpec.permitData.length > 0) {
@@ -421,10 +409,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             revert NonExistingLoan();
         } else if (loan.status == 3) {
             // Loan has been paid back
-            _settleLoanClaim({ loanId: loanId, loanOwner: msg.sender, defaulted: false });
+            _settleLoanClaim(loanId, msg.sender, false);
         } else if (loan.status == 2 && loan.defaultTimestamp <= block.timestamp) {
             // Loan is running but expired
-            _settleLoanClaim({ loanId: loanId, loanOwner: msg.sender, defaulted: true });
+            _settleLoanClaim(loanId, msg.sender, true);
         }
         // Loan is in wrong state
         else {
@@ -461,7 +449,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Delete loan data & burn LOAN token before calling safe transfer
         _deleteLoan(loanId);
 
-        emit LOANClaimed({ loanId: loanId, defaulted: false });
+        emit LOANClaimed(loanId, false);
 
         // End here if the credit amount is zero
         if (creditAmount == 0) return;
@@ -478,7 +466,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
                 // Note: Adapter can be unregistered during the loan lifetime, so the pool might not have an adapter.
                 // In that case, the loan owner will be able to claim the repaid credit.
 
-                revert InvalidSourceOfFunds({ sourceOfFunds: destinationOfFunds });
+                revert InvalidSourceOfFunds(destinationOfFunds);
             }
 
             // Supply the repaid credit to the original pool
@@ -506,7 +494,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Delete loan data & burn LOAN token before calling safe transfer
         _deleteLoan(loanId);
 
-        emit LOANClaimed({ loanId: loanId, defaulted: defaulted });
+        emit LOANClaimed(loanId, defaulted);
 
         // Transfer asset to current LOAN token owner
         _push(asset, assetAmount, loanOwner);
@@ -562,10 +550,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     function _checkPermit(address caller, address creditAddress, Permit memory permit) internal pure {
         if (permit.asset != address(0)) {
             if (permit.owner != caller) {
-                revert InvalidPermitOwner({ current: permit.owner, expected: caller });
+                revert InvalidPermitOwner(permit.owner, caller);
             }
             if (permit.asset != creditAddress) {
-                revert InvalidPermitAsset({ current: permit.asset, expected: creditAddress });
+                revert InvalidPermitAsset(permit.asset, creditAddress);
             }
         }
     }
@@ -618,7 +606,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     ) internal {
         IPoolAdapter poolAdapter = getPoolAdapter(lenderSpec.sourceOfFunds);
         if (address(poolAdapter) == address(0)) {
-            revert InvalidSourceOfFunds({ sourceOfFunds: lenderSpec.sourceOfFunds });
+            revert InvalidSourceOfFunds(lenderSpec.sourceOfFunds);
         }
 
         if (creditAmount > 0) {
@@ -705,34 +693,34 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             acceptor,
             creditAmount,
             proposalHash_,
-            ProposalBase({
-                collateralAddress: proposal.collateralAddress,
-                availableCreditLimit: proposal.availableCreditLimit,
-                startTimestamp: proposal.startTimestamp,
-                proposer: proposal.proposer,
-                nonceSpace: proposal.nonceSpace,
-                nonce: proposal.nonce,
-                loanContract: proposal.loanContract
-            })
+            ProposalBase(
+                proposal.collateralAddress,
+                proposal.availableCreditLimit,
+                proposal.startTimestamp,
+                proposal.proposer,
+                proposal.nonceSpace,
+                proposal.nonce,
+                proposal.loanContract
+            )
         );
 
         // Create loan terms object
         uint256 collateralUsed_ = (creditAmount * proposal.collateralAmount) / proposal.availableCreditLimit;
 
-        loanTerms_ = Terms({
-            lender: acceptor,
-            borrower: proposal.proposer,
-            startTimestamp: proposal.startTimestamp,
-            defaultTimestamp: proposal.defaultTimestamp,
-            collateral: proposal.collateralAddress,
-            collateralAmount: collateralUsed_,
-            credit: proposal.creditAddress,
-            creditAmount: creditAmount,
-            fixedInterestAmount: proposal.fixedInterestAmount,
-            accruingInterestAPR: proposal.accruingInterestAPR,
-            lenderSpecHash: bytes32(0),
-            borrowerSpecHash: proposal.proposerSpecHash
-        });
+        loanTerms_ = Terms(
+            acceptor,
+            proposal.proposer,
+            proposal.startTimestamp,
+            proposal.defaultTimestamp,
+            proposal.collateralAddress,
+            collateralUsed_,
+            proposal.creditAddress,
+            creditAmount,
+            proposal.fixedInterestAmount,
+            proposal.accruingInterestAPR,
+            bytes32(0),
+            proposal.proposerSpecHash
+        );
 
         withdrawableCollateral[proposalHash_] -= collateralUsed_;
     }
@@ -806,21 +794,17 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
         // Check proposer is not acceptor
         if (proposal.proposer == acceptor) {
-            revert AcceptorIsProposer({ addr: acceptor });
+            revert AcceptorIsProposer(acceptor);
         }
 
         // Check proposal is not expired
         if (block.timestamp >= proposal.startTimestamp) {
-            revert Expired({ current: block.timestamp, expiration: proposal.startTimestamp });
+            revert Expired(block.timestamp, proposal.startTimestamp);
         }
 
         // Check proposal is not revoked
         if (!revokedNonce.isNonceUsable(proposal.proposer, proposal.nonceSpace, proposal.nonce)) {
-            revert SproRevokedNonce.NonceNotUsable({
-                addr: proposal.proposer,
-                nonceSpace: proposal.nonceSpace,
-                nonce: proposal.nonce
-            });
+            revert SproRevokedNonce.NonceNotUsable(proposal.proposer, proposal.nonceSpace, proposal.nonce);
         }
 
         if (proposal.availableCreditLimit == 0) {
@@ -830,21 +814,18 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             uint256 minCreditAmount =
                 Math.mulDiv(proposal.availableCreditLimit, partialPositionPercentage, Constants.PERCENTAGE);
             if (creditAmount < minCreditAmount) {
-                revert CreditAmountTooSmall({ amount: creditAmount, minimum: minCreditAmount });
+                revert CreditAmountTooSmall(creditAmount, minCreditAmount);
             }
 
             uint256 maxCreditAmount = Math.mulDiv(
                 proposal.availableCreditLimit, (Constants.PERCENTAGE - partialPositionPercentage), Constants.PERCENTAGE
             );
             if (creditAmount > maxCreditAmount) {
-                revert CreditAmountLeavesTooLittle({ amount: creditAmount, maximum: maxCreditAmount });
+                revert CreditAmountLeavesTooLittle(creditAmount, maxCreditAmount);
             }
         } else if (creditUsed[proposalHash] + creditAmount > proposal.availableCreditLimit) {
             // Revert, credit limit is exceeded
-            revert AvailableCreditLimitExceeded({
-                used: creditUsed[proposalHash] + creditAmount,
-                limit: proposal.availableCreditLimit
-            });
+            revert AvailableCreditLimitExceeded(creditUsed[proposalHash] + creditAmount, proposal.availableCreditLimit);
         }
 
         // Apply increase if credit amount checks pass
@@ -911,7 +892,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Note: Reusing `fixedInterestAmount` to store accrued interest at the time of repayment
         // to have the value at the time of claim and stop accruing new interest.
 
-        emit LOANPaidBack({ loanId: loanId });
+        emit LOANPaidBack(loanId);
     }
 
     /**

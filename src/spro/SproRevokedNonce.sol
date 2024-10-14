@@ -134,7 +134,7 @@ contract SproRevokedNonce is Ownable {
      */
     function _revokeNonce(address owner, uint256 nonceSpace, uint256 nonce) private {
         if (_revokedNonce[owner][nonceSpace][nonce]) {
-            revert NonceAlreadyRevoked({ addr: owner, nonceSpace: nonceSpace, nonce: nonce });
+            revert NonceAlreadyRevoked(owner, nonceSpace, nonce);
         }
         _revokedNonce[owner][nonceSpace][nonce] = true;
         emit NonceRevoked(owner, nonceSpace, nonce);

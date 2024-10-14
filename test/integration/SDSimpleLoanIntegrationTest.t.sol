@@ -81,8 +81,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Lender: creates the loan
         vm.prank(lender);
-        uint256 loanId =
-            deployment.config.createLOAN({ proposalData: proposalSpec, lenderSpec: _buildLenderSpec(false), extra: "" });
+        uint256 loanId = deployment.config.createLOAN(proposalSpec, _buildLenderSpec(false), "");
 
         // Borrower: cancels proposal, withdrawing unused collateral
         vm.startPrank(borrower);
@@ -118,8 +117,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.startPrank(lender);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        ISproTypes.LenderSpec memory lenderSpec =
-            ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: amount, permitData: "" });
+        ISproTypes.LenderSpec memory lenderSpec = ISproTypes.LenderSpec(lender, amount, "");
 
         // Create loan, expecting revert
         vm.expectRevert(
@@ -129,7 +127,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
                 (PERCENTAGE - DEFAULT_THRESHOLD) * CREDIT_LIMIT / 1e4
             )
         );
-        deployment.config.createLOAN({ proposalData: proposalSpec, lenderSpec: lenderSpec, extra: "" });
+        deployment.config.createLOAN(proposalSpec, lenderSpec, "");
         vm.stopPrank();
     }
 
@@ -220,13 +218,9 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         permit.amount = deployment.config.totalLoanRepaymentAmount(loanIds, address(creditPermit));
         permit.deadline = 8 days;
 
-        SigUtils.Permit memory p = SigUtils.Permit({
-            owner: permit.owner,
-            spender: address(deployment.config),
-            value: permit.amount,
-            nonce: creditPermit.nonces(borrower),
-            deadline: permit.deadline
-        });
+        SigUtils.Permit memory p = SigUtils.Permit(
+            permit.owner, address(deployment.config), permit.amount, creditPermit.nonces(borrower), permit.deadline
+        );
 
         bytes32 digest = sigUtils.getTypedDataHash(p);
 
@@ -251,13 +245,9 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         permit.amount = deployment.config.loanRepaymentAmount(loanIds[0]);
         permit.deadline = 8 days;
 
-        SigUtils.Permit memory p = SigUtils.Permit({
-            owner: permit.owner,
-            spender: address(deployment.config),
-            value: permit.amount,
-            nonce: creditPermit.nonces(borrower),
-            deadline: permit.deadline
-        });
+        SigUtils.Permit memory p = SigUtils.Permit(
+            permit.owner, address(deployment.config), permit.amount, creditPermit.nonces(borrower), permit.deadline
+        );
 
         bytes32 digest = sigUtils.getTypedDataHash(p);
 
