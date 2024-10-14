@@ -31,7 +31,7 @@ interface ISproErrors {
     error DefaultLoanContract();
 
     /**
-     * @notice Thrown when trying to set a percentage value higher than `PERCENTAGE`.
+     * @notice Thrown when trying to set a percentage value higher than `BPS_DIVISOR`.
      * @param percentage The percentage value.
      */
     error ExcessivePercentageValue(uint16 percentage);

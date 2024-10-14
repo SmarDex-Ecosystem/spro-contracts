@@ -19,8 +19,8 @@ interface ISproStorage {
     /// @notice SproRevokedNonce contract address.
     function revokedNonce() external view returns (SproRevokedNonce);
 
-    /// @notice Get percentage of a proposal's available credit limit used in partial lending.
-    function partialPositionPercentage() external view returns (uint16);
+    /// @notice Get percentage of a proposal's available credit limit used in partial lending (in basis points).
+    function partialPositionBps() external view returns (uint16);
 
     /**
      * @notice Get protocol fixed fee for unlisted credit tokens.

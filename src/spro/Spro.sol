@@ -35,7 +35,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     ) Ownable(msg.sender) {
         require(_sdex != address(0), "SDEX is zero address");
         require(
-            _percentage > 0 && _percentage < Constants.PERCENTAGE / 2, "Partial percentage position value is invalid"
+            _percentage > 0 && _percentage < Constants.BPS_DIVISOR / 2, "Partial percentage position value is invalid"
         );
 
         SDEX = _sdex;
@@ -44,7 +44,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         fixFeeUnlisted = _fixFeeUnlisted;
         fixFeeListed = _fixFeeListed;
         variableFactor = _variableFactor;
-        partialPositionPercentage = _percentage;
+        partialPositionBps = _percentage;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -80,10 +80,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         if (percentage == 0) {
             revert ZeroPercentageValue();
         }
-        if (percentage >= Constants.PERCENTAGE / 2) {
+        if (percentage >= Constants.BPS_DIVISOR / 2) {
             revert ExcessivePercentageValue(percentage);
         }
-        partialPositionPercentage = percentage;
+        partialPositionBps = percentage;
     }
 
     /// @inheritdoc ISpro
@@ -811,13 +811,13 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         } else if (creditUsed[proposalHash] + creditAmount < proposal.availableCreditLimit) {
             // Credit may only be between min and max amounts if it is not exact
             uint256 minCreditAmount =
-                Math.mulDiv(proposal.availableCreditLimit, partialPositionPercentage, Constants.PERCENTAGE);
+                Math.mulDiv(proposal.availableCreditLimit, partialPositionBps, Constants.BPS_DIVISOR);
             if (creditAmount < minCreditAmount) {
                 revert CreditAmountTooSmall(creditAmount, minCreditAmount);
             }
 
             uint256 maxCreditAmount = Math.mulDiv(
-                proposal.availableCreditLimit, (Constants.PERCENTAGE - partialPositionPercentage), Constants.PERCENTAGE
+                proposal.availableCreditLimit, (Constants.BPS_DIVISOR - partialPositionBps), Constants.BPS_DIVISOR
             );
             if (creditAmount > maxCreditAmount) {
                 revert CreditAmountLeavesTooLittle(creditAmount, maxCreditAmount);

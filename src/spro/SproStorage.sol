@@ -18,7 +18,7 @@ contract SproStorage is ISproStorage {
     SproRevokedNonce public immutable revokedNonce;
 
     /// @inheritdoc ISproStorage
-    uint16 public partialPositionPercentage;
+    uint16 public partialPositionBps;
 
     /// @inheritdoc ISproStorage
     uint256 public fixFeeUnlisted;

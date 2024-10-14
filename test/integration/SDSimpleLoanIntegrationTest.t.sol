@@ -322,7 +322,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         lenders[3] = charlee;
 
         // Minimum credit amount
-        uint256 minCreditAmount = (proposal.availableCreditLimit * deployment.config.partialPositionPercentage()) / 1e4;
+        uint256 minCreditAmount = (proposal.availableCreditLimit * deployment.config.partialPositionBps()) / 1e4;
 
         // Setup loanIds array
         loanIds = new uint256[](4);
@@ -367,7 +367,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         lenders[3] = charlee;
 
         // Minimum credit amount
-        uint256 minCreditAmount = (proposal.availableCreditLimit * deployment.config.partialPositionPercentage()) / 1e4;
+        uint256 minCreditAmount = (proposal.availableCreditLimit * deployment.config.partialPositionBps()) / 1e4;
 
         // Setup loanIds array
         loanIds = new uint256[](4);
