@@ -16,19 +16,6 @@ contract SproVault is ISproVault {
     /* ------------------------------------------------------------ */
 
     /**
-     * @notice Function pulling an asset into a vault.
-     * @dev The function assumes a prior token approval to a vault address.
-     * @param asset Address of an asset to be pulled.
-     * @param amount Amount of an asset to be pulled.
-     * @param origin Borrower address that is transferring collateral to Vault or repaying a loan.
-     */
-    function _pull(address asset, uint256 amount, address origin) internal {
-        IERC20Metadata(asset).safeTransferFrom(origin, address(this), amount);
-
-        emit VaultPull(asset, origin, amount);
-    }
-
-    /**
      * @notice Function pushing an asset from a vault to a recipient.
      * @param asset Address of an asset to be pushed.
      * @param amount Amount of an asset to be pushed.
@@ -36,7 +23,7 @@ contract SproVault is ISproVault {
      */
     function _push(address asset, uint256 amount, address beneficiary) internal {
         IERC20Metadata(asset).safeTransfer(beneficiary, amount);
-        emit VaultPush(asset, beneficiary, amount);
+        emit VaultPushFrom(asset, address(this), beneficiary, amount);
     }
 
     /**

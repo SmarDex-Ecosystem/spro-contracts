@@ -11,22 +11,6 @@ interface ISproVault {
     error InvalidAmountTransfer();
 
     /**
-     * @notice Emitted when asset transfer happens from an `origin` address to a vault.
-     * @param asset The address of the asset.
-     * @param origin The address of the origin.
-     * @param amount The amount of the asset.
-     */
-    event VaultPull(address asset, address indexed origin, uint256 amount);
-
-    /**
-     * @notice Emitted when asset transfer happens from a vault to a `beneficiary` address.
-     * @param asset The address of the asset.
-     * @param beneficiary The address of the beneficiary.
-     * @param amount The amount of the asset.
-     */
-    event VaultPush(address asset, address indexed beneficiary, uint256 amount);
-
-    /**
      * @notice Emitted when asset transfer happens from an `origin` address to a `beneficiary` address.
      * @param asset The address of the asset.
      * @param origin The address of the origin.

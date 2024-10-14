@@ -14,10 +14,6 @@ import { ISproVault } from "src/interfaces/ISproVault.sol";
 import { Spro } from "src/spro/Spro.sol";
 
 contract SproVaultHarness is SproVault {
-    function pull(address asset, uint256 amount, address origin) external {
-        _pull(asset, amount, origin);
-    }
-
     function push(address asset, uint256 amount, address beneficiary) external {
         _push(asset, amount, beneficiary);
     }
@@ -62,25 +58,13 @@ abstract contract SproVaultTest is Test {
 }
 
 /* ------------------------------------------------------------ */
-/*  PULL                                                     */
-/* ------------------------------------------------------------ */
-
-contract SproVault_Pull_Test is SproVaultTest {
-    function test_pullEmitEvent() external {
-        vm.expectEmit(true, true, true, true);
-        emit ISproVault.VaultPull(token, alice, 42);
-        vault.pull(token, 42, alice);
-    }
-}
-
-/* ------------------------------------------------------------ */
 /*  PUSH                                                     */
 /* ------------------------------------------------------------ */
 
 contract SproVault_Push_Test is SproVaultTest {
     function test_pushEmitEvent() external {
         vm.expectEmit(true, true, true, true);
-        emit ISproVault.VaultPush(token, alice, 99_999_999);
+        emit ISproVault.VaultPushFrom(token, address(vault), alice, 99_999_999);
         vault.push(token, 99_999_999, alice);
     }
 }

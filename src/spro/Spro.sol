@@ -242,7 +242,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         }
 
         // Transfer collateral to Vault
-        _pull(collateral, collateralAmount, proposer);
+        _pushFrom(collateral, collateralAmount, proposer, address(this));
 
         // Calculate fee amount
         uint256 feeAmount = getLoanFee(creditAddress, creditLimit);
@@ -331,7 +331,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
         // Transfer the repaid credit to the Vault
         uint256 repaymentAmount = loanRepaymentAmount(loanId);
-        _pull(loan.creditAddress, repaymentAmount, msg.sender);
+        _pushFrom(loan.creditAddress, repaymentAmount, msg.sender, address(this));
 
         // Transfer collateral back to borrower
         _push(loan.collateral, loan.collateralAmount, loan.borrower);
@@ -373,7 +373,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             _tryPermit(permit);
         }
         // Transfer the repaid credit to the vault
-        _pull(creditAddress, totalRepaymentAmount, msg.sender);
+        _pushFrom(creditAddress, totalRepaymentAmount, msg.sender, address(this));
 
         for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
