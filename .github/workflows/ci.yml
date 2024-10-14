@@ -56,7 +56,9 @@ jobs:
         run: npm ci && forge soldeer install
 
       - name: Install slither
-        run: pip3 install slither-analyzer
+        uses: threeal/pipx-install-action@v1.0.0
+        with:
+          packages: slither-analyzer
 
       - name: Run slither
         run: |
