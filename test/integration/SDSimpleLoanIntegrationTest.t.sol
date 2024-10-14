@@ -3,9 +3,7 @@ pragma solidity ^0.8.26;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import {
-    SDBaseIntegrationTest, Spro, IPWNDeployer, SproRevokedNonce
-} from "test/integration/SDBaseIntegrationTest.t.sol";
+import { SDBaseIntegrationTest, Spro, SproRevokedNonce } from "test/integration/SDBaseIntegrationTest.t.sol";
 import { SigUtils } from "test/utils/SigUtils.sol";
 import { IPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 

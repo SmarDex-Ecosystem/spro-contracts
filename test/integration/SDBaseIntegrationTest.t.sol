@@ -7,7 +7,7 @@ import { SigUtils } from "test/utils/SigUtils.sol";
 import { CreditPermit } from "test/helper/CreditPermit.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { T20 } from "test/helper/T20.sol";
-import { SDDeploymentTest, Spro, IPWNDeployer, SproRevokedNonce } from "test/SDDeploymentTest.t.sol";
+import { SDDeploymentTest, Spro, SproRevokedNonce } from "test/SDDeploymentTest.t.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
