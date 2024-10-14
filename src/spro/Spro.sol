@@ -10,7 +10,6 @@ import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { ISproLoanMetadataProvider } from "src/interfaces/ISproLoanMetadataProvider.sol";
 import { ISpro } from "src/interfaces/ISpro.sol";
 import { SproLOAN } from "src/spro/SproLOAN.sol";
-import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 import { SproVault } from "src/spro/SproVault.sol";
 import { SproStorage } from "src/spro/SproStorage.sol";
 
@@ -39,7 +38,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         );
 
         SDEX = _sdex;
-        revokedNonce = new SproRevokedNonce(address(this));
         loanToken = new SproLOAN(address(this));
         fixFeeUnlisted = _fixFeeUnlisted;
         fixFeeListed = _fixFeeListed;
@@ -519,15 +517,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         return loanMetadataUri(address(this));
     }
 
-    /* ------------------------------------------------------------ */
-    /*                          EXTERNALS                           */
-    /* ------------------------------------------------------------ */
-
-    /// @inheritdoc ISpro
-    function revokeNonce(uint256 nonceSpace, uint256 nonce) external {
-        revokedNonce.revokeNonce(msg.sender, nonceSpace, nonce);
-    }
-
     /* -------------------------------------------------------------------------- */
     /*                                  INTERNAL                                  */
     /* -------------------------------------------------------------------------- */
@@ -724,12 +713,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         proposal_.collateralAmount = withdrawableCollateral[proposalHash];
         delete withdrawableCollateral[proposalHash];
 
-        // Revokes nonce if nonce is still usable
-        if (block.timestamp < proposal_.startTimestamp) {
-            if (revokedNonce.isNonceUsable(proposal_.proposer, proposal_.nonceSpace, proposal_.nonce)) {
-                revokedNonce.revokeNonce(proposal_.proposer, proposal_.nonceSpace, proposal_.nonce);
-            }
-        }
+        proposalsMade[proposalHash] = false;
     }
 
     /**
@@ -783,11 +767,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Check proposal is not expired
         if (block.timestamp >= proposal.startTimestamp) {
             revert Expired(block.timestamp, proposal.startTimestamp);
-        }
-
-        // Check proposal is not revoked
-        if (!revokedNonce.isNonceUsable(proposal.proposer, proposal.nonceSpace, proposal.nonce)) {
-            revert SproRevokedNonce.NonceNotUsable(proposal.proposer, proposal.nonceSpace, proposal.nonce);
         }
 
         if (proposal.availableCreditLimit == 0) {

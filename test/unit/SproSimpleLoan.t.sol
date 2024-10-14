@@ -7,7 +7,7 @@ import { T20 } from "test/helper/T20.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { SproHandler } from "test/helper/SproHandler.sol";
 
-import { Spro, Math, SproRevokedNonce, IPoolAdapter } from "src/spro/Spro.sol";
+import { Spro, Math, IPoolAdapter } from "src/spro/Spro.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 

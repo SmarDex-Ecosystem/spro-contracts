@@ -8,7 +8,6 @@ import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/trans
 
 import { Spro } from "src/spro/Spro.sol";
 import { SproLOAN } from "src/spro/SproLOAN.sol";
-import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 
 abstract contract SDDeploymentTest is Test {
     uint256 public constant UNLISTED_FEE = 50e18;
@@ -27,7 +26,6 @@ abstract contract SDDeploymentTest is Test {
         SproLOAN loanToken;
         address proxyAdmin;
         address protocolAdmin;
-        SproRevokedNonce revokedNonce;
         T20 sdex;
     }
 
@@ -44,7 +42,6 @@ abstract contract SDDeploymentTest is Test {
         deployment.config =
             new Spro(address(deployment.sdex), UNLISTED_FEE, LISTED_FEE, VARIABLE_FACTOR, PARTIAL_POSITION_PERCENTAGE);
         vm.stopPrank();
-        deployment.revokedNonce = deployment.config.revokedNonce();
         deployment.loanToken = deployment.config.loanToken();
 
         // Labels
@@ -52,7 +49,6 @@ abstract contract SDDeploymentTest is Test {
         vm.label(deployment.protocolAdmin, "protocolAdmin");
         vm.label(address(deployment.sdex), "sdex");
         vm.label(address(deployment.config), "config");
-        vm.label(address(deployment.revokedNonce), "revokedNonce");
         vm.label(address(deployment.loanToken), "loanToken");
     }
 }

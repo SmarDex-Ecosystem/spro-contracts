@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { SDBaseIntegrationTest, Spro, SproRevokedNonce } from "test/integration/SDBaseIntegrationTest.t.sol";
+import { SDBaseIntegrationTest, Spro } from "test/integration/SDBaseIntegrationTest.t.sol";
 import { SigUtils } from "test/utils/SigUtils.sol";
 import { IPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 
@@ -22,10 +22,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         uint256 loanId = _createLoan(proposal, "");
 
         // Borrower withdraws remaining collateral
-        vm.startPrank(borrower);
-        deployment.config.revokeNonce(proposal.nonceSpace, proposal.nonce);
+        vm.prank(borrower);
         _cancelProposal(proposal);
-        vm.stopPrank();
 
         // ASSERTIONS
         // loan token
@@ -53,12 +51,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             t20.balanceOf(address(deployment.config)),
             (CREDIT_AMOUNT * COLLATERAL_AMOUNT) / CREDIT_LIMIT,
             "6: ERC20 collateral token balance of loan contract should be used collateral"
-        );
-        // nonce
-        assertEq(
-            deployment.revokedNonce.isNonceUsable(borrower, proposal.nonceSpace, proposal.nonce),
-            false,
-            "7: nonce for borrower should not be usable"
         );
         // sdex fees
         assertEq(

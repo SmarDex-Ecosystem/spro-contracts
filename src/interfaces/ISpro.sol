@@ -254,15 +254,4 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param loanOwner Address of the LOAN token holder.
      */
     function tryClaimRepaidLOAN(uint256 loanId, uint256 creditAmount, address loanOwner) external;
-
-    /* ------------------------------------------------------------ */
-    /*                          EXTERNALS                           */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Helper function for revoking a proposal nonce on behalf of a caller.
-     * @param nonceSpace Nonce space of a proposal nonce to be revoked.
-     * @param nonce Proposal nonce to be revoked.
-     */
-    function revokeNonce(uint256 nonceSpace, uint256 nonce) external;
 }

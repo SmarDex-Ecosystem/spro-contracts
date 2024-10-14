@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
-import { SDBaseIntegrationTest, Spro, SproRevokedNonce } from "test/integration/SDBaseIntegrationTest.t.sol";
+import { SDBaseIntegrationTest, Spro } from "test/integration/SDBaseIntegrationTest.t.sol";
 
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
