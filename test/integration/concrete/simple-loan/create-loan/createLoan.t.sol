@@ -22,7 +22,6 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         _createERC20Proposal();
 
         // Specs
-        bytes memory proposalSpec = abi.encode(proposal);
         Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
 
         vm.prank(lender);
@@ -31,7 +30,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
                 ISproErrors.InvalidDuration.selector, proposal.loanExpiration - proposal.startTimestamp, minDuration
             )
         );
-        deployment.config.createLOAN(proposalSpec, lenderSpec, "");
+        deployment.config.createLOAN(proposal, lenderSpec, "");
     }
 
     function test_RevertWhen_InvalidMaxApr() external proposalContractHasTag {
@@ -40,7 +39,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         proposal.accruingInterestAPR = uint24(maxApr + 1);
 
         // Create proposal
-        bytes memory proposalSpec = _createERC20Proposal();
+        _createERC20Proposal();
 
         // Specs
         Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
@@ -49,7 +48,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         vm.expectRevert(
             abi.encodeWithSelector(ISproErrors.InterestAPROutOfBounds.selector, proposal.accruingInterestAPR, maxApr)
         );
-        deployment.config.createLOAN(proposalSpec, lenderSpec, "");
+        deployment.config.createLOAN(proposal, lenderSpec, "");
     }
 
     modifier whenLoanTermsValid() {
@@ -63,14 +62,13 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
     function test_CreateLoan_ERC20() external proposalContractHasTag whenLoanTermsValid whenERC20Collateral {
         _createERC20Proposal();
 
-        bytes memory proposalSpec = abi.encode(proposal);
         Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
 
         vm.startPrank(lender);
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        uint256 id = deployment.config.createLOAN(proposalSpec, lenderSpec, "");
+        uint256 id = deployment.config.createLOAN(proposal, lenderSpec, "");
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
@@ -95,7 +93,6 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         proposal.creditAddress = address(creditPermit);
         _createERC20Proposal();
 
-        bytes memory proposalSpec = abi.encode(proposal);
         Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
 
         // Construct permit data for the lender
@@ -130,7 +127,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         // Set the permit data
         lenderSpec.permitData = abi.encode(permit);
 
-        uint256 id = deployment.config.createLOAN(proposalSpec, lenderSpec, "");
+        uint256 id = deployment.config.createLOAN(proposal, lenderSpec, "");
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);

@@ -119,16 +119,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     }
 
     /// @inheritdoc ISpro
-    function encodeProposalData(Proposal memory proposal) public pure returns (bytes memory) {
-        return abi.encode(proposal);
-    }
-
-    /// @inheritdoc ISpro
-    function decodeProposalData(bytes memory proposalData) public pure returns (Proposal memory) {
-        return abi.decode(proposalData, (Proposal));
-    }
-
-    /// @inheritdoc ISpro
     function getProposalCreditStatus(Proposal calldata proposal)
         external
         view
@@ -231,10 +221,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function createProposal(bytes calldata proposalData) external {
+    function createProposal(Proposal calldata proposal) external {
         // Make the proposal
         (address proposer, address collateral, uint256 collateralAmount, address creditAddress, uint256 creditLimit) =
-            _makeProposal(proposalData);
+            _makeProposal(proposal);
 
         // Check caller is the proposer
         if (msg.sender != proposer) {
@@ -258,16 +248,16 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function cancelProposal(bytes calldata proposalData) external {
-        Proposal memory proposal = _cancelProposal(proposalData);
+    function cancelProposal(Proposal calldata proposal) external {
+        Proposal memory newProposal = _cancelProposal(proposal);
 
         // The caller must be the proposer
-        if (msg.sender != proposal.proposer) {
+        if (msg.sender != newProposal.proposer) {
             revert CallerNotProposer();
         }
 
         // Transfers withdrawable collateral to the proposer/borrower
-        _push(proposal.collateralAddress, proposal.collateralAmount, proposal.proposer);
+        _push(newProposal.collateralAddress, newProposal.collateralAmount, newProposal.proposer);
     }
 
     /* ------------------------------------------------------------ */
@@ -275,13 +265,12 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function createLOAN(bytes calldata proposalData, LenderSpec calldata lenderSpec, bytes calldata extra)
+    function createLOAN(Proposal calldata proposal, LenderSpec calldata lenderSpec, bytes calldata extra)
         external
         returns (uint256 loanId_)
     {
         // Accept proposal and get loan terms
-        (bytes32 proposalHash, Terms memory loanTerms) =
-            _acceptProposal(msg.sender, lenderSpec.creditAmount, proposalData);
+        (bytes32 proposalHash, Terms memory loanTerms) = _acceptProposal(msg.sender, lenderSpec.creditAmount, proposal);
 
         // Check minimum loan duration
         if (loanTerms.loanExpiration - loanTerms.startTimestamp < Constants.MIN_LOAN_DURATION) {
@@ -631,14 +620,14 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /**
      * @notice Make an on-chain proposal.
      * @dev Function will mark a proposal hash as proposed.
-     * @param proposalData Encoded proposal data.
+     * @param proposal Proposal struct.
      * @return proposer_ Address of the borrower/proposer
      * @return collateral_ Address of the collateral token.
      * @return collateralAmount_ Amount of the collateral token.
      * @return creditAddress_ Address of the credit token.
      * @return creditLimit_ Credit limit.
      */
-    function _makeProposal(bytes calldata proposalData)
+    function _makeProposal(Proposal memory proposal)
         private
         returns (
             address proposer_,
@@ -649,7 +638,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         )
     {
         // Decode proposal data
-        Proposal memory proposal = decodeProposalData(proposalData);
         if (proposal.startTimestamp > proposal.loanExpiration) {
             revert InvalidDurationStartTime();
         }
@@ -673,17 +661,14 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @notice Accept a proposal and create new loan terms.
      * @param acceptor Address of a proposal acceptor.
      * @param creditAmount Amount of credit to lend.
-     * @param proposalData Encoded proposal data with signature.
+     * @param proposal Proposal struct.
      * @return proposalHash_ Proposal hash.
      * @return loanTerms_ Loan terms.
      */
-    function _acceptProposal(address acceptor, uint256 creditAmount, bytes calldata proposalData)
+    function _acceptProposal(address acceptor, uint256 creditAmount, Proposal memory proposal)
         private
         returns (bytes32 proposalHash_, Terms memory loanTerms_)
     {
-        // Decode proposal data
-        Proposal memory proposal = decodeProposalData(proposalData);
-
         // Make proposal hash
         proposalHash_ = _getProposalHash(abi.encode(proposal));
 
@@ -727,12 +712,11 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /**
      * @notice Cancels a proposal and resets withdrawable collateral.
      * @dev Revokes the nonce if still usable and block.timestamp is < proposal startTimestamp.
-     * @param proposalData Encoded proposal data.
+     * @param proposal Proposal struct.
      * @return proposal_ Proposal struct.
      */
-    function _cancelProposal(bytes calldata proposalData) internal returns (Proposal memory proposal_) {
-        // Decode proposal data
-        proposal_ = decodeProposalData(proposalData);
+    function _cancelProposal(Proposal memory proposal) internal returns (Proposal memory proposal_) {
+        proposal_ = proposal;
 
         // Make proposal hash
         bytes32 proposalHash = _getProposalHash(abi.encode(proposal_));

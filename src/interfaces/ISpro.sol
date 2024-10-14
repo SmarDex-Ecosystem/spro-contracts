@@ -79,20 +79,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     function getProposalHash(ISproTypes.Proposal memory proposal) external returns (bytes32);
 
     /**
-     * @notice Encode proposal data.
-     * @param proposal Proposal struct to be encoded.
-     * @return Encoded proposal data.
-     */
-    function encodeProposalData(ISproTypes.Proposal memory proposal) external returns (bytes memory);
-
-    /**
-     * @notice Decode proposal data.
-     * @param proposalData Encoded proposal data.
-     * @return Decoded proposal struct.
-     */
-    function decodeProposalData(bytes memory proposalData) external returns (ISproTypes.Proposal memory);
-
-    /**
      * @notice Getter for credit used and credit remaining for a proposal.
      * @param proposal Proposal struct.
      * @return used_ Credit used for the proposal.
@@ -171,9 +157,9 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Create a borrow request proposal and transfers collateral to the vault and SDEX to fee sink.
-     * @param proposalData Proposal data.
+     * @param proposal Proposal struct.
      */
-    function createProposal(bytes memory proposalData) external;
+    function createProposal(Proposal memory proposal) external;
 
     /* ------------------------------------------------------------ */
     /*        CANCEL PROPOSAL AND WITHDRAW UNUSED COLLATERAL        */
@@ -183,9 +169,9 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @notice A borrower can cancel their proposal and withdraw unused collateral.
      * @dev Resets withdrawable collateral, revokes the nonce if needed, transfers unused collateral to the proposer.
      * @dev Fungible withdrawable collateral with amount == 0 calls should not revert, should transfer 0 tokens.
-     * @param proposalData Proposal data.
+     * @param proposal Proposal struct.
      */
-    function cancelProposal(bytes memory proposalData) external;
+    function cancelProposal(Proposal memory proposal) external;
 
     /* ------------------------------------------------------------ */
     /*                          CREATE LOAN                         */
@@ -194,12 +180,12 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /**
      * @notice Create a new loan.
      * @dev The function assumes a prior token approval to a contract address or signed permits.
-     * @param proposalData Proposal data.
+     * @param proposal Proposal struct.
      * @param lenderSpec Lender specification struct.
      * @param extra Auxiliary data that are emitted in the loan creation event. They are not used in the contract logic.
      * @return loanId_ Id of the created LOAN token.
      */
-    function createLOAN(bytes memory proposalData, ISproTypes.LenderSpec memory lenderSpec, bytes memory extra)
+    function createLOAN(Proposal memory proposal, ISproTypes.LenderSpec memory lenderSpec, bytes memory extra)
         external
         returns (uint256 loanId_);
 

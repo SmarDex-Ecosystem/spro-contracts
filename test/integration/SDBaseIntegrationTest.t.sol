@@ -113,20 +113,17 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     }
 
     // Make the proposal
-    function _createERC20Proposal() internal returns (bytes memory proposalSpec) {
+    function _createERC20Proposal() internal {
         // Mint initial state & approve collateral
         t20.mint(borrower, proposal.collateralAmount);
         vm.prank(borrower);
         t20.approve(address(deployment.config), proposal.collateralAmount);
 
-        // Create the proposal
-        proposalSpec = abi.encode(proposal);
-
         vm.prank(borrower);
-        deployment.config.createProposal(proposalSpec);
+        deployment.config.createProposal(proposal);
     }
 
-    function _createLoan(bytes memory proposalSpec, bytes memory revertData) internal returns (uint256 loanId) {
+    function _createLoan(Spro.Proposal memory newProposal, bytes memory revertData) internal returns (uint256 loanId) {
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
         vm.prank(lender);
@@ -138,11 +135,11 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         }
 
         vm.prank(lender);
-        return deployment.config.createLOAN(proposalSpec, _buildLenderSpec(false), "");
+        return deployment.config.createLOAN(newProposal, _buildLenderSpec(false), "");
     }
 
     function _cancelProposal(Spro.Proposal memory _proposal) internal {
-        deployment.config.cancelProposal(abi.encode(_proposal));
+        deployment.config.cancelProposal(_proposal);
     }
 
     function _buildLenderSpec(bool complete) internal view returns (ISproTypes.LenderSpec memory lenderSpec) {

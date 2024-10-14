@@ -109,26 +109,6 @@ contract SproSimpleLoanTest is Test {
         sproHandler.exposed_checkLoanCreditAddress(loanCreditAddress, expectedCreditAddress);
     }
 
-    function testFuzz_encodeProposalData(address addr) external view {
-        Spro.Proposal memory proposal = ISproTypes.Proposal({
-            collateralAddress: addr,
-            collateralAmount: 1e20,
-            creditAddress: addr,
-            availableCreditLimit: 20e22,
-            fixedInterestAmount: 1e14,
-            accruingInterestAPR: 0,
-            startTimestamp: uint40(block.timestamp),
-            loanExpiration: uint40(block.timestamp) + 5 days,
-            proposer: addr,
-            proposerSpecHash: keccak256(abi.encode(addr)),
-            nonceSpace: 0,
-            nonce: 0,
-            loanContract: addr
-        });
-        bytes memory x = abi.encode(proposal);
-        assertEq(sproHandler.encodeProposalData(proposal), x);
-    }
-
     function testFuzz_shouldFail_partialLoan(uint256 a, uint256 l) external {
         vm.assume(a != l);
 
