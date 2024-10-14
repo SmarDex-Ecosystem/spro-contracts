@@ -118,7 +118,7 @@ contract SproSimpleLoanTest is Test {
             fixedInterestAmount: 1e14,
             accruingInterestAPR: 0,
             startTimestamp: uint40(block.timestamp),
-            defaultTimestamp: uint40(block.timestamp) + 5 days,
+            loanExpiration: uint40(block.timestamp) + 5 days,
             proposer: addr,
             proposerSpecHash: keccak256(abi.encode(addr)),
             nonceSpace: 0,

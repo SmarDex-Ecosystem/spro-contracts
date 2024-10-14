@@ -149,7 +149,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
         loanInfo_.status = _getLOANStatus(loanId);
         loanInfo_.startTimestamp = loan.startTimestamp;
-        loanInfo_.defaultTimestamp = loan.defaultTimestamp;
+        loanInfo_.loanExpiration = loan.loanExpiration;
         loanInfo_.borrower = loan.borrower;
         loanInfo_.originalLender = loan.originalLender;
         loanInfo_.loanOwner = loan.status != 0 ? loanToken.ownerOf(loanId) : address(0);
@@ -284,8 +284,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             _acceptProposal(msg.sender, lenderSpec.creditAmount, proposalData);
 
         // Check minimum loan duration
-        if (loanTerms.defaultTimestamp - loanTerms.startTimestamp < Constants.MIN_LOAN_DURATION) {
-            revert InvalidDuration(loanTerms.defaultTimestamp - loanTerms.startTimestamp, Constants.MIN_LOAN_DURATION);
+        if (loanTerms.loanExpiration - loanTerms.startTimestamp < Constants.MIN_LOAN_DURATION) {
+            revert InvalidDuration(loanTerms.loanExpiration - loanTerms.startTimestamp, Constants.MIN_LOAN_DURATION);
         }
 
         // Check maximum accruing interest APR
@@ -317,7 +317,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     function repayLOAN(uint256 loanId, bytes calldata permitData) external {
         LOAN storage loan = LOANs[loanId];
 
-        _checkLoanCanBeRepaid(loan.status, loan.defaultTimestamp);
+        _checkLoanCanBeRepaid(loan.status, loan.loanExpiration);
 
         // Update loan to repaid state
         _updateRepaidLoan(loanId);
@@ -356,7 +356,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             LOAN storage loan = LOANs[loanId];
 
             // Checks: loan can be repaid & credit address is the same for all loanIds
-            _checkLoanCanBeRepaid(loan.status, loan.defaultTimestamp);
+            _checkLoanCanBeRepaid(loan.status, loan.loanExpiration);
             _checkLoanCreditAddress(loan.creditAddress, creditAddress);
 
             // Update loan to repaid state
@@ -412,7 +412,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         } else if (loan.status == 3) {
             // Loan has been paid back
             _settleLoanClaim(loanId, msg.sender, false);
-        } else if (loan.status == 2 && loan.defaultTimestamp <= block.timestamp) {
+        } else if (loan.status == 2 && loan.loanExpiration <= block.timestamp) {
             // Loan is running but expired
             _settleLoanClaim(loanId, msg.sender, true);
         }
@@ -518,7 +518,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      */
     function _getLOANStatus(uint256 loanId) private view returns (uint8) {
         LOAN storage loan = LOANs[loanId];
-        return (loan.status == 2 && loan.defaultTimestamp <= block.timestamp) ? 4 : loan.status;
+        return (loan.status == 2 && loan.loanExpiration <= block.timestamp) ? 4 : loan.status;
     }
 
     /* ------------------------------------------------------------ */
@@ -564,9 +564,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @notice Check if the loan can be repaid.
      * @dev The function will revert if the loan cannot be repaid.
      * @param status Loan status.
-     * @param defaultTimestamp Loan default timestamp.
+     * @param loanExpiration Loan default timestamp.
      */
-    function _checkLoanCanBeRepaid(uint8 status, uint40 defaultTimestamp) internal view {
+    function _checkLoanCanBeRepaid(uint8 status, uint40 loanExpiration) internal view {
         // Check that loan exists and is not from a different loan contract
         if (status == 0) {
             revert NonExistingLoan();
@@ -576,8 +576,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             revert LoanNotRunning();
         }
         // Check that loan is not defaulted
-        if (defaultTimestamp <= block.timestamp) {
-            revert LoanDefaulted(defaultTimestamp);
+        if (loanExpiration <= block.timestamp) {
+            revert LoanDefaulted(loanExpiration);
         }
     }
 
@@ -650,7 +650,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     {
         // Decode proposal data
         Proposal memory proposal = decodeProposalData(proposalData);
-        if (proposal.startTimestamp > proposal.defaultTimestamp) {
+        if (proposal.startTimestamp > proposal.loanExpiration) {
             revert InvalidDurationStartTime();
         }
 
@@ -710,7 +710,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             acceptor,
             proposal.proposer,
             proposal.startTimestamp,
-            proposal.defaultTimestamp,
+            proposal.loanExpiration,
             proposal.collateralAddress,
             collateralUsed_,
             proposal.creditAddress,
@@ -847,7 +847,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         loan.creditAddress = loanTerms.credit;
         loan.originalSourceOfFunds = lenderSpec.sourceOfFunds;
         loan.startTimestamp = loanTerms.startTimestamp;
-        loan.defaultTimestamp = loanTerms.defaultTimestamp;
+        loan.loanExpiration = loanTerms.loanExpiration;
         loan.borrower = loanTerms.borrower;
         loan.originalLender = loanTerms.lender;
         loan.accruingInterestAPR = loanTerms.accruingInterestAPR;
@@ -902,7 +902,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     function _loanAccruedInterest(LOAN storage loan) private view returns (uint256) {
         if (loan.accruingInterestAPR == 0) return loan.fixedInterestAmount;
 
-        uint256 accruingMinutes = (loan.defaultTimestamp - loan.startTimestamp) / 1 minutes;
+        uint256 accruingMinutes = (loan.loanExpiration - loan.startTimestamp) / 1 minutes;
         uint256 accruedInterest = Math.mulDiv(
             loan.principalAmount,
             uint256(loan.accruingInterestAPR) * accruingMinutes,

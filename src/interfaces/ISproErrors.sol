@@ -59,9 +59,9 @@ interface ISproErrors {
 
     /**
      * @notice Thrown when managed loan is defaulted.
-     * @param defaultTimestamp The timestamp of the end of the loan.
+     * @param loanExpiration The timestamp of the end of the loan.
      */
-    error LoanDefaulted(uint40 defaultTimestamp);
+    error LoanDefaulted(uint40 loanExpiration);
 
     /**
      * @notice Thrown when loan doesn't exist.

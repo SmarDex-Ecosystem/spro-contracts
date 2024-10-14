@@ -8,7 +8,7 @@ interface ISproTypes {
      * @param lender Address of a lender.
      * @param borrower Address of a borrower.
      * @param startTimestamp Unix timestamp (in seconds) of a start date.
-     * @param defaultTimestamp Unix timestamp (in seconds) of a default date.
+     * @param loanExpiration Unix timestamp (in seconds) of a default date.
      * @param collateral Address of a collateral asset.
      * @param collateralAmount Amount of a collateral asset.
      * @param credit Address of a credit asset.
@@ -23,7 +23,7 @@ interface ISproTypes {
         address lender;
         address borrower;
         uint40 startTimestamp;
-        uint40 defaultTimestamp;
+        uint40 loanExpiration;
         address collateral;
         uint256 collateralAmount;
         address credit;
@@ -54,7 +54,7 @@ interface ISproTypes {
      * @param creditAddress Address of an asset used as a loan credit.
      * @param originalSourceOfFunds Address of a source of funds that was used to fund the loan.
      * @param startTimestamp Unix timestamp (in seconds) of a start date.
-     * @param defaultTimestamp Unix timestamp (in seconds) of a default date.
+     * @param loanExpiration Unix timestamp (in seconds) of a default date.
      * @param borrower Address of a borrower.
      * @param originalLender Address of a lender that funded the loan.
      * @param accruingInterestAPR Accruing interest APR with 2 decimals.
@@ -71,7 +71,7 @@ interface ISproTypes {
         address creditAddress;
         address originalSourceOfFunds;
         uint40 startTimestamp;
-        uint40 defaultTimestamp;
+        uint40 loanExpiration;
         address borrower;
         address originalLender;
         uint24 accruingInterestAPR;
@@ -93,7 +93,7 @@ interface ISproTypes {
      * to be paid by a borrower.
      * @param accruingInterestAPR Accruing interest APR with 2 decimals.
      * @param startTimestamp Proposal start timestamp in seconds.
-     * @param defaultTimestamp Proposal default timestamp in seconds.
+     * @param loanExpiration Proposal default timestamp in seconds.
      * @param proposer Address of a proposal signer. If `isOffer` is true, the proposer is the lender. If `isOffer` is
      * false, the proposer is the borrower.
      * @param proposerSpecHash Hash of a proposer specific data, which must be provided during a loan creation.
@@ -111,7 +111,7 @@ interface ISproTypes {
         uint256 fixedInterestAmount;
         uint24 accruingInterestAPR;
         uint40 startTimestamp;
-        uint40 defaultTimestamp;
+        uint40 loanExpiration;
         address proposer;
         bytes32 proposerSpecHash;
         uint256 nonceSpace;
@@ -123,7 +123,7 @@ interface ISproTypes {
      * @notice Loan information struct.
      * @param status LOAN status.
      * @param startTimestamp Unix timestamp (in seconds) of a loan creation date.
-     * @param defaultTimestamp Unix timestamp (in seconds) of a loan default date.
+     * @param loanExpiration Unix timestamp (in seconds) of a loan default date.
      * @param borrower Address of a loan borrower.
      * @param originalLender Address of a loan original lender.
      * @param loanOwner Address of a LOAN token holder.
@@ -139,7 +139,7 @@ interface ISproTypes {
     struct LoanInfo {
         uint8 status;
         uint40 startTimestamp;
-        uint40 defaultTimestamp;
+        uint40 loanExpiration;
         address borrower;
         address originalLender;
         address loanOwner;

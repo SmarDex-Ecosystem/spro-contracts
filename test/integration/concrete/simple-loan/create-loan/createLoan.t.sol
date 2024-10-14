@@ -16,7 +16,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
     function test_RevertWhen_InvalidLoanDuration() external proposalContractHasTag {
         // Set bad duration value
         uint256 minDuration = Constants.MIN_LOAN_DURATION;
-        proposal.defaultTimestamp = proposal.startTimestamp + uint32(minDuration - 1);
+        proposal.loanExpiration = proposal.startTimestamp + uint32(minDuration - 1);
 
         // Create proposal
         _createERC20Proposal();
@@ -28,7 +28,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         vm.prank(lender);
         vm.expectRevert(
             abi.encodeWithSelector(
-                ISproErrors.InvalidDuration.selector, proposal.defaultTimestamp - proposal.startTimestamp, minDuration
+                ISproErrors.InvalidDuration.selector, proposal.loanExpiration - proposal.startTimestamp, minDuration
             )
         );
         deployment.config.createLOAN(proposalSpec, lenderSpec, "");

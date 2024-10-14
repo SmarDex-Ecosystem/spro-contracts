@@ -86,7 +86,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         deployment.config.cancelProposal(proposalSpec);
 
         // Warp ahead, just before loan default
-        vm.warp(proposal.defaultTimestamp - proposal.startTimestamp - 1);
+        vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
         // Borrower approvals for credit token
         credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
@@ -570,7 +570,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         (ISproTypes.LoanInfo memory loanInfo) = deployment.config.getLOAN(loanId);
 
         // Assertions
-        uint256 accruingMinutes = (loanInfo.defaultTimestamp - loanInfo.startTimestamp) / 1 minutes;
+        uint256 accruingMinutes = (loanInfo.loanExpiration - loanInfo.startTimestamp) / 1 minutes;
         uint256 accruedInterest = Math.mulDiv(
             amount,
             uint256(loanInfo.accruingInterestAPR) * accruingMinutes,

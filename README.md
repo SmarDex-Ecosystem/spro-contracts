@@ -17,7 +17,7 @@ Key changes made in this fork include:
 - Removed loan refinance, loan extension features.
 - Thresholds added to the partial lending feature which does not allow a lender to match with less than 5% of the requested borrow amount.
 - Domain separators updated to ensure no permit reuse with the base PWN protocol is possible.
-- All lenders on the same loan have the same defaultTimestamp.
+- All lenders on the same loan have the same loanExpiration.
 
 ## Installation
 

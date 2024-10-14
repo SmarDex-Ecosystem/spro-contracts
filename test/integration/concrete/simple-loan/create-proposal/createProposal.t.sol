@@ -98,7 +98,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
     {
         // Set bad timestamp value
         proposal.startTimestamp = uint40(block.timestamp);
-        proposal.defaultTimestamp = proposal.startTimestamp - 1;
+        proposal.loanExpiration = proposal.startTimestamp - 1;
 
         // Mint initial state & approve collateral
         t20.mint(borrower, proposal.collateralAmount);
