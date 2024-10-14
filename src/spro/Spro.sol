@@ -304,7 +304,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         }
 
         // Settle the loan - Transfer credit to borrower
-        _settleNewLoan(loanTerms, lenderSpec);
+        _settleNewLoan(loanTerms, lenderSpec.sourceOfFunds);
     }
 
     /* ------------------------------------------------------------ */
@@ -595,22 +595,19 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @dev The function will revert if pool doesn't have registered pool adapter.
      * @param credit Asset to be pulled from the pool.
      * @param creditAmount Amount of an asset to be pulled.
-     * @param loanTerms Loan terms struct.
-     * @param lenderSpec Lender specification struct.
+     * @param lender Address of a lender.
+     * @param sourceOfFunds Address of a source of funds.
      */
-    function _withdrawCreditFromPool(
-        address credit,
-        uint256 creditAmount,
-        Terms memory loanTerms,
-        LenderSpec calldata lenderSpec
-    ) internal {
-        IPoolAdapter poolAdapter = getPoolAdapter(lenderSpec.sourceOfFunds);
+    function _withdrawCreditFromPool(address credit, uint256 creditAmount, address lender, address sourceOfFunds)
+        internal
+    {
+        IPoolAdapter poolAdapter = getPoolAdapter(sourceOfFunds);
         if (address(poolAdapter) == address(0)) {
-            revert InvalidSourceOfFunds(lenderSpec.sourceOfFunds);
+            revert InvalidSourceOfFunds(sourceOfFunds);
         }
 
         if (creditAmount > 0) {
-            _withdrawFromPool(credit, creditAmount, poolAdapter, lenderSpec.sourceOfFunds, loanTerms.lender);
+            _withdrawFromPool(credit, creditAmount, poolAdapter, sourceOfFunds, lender);
         }
     }
 
@@ -862,13 +859,13 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @notice Transfers credit to borrower
      * @dev The function assumes a prior token approval to a contract address or signed permits.
      * @param loanTerms Loan terms struct.
-     * @param lenderSpec Lender specification struct.
+     * @param sourceOfFunds Address of a source of funds.
      */
-    function _settleNewLoan(Terms memory loanTerms, LenderSpec calldata lenderSpec) private {
+    function _settleNewLoan(Terms memory loanTerms, address sourceOfFunds) private {
         // Lender is not the source of funds
-        if (lenderSpec.sourceOfFunds != loanTerms.lender) {
+        if (sourceOfFunds != loanTerms.lender) {
             // Withdraw credit asset to the lender first
-            _withdrawCreditFromPool(loanTerms.credit, loanTerms.creditAmount, loanTerms, lenderSpec);
+            _withdrawCreditFromPool(loanTerms.credit, loanTerms.creditAmount, loanTerms.lender, sourceOfFunds);
         }
 
         // Transfer credit to borrower

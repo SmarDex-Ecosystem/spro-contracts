@@ -32,7 +32,7 @@ contract SproHandler is Spro {
         Terms memory loanTerms,
         LenderSpec calldata lenderSpec
     ) external {
-        _withdrawCreditFromPool(credit, creditAmount, loanTerms, lenderSpec);
+        _withdrawCreditFromPool(credit, creditAmount, loanTerms.lender, lenderSpec.sourceOfFunds);
     }
 
     function exposed_checkCompleteLoan(uint256 _creditAmount, uint256 _availableCreditLimit) external pure {
