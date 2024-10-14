@@ -6,7 +6,6 @@ import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
-import { SproListedFee } from "src/libraries/SproListedFee.sol";
 import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { ISproLoanMetadataProvider } from "src/interfaces/ISproLoanMetadataProvider.sol";
 import { ISpro } from "src/interfaces/ISpro.sol";
@@ -172,7 +171,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         uint256 tokenFactor = tokenFactors[assetAddress];
         return (tokenFactor == 0)
             ? fixFeeUnlisted
-            : SproListedFee.calculate(fixFeeListed, variableFactor, tokenFactor, amount);
+            : (
+                fixFeeListed
+                    + Math.mulDiv((variableFactor * tokenFactor) / Constants.WAD, amount, Constants.WAD, Math.Rounding.Ceil)
+            );
     }
 
     /// @inheritdoc ISpro

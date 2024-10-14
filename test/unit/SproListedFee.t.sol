@@ -5,7 +5,8 @@ import { Test } from "forge-std/Test.sol";
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { SproListedFee } from "src/libraries/SproListedFee.sol";
+import { SproListedFee } from "test/helper/SproListedFee.sol";
+
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 contract SproFeeCalculator_CalculateFeeAmount_Test is Test {

@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { SproConstantsLibrary as Constants } from "./SproConstantsLibrary.sol";
+import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 library SproListedFee {
     /**
