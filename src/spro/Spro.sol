@@ -4,6 +4,10 @@ pragma solidity ^0.8.26;
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Permit2Payments } from "@uniswap/universal-router/contracts/modules/Permit2Payments.sol";
+import {
+    PaymentsImmutables, PaymentsParameters
+} from "@uniswap/universal-router/contracts/modules/PaymentsImmutables.sol";
 
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
@@ -14,7 +18,7 @@ import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 import { SproVault } from "src/spro/SproVault.sol";
 import { SproStorage } from "src/spro/SproStorage.sol";
 
-contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataProvider {
+contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataProvider, Permit2Payments {
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
@@ -32,7 +36,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         uint256 _fixFeeListed,
         uint256 _variableFactor,
         uint16 _percentage
-    ) Ownable(msg.sender) {
+    )
+        Ownable(msg.sender)
+        PaymentsImmutables(PaymentsParameters(params.permit2, params.weth9, address(0), address(0)))
+    {
         require(_sdex != address(0), "SDEX is zero address");
         require(
             _percentage > 0 && _percentage < Constants.BPS_DIVISOR / 2, "Partial percentage position value is invalid"
@@ -289,13 +296,16 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
         // Execute permit for the caller
         if (lenderSpec.permitData.length > 0) {
-            Permit memory permit = abi.decode(lenderSpec.permitData, (Permit));
-            _checkPermit(msg.sender, loanTerms.credit, permit);
-            _tryPermit(permit);
-        }
+            // Permit memory permit = abi.decode(lenderSpec.permitData, (Permit));
+            // _checkPermit(msg.sender, loanTerms.credit, permit);
+            // _tryPermit(permit);
+            permit2TransferFrom(loanTerms.credit, loanTerms.lender, loanTerms.borrower, loanTerms.creditAmount);
+        } else {
+            // Settle the loan - Transfer credit to borrower
+            _settleNewLoan(loanTerms, lenderSpec.sourceOfFunds);
 
-        // Settle the loan - Transfer credit to borrower
-        _settleNewLoan(loanTerms, lenderSpec.sourceOfFunds);
+            // _pushFrom(loanTerms.credit, loanTerms.creditAmount, loanTerms.lender, loanTerms.borrower);
+        }
     }
 
     /* ------------------------------------------------------------ */
