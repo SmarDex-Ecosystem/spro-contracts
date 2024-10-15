@@ -26,7 +26,7 @@ interface ISproErrors {
     error InvalidComputerContract(address computer, address asset);
 
     /**
-     * @notice Thrown when trying to set a LOAN token metadata uri for zero address loan contract.
+     * @notice Thrown when trying to set a Loan token metadata uri for zero address loan contract.
      */
     error DefaultLoanContract();
 
@@ -69,9 +69,9 @@ interface ISproErrors {
     error NonExistingLoan();
 
     /**
-     * @notice Thrown when caller is not a LOAN token holder.
+     * @notice Thrown when caller is not a Loan token holder.
      */
-    error CallerNotLOANTokenHolder();
+    error CallerNotLoanTokenHolder();
 
     /**
      * @notice Thrown when loan duration is below the minimum.

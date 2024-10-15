@@ -232,9 +232,9 @@ contract TestSprosetLoanMetadataUri is SproTest {
         assertEq(config._loanMetadataUri(loanContract), tokenUri);
     }
 
-    function test_shouldEmitEvent_LOANMetadataUriUpdated() external {
+    function test_shouldEmitEvent_LoanMetadataUriUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit ISproEvents.LOANMetadataUriUpdated(loanContract, tokenUri);
+        emit ISproEvents.LoanMetadataUriUpdated(loanContract, tokenUri);
 
         vm.prank(owner);
         config.setLoanMetadataUri(loanContract, tokenUri);
@@ -261,9 +261,9 @@ contract TestSprosetDefaultLoanMetadataUri is SproTest {
         assertEq(config._loanMetadataUri(address(0)), tokenUri);
     }
 
-    function test_shouldEmitEvent_DefaultLOANMetadataUriUpdated() external {
+    function test_shouldEmitEvent_DefaultLoanMetadataUriUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit ISproEvents.DefaultLOANMetadataUriUpdated(tokenUri);
+        emit ISproEvents.DefaultLoanMetadataUriUpdated(tokenUri);
 
         vm.prank(owner);
         config.setDefaultLoanMetadataUri(tokenUri);

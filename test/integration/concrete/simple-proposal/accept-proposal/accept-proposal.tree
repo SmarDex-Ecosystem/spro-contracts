@@ -5,9 +5,9 @@ acceptProposal.t.sol
     ├── when the caller is not the loan contract
     │   └── it should revert
     └── when the caller is the loan contract
-        ├── when the loan contract does not have the ACTIVE_LOAN hub tag
+        ├── when the loan contract does not have the ACTIVE_Loan hub tag
         │   └── it should revert
-        └── when the loan contract does have the ACTIVE_LOAN hub tag
+        └── when the loan contract does have the ACTIVE_Loan hub tag
             ├── when the proposal was not made on-chain
             │   └── it should revert
             └── when the proposal was made on-chain

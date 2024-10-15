@@ -5,14 +5,14 @@ import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { ISproLoanMetadataProvider } from "src/interfaces/ISproLoanMetadataProvider.sol";
-import { ISproLOAN } from "src/interfaces/ISproLOAN.sol";
+import { ISproLoan } from "src/interfaces/ISproLoan.sol";
 
-contract SproLOAN is ISproLOAN, ERC721, Ownable {
+contract SproLoan is ISproLoan, ERC721, Ownable {
     /* ------------------------------------------------------------ */
     /*                VARIABLES & CONSTANTS DEFINITIONS             */
     /* ------------------------------------------------------------ */
 
-    /// @inheritdoc ISproLOAN
+    /// @inheritdoc ISproLoan
     uint256 public lastLoanId;
 
     /* ------------------------------------------------------------ */
@@ -23,31 +23,31 @@ contract SproLOAN is ISproLOAN, ERC721, Ownable {
      * @notice Initialize SproLoan contract.
      * @param creator Address of the creator.
      */
-    constructor(address creator) ERC721("Spro LOAN", "LOAN") Ownable(creator) { }
+    constructor(address creator) ERC721("Spro Loan", "LOAN") Ownable(creator) { }
 
     /* ------------------------------------------------------------ */
     /*                       TOKEN LIFECYCLE                        */
     /* ------------------------------------------------------------ */
 
-    /// @inheritdoc ISproLOAN
+    /// @inheritdoc ISproLoan
     function mint(address to) external onlyOwner returns (uint256 loanId_) {
         loanId_ = ++lastLoanId;
         _mint(to, loanId_);
-        emit LOANMinted(loanId_, to);
+        emit LoanMinted(loanId_, to);
     }
 
-    /// @inheritdoc ISproLOAN
+    /// @inheritdoc ISproLoan
     function burn(uint256 loanId) external onlyOwner {
         _burn(loanId);
-        emit LOANBurned(loanId);
+        emit LoanBurned(loanId);
     }
 
     /* ------------------------------------------------------------ */
     /*                          METADATA                            */
     /* ------------------------------------------------------------ */
 
-    /// @inheritdoc ISproLOAN
-    function tokenURI(uint256 tokenId) public view virtual override(ERC721, ISproLOAN) returns (string memory) {
+    /// @inheritdoc ISproLoan
+    function tokenURI(uint256 tokenId) public view virtual override(ERC721, ISproLoan) returns (string memory) {
         _requireOwned(tokenId);
 
         return ISproLoanMetadataProvider(owner()).loanMetadataUri();

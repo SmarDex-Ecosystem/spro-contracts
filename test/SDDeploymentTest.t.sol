@@ -7,7 +7,7 @@ import { T20 } from "test/helper/T20.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import { Spro } from "src/spro/Spro.sol";
-import { SproLOAN } from "src/spro/SproLOAN.sol";
+import { SproLoan } from "src/spro/SproLoan.sol";
 import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 
 abstract contract SDDeploymentTest is Test {
@@ -24,7 +24,7 @@ abstract contract SDDeploymentTest is Test {
     // Properties need to be in alphabetical order
     struct Deployment {
         Spro config;
-        SproLOAN loanToken;
+        SproLoan loanToken;
         address proxyAdmin;
         address protocolAdmin;
         SproRevokedNonce revokedNonce;

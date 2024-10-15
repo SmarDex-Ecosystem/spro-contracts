@@ -129,13 +129,13 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         vm.prank(lender);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        // Create LOAN
+        // Create Loan
         if (keccak256(revertData) != keccak256("")) {
             vm.expectRevert(revertData);
         }
 
         vm.prank(lender);
-        return deployment.config.createLOAN(newProposal, _buildLenderSpec(false), "");
+        return deployment.config.createLoan(newProposal, _buildLenderSpec(false), "");
     }
 
     function _cancelProposal(Spro.Proposal memory _proposal) internal {

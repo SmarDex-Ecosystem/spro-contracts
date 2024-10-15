@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
-import { SproLOAN } from "src/spro/SproLOAN.sol";
+import { SproLoan } from "src/spro/SproLoan.sol";
 import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 import { ISproStorage } from "src/interfaces/ISproStorage.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
@@ -53,10 +53,10 @@ contract SproStorage is ISproStorage {
     );
 
     /// @inheritdoc ISproStorage
-    SproLOAN public immutable loanToken;
+    SproLoan public immutable loanToken;
 
-    /// @notice  Mapping of all LOAN data by loan id.
-    mapping(uint256 => ISproTypes.LOAN) internal LOANs;
+    /// @notice  Mapping of all Loan data by loan id.
+    mapping(uint256 => ISproTypes.Loan) internal Loans;
 
     /* -------------------------------------------------------------------------- */
     /*                                  PROPOSAL                                  */

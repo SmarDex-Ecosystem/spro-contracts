@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { SproLOAN } from "src/spro/SproLOAN.sol";
+import { SproLoan } from "src/spro/SproLoan.sol";
 import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 
 /**
@@ -45,7 +45,7 @@ interface ISproStorage {
 
     /**
      * @notice Get loan metadata URI for a loan contract address.
-     * @dev LOAN token minted by a loan contract will return metadata uri stored in this mapping.
+     * @dev Loan token minted by a loan contract will return metadata uri stored in this mapping.
      *      If there is no metadata uri for a loan contract, default metadata uri will be used stored under address(0).
      */
     function _loanMetadataUri(address loanContract) external view returns (string memory);
@@ -60,8 +60,8 @@ interface ISproStorage {
     /// @notice Get the DOMAIN_SEPARATOR_LOAN signature verification.
     function DOMAIN_SEPARATOR_LOAN() external view returns (bytes32);
 
-    /// @notice Get SproLOAN contract.
-    function loanToken() external view returns (SproLOAN);
+    /// @notice Get SproLoan contract.
+    function loanToken() external view returns (SproLoan);
 
     /* -------------------------------------------------------------------------- */
     /*                                  PROPOSAL                                  */

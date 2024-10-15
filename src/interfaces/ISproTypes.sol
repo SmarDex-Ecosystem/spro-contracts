@@ -64,7 +64,7 @@ interface ISproTypes {
 
     /**
      * @notice Struct defining a simple loan.
-     * @param status LOAN status.
+     * @param status Loan status.
      * @param creditAddress Address of an asset used as a loan credit.
      * @param originalSourceOfFunds Address of a source of funds that was used to fund the loan.
      * @param startTimestamp Unix timestamp (in seconds) of a start date.
@@ -80,7 +80,7 @@ interface ISproTypes {
      * @param collateral Address of a collateral asset.
      * @param collateralAmount Amount of a collateral asset.
      */
-    struct LOAN {
+    struct Loan {
         LoanStatus status;
         address creditAddress;
         address originalSourceOfFunds;
@@ -135,12 +135,12 @@ interface ISproTypes {
 
     /**
      * @notice Loan information struct.
-     * @param status LOAN status.
+     * @param status Loan status.
      * @param startTimestamp Unix timestamp (in seconds) of a loan creation date.
      * @param loanExpiration Unix timestamp (in seconds) of a loan default date.
      * @param borrower Address of a loan borrower.
      * @param originalLender Address of a loan original lender.
-     * @param loanOwner Address of a LOAN token holder.
+     * @param loanOwner Address of a Loan token holder.
      * @param accruingInterestAPR Accruing interest APR with 2 decimal places.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      * @param credit Address of a credit asset.
