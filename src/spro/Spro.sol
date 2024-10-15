@@ -671,7 +671,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
                 proposal.availableCreditLimit,
                 proposal.startTimestamp,
                 proposal.proposer,
-                proposal.nonceSpace,
                 proposal.nonce,
                 proposal.loanContract
             )
@@ -700,7 +699,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /**
      * @notice Cancels a proposal and resets withdrawable collateral.
-     * @dev Revokes the nonce if still usable and block.timestamp is < proposal startTimestamp.
      * @param proposal Proposal struct.
      * @return proposal_ Proposal struct.
      */

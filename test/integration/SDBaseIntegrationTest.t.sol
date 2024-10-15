@@ -80,7 +80,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
             borrower,
             keccak256(abi.encode(borrower)),
             0,
-            0,
             address(deployment.config)
         );
 

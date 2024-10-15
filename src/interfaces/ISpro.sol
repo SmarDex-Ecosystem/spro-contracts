@@ -167,7 +167,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice A borrower can cancel their proposal and withdraw unused collateral.
-     * @dev Resets withdrawable collateral, revokes the nonce if needed, transfers unused collateral to the proposer.
+     * @dev Resets withdrawable collateral, delete proposal, transfers unused collateral to the proposer.
      * @dev Fungible withdrawable collateral with amount == 0 calls should not revert, should transfer 0 tokens.
      * @param proposal Proposal struct.
      */
