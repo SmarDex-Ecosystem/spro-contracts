@@ -29,12 +29,14 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Set new protocol variable factor
+     * @dev the token factor needs to be in units 1e18
      * @param factor New variable factor value (units 1e18)
      */
     function setVariableFactor(uint256 factor) external;
 
     /**
      * @notice Set new protocol token factor for credit asset
+     * @dev the token factor needs to be in units 1e18
      * @param token Credit token address.
      * @param factor New token factor value (units 1e18)
      * @dev Token is unlisted for `factor == 0` and listed for `factor != 0`.
@@ -102,8 +104,9 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Get the fee to create or refinance the loan.
+     * @dev The function returns the fee in SDEX tokens.
      * @param assetAddress Address of an asset to be used.
-     * @param amount Amount of an asset to be used.
+     * @param amount Amount of an asset to be used. The amount is in units of the asset decimals.
      */
     function getLoanFee(address assetAddress, uint256 amount) external view returns (uint256 fee);
 

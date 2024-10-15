@@ -4,6 +4,7 @@ pragma solidity ^0.8.26;
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
@@ -159,12 +160,17 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /// @inheritdoc ISpro
     function getLoanFee(address assetAddress, uint256 amount) public view returns (uint256) {
         uint256 tokenFactor = tokenFactors[assetAddress];
-        return (tokenFactor == 0)
-            ? fixFeeUnlisted
-            : (
-                fixFeeListed
-                    + Math.mulDiv((variableFactor * tokenFactor) / Constants.WAD, amount, Constants.WAD, Math.Rounding.Ceil)
-            );
+        if (tokenFactor == 0) {
+            return fixFeeUnlisted;
+        } else {
+            return fixFeeListed
+                + Math.mulDiv(
+                    (variableFactor * tokenFactor) / Constants.WAD,
+                    amount,
+                    10 ** IERC20Metadata(assetAddress).decimals(),
+                    Math.Rounding.Ceil
+                );
+        }
     }
 
     /// @inheritdoc ISpro
