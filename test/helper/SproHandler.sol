@@ -18,7 +18,7 @@ contract SproHandler is Spro {
         _checkPermit(caller, creditAddress, permit);
     }
 
-    function exposed_checkLoanCanBeRepaid(uint8 status, uint40 loanExpiration) external view {
+    function exposed_checkLoanCanBeRepaid(LoanStatus status, uint40 loanExpiration) external view {
         _checkLoanCanBeRepaid(status, loanExpiration);
     }
 

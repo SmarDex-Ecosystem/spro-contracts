@@ -7,6 +7,7 @@ import { SDBaseIntegrationTest, Spro } from "test/integration/SDBaseIntegrationT
 
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationTest {
     modifier proposalContractHasTag() {
@@ -77,7 +78,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
         (Spro.LoanInfo memory loanInfo) = deployment.config.getLOAN(id);
-        assertEq(loanInfo.status, 2);
+        assertTrue(loanInfo.status == ISproTypes.LoanStatus.RUNNING);
 
         assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE - lenderSpec.creditAmount);
         assertEq(credit.balanceOf(borrower), lenderSpec.creditAmount);
@@ -136,7 +137,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
         (Spro.LoanInfo memory loanInfo) = deployment.config.getLOAN(id);
-        assertEq(loanInfo.status, 2);
+        assertTrue(loanInfo.status == ISproTypes.LoanStatus.RUNNING);
 
         assertEq(creditPermit.balanceOf(lender), INITIAL_CREDIT_BALANCE - lenderSpec.creditAmount);
         assertEq(creditPermit.balanceOf(borrower), lenderSpec.creditAmount);

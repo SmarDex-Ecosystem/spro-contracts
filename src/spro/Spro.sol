@@ -142,7 +142,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         loanInfo_.loanExpiration = loan.loanExpiration;
         loanInfo_.borrower = loan.borrower;
         loanInfo_.originalLender = loan.originalLender;
-        loanInfo_.loanOwner = loan.status != 0 ? loanToken.ownerOf(loanId) : address(0);
+        loanInfo_.loanOwner = loan.status != LoanStatus.NONE ? loanToken.ownerOf(loanId) : address(0);
         loanInfo_.accruingInterestAPR = loan.accruingInterestAPR;
         loanInfo_.fixedInterestAmount = loan.fixedInterestAmount;
         loanInfo_.credit = loan.creditAddress;
@@ -179,7 +179,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         LOAN memory loan = LOANs[loanId];
 
         // Check non-existent loan
-        if (loan.status == 0) return 0;
+        if (loan.status == LoanStatus.NONE) return 0;
 
         // Return loan principal with accrued interest
         return loan.principalAmount + _loanAccruedInterest(loan);
@@ -196,7 +196,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             LOAN memory loan = LOANs[loanId];
             _checkLoanCreditAddress(loan.creditAddress, creditAddress);
             // Check non-existent loan
-            if (loan.status == 0) return 0;
+            if (loan.status == LoanStatus.NONE) return 0;
 
             // Add loan principal with accrued interest
             amount_ += loan.principalAmount + _loanAccruedInterest(loan);
@@ -395,13 +395,13 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             revert CallerNotLOANTokenHolder();
         }
 
-        if (loan.status == 0) {
+        if (loan.status == LoanStatus.NONE) {
             // Loan is not existing or from a different loan contract
             revert NonExistingLoan();
-        } else if (loan.status == 3) {
+        } else if (loan.status == LoanStatus.PAID_BACK) {
             // Loan has been paid back
             _settleLoanClaim(loanId, msg.sender, false);
-        } else if (loan.status == 2 && loan.loanExpiration <= block.timestamp) {
+        } else if (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp) {
             // Loan is running but expired
             _settleLoanClaim(loanId, msg.sender, true);
         }
@@ -427,7 +427,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
         LOAN memory loan = LOANs[loanId];
 
-        if (loan.status != 3) return;
+        if (loan.status != LoanStatus.PAID_BACK) return;
 
         // If current loan owner is not original lender, the loan cannot be repaid directly, return without revert.
         if (loan.originalLender != loanOwner) return;
@@ -505,9 +505,11 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @param loanId Id of a loan in question.
      * @return status LOAN status.
      */
-    function _getLOANStatus(uint256 loanId) private view returns (uint8) {
+    function _getLOANStatus(uint256 loanId) private view returns (LoanStatus) {
         LOAN memory loan = LOANs[loanId];
-        return (loan.status == 2 && loan.loanExpiration <= block.timestamp) ? 4 : loan.status;
+        return (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp)
+            ? LoanStatus.EXPIRED
+            : loan.status;
     }
 
     /* ------------------------------------------------------------ */
@@ -555,13 +557,13 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @param status Loan status.
      * @param loanExpiration Loan default timestamp.
      */
-    function _checkLoanCanBeRepaid(uint8 status, uint40 loanExpiration) internal view {
+    function _checkLoanCanBeRepaid(LoanStatus status, uint40 loanExpiration) internal view {
         // Check that loan exists and is not from a different loan contract
-        if (status == 0) {
+        if (status == LoanStatus.NONE) {
             revert NonExistingLoan();
         }
         // Check that loan is running
-        if (status != 2) {
+        if (status != LoanStatus.RUNNING) {
             revert LoanNotRunning();
         }
         // Check that loan is not defaulted
@@ -827,7 +829,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
         // Store loan data under loan id
         LOAN storage loan = LOANs[loanId_];
-        loan.status = 2;
+        loan.status = LoanStatus.RUNNING;
         loan.creditAddress = loanTerms.credit;
         loan.originalSourceOfFunds = lenderSpec.sourceOfFunds;
         loan.startTimestamp = loanTerms.startTimestamp;
@@ -866,7 +868,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         LOAN storage loan = LOANs[loanId];
 
         // Move loan to repaid state and wait for the loan owner to claim the repaid credit
-        loan.status = 3;
+        loan.status = LoanStatus.PAID_BACK;
 
         // Update accrued interest amount
         loan.fixedInterestAmount = _loanAccruedInterest(loan);
