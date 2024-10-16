@@ -23,18 +23,11 @@ interface ISproEvents is ISproTypes {
     event FixFeeUnlistedUpdated(uint256 oldFee, uint256 newFee);
 
     /**
-     * @notice Emitted when new variable factor is set.
-     * @param oldFactor The old factor.
-     * @param newFactor The new factor.
-     */
-    event VariableFactorUpdated(uint256 oldFactor, uint256 newFactor);
-
-    /**
      * @notice Emitted when a listed token factor is set.
      * @param token The address of the token.
-     * @param factor The new factor.
+     * @param active True if the token is listed.
      */
-    event ListedTokenUpdated(address token, uint256 factor);
+    event ListedTokenUpdated(address token, bool active);
 
     /**
      * @notice Emitted when new Loan token metadata uri is set.

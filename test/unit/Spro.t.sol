@@ -37,12 +37,11 @@ abstract contract SproTest is Test {
 
     uint256 fixFeeUnlisted = 500e18;
     uint256 fixFeeListed = 30e18;
-    uint256 variableFactor = 1e13;
     uint16 partialPositionBps = 900;
     uint16 PERCENTAGE = 1e4;
 
     function setUp() public virtual {
-        config = new Spro(sdex, fixFeeUnlisted, fixFeeListed, variableFactor, partialPositionBps);
+        config = new Spro(sdex, fixFeeUnlisted, fixFeeListed, partialPositionBps);
     }
 
     function _mockSupportsToken(address computer, address token, bool result) internal {
@@ -60,7 +59,6 @@ contract TestSproConstructor is SproTest {
         assertEq(config.partialPositionBps(), partialPositionBps);
         assertEq(config.fixFeeUnlisted(), fixFeeUnlisted);
         assertEq(config.fixFeeListed(), fixFeeListed);
-        assertEq(config.variableFactor(), variableFactor);
         assertEq(sdex, config.SDEX());
     }
 }
@@ -128,40 +126,38 @@ contract TestSproSetListedFee is SproTest {
 /* ------------------------------------------------------------ */
 
 contract TestSproSetListedToken is SproTest {
-    uint256 factor = 1e14;
-
     function test_shouldFail_whenCallerIsNotOwner() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         vm.prank(alice);
-        config.setListedToken(creditToken, factor);
+        config.setListedToken(creditToken, true);
     }
 
     function test_shouldSetListedTokenValue() external {
         vm.prank(owner);
-        config.setListedToken(creditToken, factor);
+        config.setListedToken(creditToken, true);
 
-        assertEq(config.tokenFactors(creditToken), factor);
+        assertTrue(config.tokenFactors(creditToken));
     }
 
     function test_shouldSetListedTokenValue_ResetToZero() external {
         vm.prank(owner);
-        config.setListedToken(creditToken, factor);
+        config.setListedToken(creditToken, true);
 
-        assertEq(config.tokenFactors(creditToken), factor);
+        assertTrue(config.tokenFactors(creditToken));
 
         // Reset
         vm.prank(owner);
-        config.setListedToken(creditToken, 0);
+        config.setListedToken(creditToken, false);
 
-        assertEq(config.tokenFactors(creditToken), 0);
+        assertFalse(config.tokenFactors(creditToken));
     }
 
     function test_shouldEmitEvent_TokenFactorUpdated() external {
         vm.expectEmit(true, true, false, false);
-        emit ISproEvents.ListedTokenUpdated(creditToken, factor);
+        emit ISproEvents.ListedTokenUpdated(creditToken, true);
 
         vm.prank(owner);
-        config.setListedToken(creditToken, factor);
+        config.setListedToken(creditToken, true);
     }
 }
 

@@ -34,14 +34,8 @@ interface ISproStorage {
      */
     function fixFeeListed() external view returns (uint256);
 
-    /**
-     * @notice Get variable factor for calculating variable fee component for listed credit tokens.
-     * @dev Units 1e18. Eg. factor of 40_000 == 4e22
-     */
-    function variableFactor() external view returns (uint256);
-
-    /// @notice Get token factor for a listed credit token.
-    function tokenFactors(address token) external view returns (uint256);
+    /// @notice Get if a token is listed.
+    function tokenFactors(address token) external view returns (bool);
 
     /**
      * @notice Get loan metadata URI for a loan contract address.

@@ -13,7 +13,6 @@ import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 abstract contract SDDeploymentTest is Test {
     uint256 public constant UNLISTED_FEE = 50e18;
     uint256 public constant LISTED_FEE = 20e18;
-    uint256 public constant VARIABLE_FACTOR = 1e13;
     uint16 public constant PARTIAL_POSITION_PERCENTAGE = 500;
 
     string public deploymentsSubpath;
@@ -41,8 +40,7 @@ abstract contract SDDeploymentTest is Test {
         vm.startPrank(deployment.protocolAdmin);
 
         // Deploy protocol
-        deployment.config =
-            new Spro(address(deployment.sdex), UNLISTED_FEE, LISTED_FEE, VARIABLE_FACTOR, PARTIAL_POSITION_PERCENTAGE);
+        deployment.config = new Spro(address(deployment.sdex), UNLISTED_FEE, LISTED_FEE, PARTIAL_POSITION_PERCENTAGE);
         vm.stopPrank();
         deployment.revokedNonce = deployment.config.revokedNonce();
         deployment.loanToken = deployment.config.loanToken();

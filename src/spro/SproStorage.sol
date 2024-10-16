@@ -27,10 +27,7 @@ contract SproStorage is ISproStorage {
     uint256 public fixFeeListed;
 
     /// @inheritdoc ISproStorage
-    uint256 public variableFactor;
-
-    /// @inheritdoc ISproStorage
-    mapping(address => uint256) public tokenFactors;
+    mapping(address => bool) public tokenFactors;
 
     /// @inheritdoc ISproStorage
     mapping(address => string) public _loanMetadataUri;
