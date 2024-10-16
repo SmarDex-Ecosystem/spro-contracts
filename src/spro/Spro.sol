@@ -8,6 +8,7 @@ import { Permit2Payments } from "@uniswap/universal-router/contracts/modules/Per
 import {
     PaymentsImmutables, PaymentsParameters
 } from "@uniswap/universal-router/contracts/modules/PaymentsImmutables.sol";
+import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
@@ -32,14 +33,13 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      */
     constructor(
         address _sdex,
+        address _permit2,
+        address _weth9,
         uint256 _fixFeeUnlisted,
         uint256 _fixFeeListed,
         uint256 _variableFactor,
         uint16 _percentage
-    )
-        Ownable(msg.sender)
-        PaymentsImmutables(PaymentsParameters(params.permit2, params.weth9, address(0), address(0)))
-    {
+    ) Ownable(msg.sender) PaymentsImmutables(PaymentsParameters(_permit2, _weth9, address(0), address(0))) {
         require(_sdex != address(0), "SDEX is zero address");
         require(
             _percentage > 0 && _percentage < Constants.BPS_DIVISOR / 2, "Partial percentage position value is invalid"
@@ -272,10 +272,13 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function createLoan(Proposal calldata proposal, LenderSpec calldata lenderSpec, bytes calldata extra)
-        external
-        returns (uint256 loanId_)
-    {
+    function createLoan(
+        Proposal calldata proposal,
+        LenderSpec calldata lenderSpec,
+        bytes calldata extra,
+        IAllowanceTransfer.PermitBatch memory permitBatch,
+        bytes calldata data
+    ) external returns (uint256 loanId_) {
         // Accept proposal and get loan terms
         (bytes32 proposalHash, Terms memory loanTerms) = _acceptProposal(msg.sender, lenderSpec.creditAmount, proposal);
 
@@ -295,11 +298,11 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         emit LoanCreated(loanId_, proposalHash, loanTerms, lenderSpec, extra);
 
         // Execute permit for the caller
-        if (lenderSpec.permitData.length > 0) {
+        if (permitBatch.length > 0) {
             // Permit memory permit = abi.decode(lenderSpec.permitData, (Permit));
             // _checkPermit(msg.sender, loanTerms.credit, permit);
             // _tryPermit(permit);
-            permit2TransferFrom(loanTerms.credit, loanTerms.lender, loanTerms.borrower, loanTerms.creditAmount);
+            PERMIT2.permit(msg.sender, permitBatch, data);
         } else {
             // Settle the loan - Transfer credit to borrower
             _settleNewLoan(loanTerms, lenderSpec.sourceOfFunds);

@@ -7,6 +7,8 @@ import { console } from "forge-std/Script.sol";
 
 contract Deploy is Script {
     address constant SDEX_MAINNET = 0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF;
+    address constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+    address constant WETH_MAINNET = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     uint256 internal constant FIX_FEE_UNLISTED = 50e18;
     uint256 internal constant FIX_FEE_LISTED = 30e18;
     uint256 internal constant VARIABLE_FACTOR = 1e16;
@@ -16,7 +18,8 @@ contract Deploy is Script {
         address deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         vm.startBroadcast(deployerAddress);
 
-        Spro spro = new Spro(SDEX_MAINNET, FIX_FEE_UNLISTED, FIX_FEE_LISTED, VARIABLE_FACTOR, PERCENTAGE);
+        Spro spro =
+            new Spro(SDEX_MAINNET, PERMIT2, WETH_MAINNET, FIX_FEE_UNLISTED, FIX_FEE_LISTED, VARIABLE_FACTOR, PERCENTAGE);
 
         console.log("Spro address", address(spro));
         console.log("revokedNonce address", address(spro.revokedNonce()));

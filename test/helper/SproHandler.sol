@@ -8,11 +8,13 @@ import { Spro } from "src/spro/Spro.sol";
 contract SproHandler is Spro {
     constructor(
         address _sdex,
+        address _permit2,
+        address _weth9,
         uint256 _fixFeeUnlisted,
         uint256 _fixFeeListed,
         uint256 _variableFactor,
         uint16 _percentage
-    ) Spro(_sdex, _fixFeeUnlisted, _fixFeeListed, _variableFactor, _percentage) { }
+    ) Spro(_sdex, _permit2, _weth9, _fixFeeUnlisted, _fixFeeListed, _variableFactor, _percentage) { }
 
     function exposed_checkPermit(address caller, address creditAddress, Permit memory permit) external pure {
         _checkPermit(caller, creditAddress, permit);

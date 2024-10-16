@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
+
 import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
@@ -185,9 +187,13 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param extra Auxiliary data that are emitted in the loan creation event. They are not used in the contract logic.
      * @return loanId_ Id of the created Loan token.
      */
-    function createLoan(Proposal memory proposal, ISproTypes.LenderSpec memory lenderSpec, bytes memory extra)
-        external
-        returns (uint256 loanId_);
+    function createLoan(
+        Proposal memory proposal,
+        ISproTypes.LenderSpec memory lenderSpec,
+        bytes memory extra,
+        IAllowanceTransfer.PermitBatch memory permitBatch,
+        bytes calldata data
+    ) external returns (uint256 loanId_);
 
     /* ------------------------------------------------------------ */
     /*                          REPAY LOAN                          */
