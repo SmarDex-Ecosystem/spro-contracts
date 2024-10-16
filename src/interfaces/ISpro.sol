@@ -185,14 +185,14 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param proposal Proposal struct.
      * @param lenderSpec Lender specification struct.
      * @param extra Auxiliary data that are emitted in the loan creation event. They are not used in the contract logic.
+     * @param permit Permit data.
      * @return loanId_ Id of the created Loan token.
      */
     function createLoan(
         Proposal memory proposal,
         ISproTypes.LenderSpec memory lenderSpec,
         bytes memory extra,
-        IAllowanceTransfer.PermitBatch memory permitBatch,
-        bytes calldata data
+        bytes calldata permit
     ) external returns (uint256 loanId_);
 
     /* ------------------------------------------------------------ */

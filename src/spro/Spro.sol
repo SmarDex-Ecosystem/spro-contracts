@@ -5,6 +5,7 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Permit2Payments } from "@uniswap/universal-router/contracts/modules/Permit2Payments.sol";
+import { BytesLib } from "@uniswap/universal-router/contracts/modules/uniswap/v3/BytesLib.sol";
 import {
     PaymentsImmutables, PaymentsParameters
 } from "@uniswap/universal-router/contracts/modules/PaymentsImmutables.sol";
@@ -20,6 +21,7 @@ import { SproVault } from "src/spro/SproVault.sol";
 import { SproStorage } from "src/spro/SproStorage.sol";
 
 contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataProvider, Permit2Payments {
+    using BytesLib for bytes;
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
@@ -276,8 +278,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         Proposal calldata proposal,
         LenderSpec calldata lenderSpec,
         bytes calldata extra,
-        IAllowanceTransfer.PermitBatch memory permitBatch,
-        bytes calldata data
+        bytes calldata permit
     ) external returns (uint256 loanId_) {
         // Accept proposal and get loan terms
         (bytes32 proposalHash, Terms memory loanTerms) = _acceptProposal(msg.sender, lenderSpec.creditAmount, proposal);
@@ -298,16 +299,14 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         emit LoanCreated(loanId_, proposalHash, loanTerms, lenderSpec, extra);
 
         // Execute permit for the caller
-        if (permitBatch.length > 0) {
-            // Permit memory permit = abi.decode(lenderSpec.permitData, (Permit));
-            // _checkPermit(msg.sender, loanTerms.credit, permit);
-            // _tryPermit(permit);
+        if (permit.length > 0) {
+            (IAllowanceTransfer.PermitBatch memory permitBatch,) =
+                abi.decode(permit, (IAllowanceTransfer.PermitBatch, bytes));
+            bytes calldata data = permit.toBytes(1);
             PERMIT2.permit(msg.sender, permitBatch, data);
         } else {
             // Settle the loan - Transfer credit to borrower
             _settleNewLoan(loanTerms, lenderSpec.sourceOfFunds);
-
-            // _pushFrom(loanTerms.credit, loanTerms.creditAmount, loanTerms.lender, loanTerms.borrower);
         }
     }
 

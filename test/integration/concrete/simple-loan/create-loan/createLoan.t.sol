@@ -31,7 +31,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
                 ISproErrors.InvalidDuration.selector, proposal.loanExpiration - proposal.startTimestamp, minDuration
             )
         );
-        deployment.config.createLoan(proposal, lenderSpec, "");
+        deployment.config.createLoan(proposal, lenderSpec, "", "");
     }
 
     function test_RevertWhen_InvalidMaxApr() external proposalContractHasTag {
@@ -49,7 +49,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         vm.expectRevert(
             abi.encodeWithSelector(ISproErrors.InterestAPROutOfBounds.selector, proposal.accruingInterestAPR, maxApr)
         );
-        deployment.config.createLoan(proposal, lenderSpec, "");
+        deployment.config.createLoan(proposal, lenderSpec, "", "");
     }
 
     modifier whenLoanTermsValid() {
@@ -69,7 +69,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        uint256 id = deployment.config.createLoan(proposal, lenderSpec, "");
+        uint256 id = deployment.config.createLoan(proposal, lenderSpec, "", "");
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
@@ -128,7 +128,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         // Set the permit data
         lenderSpec.permitData = abi.encode(permit);
 
-        uint256 id = deployment.config.createLoan(proposal, lenderSpec, "");
+        uint256 id = deployment.config.createLoan(proposal, lenderSpec, "", "");
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
