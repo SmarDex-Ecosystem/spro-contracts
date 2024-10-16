@@ -30,9 +30,9 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /**
      * @notice List or unlist a token.
      * @param token Credit token address.
-     * @param active True if the token is listed.
+     * @param list True if the token is listed.
      */
-    function setListedToken(address token, bool active) external;
+    function setListedToken(address token, bool list) external;
 
     /**
      * @notice Set percentage of a proposal's availableCreditLimit which can be used in partial lending.

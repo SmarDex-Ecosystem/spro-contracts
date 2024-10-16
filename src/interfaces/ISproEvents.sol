@@ -25,9 +25,9 @@ interface ISproEvents is ISproTypes {
     /**
      * @notice Emitted when a listed token factor is set.
      * @param token The address of the token.
-     * @param active True if the token is listed.
+     * @param list True if the token is listed.
      */
-    event ListedTokenUpdated(address token, bool active);
+    event ListedTokenUpdated(address token, bool list);
 
     /**
      * @notice Emitted when new Loan token metadata uri is set.

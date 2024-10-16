@@ -59,9 +59,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     }
 
     /// @inheritdoc ISpro
-    function setListedToken(address token, bool active) external onlyOwner {
-        emit ListedTokenUpdated(token, active);
-        tokenFactors[token] = active;
+    function setListedToken(address token, bool list) external onlyOwner {
+        emit ListedTokenUpdated(token, list);
+        tokenFactors[token] = list;
     }
 
     /// @inheritdoc ISpro
@@ -147,8 +147,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /// @inheritdoc ISpro
     function getLoanFee(address assetAddress) public view returns (uint256) {
-        bool isActive = tokenFactors[assetAddress];
-        if (isActive) {
+        bool isListed = tokenFactors[assetAddress];
+        if (isListed) {
             return fixFeeListed;
         } else {
             return fixFeeUnlisted;
