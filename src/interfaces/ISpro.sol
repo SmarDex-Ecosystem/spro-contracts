@@ -16,23 +16,10 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Set new protocol listed fee value.
-     * @param fee New listed fee value in amount SDEX tokens (units 1e18)
+     * @notice Set new protocol fee value.
+     * @param fee New fee value in amount SDEX tokens (units 1e18)
      */
-    function setFixFeeListed(uint256 fee) external;
-
-    /**
-     * @notice Set new protocol unlisted fee value.
-     * @param fee New unlisted fee value in amount SDEX tokens (units 1e18)
-     */
-    function setFixFeeUnlisted(uint256 fee) external;
-
-    /**
-     * @notice List or unlist a token.
-     * @param token Credit token address.
-     * @param list True if the token is listed.
-     */
-    function setListedToken(address token, bool list) external;
+    function setFee(uint256 fee) external;
 
     /**
      * @notice Set percentage of a proposal's availableCreditLimit which can be used in partial lending.
@@ -92,13 +79,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /* -------------------------------------------------------------------------- */
     /*                                    VIEW                                    */
     /* -------------------------------------------------------------------------- */
-
-    /**
-     * @notice Get the fee to create or refinance the loan.
-     * @dev The function returns the fee in SDEX tokens.
-     * @param assetAddress Address of an asset to be used.
-     */
-    function getLoanFee(address assetAddress) external view returns (uint256 fee);
 
     /**
      * @notice Return a Loan token metadata uri base on a loan contract that minted the token.

@@ -21,13 +21,7 @@ contract SproStorage is ISproStorage {
     uint16 public partialPositionBps;
 
     /// @inheritdoc ISproStorage
-    uint256 public fixFeeUnlisted;
-
-    /// @inheritdoc ISproStorage
-    uint256 public fixFeeListed;
-
-    /// @inheritdoc ISproStorage
-    mapping(address => bool) public tokenFactors;
+    uint256 public fee;
 
     /// @inheritdoc ISproStorage
     mapping(address => string) public _loanMetadataUri;

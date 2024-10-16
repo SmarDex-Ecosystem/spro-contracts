@@ -45,8 +45,8 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         assertEq(t20.balanceOf(address(deployment.config)), COLLATERAL_AMOUNT);
         assertEq(t20.balanceOf(borrower), 0);
 
-        assertEq(deployment.sdex.balanceOf(address(address(0xdead))), deployment.config.fixFeeUnlisted());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(address(address(0xdead))), deployment.config.fee());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fee());
     }
 
     modifier whenListedFee() {
@@ -66,8 +66,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         address owner = deployment.config.owner();
         uint256 feeAmount = 1e17;
         vm.startPrank(owner);
-        deployment.config.setFixFeeListed(feeAmount);
-        deployment.config.setListedToken(address(credit), true);
+        deployment.config.setFee(feeAmount);
         vm.stopPrank();
 
         // Create proposal

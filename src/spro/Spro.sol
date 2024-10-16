@@ -21,13 +21,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /**
      * @param _sdex Address of SDEX token.
-     * @param _fixFeeUnlisted Fixed fee for unlisted assets.
-     * @param _fixFeeListed Fixed fee for listed assets.
+     * @param _fee Fee in SDEX.
      * @param _percentage Partial position percentage.
      */
-    constructor(address _sdex, uint256 _fixFeeUnlisted, uint256 _fixFeeListed, uint16 _percentage)
-        Ownable(msg.sender)
-    {
+    constructor(address _sdex, uint256 _fee, uint16 _percentage) Ownable(msg.sender) {
         require(_sdex != address(0), "SDEX is zero address");
         require(
             _percentage > 0 && _percentage < Constants.BPS_DIVISOR / 2, "Partial percentage position value is invalid"
@@ -36,8 +33,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         SDEX = _sdex;
         revokedNonce = new SproRevokedNonce(address(this));
         loanToken = new SproLoan(address(this));
-        fixFeeUnlisted = _fixFeeUnlisted;
-        fixFeeListed = _fixFeeListed;
+        fee = _fee;
         partialPositionBps = _percentage;
     }
 
@@ -46,21 +42,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
-    function setFixFeeListed(uint256 fee) external onlyOwner {
-        emit FixFeeListedUpdated(fixFeeListed, fee);
-        fixFeeListed = fee;
-    }
-
-    /// @inheritdoc ISpro
-    function setFixFeeUnlisted(uint256 fee) external onlyOwner {
-        emit FixFeeUnlistedUpdated(fixFeeUnlisted, fee);
-        fixFeeUnlisted = fee;
-    }
-
-    /// @inheritdoc ISpro
-    function setListedToken(address token, bool list) external onlyOwner {
-        emit ListedTokenUpdated(token, list);
-        tokenFactors[token] = list;
+    function setFee(uint256 newFee) external onlyOwner {
+        emit FixUpdated(fee, newFee);
+        fee = newFee;
     }
 
     /// @inheritdoc ISpro
@@ -145,16 +129,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
-    function getLoanFee(address assetAddress) public view returns (uint256) {
-        bool isListed = tokenFactors[assetAddress];
-        if (isListed) {
-            return fixFeeListed;
-        } else {
-            return fixFeeUnlisted;
-        }
-    }
-
-    /// @inheritdoc ISpro
     function loanMetadataUri(address loanContract) public view returns (string memory uri_) {
         uri_ = _loanMetadataUri[loanContract];
         // If there is no metadata uri for a loan contract, use default metadata uri.
@@ -221,12 +195,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Transfer collateral to Vault
         _pushFrom(collateral, collateralAmount, proposer, address(this));
 
-        // Calculate fee amount
-        uint256 feeAmount = getLoanFee(creditAddress);
-
         // Fees to address(0xdead)(burned)
-        if (feeAmount > 0) {
-            _pushFrom(SDEX, feeAmount, msg.sender, address(0xdead));
+        if (fee > 0) {
+            _pushFrom(SDEX, fee, msg.sender, address(0xdead));
         }
     }
 

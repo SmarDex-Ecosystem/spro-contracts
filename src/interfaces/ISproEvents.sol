@@ -9,25 +9,11 @@ import { ISproTypes } from "./ISproTypes.sol";
  */
 interface ISproEvents is ISproTypes {
     /**
-     * @notice Emitted when new listed fee is set.
+     * @notice Emitted when new fee is set.
      * @param oldFee The old fee.
      * @param newFee The new fee.
      */
-    event FixFeeListedUpdated(uint256 oldFee, uint256 newFee);
-
-    /**
-     * @notice Emitted when new unlisted fee is set.
-     * @param oldFee The old fee.
-     * @param newFee The new fee.
-     */
-    event FixFeeUnlistedUpdated(uint256 oldFee, uint256 newFee);
-
-    /**
-     * @notice Emitted when a listed token factor is set.
-     * @param token The address of the token.
-     * @param list True if the token is listed.
-     */
-    event ListedTokenUpdated(address token, bool list);
+    event FixUpdated(uint256 oldFee, uint256 newFee);
 
     /**
      * @notice Emitted when new Loan token metadata uri is set.
