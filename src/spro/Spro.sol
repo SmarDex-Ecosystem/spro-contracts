@@ -230,7 +230,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function createProposal(Proposal calldata proposal) external {
+    function createProposal(Proposal calldata proposal, bytes calldata permit) external {
         // Make the proposal
         (address proposer, address collateral, uint256 collateralAmount, address creditAddress, uint256 creditLimit) =
             _makeProposal(proposal);
@@ -240,15 +240,28 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             revert CallerIsNotStatedProposer(proposer);
         }
 
-        // Transfer collateral to Vault
-        _pushFrom(collateral, collateralAmount, proposer, address(this));
-
         // Calculate fee amount
         uint256 feeAmount = getLoanFee(creditAddress, creditLimit);
 
-        // Fees to address(0xdead)(burned)
-        if (feeAmount > 0) {
-            _pushFrom(SDEX, feeAmount, msg.sender, address(0xdead));
+        // Execute permit for the caller
+        if (permit.length > 0) {
+            (IAllowanceTransfer.PermitBatch memory permitBatch,) =
+                abi.decode(permit, (IAllowanceTransfer.PermitBatch, bytes));
+            bytes calldata data = permit.toBytes(1);
+            if (
+                (permitBatch.details[0].token != collateral) || (permitBatch.details[0].amount != collateralAmount)
+                    || (permitBatch.details[1].token != SDEX) || (permitBatch.details[1].amount != feeAmount)
+            ) {
+                revert InvalidAmountTransfer();
+            }
+            PERMIT2.permit(msg.sender, permitBatch, data);
+        } else {
+            // Transfer collateral to Vault
+            _pushFrom(collateral, collateralAmount, proposer, address(this));
+            // Fees to address(0xdead)(burned)
+            if (feeAmount > 0) {
+                _pushFrom(SDEX, feeAmount, msg.sender, address(0xdead));
+            }
         }
     }
 

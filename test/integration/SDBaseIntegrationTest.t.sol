@@ -120,7 +120,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         t20.approve(address(deployment.config), proposal.collateralAmount);
 
         vm.prank(borrower);
-        deployment.config.createProposal(proposal);
+        deployment.config.createProposal(proposal, "");
     }
 
     function _createLoan(Spro.Proposal memory newProposal, bytes memory revertData) internal returns (uint256 loanId) {

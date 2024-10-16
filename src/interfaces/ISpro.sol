@@ -160,8 +160,9 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /**
      * @notice Create a borrow request proposal and transfers collateral to the vault and SDEX to fee sink.
      * @param proposal Proposal struct.
+     * @param permit Permit data.
      */
-    function createProposal(Proposal memory proposal) external;
+    function createProposal(Proposal memory proposal, bytes calldata permit) external;
 
     /* ------------------------------------------------------------ */
     /*        CANCEL PROPOSAL AND WITHDRAW UNUSED COLLATERAL        */

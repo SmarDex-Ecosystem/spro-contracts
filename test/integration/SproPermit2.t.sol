@@ -36,7 +36,6 @@ contract SDSimpleLoanIntegrationTest is SproForkBase {
         t20 = new T20();
         credit = new T20();
 
-        // Deploy protocol contracts
         proposal = ISproTypes.Proposal(
             address(t20),
             COLLATERAL_AMOUNT,
@@ -68,7 +67,8 @@ contract SDSimpleLoanIntegrationTest is SproForkBase {
 
     function test_permit2CreateLoan() public {
         IAllowanceTransfer.PermitDetails[] memory details = new IAllowanceTransfer.PermitDetails[](1);
-        details[0] = IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(CREDIT_LIMIT), 0, 0);
+        details[0] =
+            IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(proposal.collateralAmount), 0, 0);
         IAllowanceTransfer.PermitBatch memory permitBatch =
             IAllowanceTransfer.PermitBatch(details, address(deployment.config), block.timestamp);
         bytes memory signature =
@@ -82,6 +82,25 @@ contract SDSimpleLoanIntegrationTest is SproForkBase {
         deployment.config.createLoan(proposal, lenderSpec, "", abi.encode(permitBatch, signature));
     }
 
+    function test_permit2CreateProposal() public {
+        proposal.proposer = sigUser1;
+        vm.startPrank(sigUser1);
+        deployment.sdex.approve(address(deployment.permit2), type(uint256).max);
+        IAllowanceTransfer.PermitDetails[] memory details = new IAllowanceTransfer.PermitDetails[](2);
+        details[0] =
+            IAllowanceTransfer.PermitDetails(address(proposal.collateralAddress), uint160(COLLATERAL_AMOUNT), 0, 0);
+        details[1] = IAllowanceTransfer.PermitDetails(address(deployment.sdex), uint160(UNLISTED_FEE), 0, 0);
+        IAllowanceTransfer.PermitBatch memory permitBatch =
+            IAllowanceTransfer.PermitBatch(details, address(deployment.config), block.timestamp);
+        bytes memory signature =
+            getPermitBatchSignature(permitBatch, SIG_USER1_PK, deployment.permit2.DOMAIN_SEPARATOR());
+
+        t20.mint(sigUser1, proposal.collateralAmount);
+
+        deployment.config.createProposal(proposal, abi.encode(permitBatch, signature));
+        vm.stopPrank();
+    }
+
     // Make the proposal
     function _createERC20Proposal() internal {
         // Mint initial state & approve collateral
@@ -90,7 +109,7 @@ contract SDSimpleLoanIntegrationTest is SproForkBase {
         t20.approve(address(deployment.config), proposal.collateralAmount);
 
         vm.prank(borrower);
-        deployment.config.createProposal(proposal);
+        deployment.config.createProposal(proposal, "");
     }
 
     function _buildLenderSpec(bool complete) internal view returns (ISproTypes.LenderSpec memory lenderSpec) {
