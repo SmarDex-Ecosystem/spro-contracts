@@ -81,7 +81,7 @@ contract TestSproSetUnlistedFee is SproTest {
 
     function test_shouldEmitEvent_FeeUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit ISproEvents.FixUpdated(fee, 50e18);
+        emit ISproEvents.FeeUpdated(fee, 50e18);
 
         vm.prank(owner);
         config.setFee(50e18);

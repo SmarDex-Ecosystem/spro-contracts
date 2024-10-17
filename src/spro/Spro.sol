@@ -43,7 +43,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /// @inheritdoc ISpro
     function setFee(uint256 newFee) external onlyOwner {
-        emit FixUpdated(fee, newFee);
+        emit FeeUpdated(fee, newFee);
         fee = newFee;
     }
 
@@ -184,8 +184,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /// @inheritdoc ISpro
     function createProposal(Proposal calldata proposal) external {
         // Make the proposal
-        (address proposer, address collateral, uint256 collateralAmount, address creditAddress) =
-            _makeProposal(proposal);
+        (address proposer, address collateral, uint256 collateralAmount) = _makeProposal(proposal);
 
         // Check caller is the proposer
         if (msg.sender != proposer) {
@@ -584,11 +583,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @return proposer_ Address of the borrower/proposer
      * @return collateral_ Address of the collateral token.
      * @return collateralAmount_ Amount of the collateral token.
-     * @return creditAddress_ Address of the credit token.
      */
     function _makeProposal(Proposal memory proposal)
         private
-        returns (address proposer_, address collateral_, uint256 collateralAmount_, address creditAddress_)
+        returns (address proposer_, address collateral_, uint256 collateralAmount_)
     {
         // Decode proposal data
         if (proposal.startTimestamp > proposal.loanExpiration) {
@@ -604,7 +602,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         collateral_ = proposal.collateralAddress;
         collateralAmount_ = proposal.collateralAmount;
         withdrawableCollateral[proposalHash] = collateralAmount_;
-        creditAddress_ = proposal.creditAddress;
 
         emit ProposalMade(proposalHash, proposer_ = proposal.proposer, proposal);
     }

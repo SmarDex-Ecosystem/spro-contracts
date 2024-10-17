@@ -13,7 +13,7 @@ interface ISproEvents is ISproTypes {
      * @param oldFee The old fee.
      * @param newFee The new fee.
      */
-    event FixUpdated(uint256 oldFee, uint256 newFee);
+    event FeeUpdated(uint256 oldFee, uint256 newFee);
 
     /**
      * @notice Emitted when new Loan token metadata uri is set.
