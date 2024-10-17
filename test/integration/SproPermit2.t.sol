@@ -10,21 +10,18 @@ import { Spro } from "test/integration/SDDeploymentTest.t.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
-contract SDSimpleLoanIntegrationTest is SproForkBase {
+contract TestForPermit2 is SproForkBase {
     uint256 public constant COLLATERAL_AMOUNT = 10_000e18;
     uint256 public constant CREDIT_AMOUNT = 60e18;
     uint256 public constant FIXED_INTEREST_AMOUNT = 5e18;
     uint256 public constant CREDIT_LIMIT = 100e18;
     uint256 public constant INITIAL_SDEX_BALANCE = 1_000_000e18;
 
-    uint256 internal constant SIG_USER1_PK = 1;
-    address internal sigUser1 = vm.addr(SIG_USER1_PK);
-
     T20 t20;
     T20 credit;
 
-    uint256 lenderPK = uint256(777);
-    address lender = vm.addr(lenderPK);
+    uint256 internal constant SIG_USER1_PK = 1;
+    address internal sigUser1 = vm.addr(SIG_USER1_PK);
     uint256 borrowerPK = uint256(888);
     address borrower = vm.addr(borrowerPK);
     Spro.Proposal proposal;
@@ -53,14 +50,8 @@ contract SDSimpleLoanIntegrationTest is SproForkBase {
         );
 
         // Mint and approve SDEX
-        deployment.sdex.mint(lender, INITIAL_SDEX_BALANCE);
-        vm.prank(lender);
-        deployment.sdex.approve(address(deployment.config), type(uint256).max);
         deployment.sdex.mint(borrower, INITIAL_SDEX_BALANCE);
         deployment.sdex.mint(sigUser1, INITIAL_SDEX_BALANCE);
-        vm.prank(borrower);
-        deployment.sdex.approve(address(deployment.config), type(uint256).max);
-
         credit.mint(sigUser1, CREDIT_LIMIT);
         vm.prank(sigUser1);
         credit.approve(address(deployment.permit2), type(uint256).max);
@@ -76,7 +67,7 @@ contract SDSimpleLoanIntegrationTest is SproForkBase {
             getPermitBatchSignature(permitBatch, SIG_USER1_PK, deployment.permit2.DOMAIN_SEPARATOR());
 
         _createERC20Proposal();
-        Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
+        Spro.LenderSpec memory lenderSpec = ISproTypes.LenderSpec(sigUser1, CREDIT_LIMIT, "");
 
         // Lender: creates the loan
         vm.prank(sigUser1);
@@ -111,13 +102,14 @@ contract SDSimpleLoanIntegrationTest is SproForkBase {
         _createERC20Proposal();
 
         // Mint initial state & approve credit
-        credit.mint(lender, CREDIT_LIMIT);
-        vm.prank(lender);
+        credit.mint(sigUser1, CREDIT_LIMIT);
+        vm.prank(sigUser1);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
         // Lender: creates the loan
-        vm.prank(lender);
-        uint256 loanId = deployment.config.createLoan(proposal, _buildLenderSpec(false), "", "");
+        vm.prank(sigUser1);
+        uint256 loanId =
+            deployment.config.createLoan(proposal, ISproTypes.LenderSpec(sigUser1, CREDIT_AMOUNT, ""), "", "");
 
         // Borrower: cancels proposal, withdrawing unused collateral
         vm.prank(borrower);
@@ -142,16 +134,10 @@ contract SDSimpleLoanIntegrationTest is SproForkBase {
     function _createERC20Proposal() internal {
         // Mint initial state & approve collateral
         t20.mint(borrower, proposal.collateralAmount);
-        vm.prank(borrower);
+        vm.startPrank(borrower);
+        deployment.sdex.approve(address(deployment.config), type(uint256).max);
         t20.approve(address(deployment.config), proposal.collateralAmount);
-
-        vm.prank(borrower);
         deployment.config.createProposal(proposal, "");
-    }
-
-    function _buildLenderSpec(bool complete) internal view returns (ISproTypes.LenderSpec memory lenderSpec) {
-        lenderSpec = complete
-            ? ISproTypes.LenderSpec(lender, CREDIT_LIMIT, "")
-            : ISproTypes.LenderSpec(lender, CREDIT_AMOUNT, "");
+        vm.stopPrank();
     }
 }
