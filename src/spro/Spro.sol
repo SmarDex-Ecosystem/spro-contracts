@@ -21,7 +21,6 @@ import { SproLoan } from "src/spro/SproLoan.sol";
 import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 import { SproVault } from "src/spro/SproVault.sol";
 import { SproStorage } from "src/spro/SproStorage.sol";
-import { console2 } from "forge-std/Test.sol";
 
 contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataProvider, Permit2Payments {
     using SafeCast for uint256;
