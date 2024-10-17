@@ -197,10 +197,9 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      *      or a signed permit.
      * @param loanIds Id array of loans that are being repaid.
      * @param creditAddress Expected credit address for all loan ids.
-     * @param permitData Callers credit permit data.
+     * @param permit Permit data.
      */
-    function repayMultipleLoans(uint256[] calldata loanIds, address creditAddress, bytes calldata permitData)
-        external;
+    function repayMultipleLoans(uint256[] calldata loanIds, address creditAddress, bytes calldata permit) external;
 
     /* ------------------------------------------------------------ */
     /*                          CLAIM LOAN                          */

@@ -127,6 +127,49 @@ contract TestForPermit2 is SproForkBase {
         deployment.config.repayLoan(loanId, abi.encode(permitSign, signature));
     }
 
+    function test_permit2RepayMultipleLoans() public {
+        // Borrower: creates proposal
+        _createERC20Proposal();
+
+        // Mint initial state & approve credit
+        credit.mint(sigUser1, CREDIT_LIMIT);
+        vm.prank(sigUser1);
+        credit.approve(address(deployment.config), CREDIT_LIMIT);
+
+        // Lender: creates the loan
+        vm.startPrank(sigUser1);
+        // Setup loanIds array
+        uint256[] memory loanIds = new uint256[](3);
+        loanIds[0] =
+            deployment.config.createLoan(proposal, ISproTypes.LenderSpec(sigUser1, CREDIT_AMOUNT / 3, ""), "", "");
+        loanIds[1] =
+            deployment.config.createLoan(proposal, ISproTypes.LenderSpec(sigUser1, CREDIT_AMOUNT / 3, ""), "", "");
+        loanIds[2] =
+            deployment.config.createLoan(proposal, ISproTypes.LenderSpec(sigUser1, CREDIT_AMOUNT / 3, ""), "", "");
+        vm.stopPrank();
+
+        // Borrower: cancels proposal, withdrawing unused collateral
+        vm.prank(borrower);
+        deployment.config.cancelProposal(proposal);
+
+        // Warp ahead, just before loan default
+        vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
+
+        uint256 totalRepaymentAmount = deployment.config.loanRepaymentAmount(loanIds[0]);
+        totalRepaymentAmount += deployment.config.loanRepaymentAmount(loanIds[1]);
+        totalRepaymentAmount += deployment.config.loanRepaymentAmount(loanIds[2]);
+        IAllowanceTransfer.PermitDetails memory details =
+            IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(totalRepaymentAmount), 0, 0);
+        IAllowanceTransfer.PermitSingle memory permitSign =
+            IAllowanceTransfer.PermitSingle(details, address(deployment.config), block.timestamp);
+        bytes memory signature = getPermitSignature(permitSign, SIG_USER1_PK, deployment.permit2.DOMAIN_SEPARATOR());
+
+        vm.prank(sigUser1);
+        deployment.config.repayMultipleLoans(
+            loanIds, address(proposal.creditAddress), abi.encode(permitSign, signature)
+        );
+    }
+
     // Make the proposal
     function _createERC20Proposal() internal {
         // Mint initial state & approve collateral

@@ -213,7 +213,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
                 abi.decode(permit, (IAllowanceTransfer.PermitBatch, bytes));
             PERMIT2.permit(msg.sender, permitBatch, data);
             PERMIT2.transferFrom(msg.sender, address(this), collateralAmount.toUint160(), address(collateral));
-            PERMIT2.transferFrom(msg.sender, address(0xdead), fee.toUint160(), address(SDEX));
+            // Fees to address(0xdead)(burned)
+            if (fee > 0) {
+                PERMIT2.transferFrom(msg.sender, address(0xdead), fee.toUint160(), address(SDEX));
+            }
         } else {
             // Transfer collateral to Vault
             _pushFrom(collateral, collateralAmount, proposer, address(this));
@@ -322,9 +325,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     }
 
     /// @inheritdoc ISpro
-    function repayMultipleLoans(uint256[] calldata loanIds, address creditAddress, bytes calldata permitData)
-        external
-    {
+    function repayMultipleLoans(uint256[] calldata loanIds, address creditAddress, bytes calldata permit) external {
         uint256 totalRepaymentAmount;
 
         for (uint256 i; i < loanIds.length; ++i) {
@@ -342,14 +343,15 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             totalRepaymentAmount += loanRepaymentAmount(loanId);
         }
 
-        // Execute permit for the caller
-        if (permitData.length > 0) {
-            Permit memory permit = abi.decode(permitData, (Permit));
-            _checkPermit(msg.sender, creditAddress, permit);
-            _tryPermit(permit);
+        if (permit.length > 0) {
+            (IAllowanceTransfer.PermitSingle memory permitSign, bytes memory data) =
+                abi.decode(permit, (IAllowanceTransfer.PermitSingle, bytes));
+            PERMIT2.permit(msg.sender, permitSign, data);
+            PERMIT2.transferFrom(msg.sender, address(this), totalRepaymentAmount.toUint160(), address(creditAddress));
+        } else {
+            // Transfer the repaid credit to the vault
+            _pushFrom(creditAddress, totalRepaymentAmount, msg.sender, address(this));
         }
-        // Transfer the repaid credit to the vault
-        _pushFrom(creditAddress, totalRepaymentAmount, msg.sender, address(this));
 
         for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];

@@ -205,60 +205,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(8000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(address(deployment.config)));
     }
 
-    function test_MultiplePartialLoans_RepayMultiple_PermitCreditTokens() external {
-        uint256[] memory loanIds = _setupMultipleRepayCreditPermit();
-
-        permit.asset = address(creditPermit);
-        permit.owner = borrower;
-        permit.amount = deployment.config.totalLoanRepaymentAmount(loanIds, address(creditPermit));
-        permit.deadline = 8 days;
-
-        SigUtils.Permit memory p = SigUtils.Permit(
-            permit.owner, address(deployment.config), permit.amount, creditPermit.nonces(borrower), permit.deadline
-        );
-
-        bytes32 digest = sigUtils.getTypedDataHash(p);
-
-        vm.startPrank(borrower);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(borrowerPK, digest);
-
-        permit.v = v;
-        permit.r = r;
-        permit.s = s;
-
-        // zero the approvals before the repayment, tokens should be transferred via permit
-        creditPermit.approve(address(deployment.config), 0);
-
-        deployment.config.repayMultipleLoans(loanIds, address(creditPermit), abi.encode(permit));
-    }
-
-    function test_MultiplePartialLoans_RepayLoan_PermitCreditTokens() external {
-        uint256[] memory loanIds = _setupMultipleRepayCreditPermit();
-
-        permit.asset = address(creditPermit);
-        permit.owner = borrower;
-        permit.amount = deployment.config.loanRepaymentAmount(loanIds[0]);
-        permit.deadline = 8 days;
-
-        SigUtils.Permit memory p = SigUtils.Permit(
-            permit.owner, address(deployment.config), permit.amount, creditPermit.nonces(borrower), permit.deadline
-        );
-
-        bytes32 digest = sigUtils.getTypedDataHash(p);
-
-        vm.startPrank(borrower);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(borrowerPK, digest);
-
-        permit.v = v;
-        permit.r = r;
-        permit.s = s;
-
-        // zero the approvals before the repayment, tokens should be transferred via permit
-        creditPermit.approve(address(deployment.config), 0);
-
-        deployment.config.repayLoan(loanIds[0], abi.encode(permit));
-    }
-
     function test_MultiplePartialLoans_RepayMultiple_RepayerNotOwner() external {
         uint256[] memory loanIds = _setupMultipleRepay();
 
