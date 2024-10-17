@@ -28,9 +28,7 @@ contract wethMock is ERC20, ERC20Wrapper, ERC20Permit {
 
 abstract contract SproForkBase is Test, PermitSignature {
     address payable constant PERMIT = payable(address(0x000000000022D473030F116dDEE9F6B43aC78BA3));
-    uint256 public constant UNLISTED_FEE = 50e18;
-    uint256 public constant LISTED_FEE = 20e18;
-    uint256 public constant VARIABLE_FACTOR = 1e13;
+    uint256 public constant FEE = 20e18;
     uint16 public constant PARTIAL_POSITION_PERCENTAGE = 500;
 
     string public deploymentsSubpath;
@@ -69,9 +67,7 @@ abstract contract SproForkBase is Test, PermitSignature {
             address(deployment.sdex),
             address(deployment.permit2),
             address(deployment.weth9),
-            UNLISTED_FEE,
-            LISTED_FEE,
-            VARIABLE_FACTOR,
+            FEE,
             PARTIAL_POSITION_PERCENTAGE
         );
         vm.stopPrank();

@@ -82,7 +82,7 @@ contract TestForPermit2 is SproForkBase {
             address(proposal.collateralAddress), uint160(COLLATERAL_AMOUNT), uint48(block.timestamp), 0
         );
         details[1] = IAllowanceTransfer.PermitDetails(
-            address(deployment.sdex), uint160(deployment.config.fixFeeUnlisted()), uint48(block.timestamp), 0
+            address(deployment.sdex), uint160(deployment.config.fee()), uint48(block.timestamp), 0
         );
         IAllowanceTransfer.PermitBatch memory permitBatch =
             IAllowanceTransfer.PermitBatch(details, address(deployment.config), block.timestamp);
