@@ -35,14 +35,12 @@ abstract contract SproTest is Test {
     address alice = makeAddr("alice");
     address creditToken = makeAddr("creditToken");
 
-    uint256 fixFeeUnlisted = 500e18;
-    uint256 fixFeeListed = 30e18;
-    uint256 variableFactor = 1e13;
+    uint256 fee = 500e18;
     uint16 partialPositionBps = 900;
     uint16 PERCENTAGE = 1e4;
 
     function setUp() public virtual {
-        config = new Spro(sdex, fixFeeUnlisted, fixFeeListed, variableFactor, partialPositionBps);
+        config = new Spro(sdex, fee, partialPositionBps);
     }
 
     function _mockSupportsToken(address computer, address token, bool result) internal {
@@ -58,110 +56,35 @@ contract TestSproConstructor is SproTest {
     function test_shouldInitializeWithCorrectValues() external view {
         assertEq(config.owner(), owner);
         assertEq(config.partialPositionBps(), partialPositionBps);
-        assertEq(config.fixFeeUnlisted(), fixFeeUnlisted);
-        assertEq(config.fixFeeListed(), fixFeeListed);
-        assertEq(config.variableFactor(), variableFactor);
+        assertEq(config.fee(), fee);
         assertEq(sdex, config.SDEX());
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  SET FIX FEE UNLISTED                                     */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                                   SET FEE                                  */
+/* -------------------------------------------------------------------------- */
 
 contract TestSproSetUnlistedFee is SproTest {
-    uint256 fee = 90e18;
-
     function test_shouldFail_whenCallerIsNotOwner() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         vm.prank(alice);
-        config.setFixFeeUnlisted(fee);
+        config.setFee(fee);
     }
 
     function test_shouldSetFeeValue() external {
         vm.prank(owner);
-        config.setFixFeeUnlisted(fee);
+        config.setFee(fee);
 
-        assertEq(config.fixFeeUnlisted(), fee);
+        assertEq(config.fee(), fee);
     }
 
     function test_shouldEmitEvent_FeeUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit ISproEvents.FixFeeUnlistedUpdated(fixFeeUnlisted, fee);
+        emit ISproEvents.FeeUpdated(fee, 50e18);
 
         vm.prank(owner);
-        config.setFixFeeUnlisted(fee);
-    }
-}
-
-/* ------------------------------------------------------------ */
-/*  SET FIX FEE LISTED                                       */
-/* ------------------------------------------------------------ */
-
-contract TestSproSetListedFee is SproTest {
-    uint256 fee = 90e18;
-
-    function test_shouldFail_whenCallerIsNotOwner() external {
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
-        vm.prank(alice);
-        config.setFixFeeListed(fee);
-    }
-
-    function test_shouldSetFeeValue() external {
-        vm.prank(owner);
-        config.setFixFeeListed(fee);
-
-        assertEq(config.fixFeeListed(), fee);
-    }
-
-    function test_shouldEmitEvent_FeeUpdated() external {
-        vm.expectEmit(true, true, false, false);
-        emit ISproEvents.FixFeeListedUpdated(fixFeeListed, fee);
-
-        vm.prank(owner);
-        config.setFixFeeListed(fee);
-    }
-}
-
-/* ------------------------------------------------------------ */
-/*  SET LISTED TOKEN                                         */
-/* ------------------------------------------------------------ */
-
-contract TestSproSetListedToken is SproTest {
-    uint256 factor = 1e14;
-
-    function test_shouldFail_whenCallerIsNotOwner() external {
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
-        vm.prank(alice);
-        config.setListedToken(creditToken, factor);
-    }
-
-    function test_shouldSetListedTokenValue() external {
-        vm.prank(owner);
-        config.setListedToken(creditToken, factor);
-
-        assertEq(config.tokenFactors(creditToken), factor);
-    }
-
-    function test_shouldSetListedTokenValue_ResetToZero() external {
-        vm.prank(owner);
-        config.setListedToken(creditToken, factor);
-
-        assertEq(config.tokenFactors(creditToken), factor);
-
-        // Reset
-        vm.prank(owner);
-        config.setListedToken(creditToken, 0);
-
-        assertEq(config.tokenFactors(creditToken), 0);
-    }
-
-    function test_shouldEmitEvent_TokenFactorUpdated() external {
-        vm.expectEmit(true, true, false, false);
-        emit ISproEvents.ListedTokenUpdated(creditToken, factor);
-
-        vm.prank(owner);
-        config.setListedToken(creditToken, factor);
+        config.setFee(50e18);
     }
 }
 
@@ -232,9 +155,9 @@ contract TestSprosetLoanMetadataUri is SproTest {
         assertEq(config._loanMetadataUri(loanContract), tokenUri);
     }
 
-    function test_shouldEmitEvent_LOANMetadataUriUpdated() external {
+    function test_shouldEmitEvent_LoanMetadataUriUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit ISproEvents.LOANMetadataUriUpdated(loanContract, tokenUri);
+        emit ISproEvents.LoanMetadataUriUpdated(loanContract, tokenUri);
 
         vm.prank(owner);
         config.setLoanMetadataUri(loanContract, tokenUri);
@@ -261,9 +184,9 @@ contract TestSprosetDefaultLoanMetadataUri is SproTest {
         assertEq(config._loanMetadataUri(address(0)), tokenUri);
     }
 
-    function test_shouldEmitEvent_DefaultLOANMetadataUriUpdated() external {
+    function test_shouldEmitEvent_DefaultLoanMetadataUriUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit ISproEvents.DefaultLOANMetadataUriUpdated(tokenUri);
+        emit ISproEvents.DefaultLoanMetadataUriUpdated(tokenUri);
 
         vm.prank(owner);
         config.setDefaultLoanMetadataUri(tokenUri);

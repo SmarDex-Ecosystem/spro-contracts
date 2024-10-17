@@ -5,7 +5,7 @@
 //     SDBaseIntegrationTest,
 //     Spro,
 //     IPWNDeployer,
-//     PWNLOAN,
+//     PWNLoan,
 //     SproRevokedNonce
 // } from "test/integration/SDBaseIntegrationTest.t.sol";
 

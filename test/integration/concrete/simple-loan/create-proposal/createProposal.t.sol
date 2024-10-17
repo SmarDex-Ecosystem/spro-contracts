@@ -45,8 +45,8 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         assertEq(t20.balanceOf(address(deployment.config)), COLLATERAL_AMOUNT);
         assertEq(t20.balanceOf(borrower), 0);
 
-        assertEq(deployment.sdex.balanceOf(address(address(0xdead))), deployment.config.fixFeeUnlisted());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(address(0xdead)), deployment.config.fee());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fee());
     }
 
     modifier whenListedFee() {
@@ -64,10 +64,9 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
     {
         // Setup listed fee and token
         address owner = deployment.config.owner();
+        uint256 feeAmount = 1e17;
         vm.startPrank(owner);
-        deployment.config.setFixFeeListed(1e17);
-        deployment.config.setVariableFactor(2e20);
-        deployment.config.setListedToken(address(credit), 1e16);
+        deployment.config.setFee(feeAmount);
         vm.stopPrank();
 
         // Create proposal
@@ -76,13 +75,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         assertEq(t20.balanceOf(address(deployment.config)), COLLATERAL_AMOUNT);
         assertEq(t20.balanceOf(borrower), 0);
 
-        uint256 lf = deployment.config.fixFeeListed();
-        uint256 vf = deployment.config.variableFactor();
-        uint256 tf = deployment.config.tokenFactors(address(credit));
-
-        uint256 feeAmount = lf + (((vf * tf) / 1e18) * proposal.availableCreditLimit) / 1e18;
-
-        assertEq(deployment.sdex.balanceOf(address(address(0xdead))), feeAmount);
+        assertEq(deployment.sdex.balanceOf(address(0xdead)), feeAmount);
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - feeAmount);
     }
 

@@ -9,45 +9,24 @@ import { ISproTypes } from "./ISproTypes.sol";
  */
 interface ISproEvents is ISproTypes {
     /**
-     * @notice Emitted when new listed fee is set.
+     * @notice Emitted when new fee is set.
      * @param oldFee The old fee.
      * @param newFee The new fee.
      */
-    event FixFeeListedUpdated(uint256 oldFee, uint256 newFee);
+    event FeeUpdated(uint256 oldFee, uint256 newFee);
 
     /**
-     * @notice Emitted when new unlisted fee is set.
-     * @param oldFee The old fee.
-     * @param newFee The new fee.
-     */
-    event FixFeeUnlistedUpdated(uint256 oldFee, uint256 newFee);
-
-    /**
-     * @notice Emitted when new variable factor is set.
-     * @param oldFactor The old factor.
-     * @param newFactor The new factor.
-     */
-    event VariableFactorUpdated(uint256 oldFactor, uint256 newFactor);
-
-    /**
-     * @notice Emitted when a listed token factor is set.
-     * @param token The address of the token.
-     * @param factor The new factor.
-     */
-    event ListedTokenUpdated(address token, uint256 factor);
-
-    /**
-     * @notice Emitted when new LOAN token metadata uri is set.
+     * @notice Emitted when new Loan token metadata uri is set.
      * @param loanContract The address of the loan contract.
      * @param newUri The new uri.
      */
-    event LOANMetadataUriUpdated(address indexed loanContract, string newUri);
+    event LoanMetadataUriUpdated(address indexed loanContract, string newUri);
 
     /**
-     * @notice Emitted when new default LOAN token metadata uri is set.
+     * @notice Emitted when new default Loan token metadata uri is set.
      * @param newUri The new default uri.
      */
-    event DefaultLOANMetadataUriUpdated(string newUri);
+    event DefaultLoanMetadataUriUpdated(string newUri);
 
     /**
      * @notice Emitted when a new loan in created.
@@ -57,7 +36,7 @@ interface ISproEvents is ISproTypes {
      * @param lenderSpec The lender spec of the loan.
      * @param extra The extra data of the loan.
      */
-    event LOANCreated(
+    event LoanCreated(
         uint256 indexed loanId, bytes32 indexed proposalHash, Terms terms, LenderSpec lenderSpec, bytes extra
     );
 
@@ -65,14 +44,14 @@ interface ISproEvents is ISproTypes {
      * @notice Emitted when a loan is paid back.
      * @param loanId The id of the loan.
      */
-    event LOANPaidBack(uint256 indexed loanId);
+    event LoanPaidBack(uint256 indexed loanId);
 
     /**
      * @notice Emitted when a repaid or defaulted loan is claimed.
      * @param loanId The id of the loan.
      * @param defaulted True if the loan is defaulted.
      */
-    event LOANClaimed(uint256 indexed loanId, bool indexed defaulted);
+    event LoanClaimed(uint256 indexed loanId, bool indexed defaulted);
 
     /**
      * @notice Emitted when a proposal is made.

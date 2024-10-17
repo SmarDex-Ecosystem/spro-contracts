@@ -9,7 +9,7 @@ import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLi
 import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { ISproLoanMetadataProvider } from "src/interfaces/ISproLoanMetadataProvider.sol";
 import { ISpro } from "src/interfaces/ISpro.sol";
-import { SproLOAN } from "src/spro/SproLOAN.sol";
+import { SproLoan } from "src/spro/SproLoan.sol";
 import { SproVault } from "src/spro/SproVault.sol";
 import { SproStorage } from "src/spro/SproStorage.sol";
 
@@ -20,28 +20,18 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /**
      * @param _sdex Address of SDEX token.
-     * @param _fixFeeUnlisted Fixed fee for unlisted assets.
-     * @param _fixFeeListed Fixed fee for listed assets.
-     * @param _variableFactor Variable factor for listed assets.
+     * @param _fee Fee in SDEX.
      * @param _percentage Partial position percentage.
      */
-    constructor(
-        address _sdex,
-        uint256 _fixFeeUnlisted,
-        uint256 _fixFeeListed,
-        uint256 _variableFactor,
-        uint16 _percentage
-    ) Ownable(msg.sender) {
+    constructor(address _sdex, uint256 _fee, uint16 _percentage) Ownable(msg.sender) {
         require(_sdex != address(0), "SDEX is zero address");
         require(
             _percentage > 0 && _percentage < Constants.BPS_DIVISOR / 2, "Partial percentage position value is invalid"
         );
 
         SDEX = _sdex;
-        loanToken = new SproLOAN(address(this));
-        fixFeeUnlisted = _fixFeeUnlisted;
-        fixFeeListed = _fixFeeListed;
-        variableFactor = _variableFactor;
+        loanToken = new SproLoan(address(this));
+        fee = _fee;
         partialPositionBps = _percentage;
     }
 
@@ -50,27 +40,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
-    function setFixFeeListed(uint256 fee) external onlyOwner {
-        emit FixFeeListedUpdated(fixFeeListed, fee);
-        fixFeeListed = fee;
-    }
-
-    /// @inheritdoc ISpro
-    function setFixFeeUnlisted(uint256 fee) external onlyOwner {
-        emit FixFeeUnlistedUpdated(fixFeeUnlisted, fee);
-        fixFeeUnlisted = fee;
-    }
-
-    /// @inheritdoc ISpro
-    function setVariableFactor(uint256 factor) external onlyOwner {
-        emit VariableFactorUpdated(variableFactor, factor);
-        variableFactor = factor;
-    }
-
-    /// @inheritdoc ISpro
-    function setListedToken(address token, uint256 factor) external onlyOwner {
-        emit ListedTokenUpdated(token, factor);
-        tokenFactors[token] = factor;
+    function setFee(uint256 newFee) external onlyOwner {
+        emit FeeUpdated(fee, newFee);
+        fee = newFee;
     }
 
     /// @inheritdoc ISpro
@@ -93,13 +65,13 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         }
 
         _loanMetadataUri[loanContract] = metadataUri;
-        emit LOANMetadataUriUpdated(loanContract, metadataUri);
+        emit LoanMetadataUriUpdated(loanContract, metadataUri);
     }
 
     /// @inheritdoc ISpro
     function setDefaultLoanMetadataUri(string memory metadataUri) external onlyOwner {
         _loanMetadataUri[address(0)] = metadataUri;
-        emit DefaultLOANMetadataUriUpdated(metadataUri);
+        emit DefaultLoanMetadataUriUpdated(metadataUri);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -132,15 +104,15 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     }
 
     /// @inheritdoc ISpro
-    function getLOAN(uint256 loanId) external view returns (LoanInfo memory loanInfo_) {
-        LOAN storage loan = LOANs[loanId];
+    function getLoan(uint256 loanId) external view returns (LoanInfo memory loanInfo_) {
+        Loan storage loan = Loans[loanId];
 
-        loanInfo_.status = _getLOANStatus(loanId);
+        loanInfo_.status = _getLoanStatus(loanId);
         loanInfo_.startTimestamp = loan.startTimestamp;
         loanInfo_.loanExpiration = loan.loanExpiration;
         loanInfo_.borrower = loan.borrower;
         loanInfo_.originalLender = loan.originalLender;
-        loanInfo_.loanOwner = loan.status != 0 ? loanToken.ownerOf(loanId) : address(0);
+        loanInfo_.loanOwner = loan.status != LoanStatus.NONE ? loanToken.ownerOf(loanId) : address(0);
         loanInfo_.accruingInterestAPR = loan.accruingInterestAPR;
         loanInfo_.fixedInterestAmount = loan.fixedInterestAmount;
         loanInfo_.credit = loan.creditAddress;
@@ -155,17 +127,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
-    function getLoanFee(address assetAddress, uint256 amount) public view returns (uint256) {
-        uint256 tokenFactor = tokenFactors[assetAddress];
-        return (tokenFactor == 0)
-            ? fixFeeUnlisted
-            : (
-                fixFeeListed
-                    + Math.mulDiv((variableFactor * tokenFactor) / Constants.WAD, amount, Constants.WAD, Math.Rounding.Ceil)
-            );
-    }
-
-    /// @inheritdoc ISpro
     function loanMetadataUri(address loanContract) public view returns (string memory uri_) {
         uri_ = _loanMetadataUri[loanContract];
         // If there is no metadata uri for a loan contract, use default metadata uri.
@@ -174,10 +135,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /// @inheritdoc ISpro
     function loanRepaymentAmount(uint256 loanId) public view returns (uint256) {
-        LOAN storage loan = LOANs[loanId];
+        Loan memory loan = Loans[loanId];
 
         // Check non-existent loan
-        if (loan.status == 0) return 0;
+        if (loan.status == LoanStatus.NONE) return 0;
 
         // Return loan principal with accrued interest
         return loan.principalAmount + _loanAccruedInterest(loan);
@@ -191,10 +152,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     {
         for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
-            LOAN storage loan = LOANs[loanId];
+            Loan memory loan = Loans[loanId];
             _checkLoanCreditAddress(loan.creditAddress, creditAddress);
             // Check non-existent loan
-            if (loan.status == 0) return 0;
+            if (loan.status == LoanStatus.NONE) return 0;
 
             // Add loan principal with accrued interest
             amount_ += loan.principalAmount + _loanAccruedInterest(loan);
@@ -221,8 +182,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /// @inheritdoc ISpro
     function createProposal(Proposal calldata proposal) external {
         // Make the proposal
-        (address proposer, address collateral, uint256 collateralAmount, address creditAddress, uint256 creditLimit) =
-            _makeProposal(proposal);
+        (address proposer, address collateral, uint256 collateralAmount) = _makeProposal(proposal);
 
         // Check caller is the proposer
         if (msg.sender != proposer) {
@@ -232,12 +192,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Transfer collateral to Vault
         _pushFrom(collateral, collateralAmount, proposer, address(this));
 
-        // Calculate fee amount
-        uint256 feeAmount = getLoanFee(creditAddress, creditLimit);
-
         // Fees to address(0xdead)(burned)
-        if (feeAmount > 0) {
-            _pushFrom(SDEX, feeAmount, msg.sender, address(0xdead));
+        if (fee > 0) {
+            _pushFrom(SDEX, fee, msg.sender, address(0xdead));
         }
     }
 
@@ -263,7 +220,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function createLOAN(Proposal calldata proposal, LenderSpec calldata lenderSpec, bytes calldata extra)
+    function createLoan(Proposal calldata proposal, LenderSpec calldata lenderSpec, bytes calldata extra)
         external
         returns (uint256 loanId_)
     {
@@ -283,7 +240,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Create a new loan
         loanId_ = _createLoan(loanTerms, lenderSpec);
 
-        emit LOANCreated(loanId_, proposalHash, loanTerms, lenderSpec, extra);
+        emit LoanCreated(loanId_, proposalHash, loanTerms, lenderSpec, extra);
 
         // Execute permit for the caller
         if (lenderSpec.permitData.length > 0) {
@@ -301,8 +258,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function repayLOAN(uint256 loanId, bytes calldata permitData) external {
-        LOAN storage loan = LOANs[loanId];
+    function repayLoan(uint256 loanId, bytes calldata permitData) external {
+        Loan memory loan = Loans[loanId];
 
         _checkLoanCanBeRepaid(loan.status, loan.loanExpiration);
 
@@ -324,23 +281,23 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         _push(loan.collateral, loan.collateralAmount, loan.borrower);
 
         // Try to repay directly
-        try this.tryClaimRepaidLOAN(loanId, repaymentAmount, loanToken.ownerOf(loanId)) { }
+        try this.tryClaimRepaidLoan(loanId, repaymentAmount, loanToken.ownerOf(loanId)) { }
         catch {
-            // Note: Safe transfer or supply to a pool can fail. In that case leave the LOAN token in repaid state and
-            // wait for the LOAN token owner to claim the repaid credit. Otherwise lender would be able to prevent
+            // Note: Safe transfer or supply to a pool can fail. In that case leave the Loan token in repaid state and
+            // wait for the Loan token owner to claim the repaid credit. Otherwise lender would be able to prevent
             // borrower from repaying the loan.
         }
     }
 
     /// @inheritdoc ISpro
-    function repayMultipleLOANs(uint256[] calldata loanIds, address creditAddress, bytes calldata permitData)
+    function repayMultipleLoans(uint256[] calldata loanIds, address creditAddress, bytes calldata permitData)
         external
     {
         uint256 totalRepaymentAmount;
 
         for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
-            LOAN storage loan = LOANs[loanId];
+            Loan memory loan = Loans[loanId];
 
             // Checks: loan can be repaid & credit address is the same for all loanIds
             _checkLoanCanBeRepaid(loan.status, loan.loanExpiration);
@@ -364,17 +321,17 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
         for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
-            LOAN storage loan = LOANs[loanId];
+            Loan memory loan = Loans[loanId];
 
             // Transfer collateral back to the borrower
             _push(loan.collateral, loan.collateralAmount, loan.borrower);
 
             // Try to repay directly (for each loanId)
-            try this.tryClaimRepaidLOAN(loanId, loanRepaymentAmount(loanId), loanToken.ownerOf(loanId)) { }
+            try this.tryClaimRepaidLoan(loanId, loanRepaymentAmount(loanId), loanToken.ownerOf(loanId)) { }
             catch {
-                // Note: Safe transfer or supply to a pool can fail. In that case leave the LOAN token in repaid state
+                // Note: Safe transfer or supply to a pool can fail. In that case leave the Loan token in repaid state
                 // and
-                // wait for the LOAN token owner to claim the repaid credit. Otherwise lender would be able to prevent
+                // wait for the Loan token owner to claim the repaid credit. Otherwise lender would be able to prevent
                 // borrower from repaying the loan.
             }
         }
@@ -385,21 +342,21 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function claimLOAN(uint256 loanId) public {
-        LOAN storage loan = LOANs[loanId];
+    function claimLoan(uint256 loanId) public {
+        Loan memory loan = Loans[loanId];
 
-        // Check that caller is LOAN token holder
+        // Check that caller is Loan token holder
         if (loanToken.ownerOf(loanId) != msg.sender) {
-            revert CallerNotLOANTokenHolder();
+            revert CallerNotLoanTokenHolder();
         }
 
-        if (loan.status == 0) {
+        if (loan.status == LoanStatus.NONE) {
             // Loan is not existing or from a different loan contract
             revert NonExistingLoan();
-        } else if (loan.status == 3) {
+        } else if (loan.status == LoanStatus.PAID_BACK) {
             // Loan has been paid back
             _settleLoanClaim(loanId, msg.sender, false);
-        } else if (loan.status == 2 && loan.loanExpiration <= block.timestamp) {
+        } else if (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp) {
             // Loan is running but expired
             _settleLoanClaim(loanId, msg.sender, true);
         }
@@ -410,22 +367,22 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     }
 
     /// @inheritdoc ISpro
-    function claimMultipleLOANs(uint256[] calldata loanIds) external {
+    function claimMultipleLoans(uint256[] calldata loanIds) external {
         uint256 l = loanIds.length;
         for (uint256 i; i < l; ++i) {
-            claimLOAN(loanIds[i]);
+            claimLoan(loanIds[i]);
         }
     }
 
     /// @inheritdoc ISpro
-    function tryClaimRepaidLOAN(uint256 loanId, uint256 creditAmount, address loanOwner) external {
+    function tryClaimRepaidLoan(uint256 loanId, uint256 creditAmount, address loanOwner) external {
         if (msg.sender != address(this)) {
             revert CallerNotVault();
         }
 
-        LOAN storage loan = LOANs[loanId];
+        Loan memory loan = Loans[loanId];
 
-        if (loan.status != 3) return;
+        if (loan.status != LoanStatus.PAID_BACK) return;
 
         // If current loan owner is not original lender, the loan cannot be repaid directly, return without revert.
         if (loan.originalLender != loanOwner) return;
@@ -435,10 +392,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         address destinationOfFunds = loan.originalSourceOfFunds;
         address credit = loan.creditAddress;
 
-        // Delete loan data & burn LOAN token before calling safe transfer
+        // Delete loan data & burn Loan token before calling safe transfer
         _deleteLoan(loanId);
 
-        emit LOANClaimed(loanId, false);
+        emit LoanClaimed(loanId, false);
 
         // End here if the credit amount is zero
         if (creditAmount == 0) return;
@@ -462,7 +419,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             _supplyToPool(credit, creditAmount, poolAdapter, destinationOfFunds, loanOwner);
         }
 
-        // Note: If the transfer fails, the LOAN token will remain in repaid state and the LOAN token owner
+        // Note: If the transfer fails, the Loan token will remain in repaid state and the Loan token owner
         // will be able to claim the repaid credit. Otherwise lender would be able to prevent borrower from
         // repaying the loan.
     }
@@ -470,42 +427,44 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /**
      * @notice Settle the loan claim.
      * @param loanId Id of a loan that is being claimed.
-     * @param loanOwner Address of the LOAN token holder.
+     * @param loanOwner Address of the Loan token holder.
      * @param defaulted If the loan is defaulted.
      */
     function _settleLoanClaim(uint256 loanId, address loanOwner, bool defaulted) private {
-        LOAN storage loan = LOANs[loanId];
+        Loan memory loan = Loans[loanId];
 
         // Store in memory before deleting the loan
         address asset = defaulted ? loan.collateral : loan.creditAddress;
         uint256 assetAmount = defaulted ? loan.collateralAmount : loanRepaymentAmount(loanId);
 
-        // Delete loan data & burn LOAN token before calling safe transfer
+        // Delete loan data & burn Loan token before calling safe transfer
         _deleteLoan(loanId);
 
-        emit LOANClaimed(loanId, defaulted);
+        emit LoanClaimed(loanId, defaulted);
 
-        // Transfer asset to current LOAN token owner
+        // Transfer asset to current Loan token owner
         _push(asset, assetAmount, loanOwner);
     }
 
     /**
-     * @notice Delete loan data and burn LOAN token.
+     * @notice Delete loan data and burn Loan token.
      * @param loanId Id of a loan that is being deleted.
      */
     function _deleteLoan(uint256 loanId) private {
         loanToken.burn(loanId);
-        delete LOANs[loanId];
+        delete Loans[loanId];
     }
 
     /**
-     * @notice Return a LOAN status associated with a loan id.
+     * @notice Return a Loan status associated with a loan id.
      * @param loanId Id of a loan in question.
-     * @return status LOAN status.
+     * @return status Loan status.
      */
-    function _getLOANStatus(uint256 loanId) private view returns (uint8) {
-        LOAN storage loan = LOANs[loanId];
-        return (loan.status == 2 && loan.loanExpiration <= block.timestamp) ? 4 : loan.status;
+    function _getLoanStatus(uint256 loanId) private view returns (LoanStatus) {
+        Loan memory loan = Loans[loanId];
+        return (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp)
+            ? LoanStatus.EXPIRED
+            : loan.status;
     }
 
     /* ------------------------------------------------------------ */
@@ -544,13 +503,13 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @param status Loan status.
      * @param loanExpiration Loan default timestamp.
      */
-    function _checkLoanCanBeRepaid(uint8 status, uint40 loanExpiration) internal view {
+    function _checkLoanCanBeRepaid(LoanStatus status, uint40 loanExpiration) internal view {
         // Check that loan exists and is not from a different loan contract
-        if (status == 0) {
+        if (status == LoanStatus.NONE) {
             revert NonExistingLoan();
         }
         // Check that loan is running
-        if (status != 2) {
+        if (status != LoanStatus.RUNNING) {
             revert LoanNotRunning();
         }
         // Check that loan is not defaulted
@@ -613,18 +572,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @return proposer_ Address of the borrower/proposer
      * @return collateral_ Address of the collateral token.
      * @return collateralAmount_ Amount of the collateral token.
-     * @return creditAddress_ Address of the credit token.
-     * @return creditLimit_ Credit limit.
      */
     function _makeProposal(Proposal memory proposal)
         private
-        returns (
-            address proposer_,
-            address collateral_,
-            uint256 collateralAmount_,
-            address creditAddress_,
-            uint256 creditLimit_
-        )
+        returns (address proposer_, address collateral_, uint256 collateralAmount_)
     {
         // Decode proposal data
         if (proposal.startTimestamp > proposal.loanExpiration) {
@@ -640,8 +591,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         collateral_ = proposal.collateralAddress;
         collateralAmount_ = proposal.collateralAmount;
         withdrawableCollateral[proposalHash] = collateralAmount_;
-        creditAddress_ = proposal.creditAddress;
-        creditLimit_ = proposal.availableCreditLimit;
 
         emit ProposalMade(proposalHash, proposer_ = proposal.proposer, proposal);
     }
@@ -793,18 +742,18 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     }
 
     /**
-     * @notice Mint LOAN token and store loan data under loan id.
+     * @notice Mint Loan token and store loan data under loan id.
      * @param loanTerms Loan terms struct.
      * @param lenderSpec Lender specification struct.
-     * @return loanId_ Id of the created LOAN token.
+     * @return loanId_ Id of the created Loan token.
      */
     function _createLoan(Terms memory loanTerms, LenderSpec calldata lenderSpec) private returns (uint256 loanId_) {
-        // Mint LOAN token for lender
+        // Mint Loan token for lender
         loanId_ = loanToken.mint(loanTerms.lender);
 
         // Store loan data under loan id
-        LOAN storage loan = LOANs[loanId_];
-        loan.status = 2;
+        Loan storage loan = Loans[loanId_];
+        loan.status = LoanStatus.RUNNING;
         loan.creditAddress = loanTerms.credit;
         loan.originalSourceOfFunds = lenderSpec.sourceOfFunds;
         loan.startTimestamp = loanTerms.startTimestamp;
@@ -840,10 +789,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @param loanId Id of a loan that is being repaid.
      */
     function _updateRepaidLoan(uint256 loanId) private {
-        LOAN storage loan = LOANs[loanId];
+        Loan storage loan = Loans[loanId];
 
         // Move loan to repaid state and wait for the loan owner to claim the repaid credit
-        loan.status = 3;
+        loan.status = LoanStatus.PAID_BACK;
 
         // Update accrued interest amount
         loan.fixedInterestAmount = _loanAccruedInterest(loan);
@@ -852,7 +801,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Note: Reusing `fixedInterestAmount` to store accrued interest at the time of repayment
         // to have the value at the time of claim and stop accruing new interest.
 
-        emit LOANPaidBack(loanId);
+        emit LoanPaidBack(loanId);
     }
 
     /**
@@ -860,7 +809,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @param loan Loan data struct.
      * @return Accrued interest amount.
      */
-    function _loanAccruedInterest(LOAN storage loan) private view returns (uint256) {
+    function _loanAccruedInterest(Loan memory loan) private pure returns (uint256) {
         if (loan.accruingInterestAPR == 0) return loan.fixedInterestAmount;
 
         uint256 accruingMinutes = (loan.loanExpiration - loan.startTimestamp) / 1 minutes;

@@ -7,12 +7,10 @@ import { T20 } from "test/helper/T20.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import { Spro } from "src/spro/Spro.sol";
-import { SproLOAN } from "src/spro/SproLOAN.sol";
+import { SproLoan } from "src/spro/SproLoan.sol";
 
 abstract contract SDDeploymentTest is Test {
-    uint256 public constant UNLISTED_FEE = 50e18;
-    uint256 public constant LISTED_FEE = 20e18;
-    uint256 public constant VARIABLE_FACTOR = 1e13;
+    uint256 public constant FEE = 50e18;
     uint16 public constant PARTIAL_POSITION_PERCENTAGE = 500;
 
     string public deploymentsSubpath;
@@ -23,7 +21,7 @@ abstract contract SDDeploymentTest is Test {
     // Properties need to be in alphabetical order
     struct Deployment {
         Spro config;
-        SproLOAN loanToken;
+        SproLoan loanToken;
         address proxyAdmin;
         address protocolAdmin;
         T20 sdex;
@@ -39,8 +37,7 @@ abstract contract SDDeploymentTest is Test {
         vm.startPrank(deployment.protocolAdmin);
 
         // Deploy protocol
-        deployment.config =
-            new Spro(address(deployment.sdex), UNLISTED_FEE, LISTED_FEE, VARIABLE_FACTOR, PARTIAL_POSITION_PERCENTAGE);
+        deployment.config = new Spro(address(deployment.sdex), FEE, PARTIAL_POSITION_PERCENTAGE);
         vm.stopPrank();
         deployment.loanToken = deployment.config.loanToken();
 

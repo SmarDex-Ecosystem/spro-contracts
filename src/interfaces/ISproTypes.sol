@@ -49,8 +49,22 @@ interface ISproTypes {
     }
 
     /**
+     * @notice Loan status enum.
+     * @param NONE none/dead.
+     * @param RUNNING running/accepted offer/accepted request.
+     * @param PAID_BACK paid back.
+     * @param EXPIRED expired.
+     */
+    enum LoanStatus {
+        NONE,
+        RUNNING,
+        PAID_BACK,
+        EXPIRED
+    }
+
+    /**
      * @notice Struct defining a simple loan.
-     * @param status 0 == none/dead || 2 == running/accepted offer/accepted request || 3 == paid back || 4 == expired.
+     * @param status Loan status.
      * @param creditAddress Address of an asset used as a loan credit.
      * @param originalSourceOfFunds Address of a source of funds that was used to fund the loan.
      * @param startTimestamp Unix timestamp (in seconds) of a start date.
@@ -66,8 +80,8 @@ interface ISproTypes {
      * @param collateral Address of a collateral asset.
      * @param collateralAmount Amount of a collateral asset.
      */
-    struct LOAN {
-        uint8 status;
+    struct Loan {
+        LoanStatus status;
         address creditAddress;
         address originalSourceOfFunds;
         uint40 startTimestamp;
@@ -118,12 +132,12 @@ interface ISproTypes {
 
     /**
      * @notice Loan information struct.
-     * @param status LOAN status.
+     * @param status Loan status.
      * @param startTimestamp Unix timestamp (in seconds) of a loan creation date.
      * @param loanExpiration Unix timestamp (in seconds) of a loan default date.
      * @param borrower Address of a loan borrower.
      * @param originalLender Address of a loan original lender.
-     * @param loanOwner Address of a LOAN token holder.
+     * @param loanOwner Address of a Loan token holder.
      * @param accruingInterestAPR Accruing interest APR with 2 decimal places.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      * @param credit Address of a credit asset.
@@ -134,7 +148,7 @@ interface ISproTypes {
      * @param repaymentAmount Loan repayment amount in credit asset tokens.
      */
     struct LoanInfo {
-        uint8 status;
+        LoanStatus status;
         uint40 startTimestamp;
         uint40 loanExpiration;
         address borrower;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { SproLOAN } from "src/spro/SproLOAN.sol";
+import { SproLoan } from "src/spro/SproLoan.sol";
 
 /**
  * @title ISproStorage
@@ -19,29 +19,14 @@ interface ISproStorage {
     function partialPositionBps() external view returns (uint16);
 
     /**
-     * @notice Get protocol fixed fee for unlisted credit tokens.
+     * @notice Get protocol fee value.
      * @dev Amount of SDEX tokens (units 1e18).
      */
-    function fixFeeUnlisted() external view returns (uint256);
-
-    /**
-     * @notice Get protocol fixed fee for listed credit tokens.
-     * @dev Amount of SDEX tokens (units 1e18).
-     */
-    function fixFeeListed() external view returns (uint256);
-
-    /**
-     * @notice Get variable factor for calculating variable fee component for listed credit tokens.
-     * @dev Units 1e18. Eg. factor of 40_000 == 4e22
-     */
-    function variableFactor() external view returns (uint256);
-
-    /// @notice Get token factor for a listed credit token.
-    function tokenFactors(address token) external view returns (uint256);
+    function fee() external view returns (uint256);
 
     /**
      * @notice Get loan metadata URI for a loan contract address.
-     * @dev LOAN token minted by a loan contract will return metadata uri stored in this mapping.
+     * @dev Loan token minted by a loan contract will return metadata uri stored in this mapping.
      *      If there is no metadata uri for a loan contract, default metadata uri will be used stored under address(0).
      */
     function _loanMetadataUri(address loanContract) external view returns (string memory);
@@ -56,8 +41,8 @@ interface ISproStorage {
     /// @notice Get the DOMAIN_SEPARATOR_LOAN signature verification.
     function DOMAIN_SEPARATOR_LOAN() external view returns (bytes32);
 
-    /// @notice Get SproLOAN contract.
-    function loanToken() external view returns (SproLOAN);
+    /// @notice Get SproLoan contract.
+    function loanToken() external view returns (SproLoan);
 
     /* -------------------------------------------------------------------------- */
     /*                                  PROPOSAL                                  */

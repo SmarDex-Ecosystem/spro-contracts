@@ -1,7 +1,7 @@
 createProposal.t.sol
-├── when the proposal contract does not have the LOAN_PROPOSAL tag in the hub
+├── when the proposal contract does not have the Loan_PROPOSAL tag in the hub
 │   └── it should revert
-└── when the proposal contract has the LOAN_PROPOSAL tag in the hub
+└── when the proposal contract has the Loan_PROPOSAL tag in the hub
     └── when the proposal data is valid
         ├── it should successfully make a proposal in the proposal contract
         ├── when the caller is not the proposer

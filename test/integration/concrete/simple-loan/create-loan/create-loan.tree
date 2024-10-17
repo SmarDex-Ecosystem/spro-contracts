@@ -1,15 +1,15 @@
 createLoan.t.sol
-└── when the proposal contract does not have the LOAN_PROPOSAL tag in the hub
+└── when the proposal contract does not have the Loan_PROPOSAL tag in the hub
     ├── it should revert
-    └── when the proposal contract has the LOAN_PROPOSAL tag in the hub
-        └── when the proposal contract has the LOAN_PROPOSAL tag in the hub
+    └── when the proposal contract has the Loan_PROPOSAL tag in the hub
+        └── when the proposal contract has the Loan_PROPOSAL tag in the hub
             └── it should accept the proposal and return the proposal hash and loan terms object
                 ├── when the loan terms are invalid (< min duration, > max APR)
                 │   └── it should revert
                 └── when the loan terms are valid
-                    ├── it should mint a LOAN token for the lender
+                    ├── it should mint a Loan token for the lender
                     ├── it should store the loan data under the loan id, and return the loan id
-                    ├── it should emit a {LOANCreated} event
+                    ├── it should emit a {LoanCreated} event
                     ├── when the lender spec permit data is empty
                     │   ├── it should transfer the SDEX fees to the 0xdead address
                     │   └── it should transfer the credit tokens from the lender to the borrower

@@ -7,6 +7,7 @@ import { SDBaseIntegrationTest, Spro } from "test/integration/SDBaseIntegrationT
 
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationTest {
     modifier proposalContractHasTag() {
@@ -30,7 +31,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
                 ISproErrors.InvalidDuration.selector, proposal.loanExpiration - proposal.startTimestamp, minDuration
             )
         );
-        deployment.config.createLOAN(proposal, lenderSpec, "");
+        deployment.config.createLoan(proposal, lenderSpec, "");
     }
 
     function test_RevertWhen_InvalidMaxApr() external proposalContractHasTag {
@@ -48,7 +49,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         vm.expectRevert(
             abi.encodeWithSelector(ISproErrors.InterestAPROutOfBounds.selector, proposal.accruingInterestAPR, maxApr)
         );
-        deployment.config.createLOAN(proposal, lenderSpec, "");
+        deployment.config.createLoan(proposal, lenderSpec, "");
     }
 
     modifier whenLoanTermsValid() {
@@ -68,16 +69,16 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        uint256 id = deployment.config.createLOAN(proposal, lenderSpec, "");
+        uint256 id = deployment.config.createLoan(proposal, lenderSpec, "");
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
-        assertEq(deployment.sdex.balanceOf(address(address(0xdead))), deployment.config.fixFeeUnlisted());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(address(0xdead)), deployment.config.fee());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fee());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
-        (Spro.LoanInfo memory loanInfo) = deployment.config.getLOAN(id);
-        assertEq(loanInfo.status, 2);
+        (Spro.LoanInfo memory loanInfo) = deployment.config.getLoan(id);
+        assertTrue(loanInfo.status == ISproTypes.LoanStatus.RUNNING);
 
         assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE - lenderSpec.creditAmount);
         assertEq(credit.balanceOf(borrower), lenderSpec.creditAmount);
@@ -127,16 +128,16 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         // Set the permit data
         lenderSpec.permitData = abi.encode(permit);
 
-        uint256 id = deployment.config.createLOAN(proposal, lenderSpec, "");
+        uint256 id = deployment.config.createLoan(proposal, lenderSpec, "");
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
-        assertEq(deployment.sdex.balanceOf(address(address(0xdead))), deployment.config.fixFeeUnlisted());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fixFeeUnlisted());
+        assertEq(deployment.sdex.balanceOf(address(0xdead)), deployment.config.fee());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fee());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
-        (Spro.LoanInfo memory loanInfo) = deployment.config.getLOAN(id);
-        assertEq(loanInfo.status, 2);
+        (Spro.LoanInfo memory loanInfo) = deployment.config.getLoan(id);
+        assertTrue(loanInfo.status == ISproTypes.LoanStatus.RUNNING);
 
         assertEq(creditPermit.balanceOf(lender), INITIAL_CREDIT_BALANCE - lenderSpec.creditAmount);
         assertEq(creditPermit.balanceOf(borrower), lenderSpec.creditAmount);

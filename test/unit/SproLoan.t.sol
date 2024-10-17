@@ -6,19 +6,19 @@ import { Test } from "forge-std/Test.sol";
 import { IERC721Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { SproLOAN } from "src/spro/SproLOAN.sol";
-import { ISproLOAN } from "src/interfaces/ISproLOAN.sol";
+import { SproLoan } from "src/spro/SproLoan.sol";
+import { ISproLoan } from "src/interfaces/ISproLoan.sol";
 
-contract SproLOANTest is Test {
+contract SproLoanTest is Test {
     bytes32 internal constant LAST_LOAN_ID_SLOT = bytes32(uint256(6)); // `lastLoanId` property position
     bytes32 internal constant LOAN_CONTRACT_SLOT = bytes32(uint256(7)); // `loanContract` mapping position
 
-    SproLOAN loanToken;
+    SproLoan loanToken;
     address alice = address(0xa11ce);
     address activeLoanContract = address(0x01);
 
     function setUp() public virtual {
-        loanToken = new SproLOAN(address(this));
+        loanToken = new SproLoan(address(this));
     }
 }
 
@@ -26,9 +26,9 @@ contract SproLOANTest is Test {
 /*  CONSTRUCTOR                                              */
 /* ------------------------------------------------------------ */
 
-contract SproLOAN_Constructor_Test is SproLOANTest {
+contract SproLoan_Constructor_Test is SproLoanTest {
     function test_shouldHaveCorrectNameAndSymbol() external view {
-        assertTrue(keccak256(abi.encodePacked(loanToken.name())) == keccak256("Spro LOAN"));
+        assertTrue(keccak256(abi.encodePacked(loanToken.name())) == keccak256("Spro Loan"));
         assertTrue(keccak256(abi.encodePacked(loanToken.symbol())) == keccak256("LOAN"));
     }
 }
@@ -37,7 +37,7 @@ contract SproLOAN_Constructor_Test is SproLOANTest {
 /*  MINT                                                     */
 /* ------------------------------------------------------------ */
 
-contract SproLOAN_Mint_Test is SproLOANTest {
+contract SproLoan_Mint_Test is SproLoanTest {
     function test_shouldFail_whenCallerIsNotActiveLoanContract() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(alice)));
         vm.prank(alice);
@@ -53,7 +53,7 @@ contract SproLOAN_Mint_Test is SproLOANTest {
         assertTrue(lastLoanIdValue == lastLoanId + 1);
     }
 
-    function test_shouldMintLOANToken() external {
+    function test_shouldMintLoanToken() external {
         vm.prank(address(this));
         uint256 loanId = loanToken.mint(alice);
 
@@ -65,9 +65,9 @@ contract SproLOAN_Mint_Test is SproLOANTest {
         assertTrue(loanId == 1);
     }
 
-    function test_shouldEmitEvent_LOANMinted() external {
+    function test_shouldEmitEvent_LoanMinted() external {
         vm.expectEmit(true, true, true, false);
-        emit ISproLOAN.LOANMinted(1, alice);
+        emit ISproLoan.LoanMinted(1, alice);
 
         loanToken.mint(alice);
     }
@@ -77,7 +77,7 @@ contract SproLOAN_Mint_Test is SproLOANTest {
 /*  BURN                                                     */
 /* ------------------------------------------------------------ */
 
-contract SproLOAN_Burn_Test is SproLOANTest {
+contract SproLoan_Burn_Test is SproLoanTest {
     uint256 loanId;
 
     function setUp() public override {
@@ -92,16 +92,16 @@ contract SproLOAN_Burn_Test is SproLOANTest {
         loanToken.burn(loanId);
     }
 
-    function test_shouldBurnLOANToken() external {
+    function test_shouldBurnLoanToken() external {
         loanToken.burn(loanId);
 
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, loanId));
         loanToken.ownerOf(loanId);
     }
 
-    function test_shouldEmitEvent_LOANBurned() external {
+    function test_shouldEmitEvent_LoanBurned() external {
         vm.expectEmit(true, false, false, false);
-        emit ISproLOAN.LOANBurned(loanId);
+        emit ISproLoan.LoanBurned(loanId);
 
         loanToken.burn(loanId);
     }
@@ -111,7 +111,7 @@ contract SproLOAN_Burn_Test is SproLOANTest {
 /*  TOKEN URI                                                */
 /* ------------------------------------------------------------ */
 
-contract SproLOAN_TokenUri_Test is SproLOANTest {
+contract SproLoan_TokenUri_Test is SproLoanTest {
     string tokenUri;
     uint256 loanId;
 
