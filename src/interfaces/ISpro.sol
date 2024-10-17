@@ -207,12 +207,11 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      *      If the Loan token holder is the same as the original lender, the repayment credit asset will be
      *      transferred to the Loan token holder directly. Otherwise it will transfer the repayment credit asset to
      *      a vault, waiting on a Loan token holder to claim it. The function assumes a prior token approval to a
-     * contract address
-     *      or a signed permit.
+     * contract address or a signed permit.
      * @param loanId Id of a loan that is being repaid.
-     * @param permitData Callers credit permit data.
+     * @param permit Permit data.
      */
-    function repayLoan(uint256 loanId, bytes calldata permitData) external;
+    function repayLoan(uint256 loanId, bytes calldata permit) external;
 
     /**
      * @notice Repay running loans.

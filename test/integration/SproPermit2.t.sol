@@ -101,6 +101,40 @@ contract SDSimpleLoanIntegrationTest is SproForkBase {
         vm.stopPrank();
     }
 
+    function test_permit2RepayLoan() public {
+        // Borrower: creates proposal
+        _createERC20Proposal();
+
+        // Mint initial state & approve credit
+        credit.mint(lender, CREDIT_LIMIT);
+        vm.prank(lender);
+        credit.approve(address(deployment.config), CREDIT_LIMIT);
+
+        // Lender: creates the loan
+        vm.prank(lender);
+        uint256 loanId = deployment.config.createLoan(proposal, _buildLenderSpec(false), "", "");
+
+        // Borrower: cancels proposal, withdrawing unused collateral
+        vm.prank(borrower);
+        deployment.config.cancelProposal(proposal);
+
+        // Warp ahead, just before loan default
+        vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
+
+        uint256 repaymentAmount = deployment.config.loanRepaymentAmount(loanId);
+        deployment.sdex.approve(address(deployment.permit2), type(uint256).max);
+        IAllowanceTransfer.PermitDetails[] memory details = new IAllowanceTransfer.PermitDetails[](2);
+        details[0] = IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(repaymentAmount), 0, 0);
+        details[1] = IAllowanceTransfer.PermitDetails(address(deployment.sdex), uint160(UNLISTED_FEE), 0, 0);
+        IAllowanceTransfer.PermitBatch memory permitBatch =
+            IAllowanceTransfer.PermitBatch(details, address(deployment.config), block.timestamp);
+        bytes memory signature =
+            getPermitBatchSignature(permitBatch, SIG_USER1_PK, deployment.permit2.DOMAIN_SEPARATOR());
+
+        vm.prank(sigUser1);
+        deployment.config.repayLoan(loanId, abi.encode(permitBatch, signature));
+    }
+
     // Make the proposal
     function _createERC20Proposal() internal {
         // Mint initial state & approve collateral

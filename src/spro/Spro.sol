@@ -328,7 +328,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function repayLoan(uint256 loanId, bytes calldata permitData) external {
+    function repayLoan(uint256 loanId, bytes calldata permit) external {
         Loan memory loan = Loans[loanId];
 
         _checkLoanCanBeRepaid(loan.status, loan.loanExpiration);
@@ -336,16 +336,23 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Update loan to repaid state
         _updateRepaidLoan(loanId);
 
-        // Execute permit for the caller
-        if (permitData.length > 0) {
-            Permit memory permit = abi.decode(permitData, (Permit));
-            _checkPermit(msg.sender, loan.creditAddress, permit);
-            _tryPermit(permit);
-        }
-
-        // Transfer the repaid credit to the Vault
         uint256 repaymentAmount = loanRepaymentAmount(loanId);
-        _pushFrom(loan.creditAddress, repaymentAmount, msg.sender, address(this));
+        // Execute permit for the caller
+        if (permit.length > 0) {
+            (IAllowanceTransfer.PermitBatch memory permitBatch,) =
+                abi.decode(permit, (IAllowanceTransfer.PermitBatch, bytes));
+            bytes calldata data = permit.toBytes(1);
+            if (
+                (permitBatch.details[0].token != loan.creditAddress)
+                    || (permitBatch.details[0].amount != repaymentAmount)
+            ) {
+                revert InvalidAmountTransfer();
+            }
+            PERMIT2.permit(msg.sender, permitBatch, data);
+        } else {
+            // Transfer the repaid credit to the Vault
+            _pushFrom(loan.creditAddress, repaymentAmount, msg.sender, address(this));
+        }
 
         // Transfer collateral back to borrower
         _push(loan.collateral, loan.collateralAmount, loan.borrower);
