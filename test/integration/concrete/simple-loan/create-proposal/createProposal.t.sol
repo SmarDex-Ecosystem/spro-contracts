@@ -45,7 +45,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         assertEq(t20.balanceOf(address(deployment.config)), COLLATERAL_AMOUNT);
         assertEq(t20.balanceOf(borrower), 0);
 
-        assertEq(deployment.sdex.balanceOf(address(address(0xdead))), deployment.config.fee());
+        assertEq(deployment.sdex.balanceOf(address(0xdead)), deployment.config.fee());
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fee());
     }
 
@@ -75,7 +75,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         assertEq(t20.balanceOf(address(deployment.config)), COLLATERAL_AMOUNT);
         assertEq(t20.balanceOf(borrower), 0);
 
-        assertEq(deployment.sdex.balanceOf(address(address(0xdead))), feeAmount);
+        assertEq(deployment.sdex.balanceOf(address(0xdead)), feeAmount);
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - feeAmount);
     }
 
