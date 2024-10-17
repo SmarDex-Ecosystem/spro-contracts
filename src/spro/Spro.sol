@@ -32,20 +32,15 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /**
      * @param _sdex Address of SDEX token.
-     * @param _fixFeeUnlisted Fixed fee for unlisted assets.
-     * @param _fixFeeListed Fixed fee for listed assets.
-     * @param _variableFactor Variable factor for listed assets.
+     * @param _permit2 Address of Permit2 contract.
+     * @param _weth9 Address of WETH9 token.
+     * @param _fee Fee in SDEX.
      * @param _percentage Partial position percentage.
      */
-    constructor(
-        address _sdex,
-        address _permit2,
-        address _weth9,
-        uint256 _fixFeeUnlisted,
-        uint256 _fixFeeListed,
-        uint256 _variableFactor,
-        uint16 _percentage
-    ) Ownable(msg.sender) PaymentsImmutables(PaymentsParameters(_permit2, _weth9, address(0), address(0))) {
+    constructor(address _sdex, address _permit2, address _weth9, uint256 _fee, uint16 _percentage)
+        Ownable(msg.sender)
+        PaymentsImmutables(PaymentsParameters(_permit2, _weth9, address(0), address(0)))
+    {
         require(_sdex != address(0), "SDEX is zero address");
         require(
             _percentage > 0 && _percentage < Constants.BPS_DIVISOR / 2, "Partial percentage position value is invalid"
@@ -54,9 +49,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         SDEX = _sdex;
         revokedNonce = new SproRevokedNonce(address(this));
         loanToken = new SproLoan(address(this));
-        fixFeeUnlisted = _fixFeeUnlisted;
-        fixFeeListed = _fixFeeListed;
-        variableFactor = _variableFactor;
+        fee = _fee;
         partialPositionBps = _percentage;
     }
 
@@ -65,27 +58,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
-    function setFixFeeListed(uint256 fee) external onlyOwner {
-        emit FixFeeListedUpdated(fixFeeListed, fee);
-        fixFeeListed = fee;
-    }
-
-    /// @inheritdoc ISpro
-    function setFixFeeUnlisted(uint256 fee) external onlyOwner {
-        emit FixFeeUnlistedUpdated(fixFeeUnlisted, fee);
-        fixFeeUnlisted = fee;
-    }
-
-    /// @inheritdoc ISpro
-    function setVariableFactor(uint256 factor) external onlyOwner {
-        emit VariableFactorUpdated(variableFactor, factor);
-        variableFactor = factor;
-    }
-
-    /// @inheritdoc ISpro
-    function setListedToken(address token, uint256 factor) external onlyOwner {
-        emit ListedTokenUpdated(token, factor);
-        tokenFactors[token] = factor;
+    function setFee(uint256 newFee) external onlyOwner {
+        emit FeeUpdated(fee, newFee);
+        fee = newFee;
     }
 
     /// @inheritdoc ISpro
@@ -170,17 +145,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
-    function getLoanFee(address assetAddress, uint256 amount) public view returns (uint256) {
-        uint256 tokenFactor = tokenFactors[assetAddress];
-        return (tokenFactor == 0)
-            ? fixFeeUnlisted
-            : (
-                fixFeeListed
-                    + Math.mulDiv((variableFactor * tokenFactor) / Constants.WAD, amount, Constants.WAD, Math.Rounding.Ceil)
-            );
-    }
-
-    /// @inheritdoc ISpro
     function loanMetadataUri(address loanContract) public view returns (string memory uri_) {
         uri_ = _loanMetadataUri[loanContract];
         // If there is no metadata uri for a loan contract, use default metadata uri.
@@ -236,16 +200,12 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /// @inheritdoc ISpro
     function createProposal(Proposal calldata proposal, bytes calldata permit) external {
         // Make the proposal
-        (address proposer, address collateral, uint256 collateralAmount, address creditAddress, uint256 creditLimit) =
-            _makeProposal(proposal);
+        (address proposer, address collateral, uint256 collateralAmount) = _makeProposal(proposal);
 
         // Check caller is the proposer
         if (msg.sender != proposer) {
             revert CallerIsNotStatedProposer(proposer);
         }
-
-        // Calculate fee amount
-        uint256 feeAmount = getLoanFee(creditAddress, creditLimit);
 
         // Execute permit for the caller
         if (permit.length > 0) {
@@ -253,13 +213,13 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
                 abi.decode(permit, (IAllowanceTransfer.PermitBatch, bytes));
             PERMIT2.permit(msg.sender, permitBatch, data);
             PERMIT2.transferFrom(msg.sender, address(this), collateralAmount.toUint160(), address(collateral));
-            PERMIT2.transferFrom(msg.sender, address(0xdead), feeAmount.toUint160(), address(SDEX));
+            PERMIT2.transferFrom(msg.sender, address(0xdead), fee.toUint160(), address(SDEX));
         } else {
             // Transfer collateral to Vault
             _pushFrom(collateral, collateralAmount, proposer, address(this));
             // Fees to address(0xdead)(burned)
-            if (feeAmount > 0) {
-                _pushFrom(SDEX, feeAmount, msg.sender, address(0xdead));
+            if (fee > 0) {
+                _pushFrom(SDEX, fee, msg.sender, address(0xdead));
             }
         }
     }
@@ -653,18 +613,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @return proposer_ Address of the borrower/proposer
      * @return collateral_ Address of the collateral token.
      * @return collateralAmount_ Amount of the collateral token.
-     * @return creditAddress_ Address of the credit token.
-     * @return creditLimit_ Credit limit.
      */
     function _makeProposal(Proposal memory proposal)
         private
-        returns (
-            address proposer_,
-            address collateral_,
-            uint256 collateralAmount_,
-            address creditAddress_,
-            uint256 creditLimit_
-        )
+        returns (address proposer_, address collateral_, uint256 collateralAmount_)
     {
         // Decode proposal data
         if (proposal.startTimestamp > proposal.loanExpiration) {
@@ -680,8 +632,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         collateral_ = proposal.collateralAddress;
         collateralAmount_ = proposal.collateralAmount;
         withdrawableCollateral[proposalHash] = collateralAmount_;
-        creditAddress_ = proposal.creditAddress;
-        creditLimit_ = proposal.availableCreditLimit;
 
         emit ProposalMade(proposalHash, proposer_ = proposal.proposer, proposal);
     }

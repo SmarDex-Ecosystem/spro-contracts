@@ -18,30 +18,10 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Set new protocol listed fee value.
-     * @param fee New listed fee value in amount SDEX tokens (units 1e18)
+     * @notice Set new protocol fee value.
+     * @param newFee New fee value in amount SDEX tokens (units 1e18)
      */
-    function setFixFeeListed(uint256 fee) external;
-
-    /**
-     * @notice Set new protocol unlisted fee value.
-     * @param fee New unlisted fee value in amount SDEX tokens (units 1e18)
-     */
-    function setFixFeeUnlisted(uint256 fee) external;
-
-    /**
-     * @notice Set new protocol variable factor
-     * @param factor New variable factor value (units 1e18)
-     */
-    function setVariableFactor(uint256 factor) external;
-
-    /**
-     * @notice Set new protocol token factor for credit asset
-     * @param token Credit token address.
-     * @param factor New token factor value (units 1e18)
-     * @dev Token is unlisted for `factor == 0` and listed for `factor != 0`.
-     */
-    function setListedToken(address token, uint256 factor) external;
+    function setFee(uint256 newFee) external;
 
     /**
      * @notice Set percentage of a proposal's availableCreditLimit which can be used in partial lending.
@@ -103,13 +83,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Get the fee to create or refinance the loan.
-     * @param assetAddress Address of an asset to be used.
-     * @param amount Amount of an asset to be used.
-     */
-    function getLoanFee(address assetAddress, uint256 amount) external view returns (uint256 fee);
-
-    /**
      * @notice Return a Loan token metadata uri base on a loan contract that minted the token.
      * @param loanContract Address of a loan contract.
      * @return uri_ Metadata uri for given loan contract.
@@ -162,7 +135,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param proposal Proposal struct.
      * @param permit Permit data.
      */
-    function createProposal(Proposal memory proposal, bytes calldata permit) external;
+    function createProposal(Proposal calldata proposal, bytes calldata permit) external;
 
     /* ------------------------------------------------------------ */
     /*        CANCEL PROPOSAL AND WITHDRAW UNUSED COLLATERAL        */

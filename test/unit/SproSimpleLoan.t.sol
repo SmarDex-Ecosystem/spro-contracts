@@ -26,7 +26,7 @@ contract SproSimpleLoanTest is Test {
 
     function setUp() public {
         vm.etch(config, bytes("data"));
-        sproHandler = new SproHandler(sdex, permit2, weth9, 1, 1, 1, 1);
+        sproHandler = new SproHandler(sdex, permit2, weth9, 1, 1);
 
         vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(poolAdapter));
     }
