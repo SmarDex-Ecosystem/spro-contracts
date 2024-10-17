@@ -124,24 +124,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
-    function loanMetadataUri(address loanContract) public view returns (string memory uri_) {
-        uri_ = _loanMetadataUri[loanContract];
-        // If there is no metadata uri for a loan contract, use default metadata uri.
-        if (bytes(uri_).length == 0) uri_ = _loanMetadataUri[address(0)];
-    }
-
-    /// @inheritdoc ISpro
-    function loanRepaymentAmount(uint256 loanId) public view returns (uint256) {
-        Loan memory loan = Loans[loanId];
-
-        // Check non-existent loan
-        if (loan.status == LoanStatus.NONE) return 0;
-
-        // Return loan principal with accrued interest
-        return loan.principalAmount + _loanAccruedInterest(loan);
-    }
-
-    /// @inheritdoc ISpro
     function totalLoanRepaymentAmount(uint256[] calldata loanIds, address creditAddress)
         external
         view
@@ -157,6 +139,24 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             // Add loan principal with accrued interest
             amount_ += loan.principalAmount + _loanAccruedInterest(loan);
         }
+    }
+
+    /// @inheritdoc ISpro
+    function loanMetadataUri(address loanContract) public view returns (string memory uri_) {
+        uri_ = _loanMetadataUri[loanContract];
+        // If there is no metadata uri for a loan contract, use default metadata uri.
+        if (bytes(uri_).length == 0) uri_ = _loanMetadataUri[address(0)];
+    }
+
+    /// @inheritdoc ISpro
+    function loanRepaymentAmount(uint256 loanId) public view returns (uint256) {
+        Loan memory loan = Loans[loanId];
+
+        // Check non-existent loan
+        if (loan.status == LoanStatus.NONE) return 0;
+
+        // Return loan principal with accrued interest
+        return loan.principalAmount + _loanAccruedInterest(loan);
     }
 
     /* ------------------------------------------------------------ */

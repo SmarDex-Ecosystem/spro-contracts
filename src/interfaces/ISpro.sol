@@ -74,6 +74,18 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /* -------------------------------------------------------------------------- */
 
     /**
+     * @notice Calculates the loan repayment amount with fixed and accrued interest for a set of loan ids.
+     * @dev Intended to be used to build permit data or credit token approvals
+     * @param loanIds Array of loan ids.
+     * @param creditAddress Expected credit address for all loan ids.
+     * @return amount_ Total repayment amount for loan.
+     */
+    function totalLoanRepaymentAmount(uint256[] memory loanIds, address creditAddress)
+        external
+        view
+        returns (uint256 amount_);
+
+    /**
      * @notice Return a Loan token metadata uri base on a loan contract that minted the token.
      * @param loanContract Address of a loan contract.
      * @return uri_ Metadata uri for given loan contract.
@@ -86,18 +98,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @return Repayment amount.
      */
     function loanRepaymentAmount(uint256 loanId) external view returns (uint256);
-
-    /**
-     * @notice Calculates the loan repayment amount with fixed and accrued interest for a set of loan ids.
-     * @dev Intended to be used to build permit data or credit token approvals
-     * @param loanIds Array of loan ids.
-     * @param creditAddress Expected credit address for all loan ids.
-     * @return amount_ Total repayment amount for loan.
-     */
-    function totalLoanRepaymentAmount(uint256[] memory loanIds, address creditAddress)
-        external
-        view
-        returns (uint256 amount_);
 
     /* ------------------------------------------------------------ */
     /*                          POOL ADAPTER                        */
