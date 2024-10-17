@@ -45,13 +45,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Get hash of a lender specification.
-     * @param lenderSpec Lender specification struct.
-     * @return Hash of a lender specification.
-     */
-    function getLenderSpecHash(ISproTypes.LenderSpec memory lenderSpec) external pure returns (bytes32);
-
-    /**
      * @notice Get an proposal hash according to EIP-712
      * @param proposal Proposal struct to be hashed.
      * @return Proposal struct hash.

@@ -29,14 +29,6 @@ contract SproSimpleLoanTest is Test {
         vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(poolAdapter));
     }
 
-    function testFuzz_getLenderSpecHash(address source, uint256 amount, bytes memory data) external view {
-        Spro.LenderSpec memory ls =
-            ISproTypes.LenderSpec({ sourceOfFunds: source, creditAmount: amount, permitData: data });
-        bytes32 lenderSpecHash = keccak256(abi.encode(ls));
-
-        assertEq(sproHandler.getLenderSpecHash(ls), lenderSpecHash);
-    }
-
     function test_shouldFail_checkPermit_whenInvalidPermitOwner() external {
         Spro.Permit memory permit;
         permit.asset = permitAsset;
