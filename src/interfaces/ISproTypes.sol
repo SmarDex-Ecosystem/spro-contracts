@@ -112,7 +112,7 @@ interface ISproTypes {
      * false, the proposer is the borrower.
      * @param proposerSpecHash Hash of a proposer specific data, which must be provided during a loan creation.
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
-     * again proposal.
+     * an identical proposal again.
      * @param loanContract Address of a loan contract that will create a loan from the proposal.
      */
     struct Proposal {
@@ -173,7 +173,7 @@ interface ISproTypes {
      * @param proposer Address of a proposal signer. If `isOffer` is true, the proposer is the lender. If `isOffer` is
      * false, the proposer is the borrower.
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
-     * again proposal.
+     * an identical proposal again.
      * @param loanContract Address of a loan contract that will create a loan from the proposal.
      */
     struct ProposalBase {
