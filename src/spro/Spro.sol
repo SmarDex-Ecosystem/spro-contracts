@@ -249,9 +249,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
         // Execute permit for the caller
         if (permit.length > 0) {
-            (IAllowanceTransfer.PermitBatch memory permitBatch,) =
+            (IAllowanceTransfer.PermitBatch memory permitBatch, bytes memory data) =
                 abi.decode(permit, (IAllowanceTransfer.PermitBatch, bytes));
-            bytes calldata data = permit.toBytes(1);
             PERMIT2.permit(msg.sender, permitBatch, data);
             PERMIT2.transferFrom(msg.sender, address(this), collateralAmount.toUint160(), address(collateral));
             PERMIT2.transferFrom(msg.sender, address(0xdead), feeAmount.toUint160(), address(SDEX));
@@ -313,10 +312,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
         // Execute permit for the caller
         if (permit.length > 0) {
-            (IAllowanceTransfer.PermitBatch memory permitBatch,) =
-                abi.decode(permit, (IAllowanceTransfer.PermitBatch, bytes));
-            bytes calldata data = permit.toBytes(1);
-            PERMIT2.permit(msg.sender, permitBatch, data);
+            (IAllowanceTransfer.PermitSingle memory permitSign, bytes memory data) =
+                abi.decode(permit, (IAllowanceTransfer.PermitSingle, bytes));
+            PERMIT2.permit(msg.sender, permitSign, data);
             PERMIT2.transferFrom(
                 msg.sender, address(this), loanTerms.creditAmount.toUint160(), address(loanTerms.credit)
             );
@@ -342,10 +340,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         uint256 repaymentAmount = loanRepaymentAmount(loanId);
         // Execute permit for the caller
         if (permit.length > 0) {
-            (IAllowanceTransfer.PermitBatch memory permitBatch,) =
-                abi.decode(permit, (IAllowanceTransfer.PermitBatch, bytes));
-            bytes calldata data = permit.toBytes(1);
-            PERMIT2.permit(msg.sender, permitBatch, data);
+            (IAllowanceTransfer.PermitSingle memory permitSign, bytes memory data) =
+                abi.decode(permit, (IAllowanceTransfer.PermitSingle, bytes));
+            PERMIT2.permit(msg.sender, permitSign, data);
             PERMIT2.transferFrom(msg.sender, address(this), repaymentAmount.toUint160(), address(loan.creditAddress));
         } else {
             // Transfer the repaid credit to the Vault

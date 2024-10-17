@@ -58,20 +58,18 @@ contract TestForPermit2 is SproForkBase {
     }
 
     function test_permit2CreateLoan() public {
-        IAllowanceTransfer.PermitDetails[] memory details = new IAllowanceTransfer.PermitDetails[](1);
-        details[0] =
+        IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(proposal.collateralAmount), 0, 0);
-        IAllowanceTransfer.PermitBatch memory permitBatch =
-            IAllowanceTransfer.PermitBatch(details, address(deployment.config), block.timestamp);
-        bytes memory signature =
-            getPermitBatchSignature(permitBatch, SIG_USER1_PK, deployment.permit2.DOMAIN_SEPARATOR());
+        IAllowanceTransfer.PermitSingle memory permitSign =
+            IAllowanceTransfer.PermitSingle(details, address(deployment.config), block.timestamp);
+        bytes memory signature = getPermitSignature(permitSign, SIG_USER1_PK, deployment.permit2.DOMAIN_SEPARATOR());
 
         _createERC20Proposal();
         Spro.LenderSpec memory lenderSpec = ISproTypes.LenderSpec(sigUser1, CREDIT_LIMIT, "");
 
         // Lender: creates the loan
         vm.prank(sigUser1);
-        deployment.config.createLoan(proposal, lenderSpec, "", abi.encode(permitBatch, signature));
+        deployment.config.createLoan(proposal, lenderSpec, "", abi.encode(permitSign, signature));
     }
 
     function test_permit2CreateProposal() public {
@@ -119,15 +117,14 @@ contract TestForPermit2 is SproForkBase {
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
         uint256 repaymentAmount = deployment.config.loanRepaymentAmount(loanId);
-        IAllowanceTransfer.PermitDetails[] memory details = new IAllowanceTransfer.PermitDetails[](1);
-        details[0] = IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(repaymentAmount), 0, 0);
-        IAllowanceTransfer.PermitBatch memory permitBatch =
-            IAllowanceTransfer.PermitBatch(details, address(deployment.config), block.timestamp);
-        bytes memory signature =
-            getPermitBatchSignature(permitBatch, SIG_USER1_PK, deployment.permit2.DOMAIN_SEPARATOR());
+        IAllowanceTransfer.PermitDetails memory details =
+            IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(repaymentAmount), 0, 0);
+        IAllowanceTransfer.PermitSingle memory permitSign =
+            IAllowanceTransfer.PermitSingle(details, address(deployment.config), block.timestamp);
+        bytes memory signature = getPermitSignature(permitSign, SIG_USER1_PK, deployment.permit2.DOMAIN_SEPARATOR());
 
         vm.prank(sigUser1);
-        deployment.config.repayLoan(loanId, abi.encode(permitBatch, signature));
+        deployment.config.repayLoan(loanId, abi.encode(permitSign, signature));
     }
 
     // Make the proposal
