@@ -10,7 +10,7 @@ import { Spro } from "test/integration/SDDeploymentTest.t.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
-contract TestForPermit2 is SproForkBase {
+contract TestForkPermit2 is SproForkBase {
     uint256 public constant COLLATERAL_AMOUNT = 10_000e18;
     uint256 public constant CREDIT_AMOUNT = 60e18;
     uint256 public constant FIXED_INTEREST_AMOUNT = 5e18;
