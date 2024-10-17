@@ -210,7 +210,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             (IAllowanceTransfer.PermitBatch memory permitBatch, bytes memory data) =
                 abi.decode(permit, (IAllowanceTransfer.PermitBatch, bytes));
             PERMIT2.permit(msg.sender, permitBatch, data);
-            PERMIT2.transferFrom(msg.sender, address(this), collateralAmount.toUint160(), address(collateral));
+            PERMIT2.transferFrom(msg.sender, address(this), collateralAmount.toUint160(), collateral);
             // Fees to address(0xdead)(burned)
             if (fee > 0) {
                 PERMIT2.transferFrom(msg.sender, address(0xdead), fee.toUint160(), address(SDEX));
@@ -276,9 +276,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             (IAllowanceTransfer.PermitSingle memory permitSign, bytes memory data) =
                 abi.decode(permit, (IAllowanceTransfer.PermitSingle, bytes));
             PERMIT2.permit(msg.sender, permitSign, data);
-            PERMIT2.transferFrom(
-                msg.sender, address(this), loanTerms.creditAmount.toUint160(), address(loanTerms.credit)
-            );
+            PERMIT2.transferFrom(msg.sender, address(this), loanTerms.creditAmount.toUint160(), loanTerms.credit);
         } else {
             // Settle the loan - Transfer credit to borrower
             _settleNewLoan(loanTerms, lenderSpec.sourceOfFunds);
@@ -304,7 +302,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             (IAllowanceTransfer.PermitSingle memory permitSign, bytes memory data) =
                 abi.decode(permit, (IAllowanceTransfer.PermitSingle, bytes));
             PERMIT2.permit(msg.sender, permitSign, data);
-            PERMIT2.transferFrom(msg.sender, address(this), repaymentAmount.toUint160(), address(loan.creditAddress));
+            PERMIT2.transferFrom(msg.sender, address(this), repaymentAmount.toUint160(), loan.creditAddress);
         } else {
             // Transfer the repaid credit to the Vault
             _pushFrom(loan.creditAddress, repaymentAmount, msg.sender, address(this));
@@ -345,7 +343,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             (IAllowanceTransfer.PermitSingle memory permitSign, bytes memory data) =
                 abi.decode(permit, (IAllowanceTransfer.PermitSingle, bytes));
             PERMIT2.permit(msg.sender, permitSign, data);
-            PERMIT2.transferFrom(msg.sender, address(this), totalRepaymentAmount.toUint160(), address(creditAddress));
+            PERMIT2.transferFrom(msg.sender, address(this), totalRepaymentAmount.toUint160(), creditAddress);
         } else {
             // Transfer the repaid credit to the vault
             _pushFrom(creditAddress, totalRepaymentAmount, msg.sender, address(this));
