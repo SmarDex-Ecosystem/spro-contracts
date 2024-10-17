@@ -23,25 +23,10 @@ interface ISproStorage {
     function partialPositionBps() external view returns (uint16);
 
     /**
-     * @notice Get protocol fixed fee for unlisted credit tokens.
+     * @notice Get protocol fee value.
      * @dev Amount of SDEX tokens (units 1e18).
      */
-    function fixFeeUnlisted() external view returns (uint256);
-
-    /**
-     * @notice Get protocol fixed fee for listed credit tokens.
-     * @dev Amount of SDEX tokens (units 1e18).
-     */
-    function fixFeeListed() external view returns (uint256);
-
-    /**
-     * @notice Get variable factor for calculating variable fee component for listed credit tokens.
-     * @dev Units 1e18. Eg. factor of 40_000 == 4e22
-     */
-    function variableFactor() external view returns (uint256);
-
-    /// @notice Get token factor for a listed credit token.
-    function tokenFactors(address token) external view returns (uint256);
+    function fee() external view returns (uint256);
 
     /**
      * @notice Get loan metadata URI for a loan contract address.
