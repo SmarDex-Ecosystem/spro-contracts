@@ -6,6 +6,8 @@ import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Permit2Payments } from "@uniswap/universal-router/contracts/modules/Permit2Payments.sol";
 import { BytesLib } from "@uniswap/universal-router/contracts/modules/uniswap/v3/BytesLib.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {
     PaymentsImmutables, PaymentsParameters
 } from "@uniswap/universal-router/contracts/modules/PaymentsImmutables.sol";
@@ -19,8 +21,10 @@ import { SproLoan } from "src/spro/SproLoan.sol";
 import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 import { SproVault } from "src/spro/SproVault.sol";
 import { SproStorage } from "src/spro/SproStorage.sol";
+import { console2 } from "forge-std/Test.sol";
 
 contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataProvider, Permit2Payments {
+    using SafeCast for uint256;
     using BytesLib for bytes;
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
@@ -248,13 +252,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             (IAllowanceTransfer.PermitBatch memory permitBatch,) =
                 abi.decode(permit, (IAllowanceTransfer.PermitBatch, bytes));
             bytes calldata data = permit.toBytes(1);
-            if (
-                (permitBatch.details[0].token != collateral) || (permitBatch.details[0].amount != collateralAmount)
-                    || (permitBatch.details[1].token != SDEX) || (permitBatch.details[1].amount != feeAmount)
-            ) {
-                revert InvalidAmountTransfer();
-            }
             PERMIT2.permit(msg.sender, permitBatch, data);
+            PERMIT2.transferFrom(msg.sender, address(this), collateralAmount.toUint160(), address(collateral));
+            PERMIT2.transferFrom(msg.sender, address(0xdead), feeAmount.toUint160(), address(SDEX));
         } else {
             // Transfer collateral to Vault
             _pushFrom(collateral, collateralAmount, proposer, address(this));
@@ -317,6 +317,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
                 abi.decode(permit, (IAllowanceTransfer.PermitBatch, bytes));
             bytes calldata data = permit.toBytes(1);
             PERMIT2.permit(msg.sender, permitBatch, data);
+            PERMIT2.transferFrom(
+                msg.sender, address(this), loanTerms.creditAmount.toUint160(), address(loanTerms.credit)
+            );
         } else {
             // Settle the loan - Transfer credit to borrower
             _settleNewLoan(loanTerms, lenderSpec.sourceOfFunds);
@@ -342,13 +345,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             (IAllowanceTransfer.PermitBatch memory permitBatch,) =
                 abi.decode(permit, (IAllowanceTransfer.PermitBatch, bytes));
             bytes calldata data = permit.toBytes(1);
-            if (
-                (permitBatch.details[0].token != loan.creditAddress)
-                    || (permitBatch.details[0].amount != repaymentAmount)
-            ) {
-                revert InvalidAmountTransfer();
-            }
             PERMIT2.permit(msg.sender, permitBatch, data);
+            PERMIT2.transferFrom(msg.sender, address(this), repaymentAmount.toUint160(), address(loan.creditAddress));
         } else {
             // Transfer the repaid credit to the Vault
             _pushFrom(loan.creditAddress, repaymentAmount, msg.sender, address(this));

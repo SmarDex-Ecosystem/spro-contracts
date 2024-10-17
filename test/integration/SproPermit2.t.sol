@@ -57,6 +57,7 @@ contract SDSimpleLoanIntegrationTest is SproForkBase {
         vm.prank(lender);
         deployment.sdex.approve(address(deployment.config), type(uint256).max);
         deployment.sdex.mint(borrower, INITIAL_SDEX_BALANCE);
+        deployment.sdex.mint(sigUser1, INITIAL_SDEX_BALANCE);
         vm.prank(borrower);
         deployment.sdex.approve(address(deployment.config), type(uint256).max);
 
@@ -85,11 +86,15 @@ contract SDSimpleLoanIntegrationTest is SproForkBase {
     function test_permit2CreateProposal() public {
         proposal.proposer = sigUser1;
         vm.startPrank(sigUser1);
+        IERC20(proposal.collateralAddress).approve(address(deployment.permit2), type(uint256).max);
         deployment.sdex.approve(address(deployment.permit2), type(uint256).max);
         IAllowanceTransfer.PermitDetails[] memory details = new IAllowanceTransfer.PermitDetails[](2);
-        details[0] =
-            IAllowanceTransfer.PermitDetails(address(proposal.collateralAddress), uint160(COLLATERAL_AMOUNT), 0, 0);
-        details[1] = IAllowanceTransfer.PermitDetails(address(deployment.sdex), uint160(UNLISTED_FEE), 0, 0);
+        details[0] = IAllowanceTransfer.PermitDetails(
+            address(proposal.collateralAddress), uint160(COLLATERAL_AMOUNT), uint48(block.timestamp), 0
+        );
+        details[1] = IAllowanceTransfer.PermitDetails(
+            address(deployment.sdex), uint160(deployment.config.fixFeeUnlisted()), uint48(block.timestamp), 0
+        );
         IAllowanceTransfer.PermitBatch memory permitBatch =
             IAllowanceTransfer.PermitBatch(details, address(deployment.config), block.timestamp);
         bytes memory signature =
@@ -122,10 +127,8 @@ contract SDSimpleLoanIntegrationTest is SproForkBase {
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
         uint256 repaymentAmount = deployment.config.loanRepaymentAmount(loanId);
-        deployment.sdex.approve(address(deployment.permit2), type(uint256).max);
-        IAllowanceTransfer.PermitDetails[] memory details = new IAllowanceTransfer.PermitDetails[](2);
+        IAllowanceTransfer.PermitDetails[] memory details = new IAllowanceTransfer.PermitDetails[](1);
         details[0] = IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(repaymentAmount), 0, 0);
-        details[1] = IAllowanceTransfer.PermitDetails(address(deployment.sdex), uint160(UNLISTED_FEE), 0, 0);
         IAllowanceTransfer.PermitBatch memory permitBatch =
             IAllowanceTransfer.PermitBatch(details, address(deployment.config), block.timestamp);
         bytes memory signature =
