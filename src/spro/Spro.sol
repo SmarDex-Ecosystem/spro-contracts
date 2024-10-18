@@ -660,7 +660,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @param proposal Proposal struct.
      * @return proposal_ Proposal struct.
      */
-    function _cancelProposal(Proposal memory proposal) internal returns (Proposal memory proposal_) {
+    function _cancelProposal(Proposal memory proposal) private returns (Proposal memory proposal_) {
         proposal_ = proposal;
 
         // Make proposal hash
