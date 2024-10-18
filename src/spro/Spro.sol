@@ -81,11 +81,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
-    function getProposalHash(Proposal calldata proposal) public view returns (bytes32) {
-        return _getProposalHash(abi.encode(proposal));
-    }
-
-    /// @inheritdoc ISpro
     function getProposalCreditStatus(Proposal calldata proposal)
         external
         view
@@ -117,6 +112,11 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         loanInfo_.collateralAmount = loan.collateralAmount;
         loanInfo_.originalSourceOfFunds = loan.originalSourceOfFunds;
         loanInfo_.repaymentAmount = loanRepaymentAmount(loanId);
+    }
+
+    /// @inheritdoc ISpro
+    function getProposalHash(Proposal calldata proposal) public view returns (bytes32) {
+        return _getProposalHash(abi.encode(proposal));
     }
 
     /* -------------------------------------------------------------------------- */
@@ -164,14 +164,15 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
+    function registerPoolAdapter(address pool, address adapter) external onlyOwner {
+        _poolAdapterRegistry[pool] = adapter;
+    }
+
+    /// @inheritdoc ISpro
     function getPoolAdapter(address pool) public view returns (IPoolAdapter) {
         return IPoolAdapter(_poolAdapterRegistry[pool]);
     }
 
-    /// @inheritdoc ISpro
-    function registerPoolAdapter(address pool, address adapter) external onlyOwner {
-        _poolAdapterRegistry[pool] = adapter;
-    }
     /* ------------------------------------------------------------ */
     /*                      CREATE PROPOSAL                         */
     /* ------------------------------------------------------------ */

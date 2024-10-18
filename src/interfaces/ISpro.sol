@@ -45,13 +45,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Get an proposal hash according to EIP-712
-     * @param proposal Proposal struct to be hashed.
-     * @return Proposal struct hash.
-     */
-    function getProposalHash(ISproTypes.Proposal memory proposal) external returns (bytes32);
-
-    /**
      * @notice Getter for credit used and credit remaining for a proposal.
      * @param proposal Proposal struct.
      * @return used_ Credit used for the proposal.
@@ -68,6 +61,13 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @return loanInfo_ Loan information struct.
      */
     function getLoan(uint256 loanId) external view returns (ISproTypes.LoanInfo memory loanInfo_);
+
+    /**
+     * @notice Get an proposal hash according to EIP-712
+     * @param proposal Proposal struct to be hashed.
+     * @return Proposal struct hash.
+     */
+    function getProposalHash(ISproTypes.Proposal memory proposal) external returns (bytes32);
 
     /* -------------------------------------------------------------------------- */
     /*                                    VIEW                                    */
@@ -104,18 +104,18 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /* ------------------------------------------------------------ */
 
     /**
-     * @notice Returns the pool adapter for a given pool.
-     * @param pool The pool for which the adapter is requested.
-     * @return The adapter for the given pool.
-     */
-    function getPoolAdapter(address pool) external view returns (IPoolAdapter);
-
-    /**
      * @notice Registers a pool adapter for a given pool.
      * @param pool The pool for which the adapter is registered.
      * @param adapter The adapter to be registered.
      */
     function registerPoolAdapter(address pool, address adapter) external;
+
+    /**
+     * @notice Returns the pool adapter for a given pool.
+     * @param pool The pool for which the adapter is requested.
+     * @return The adapter for the given pool.
+     */
+    function getPoolAdapter(address pool) external view returns (IPoolAdapter);
 
     /* ------------------------------------------------------------ */
     /*                      CREATE PROPOSAL                         */
