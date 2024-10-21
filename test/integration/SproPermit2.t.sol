@@ -45,7 +45,6 @@ contract TestForkPermit2 is SproForkBase {
             borrower,
             keccak256(abi.encode(borrower)),
             0,
-            0,
             address(deployment.config)
         );
 
