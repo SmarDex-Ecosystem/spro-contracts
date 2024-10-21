@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-
 import { SigUtils } from "test/utils/SigUtils.sol";
 import { CreditPermit } from "test/helper/CreditPermit.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";

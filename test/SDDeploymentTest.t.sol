@@ -4,8 +4,6 @@ pragma solidity ^0.8.26;
 import { Test } from "forge-std/Test.sol";
 import { T20 } from "test/helper/T20.sol";
 
-import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-
 import { Spro } from "src/spro/Spro.sol";
 import { SproLoan } from "src/spro/SproLoan.sol";
 

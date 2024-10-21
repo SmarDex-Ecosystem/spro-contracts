@@ -3,11 +3,10 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
-import { T20 } from "test/helper/T20.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { SproHandler } from "test/helper/SproHandler.sol";
 
-import { Spro, Math, IPoolAdapter } from "src/spro/Spro.sol";
+import { Spro } from "src/spro/Spro.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
