@@ -2,7 +2,6 @@
 pragma solidity ^0.8.26;
 
 import { SigUtils } from "test/utils/SigUtils.sol";
-import { IPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { SDBaseIntegrationTest, Spro } from "test/integration/SDBaseIntegrationTest.t.sol";
 
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";

@@ -133,7 +133,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice A borrower can cancel their proposal and withdraw unused collateral.
-     * @dev Resets withdrawable collateral, revokes the nonce if needed, transfers unused collateral to the proposer.
+     * @dev Resets withdrawable collateral, delete proposal, transfers unused collateral to the proposer.
      * @dev Fungible withdrawable collateral with amount == 0 calls should not revert, should transfer 0 tokens.
      * @param proposal Proposal struct.
      */
@@ -220,15 +220,4 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param loanOwner Address of the Loan token holder.
      */
     function tryClaimRepaidLoan(uint256 loanId, uint256 creditAmount, address loanOwner) external;
-
-    /* ------------------------------------------------------------ */
-    /*                          EXTERNALS                           */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Helper function for revoking a proposal nonce on behalf of a caller.
-     * @param nonceSpace Nonce space of a proposal nonce to be revoked.
-     * @param nonce Proposal nonce to be revoked.
-     */
-    function revokeNonce(uint256 nonceSpace, uint256 nonce) external;
 }

@@ -28,6 +28,6 @@ library SproConstantsLibrary {
 
     /// @dev EIP-712 simple proposal struct type hash.
     bytes32 public constant PROPOSAL_TYPEHASH = keccak256(
-        "Proposal(address collateralAddress,uint256 collateralAmount,address creditAddress,uint256 availableCreditLimit,uint256 fixedInterestAmount,uint40 accruingInterestAPR,uint32 duration,uint40 startTimestamp,address proposer,bytes32 proposerSpecHash,uint256 nonceSpace,uint256 nonce,address loanContract)"
+        "Proposal(address collateralAddress,uint256 collateralAmount,address creditAddress,uint256 availableCreditLimit,uint256 fixedInterestAmount,uint40 accruingInterestAPR,uint32 duration,uint40 startTimestamp,address proposer,bytes32 proposerSpecHash,uint256 nonce,address loanContract)"
     );
 }

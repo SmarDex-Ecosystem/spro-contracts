@@ -111,10 +111,8 @@ interface ISproTypes {
      * @param proposer Address of a proposal signer. If `isOffer` is true, the proposer is the lender. If `isOffer` is
      * false, the proposer is the borrower.
      * @param proposerSpecHash Hash of a proposer specific data, which must be provided during a loan creation.
-     * @param nonceSpace Nonce space of a proposal nonce. All nonces in the same space can be revoked at once.
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
-     * again proposal, which was once revoked. Can be used to create a group of proposals, where accepting one proposal
-     * will make other proposals in the group revoked.
+     * an identical proposal again.
      * @param loanContract Address of a loan contract that will create a loan from the proposal.
      */
     struct Proposal {
@@ -128,7 +126,6 @@ interface ISproTypes {
         uint40 loanExpiration;
         address proposer;
         bytes32 proposerSpecHash;
-        uint256 nonceSpace;
         uint256 nonce;
         address loanContract;
     }
@@ -175,10 +172,8 @@ interface ISproTypes {
      * @param startTimestamp Proposal start timestamp in seconds.
      * @param proposer Address of a proposal signer. If `isOffer` is true, the proposer is the lender. If `isOffer` is
      * false, the proposer is the borrower.
-     * @param nonceSpace Nonce space of a proposal nonce. All nonces in the same space can be revoked at once.
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
-     * again proposal, which was once revoked. Can be used to create a group of proposals, where accepting one proposal
-     * will make other proposals in the group revoked.
+     * an identical proposal again.
      * @param loanContract Address of a loan contract that will create a loan from the proposal.
      */
     struct ProposalBase {
@@ -186,7 +181,6 @@ interface ISproTypes {
         uint256 availableCreditLimit;
         uint40 startTimestamp;
         address proposer;
-        uint256 nonceSpace;
         uint256 nonce;
         address loanContract;
     }

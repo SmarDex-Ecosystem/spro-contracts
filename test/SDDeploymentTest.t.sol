@@ -4,11 +4,8 @@ pragma solidity ^0.8.26;
 import { Test } from "forge-std/Test.sol";
 import { T20 } from "test/helper/T20.sol";
 
-import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-
 import { Spro } from "src/spro/Spro.sol";
 import { SproLoan } from "src/spro/SproLoan.sol";
-import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 
 abstract contract SDDeploymentTest is Test {
     uint256 public constant FEE = 50e18;
@@ -25,7 +22,6 @@ abstract contract SDDeploymentTest is Test {
         SproLoan loanToken;
         address proxyAdmin;
         address protocolAdmin;
-        SproRevokedNonce revokedNonce;
         T20 sdex;
     }
 
@@ -41,7 +37,6 @@ abstract contract SDDeploymentTest is Test {
         // Deploy protocol
         deployment.config = new Spro(address(deployment.sdex), FEE, PARTIAL_POSITION_PERCENTAGE);
         vm.stopPrank();
-        deployment.revokedNonce = deployment.config.revokedNonce();
         deployment.loanToken = deployment.config.loanToken();
 
         // Labels
@@ -49,7 +44,6 @@ abstract contract SDDeploymentTest is Test {
         vm.label(deployment.protocolAdmin, "protocolAdmin");
         vm.label(address(deployment.sdex), "sdex");
         vm.label(address(deployment.config), "config");
-        vm.label(address(deployment.revokedNonce), "revokedNonce");
         vm.label(address(deployment.loanToken), "loanToken");
     }
 }
