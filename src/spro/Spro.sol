@@ -23,7 +23,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /**
      * @param _sdex Address of SDEX token.
-     * @param _permit2 Address of Permit2 contract.
+     * @param _permit2 Address of the Permit2 contract.
      * @param _fee Fee in SDEX.
      * @param _percentage Partial position percentage.
      */
