@@ -33,7 +33,6 @@ abstract contract SproTest is Test {
     address owner = address(this);
     address sdex = makeAddr("sdex");
     address public permit2 = makeAddr("permit2");
-    address public weth9 = makeAddr("weth9");
     address alice = makeAddr("alice");
     address creditToken = makeAddr("creditToken");
 
@@ -42,7 +41,7 @@ abstract contract SproTest is Test {
     uint16 PERCENTAGE = 1e4;
 
     function setUp() public virtual {
-        config = new Spro(sdex, permit2, weth9, fee, partialPositionBps);
+        config = new Spro(sdex, permit2, fee, partialPositionBps);
     }
 
     function _mockSupportsToken(address computer, address token, bool result) internal {

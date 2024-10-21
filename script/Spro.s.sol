@@ -8,7 +8,6 @@ import { console } from "forge-std/Script.sol";
 contract Deploy is Script {
     address constant SDEX_MAINNET = 0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF;
     address constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
-    address constant WETH_MAINNET = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     uint256 internal constant FEE = 50e18;
     uint16 internal constant PERCENTAGE = 500;
 
@@ -16,7 +15,7 @@ contract Deploy is Script {
         address deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
         vm.startBroadcast(deployerAddress);
 
-        Spro spro = new Spro(SDEX_MAINNET, PERMIT2, WETH_MAINNET, FEE, PERCENTAGE);
+        Spro spro = new Spro(SDEX_MAINNET, PERMIT2, FEE, PERCENTAGE);
 
         console.log("Spro address", address(spro));
         console.log("loanToken address", address(spro.loanToken()));

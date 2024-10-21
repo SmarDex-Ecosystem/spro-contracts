@@ -4,8 +4,8 @@ pragma solidity ^0.8.26;
 import { Spro } from "src/spro/Spro.sol";
 
 contract SproHandler is Spro {
-    constructor(address _sdex, address _permit2, address _weth9, uint256 _fee, uint16 _percentage)
-        Spro(_sdex, _permit2, _weth9, _fee, _percentage)
+    constructor(address _sdex, address _permit2, uint256 _fee, uint16 _percentage)
+        Spro(_sdex, _permit2, _fee, _percentage)
     { }
 
     function exposed_checkPermit(address caller, address creditAddress, Permit memory permit) external pure {

@@ -40,7 +40,6 @@ abstract contract SDDeploymentTest is Test {
         address protocolAdmin;
         T20 sdex;
         IAllowanceTransfer permit2;
-        ERC20Wrapper weth9;
     }
 
     function setUp() public virtual {
@@ -51,18 +50,12 @@ abstract contract SDDeploymentTest is Test {
         deployment.sdex = new T20();
 
         deployment.permit2 = IAllowanceTransfer(makeAddr("IAllowanceTransfer"));
-        deployment.weth9 = new wethMock(new T20());
 
         vm.startPrank(deployment.protocolAdmin);
 
         // Deploy protocol
-        deployment.config = new Spro(
-            address(deployment.sdex),
-            address(deployment.permit2),
-            address(deployment.weth9),
-            FEE,
-            PARTIAL_POSITION_PERCENTAGE
-        );
+        deployment.config =
+            new Spro(address(deployment.sdex), address(deployment.permit2), FEE, PARTIAL_POSITION_PERCENTAGE);
         vm.stopPrank();
         deployment.loanToken = deployment.config.loanToken();
 
@@ -71,7 +64,6 @@ abstract contract SDDeploymentTest is Test {
         vm.label(deployment.protocolAdmin, "protocolAdmin");
         vm.label(address(deployment.sdex), "sdex");
         vm.label(address(deployment.permit2), "permit2");
-        vm.label(address(deployment.weth9), "weth9");
         vm.label(address(deployment.config), "config");
         vm.label(address(deployment.loanToken), "loanToken");
     }

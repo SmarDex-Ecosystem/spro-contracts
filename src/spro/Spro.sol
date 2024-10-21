@@ -4,12 +4,7 @@ pragma solidity ^0.8.26;
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { Permit2Payments } from "@uniswap/universal-router/contracts/modules/Permit2Payments.sol";
-import { BytesLib } from "@uniswap/universal-router/contracts/modules/uniswap/v3/BytesLib.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import {
-    PaymentsImmutables, PaymentsParameters
-} from "@uniswap/universal-router/contracts/modules/PaymentsImmutables.sol";
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
@@ -20,9 +15,8 @@ import { SproLoan } from "src/spro/SproLoan.sol";
 import { SproVault } from "src/spro/SproVault.sol";
 import { SproStorage } from "src/spro/SproStorage.sol";
 
-contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataProvider, Permit2Payments {
+contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataProvider {
     using SafeCast for uint256;
-    using BytesLib for bytes;
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
@@ -30,19 +24,16 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /**
      * @param _sdex Address of SDEX token.
      * @param _permit2 Address of Permit2 contract.
-     * @param _weth9 Address of WETH9 token.
      * @param _fee Fee in SDEX.
      * @param _percentage Partial position percentage.
      */
-    constructor(address _sdex, address _permit2, address _weth9, uint256 _fee, uint16 _percentage)
-        Ownable(msg.sender)
-        PaymentsImmutables(PaymentsParameters(_permit2, _weth9, address(0), address(0)))
-    {
+    constructor(address _sdex, address _permit2, uint256 _fee, uint16 _percentage) Ownable(msg.sender) {
         require(_sdex != address(0), "SDEX is zero address");
         require(
             _percentage > 0 && _percentage < Constants.BPS_DIVISOR / 2, "Partial percentage position value is invalid"
         );
 
+        PERMIT2 = IAllowanceTransfer(_permit2);
         SDEX = _sdex;
         loanToken = new SproLoan(address(this));
         fee = _fee;
