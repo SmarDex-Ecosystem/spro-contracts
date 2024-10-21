@@ -29,23 +29,6 @@ contract SproSimpleLoanTest is Test {
         vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(poolAdapter));
     }
 
-    function test_shouldFail_checkPermit_whenInvalidPermitOwner() external {
-        Spro.Permit memory permit;
-        permit.asset = permitAsset;
-
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidPermitOwner.selector, permit.owner, address(this)));
-        sproHandler.exposed_checkPermit(address(this), credit, permit);
-    }
-
-    function test_shouldFail_checkPermit_whenInvalidPermitAsset() external {
-        Spro.Permit memory permit;
-        permit.asset = permitAsset;
-        permit.owner = address(this);
-
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidPermitAsset.selector, permit.asset, address(this)));
-        sproHandler.exposed_checkPermit({ caller: address(this), creditAddress: address(this), permit: permit });
-    }
-
     function testFuzz_shouldFail_withdrawCreditFromPool_InvalidSourceOfFunds(
         address source,
         uint256 amount,

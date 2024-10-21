@@ -181,7 +181,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function createProposal(Proposal calldata proposal, bytes calldata permit) external {
+    function createProposal(Proposal calldata proposal, bytes calldata permit2Data) external {
         // Make the proposal
         (address proposer, address collateral, uint256 collateralAmount) = _makeProposal(proposal);
 
@@ -190,10 +190,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             revert CallerIsNotStatedProposer(proposer);
         }
 
-        // Execute permit for the caller
-        if (permit.length > 0) {
+        // Execute permit2Data for the caller
+        if (permit2Data.length > 0) {
             (IAllowanceTransfer.PermitBatch memory permitBatch, bytes memory data) =
-                abi.decode(permit, (IAllowanceTransfer.PermitBatch, bytes));
+                abi.decode(permit2Data, (IAllowanceTransfer.PermitBatch, bytes));
             PERMIT2.permit(msg.sender, permitBatch, data);
             PERMIT2.transferFrom(msg.sender, address(this), collateralAmount.toUint160(), collateral);
             // Fees to address(0xdead)(burned)
@@ -236,7 +236,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         Proposal calldata proposal,
         LenderSpec calldata lenderSpec,
         bytes calldata extra,
-        bytes calldata permit
+        bytes calldata permit2Data
     ) external returns (uint256 loanId_) {
         // Accept proposal and get loan terms
         (bytes32 proposalHash, Terms memory loanTerms) = _acceptProposal(msg.sender, lenderSpec.creditAmount, proposal);
@@ -256,12 +256,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
         emit LoanCreated(loanId_, proposalHash, loanTerms, lenderSpec, extra);
 
-        // Execute permit for the caller
-        if (permit.length > 0) {
-            (IAllowanceTransfer.PermitSingle memory permitSign, bytes memory data) =
-                abi.decode(permit, (IAllowanceTransfer.PermitSingle, bytes));
-            PERMIT2.permit(msg.sender, permitSign, data);
-            PERMIT2.transferFrom(msg.sender, address(this), loanTerms.creditAmount.toUint160(), loanTerms.credit);
+        // Execute permit2Data for the caller
+        if (permit2Data.length > 0) {
+            _permit2Workflows(permit2Data, loanTerms.creditAmount.toUint160(), loanTerms.credit);
         } else {
             // Settle the loan - Transfer credit to borrower
             _settleNewLoan(loanTerms, lenderSpec.sourceOfFunds);
@@ -273,7 +270,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function repayLoan(uint256 loanId, bytes calldata permit) external {
+    function repayLoan(uint256 loanId, bytes calldata permit2Data) external {
         Loan memory loan = Loans[loanId];
 
         _checkLoanCanBeRepaid(loan.status, loan.loanExpiration);
@@ -282,12 +279,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         _updateRepaidLoan(loanId);
 
         uint256 repaymentAmount = loanRepaymentAmount(loanId);
-        // Execute permit for the caller
-        if (permit.length > 0) {
-            (IAllowanceTransfer.PermitSingle memory permitSign, bytes memory data) =
-                abi.decode(permit, (IAllowanceTransfer.PermitSingle, bytes));
-            PERMIT2.permit(msg.sender, permitSign, data);
-            PERMIT2.transferFrom(msg.sender, address(this), repaymentAmount.toUint160(), loan.creditAddress);
+        // Execute permit2Data for the caller
+        if (permit2Data.length > 0) {
+            _permit2Workflows(permit2Data, repaymentAmount.toUint160(), loan.creditAddress);
         } else {
             // Transfer the repaid credit to the Vault
             _pushFrom(loan.creditAddress, repaymentAmount, msg.sender, address(this));
@@ -306,7 +300,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     }
 
     /// @inheritdoc ISpro
-    function repayMultipleLoans(uint256[] calldata loanIds, address creditAddress, bytes calldata permit) external {
+    function repayMultipleLoans(uint256[] calldata loanIds, address creditAddress, bytes calldata permit2Data)
+        external
+    {
         uint256 totalRepaymentAmount;
 
         for (uint256 i; i < loanIds.length; ++i) {
@@ -324,11 +320,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             totalRepaymentAmount += loanRepaymentAmount(loanId);
         }
 
-        if (permit.length > 0) {
-            (IAllowanceTransfer.PermitSingle memory permitSign, bytes memory data) =
-                abi.decode(permit, (IAllowanceTransfer.PermitSingle, bytes));
-            PERMIT2.permit(msg.sender, permitSign, data);
-            PERMIT2.transferFrom(msg.sender, address(this), totalRepaymentAmount.toUint160(), creditAddress);
+        if (permit2Data.length > 0) {
+            _permit2Workflows(permit2Data, totalRepaymentAmount.toUint160(), creditAddress);
         } else {
             // Transfer the repaid credit to the vault
             _pushFrom(creditAddress, totalRepaymentAmount, msg.sender, address(this));
@@ -494,23 +487,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* -------------------------------------------------------------------------- */
     /*                                  INTERNAL                                  */
     /* -------------------------------------------------------------------------- */
-
-    /**
-     * @notice Check that permit data have correct owner and asset.
-     * @param caller Caller address.
-     * @param creditAddress Address of a credit to be used.
-     * @param permit Permit to be checked.
-     */
-    function _checkPermit(address caller, address creditAddress, Permit memory permit) internal pure {
-        if (permit.asset != address(0)) {
-            if (permit.owner != caller) {
-                revert InvalidPermitOwner(permit.owner, caller);
-            }
-            if (permit.asset != creditAddress) {
-                revert InvalidPermitAsset(permit.asset, creditAddress);
-            }
-        }
-    }
 
     /**
      * @notice Check if the loan can be repaid.
@@ -835,5 +811,18 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             Math.Rounding.Ceil
         );
         return loan.fixedInterestAmount + accruedInterest;
+    }
+
+    /**
+     * @notice Permit2 workflows for the caller.
+     * @param permit2Data Permit data.
+     * @param amount Amount of an asset to transfer.
+     * @param token Address of an asset to transfer.
+     */
+    function _permit2Workflows(bytes memory permit2Data, uint160 amount, address token) private {
+        (IAllowanceTransfer.PermitSingle memory permitSign, bytes memory data) =
+            abi.decode(permit2Data, (IAllowanceTransfer.PermitSingle, bytes));
+        PERMIT2.permit(msg.sender, permitSign, data);
+        PERMIT2.transferFrom(msg.sender, address(this), amount, token);
     }
 }

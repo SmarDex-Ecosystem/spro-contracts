@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
-
 import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
@@ -126,9 +124,9 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /**
      * @notice Create a borrow request proposal and transfers collateral to the vault and SDEX to fee sink.
      * @param proposal Proposal struct.
-     * @param permit Permit data.
+     * @param permit2Data Permit data.
      */
-    function createProposal(Proposal calldata proposal, bytes calldata permit) external;
+    function createProposal(Proposal calldata proposal, bytes calldata permit2Data) external;
 
     /* ------------------------------------------------------------ */
     /*        CANCEL PROPOSAL AND WITHDRAW UNUSED COLLATERAL        */
@@ -152,14 +150,14 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param proposal Proposal struct.
      * @param lenderSpec Lender specification struct.
      * @param extra Auxiliary data that are emitted in the loan creation event. They are not used in the contract logic.
-     * @param permit Permit data.
+     * @param permit2Data Permit data.
      * @return loanId_ Id of the created Loan token.
      */
     function createLoan(
         Proposal memory proposal,
         ISproTypes.LenderSpec memory lenderSpec,
         bytes memory extra,
-        bytes calldata permit
+        bytes calldata permit2Data
     ) external returns (uint256 loanId_);
 
     /* ------------------------------------------------------------ */
@@ -175,24 +173,23 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      *      a vault, waiting on a Loan token holder to claim it. The function assumes a prior token approval to a
      * contract address or a signed permit.
      * @param loanId Id of a loan that is being repaid.
-     * @param permit Permit data.
+     * @param permit2Data Permit data.
      */
-    function repayLoan(uint256 loanId, bytes calldata permit) external;
+    function repayLoan(uint256 loanId, bytes calldata permit2Data) external;
 
     /**
      * @notice Repay running loans.
      * @dev Any address can repay a running loan, but a collateral will be transferred to a borrower address associated
-     * with the loan.
-     *      If the Loan token holder is the same as the original lender, the repayment credit asset will be
-     *      transferred to the Loan token holder directly. Otherwise it will transfer the repayment credit asset to
-     *      a vault, waiting on a Loan token holder to claim it. The function assumes a prior token approval to a
-     * contract address
-     *      or a signed permit.
+     * with the loan. If the Loan token holder is the same as the original lender, the repayment credit asset will be
+     * transferred to the Loan token holder directly. Otherwise it will transfer the repayment credit asset to a vault,
+     * waiting on a Loan token holder to claim it. The function assumes a prior token approval to a contract address or
+     * a signed permit.
      * @param loanIds Id array of loans that are being repaid.
      * @param creditAddress Expected credit address for all loan ids.
-     * @param permit Permit data.
+     * @param permit2Data Permit data.
      */
-    function repayMultipleLoans(uint256[] calldata loanIds, address creditAddress, bytes calldata permit) external;
+    function repayMultipleLoans(uint256[] calldata loanIds, address creditAddress, bytes calldata permit2Data)
+        external;
 
     /* ------------------------------------------------------------ */
     /*                          CLAIM LOAN                          */

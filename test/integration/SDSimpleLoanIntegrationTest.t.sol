@@ -275,7 +275,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
             // Create loan
             loanIds[i] =
-                deployment.config.createLoan({ proposal: proposal, lenderSpec: lenderSpec, extra: "", permit: "" });
+                deployment.config.createLoan({ proposal: proposal, lenderSpec: lenderSpec, extra: "", permit2Data: "" });
             vm.stopPrank();
         }
 
@@ -321,7 +321,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
             // Create loan
             loanIds[i] =
-                deployment.config.createLoan({ proposal: proposal, lenderSpec: lenderSpec, extra: "", permit: "" });
+                deployment.config.createLoan({ proposal: proposal, lenderSpec: lenderSpec, extra: "", permit2Data: "" });
             vm.stopPrank();
         }
 
@@ -354,7 +354,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             proposal: proposal,
             lenderSpec: _buildLenderSpec(false),
             extra: "",
-            permit: ""
+            permit2Data: ""
         });
 
         vm.startPrank(borrower);
@@ -391,7 +391,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             proposal: proposal,
             lenderSpec: _buildLenderSpec(true),
             extra: "",
-            permit: ""
+            permit2Data: ""
         });
 
         // Borrower approvals for credit token
@@ -428,7 +428,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             proposal: proposal,
             lenderSpec: _buildLenderSpec(false),
             extra: "",
-            permit: ""
+            permit2Data: ""
         });
 
         vm.startPrank(borrower);
