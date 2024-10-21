@@ -2,7 +2,6 @@
 pragma solidity ^0.8.26;
 
 import { SproLoan } from "src/spro/SproLoan.sol";
-import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 import { ISproStorage } from "src/interfaces/ISproStorage.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
@@ -13,9 +12,6 @@ contract SproStorage is ISproStorage {
 
     /// @inheritdoc ISproStorage
     address public immutable SDEX;
-
-    /// @inheritdoc ISproStorage
-    SproRevokedNonce public immutable revokedNonce;
 
     /// @inheritdoc ISproStorage
     uint16 public partialPositionBps;

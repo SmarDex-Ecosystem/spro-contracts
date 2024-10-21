@@ -47,20 +47,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Get hash of a lender specification.
-     * @param lenderSpec Lender specification struct.
-     * @return Hash of a lender specification.
-     */
-    function getLenderSpecHash(ISproTypes.LenderSpec memory lenderSpec) external pure returns (bytes32);
-
-    /**
-     * @notice Get an proposal hash according to EIP-712
-     * @param proposal Proposal struct to be hashed.
-     * @return Proposal struct hash.
-     */
-    function getProposalHash(ISproTypes.Proposal memory proposal) external returns (bytes32);
-
-    /**
      * @notice Getter for credit used and credit remaining for a proposal.
      * @param proposal Proposal struct.
      * @return used_ Credit used for the proposal.
@@ -78,9 +64,28 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      */
     function getLoan(uint256 loanId) external view returns (ISproTypes.LoanInfo memory loanInfo_);
 
+    /**
+     * @notice Get an proposal hash according to EIP-712
+     * @param proposal Proposal struct to be hashed.
+     * @return Proposal struct hash.
+     */
+    function getProposalHash(ISproTypes.Proposal memory proposal) external returns (bytes32);
+
     /* -------------------------------------------------------------------------- */
     /*                                    VIEW                                    */
     /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Calculates the loan repayment amount with fixed and accrued interest for a set of loan ids.
+     * @dev Intended to be used to build permit data or credit token approvals
+     * @param loanIds Array of loan ids.
+     * @param creditAddress Expected credit address for all loan ids.
+     * @return amount_ Total repayment amount for loan.
+     */
+    function totalLoanRepaymentAmount(uint256[] memory loanIds, address creditAddress)
+        external
+        view
+        returns (uint256 amount_);
 
     /**
      * @notice Return a Loan token metadata uri base on a loan contract that minted the token.
@@ -96,28 +101,9 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      */
     function loanRepaymentAmount(uint256 loanId) external view returns (uint256);
 
-    /**
-     * @notice Calculates the loan repayment amount with fixed and accrued interest for a set of loan ids.
-     * @dev Intended to be used to build permit data or credit token approvals
-     * @param loanIds Array of loan ids.
-     * @param creditAddress Expected credit address for all loan ids.
-     * @return amount_ Total repayment amount for loan.
-     */
-    function totalLoanRepaymentAmount(uint256[] memory loanIds, address creditAddress)
-        external
-        view
-        returns (uint256 amount_);
-
     /* ------------------------------------------------------------ */
     /*                          POOL ADAPTER                        */
     /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Returns the pool adapter for a given pool.
-     * @param pool The pool for which the adapter is requested.
-     * @return The adapter for the given pool.
-     */
-    function getPoolAdapter(address pool) external view returns (IPoolAdapter);
 
     /**
      * @notice Registers a pool adapter for a given pool.
@@ -125,6 +111,13 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param adapter The adapter to be registered.
      */
     function registerPoolAdapter(address pool, address adapter) external;
+
+    /**
+     * @notice Returns the pool adapter for a given pool.
+     * @param pool The pool for which the adapter is requested.
+     * @return The adapter for the given pool.
+     */
+    function getPoolAdapter(address pool) external view returns (IPoolAdapter);
 
     /* ------------------------------------------------------------ */
     /*                      CREATE PROPOSAL                         */
@@ -143,7 +136,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice A borrower can cancel their proposal and withdraw unused collateral.
-     * @dev Resets withdrawable collateral, revokes the nonce if needed, transfers unused collateral to the proposer.
+     * @dev Resets withdrawable collateral, delete proposal, transfers unused collateral to the proposer.
      * @dev Fungible withdrawable collateral with amount == 0 calls should not revert, should transfer 0 tokens.
      * @param proposal Proposal struct.
      */
@@ -232,15 +225,4 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param loanOwner Address of the Loan token holder.
      */
     function tryClaimRepaidLoan(uint256 loanId, uint256 creditAmount, address loanOwner) external;
-
-    /* ------------------------------------------------------------ */
-    /*                          EXTERNALS                           */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Helper function for revoking a proposal nonce on behalf of a caller.
-     * @param nonceSpace Nonce space of a proposal nonce to be revoked.
-     * @param nonce Proposal nonce to be revoked.
-     */
-    function revokeNonce(uint256 nonceSpace, uint256 nonce) external;
 }

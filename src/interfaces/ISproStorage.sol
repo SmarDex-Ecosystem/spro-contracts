@@ -2,7 +2,6 @@
 pragma solidity ^0.8.26;
 
 import { SproLoan } from "src/spro/SproLoan.sol";
-import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 
 /**
  * @title ISproStorage
@@ -15,9 +14,6 @@ interface ISproStorage {
 
     /// @notice Get SDEX token address.
     function SDEX() external view returns (address);
-
-    /// @notice SproRevokedNonce contract address.
-    function revokedNonce() external view returns (SproRevokedNonce);
 
     /// @notice Get percentage of a proposal's available credit limit used in partial lending (in basis points).
     function partialPositionBps() external view returns (uint16);

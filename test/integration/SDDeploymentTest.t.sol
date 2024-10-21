@@ -4,7 +4,6 @@ pragma solidity ^0.8.26;
 import { Test } from "forge-std/Test.sol";
 import { T20 } from "test/helper/T20.sol";
 
-import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import { ERC20Wrapper } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Wrapper.sol";
 import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -13,7 +12,6 @@ import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.so
 
 import { Spro } from "src/spro/Spro.sol";
 import { SproLoan } from "src/spro/SproLoan.sol";
-import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 
 contract wethMock is ERC20, ERC20Wrapper, ERC20Permit {
     constructor(IERC20 token) ERC20("Wrapped Token", "wTKN") ERC20Permit("Wrapped Token") ERC20Wrapper(token) {
@@ -40,7 +38,6 @@ abstract contract SDDeploymentTest is Test {
         SproLoan loanToken;
         address proxyAdmin;
         address protocolAdmin;
-        SproRevokedNonce revokedNonce;
         T20 sdex;
         IAllowanceTransfer permit2;
         ERC20Wrapper weth9;
@@ -67,7 +64,6 @@ abstract contract SDDeploymentTest is Test {
             PARTIAL_POSITION_PERCENTAGE
         );
         vm.stopPrank();
-        deployment.revokedNonce = deployment.config.revokedNonce();
         deployment.loanToken = deployment.config.loanToken();
 
         // Labels
@@ -77,7 +73,6 @@ abstract contract SDDeploymentTest is Test {
         vm.label(address(deployment.permit2), "permit2");
         vm.label(address(deployment.weth9), "weth9");
         vm.label(address(deployment.config), "config");
-        vm.label(address(deployment.revokedNonce), "revokedNonce");
         vm.label(address(deployment.loanToken), "loanToken");
     }
 }

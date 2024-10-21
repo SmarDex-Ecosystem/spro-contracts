@@ -17,7 +17,6 @@ import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { ISproLoanMetadataProvider } from "src/interfaces/ISproLoanMetadataProvider.sol";
 import { ISpro } from "src/interfaces/ISpro.sol";
 import { SproLoan } from "src/spro/SproLoan.sol";
-import { SproRevokedNonce } from "src/spro/SproRevokedNonce.sol";
 import { SproVault } from "src/spro/SproVault.sol";
 import { SproStorage } from "src/spro/SproStorage.sol";
 
@@ -45,7 +44,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         );
 
         SDEX = _sdex;
-        revokedNonce = new SproRevokedNonce(address(this));
         loanToken = new SproLoan(address(this));
         fee = _fee;
         partialPositionBps = _percentage;
@@ -95,16 +93,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
-    function getLenderSpecHash(LenderSpec calldata lenderSpec) public pure returns (bytes32) {
-        return keccak256(abi.encode(lenderSpec));
-    }
-
-    /// @inheritdoc ISpro
-    function getProposalHash(Proposal calldata proposal) public view returns (bytes32) {
-        return _getProposalHash(abi.encode(proposal));
-    }
-
-    /// @inheritdoc ISpro
     function getProposalCreditStatus(Proposal calldata proposal)
         external
         view
@@ -138,27 +126,14 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         loanInfo_.repaymentAmount = loanRepaymentAmount(loanId);
     }
 
+    /// @inheritdoc ISpro
+    function getProposalHash(Proposal calldata proposal) public view returns (bytes32) {
+        return _getProposalHash(abi.encode(proposal));
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                                    VIEW                                    */
     /* -------------------------------------------------------------------------- */
-
-    /// @inheritdoc ISpro
-    function loanMetadataUri(address loanContract) public view returns (string memory uri_) {
-        uri_ = _loanMetadataUri[loanContract];
-        // If there is no metadata uri for a loan contract, use default metadata uri.
-        if (bytes(uri_).length == 0) uri_ = _loanMetadataUri[address(0)];
-    }
-
-    /// @inheritdoc ISpro
-    function loanRepaymentAmount(uint256 loanId) public view returns (uint256) {
-        Loan memory loan = Loans[loanId];
-
-        // Check non-existent loan
-        if (loan.status == LoanStatus.NONE) return 0;
-
-        // Return loan principal with accrued interest
-        return loan.principalAmount + _loanAccruedInterest(loan);
-    }
 
     /// @inheritdoc ISpro
     function totalLoanRepaymentAmount(uint256[] calldata loanIds, address creditAddress)
@@ -178,19 +153,38 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         }
     }
 
+    /// @inheritdoc ISpro
+    function loanMetadataUri(address loanContract) public view returns (string memory uri_) {
+        uri_ = _loanMetadataUri[loanContract];
+        // If there is no metadata uri for a loan contract, use default metadata uri.
+        if (bytes(uri_).length == 0) uri_ = _loanMetadataUri[address(0)];
+    }
+
+    /// @inheritdoc ISpro
+    function loanRepaymentAmount(uint256 loanId) public view returns (uint256) {
+        Loan memory loan = Loans[loanId];
+
+        // Check non-existent loan
+        if (loan.status == LoanStatus.NONE) return 0;
+
+        // Return loan principal with accrued interest
+        return loan.principalAmount + _loanAccruedInterest(loan);
+    }
+
     /* ------------------------------------------------------------ */
     /*                          POOL ADAPTER                        */
     /* ------------------------------------------------------------ */
+
+    /// @inheritdoc ISpro
+    function registerPoolAdapter(address pool, address adapter) external onlyOwner {
+        _poolAdapterRegistry[pool] = adapter;
+    }
 
     /// @inheritdoc ISpro
     function getPoolAdapter(address pool) public view returns (IPoolAdapter) {
         return IPoolAdapter(_poolAdapterRegistry[pool]);
     }
 
-    /// @inheritdoc ISpro
-    function registerPoolAdapter(address pool, address adapter) external onlyOwner {
-        _poolAdapterRegistry[pool] = adapter;
-    }
     /* ------------------------------------------------------------ */
     /*                      CREATE PROPOSAL                         */
     /* ------------------------------------------------------------ */
@@ -506,15 +500,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         return loanMetadataUri(address(this));
     }
 
-    /* ------------------------------------------------------------ */
-    /*                          EXTERNALS                           */
-    /* ------------------------------------------------------------ */
-
-    /// @inheritdoc ISpro
-    function revokeNonce(uint256 nonceSpace, uint256 nonce) external {
-        revokedNonce.revokeNonce(msg.sender, nonceSpace, nonce);
-    }
-
     /* -------------------------------------------------------------------------- */
     /*                                  INTERNAL                                  */
     /* -------------------------------------------------------------------------- */
@@ -659,7 +644,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
                 proposal.availableCreditLimit,
                 proposal.startTimestamp,
                 proposal.proposer,
-                proposal.nonceSpace,
                 proposal.nonce,
                 proposal.loanContract
             )
@@ -688,11 +672,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /**
      * @notice Cancels a proposal and resets withdrawable collateral.
-     * @dev Revokes the nonce if still usable and block.timestamp is < proposal startTimestamp.
      * @param proposal Proposal struct.
      * @return proposal_ Proposal struct.
      */
-    function _cancelProposal(Proposal memory proposal) internal returns (Proposal memory proposal_) {
+    function _cancelProposal(Proposal memory proposal) private returns (Proposal memory proposal_) {
         proposal_ = proposal;
 
         // Make proposal hash
@@ -701,12 +684,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         proposal_.collateralAmount = withdrawableCollateral[proposalHash];
         delete withdrawableCollateral[proposalHash];
 
-        // Revokes nonce if nonce is still usable
-        if (block.timestamp < proposal_.startTimestamp) {
-            if (revokedNonce.isNonceUsable(proposal_.proposer, proposal_.nonceSpace, proposal_.nonce)) {
-                revokedNonce.revokeNonce(proposal_.proposer, proposal_.nonceSpace, proposal_.nonce);
-            }
-        }
+        proposalsMade[proposalHash] = false;
     }
 
     /**
@@ -760,11 +738,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Check proposal is not expired
         if (block.timestamp >= proposal.startTimestamp) {
             revert Expired(block.timestamp, proposal.startTimestamp);
-        }
-
-        // Check proposal is not revoked
-        if (!revokedNonce.isNonceUsable(proposal.proposer, proposal.nonceSpace, proposal.nonce)) {
-            revert SproRevokedNonce.NonceNotUsable(proposal.proposer, proposal.nonceSpace, proposal.nonce);
         }
 
         if (proposal.availableCreditLimit == 0) {

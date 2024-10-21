@@ -7,8 +7,6 @@ import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { T20 } from "test/helper/T20.sol";
 
 import { SproVault, IPoolAdapter } from "src/spro/SproVault.sol";
-import { ISproEvents } from "src/interfaces/ISproEvents.sol";
-import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproVault } from "src/interfaces/ISproVault.sol";
 import { Spro } from "src/spro/Spro.sol";

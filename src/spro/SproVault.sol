@@ -31,7 +31,7 @@ contract SproVault is ISproVault {
      * @dev The function assumes a prior token approval to a vault address.
      * @param asset Address of an asset to be pushed.
      * @param amount Amount of an asset to be pushed.
-     * @param origin An address of a lender who is providing a loan asset.
+     * @param origin An address of the sender of an asset.
      * @param beneficiary An address of the recipient of an asset.
      */
     function _pushFrom(address asset, uint256 amount, address origin, address beneficiary) internal {

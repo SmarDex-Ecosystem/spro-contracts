@@ -3,11 +3,10 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
-import { T20 } from "test/helper/T20.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { SproHandler } from "test/helper/SproHandler.sol";
 
-import { Spro, Math, SproRevokedNonce, IPoolAdapter } from "src/spro/Spro.sol";
+import { Spro } from "src/spro/Spro.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
@@ -29,14 +28,6 @@ contract SproSimpleLoanTest is Test {
         sproHandler = new SproHandler(sdex, permit2, weth9, 1, 1);
 
         vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(poolAdapter));
-    }
-
-    function testFuzz_getLenderSpecHash(address source, uint256 amount, bytes memory data) external view {
-        Spro.LenderSpec memory ls =
-            ISproTypes.LenderSpec({ sourceOfFunds: source, creditAmount: amount, permitData: data });
-        bytes32 lenderSpecHash = keccak256(abi.encode(ls));
-
-        assertEq(sproHandler.getLenderSpecHash(ls), lenderSpecHash);
     }
 
     function test_shouldFail_checkPermit_whenInvalidPermitOwner() external {
