@@ -75,17 +75,9 @@ contract SproVault is ISproVault {
     function _supplyToPool(address asset, uint256 amount, IPoolAdapter poolAdapter, address pool, address owner)
         internal
     {
-        uint256 originalBalance = IERC20Metadata(asset).balanceOf(address(this));
-
         IERC20Metadata(asset).safeTransfer(address(poolAdapter), amount);
         poolAdapter.supply(pool, owner, asset, amount);
-
-        if (IERC20Metadata(asset).balanceOf(address(this)) != originalBalance - amount) {
-            revert InvalidAmountTransfer();
-        }
-
         // Note: Assuming pool will revert supply transaction if it fails.
-
         emit PoolSupply(asset, address(poolAdapter), pool, owner, amount);
     }
 
