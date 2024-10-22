@@ -21,13 +21,4 @@ library SproConstantsLibrary {
     uint256 public constant MINUTES_IN_YEAR = 525_600; // Note: Assuming 365 days in a year
     /// @dev The accruing interest APR denominator.
     uint256 public constant ACCRUING_INTEREST_APR_DENOMINATOR = ACCRUING_INTEREST_APR_DECIMALS * MINUTES_IN_YEAR * 100;
-
-    /* -------------------------------------------------------------------------- */
-    /*                                  PROPOSAL                                  */
-    /* -------------------------------------------------------------------------- */
-
-    /// @dev EIP-712 simple proposal struct type hash.
-    bytes32 public constant PROPOSAL_TYPEHASH = keccak256(
-        "Proposal(address collateralAddress,uint256 collateralAmount,address creditAddress,uint256 availableCreditLimit,uint256 fixedInterestAmount,uint40 accruingInterestAPR,uint32 duration,uint40 startTimestamp,address proposer,bytes32 proposerSpecHash,uint256 nonceSpace,uint256 nonce,address loanContract)"
-    );
 }

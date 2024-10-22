@@ -35,16 +35,6 @@ contract SproStorage is ISproStorage {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISproStorage
-    bytes32 public immutable DOMAIN_SEPARATOR_LOAN = keccak256(
-        abi.encode(
-            keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-            keccak256("SDSimpleLoan"),
-            block.chainid,
-            address(this)
-        )
-    );
-
-    /// @inheritdoc ISproStorage
     SproLoan public immutable loanToken;
 
     /// @notice  Mapping of all Loan data by loan id.
@@ -53,16 +43,6 @@ contract SproStorage is ISproStorage {
     /* -------------------------------------------------------------------------- */
     /*                                  PROPOSAL                                  */
     /* -------------------------------------------------------------------------- */
-
-    /// @inheritdoc ISproStorage
-    bytes32 public immutable DOMAIN_SEPARATOR_PROPOSAL = keccak256(
-        abi.encode(
-            keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-            keccak256(abi.encodePacked("SDSimpleLoanSimpleProposal")),
-            block.chainid,
-            address(this)
-        )
-    );
 
     /// @inheritdoc ISproStorage
     mapping(bytes32 => uint256) public withdrawableCollateral;

@@ -63,7 +63,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     function getLoan(uint256 loanId) external view returns (ISproTypes.LoanInfo memory loanInfo_);
 
     /**
-     * @notice Get an proposal hash according to EIP-712
+     * @notice Get the proposal hash for a given proposal struct.
      * @param proposal Proposal struct to be hashed.
      * @return Proposal struct hash.
      */
