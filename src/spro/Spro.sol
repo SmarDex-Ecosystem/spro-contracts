@@ -113,7 +113,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     }
 
     /// @inheritdoc ISpro
-    function getProposalHash(Proposal calldata proposal) public view returns (bytes32) {
+    function getProposalHash(Proposal calldata proposal) public pure returns (bytes32) {
         return keccak256(abi.encode(proposal));
     }
 
