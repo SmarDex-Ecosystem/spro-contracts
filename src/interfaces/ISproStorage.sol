@@ -38,18 +38,12 @@ interface ISproStorage {
     /*                                    LOAN                                    */
     /* -------------------------------------------------------------------------- */
 
-    /// @notice Get the DOMAIN_SEPARATOR_LOAN signature verification.
-    function DOMAIN_SEPARATOR_LOAN() external view returns (bytes32);
-
     /// @notice Get SproLoan contract.
     function loanToken() external view returns (SproLoan);
 
     /* -------------------------------------------------------------------------- */
     /*                                  PROPOSAL                                  */
     /* -------------------------------------------------------------------------- */
-
-    /// @notice Get the DOMAIN_SEPARATOR_PROPOSAL signature verification.
-    function DOMAIN_SEPARATOR_PROPOSAL() external view returns (bytes32);
 
     /// @notice Get withdrawable collateral tokens for a given proposal hash.
     function withdrawableCollateral(bytes32 proposalHash) external view returns (uint256);

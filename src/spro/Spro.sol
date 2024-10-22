@@ -84,7 +84,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         view
         returns (uint256 used_, uint256 remaining_)
     {
-        bytes32 proposalHash = _getProposalHash(abi.encode(proposal));
+        bytes32 proposalHash = keccak256(abi.encode(proposal));
         if (proposalsMade[proposalHash]) {
             used_ = creditUsed[proposalHash];
             remaining_ = proposal.availableCreditLimit - used_;
@@ -114,7 +114,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /// @inheritdoc ISpro
     function getProposalHash(Proposal calldata proposal) public view returns (bytes32) {
-        return _getProposalHash(abi.encode(proposal));
+        return keccak256(abi.encode(proposal));
     }
 
     /* -------------------------------------------------------------------------- */
@@ -579,7 +579,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         }
 
         // Make proposal hash
-        bytes32 proposalHash = _getProposalHash(abi.encode(proposal));
+        bytes32 proposalHash = keccak256(abi.encode(proposal));
 
         // Try to make proposal
         _makeProposal(proposalHash);
@@ -604,7 +604,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         returns (bytes32 proposalHash_, Terms memory loanTerms_)
     {
         // Make proposal hash
-        proposalHash_ = _getProposalHash(abi.encode(proposal));
+        proposalHash_ = keccak256(abi.encode(proposal));
 
         // Try to accept proposal
         _acceptProposal(
@@ -651,27 +651,12 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         proposal_ = proposal;
 
         // Make proposal hash
-        bytes32 proposalHash = _getProposalHash(abi.encode(proposal_));
+        bytes32 proposalHash = keccak256(abi.encode(proposal_));
 
         proposal_.collateralAmount = withdrawableCollateral[proposalHash];
         delete withdrawableCollateral[proposalHash];
 
         proposalsMade[proposalHash] = false;
-    }
-
-    /**
-     * @notice Get a proposal hash according to EIP-712.
-     * @param encodedProposal Encoded proposal struct.
-     * @return Struct hash.
-     */
-    function _getProposalHash(bytes memory encodedProposal) private view returns (bytes32) {
-        return keccak256(
-            abi.encodePacked(
-                hex"1901",
-                DOMAIN_SEPARATOR_PROPOSAL,
-                keccak256(abi.encodePacked(Constants.PROPOSAL_TYPEHASH, encodedProposal))
-            )
-        );
     }
 
     /**
