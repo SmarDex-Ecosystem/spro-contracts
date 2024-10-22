@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
+import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { T20 } from "test/helper/T20.sol";
@@ -156,8 +157,11 @@ contract SproVault_SupplyToPool_Test is SproVaultTest {
     }
 
     function test_shouldFail_whenIncompleteTransaction() external {
-        vm.mockCall(asset, abi.encodeWithSignature("balanceOf(address)", address(vault)), abi.encode(amount));
-        vm.expectRevert(abi.encodeWithSelector(ISproVault.InvalidAmountTransfer.selector));
+        vm.prank(address(vault));
+        t20.transfer(address(address(this)), amount);
+        vm.expectRevert(
+            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, address(vault), 0, amount)
+        );
         vault.supplyToPool(asset, amount, poolAdapter, pool, alice);
     }
 
