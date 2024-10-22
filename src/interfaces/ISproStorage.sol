@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
+
 import { SproLoan } from "src/spro/SproLoan.sol";
 
 /**
@@ -14,6 +16,9 @@ interface ISproStorage {
 
     /// @notice Get SDEX token address.
     function SDEX() external view returns (address);
+
+    /// @notice Get Permit2 contract address.
+    function PERMIT2() external view returns (IAllowanceTransfer);
 
     /// @notice Get percentage of a proposal's available credit limit used in partial lending (in basis points).
     function partialPositionBps() external view returns (uint16);

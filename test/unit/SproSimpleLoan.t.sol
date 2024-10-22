@@ -12,6 +12,7 @@ import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
 contract SproSimpleLoanTest is Test {
     address public sdex = makeAddr("sdex");
+    address public permit2 = makeAddr("permit2");
     address public config = makeAddr("config");
 
     address public permitAsset = makeAddr("permitAsset");
@@ -23,26 +24,9 @@ contract SproSimpleLoanTest is Test {
 
     function setUp() public {
         vm.etch(config, bytes("data"));
-        sproHandler = new SproHandler(sdex, 1, 1);
+        sproHandler = new SproHandler(sdex, permit2, 1, 1);
 
         vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(poolAdapter));
-    }
-
-    function test_shouldFail_checkPermit_whenInvalidPermitOwner() external {
-        Spro.Permit memory permit;
-        permit.asset = permitAsset;
-
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidPermitOwner.selector, permit.owner, address(this)));
-        sproHandler.exposed_checkPermit(address(this), credit, permit);
-    }
-
-    function test_shouldFail_checkPermit_whenInvalidPermitAsset() external {
-        Spro.Permit memory permit;
-        permit.asset = permitAsset;
-        permit.owner = address(this);
-
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidPermitAsset.selector, permit.asset, address(this)));
-        sproHandler.exposed_checkPermit({ caller: address(this), creditAddress: address(this), permit: permit });
     }
 
     function testFuzz_shouldFail_withdrawCreditFromPool_InvalidSourceOfFunds(

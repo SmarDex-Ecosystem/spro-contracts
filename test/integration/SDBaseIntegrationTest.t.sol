@@ -5,7 +5,7 @@ import { SigUtils } from "test/utils/SigUtils.sol";
 import { CreditPermit } from "test/helper/CreditPermit.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { T20 } from "test/helper/T20.sol";
-import { SDDeploymentTest, Spro } from "test/SDDeploymentTest.t.sol";
+import { SDDeploymentTest, Spro } from "test/integration/SDDeploymentTest.t.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
@@ -117,7 +117,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         t20.approve(address(deployment.config), proposal.collateralAmount);
 
         vm.prank(borrower);
-        deployment.config.createProposal(proposal);
+        deployment.config.createProposal(proposal, "");
     }
 
     function _createLoan(Spro.Proposal memory newProposal, bytes memory revertData) internal returns (uint256 loanId) {
@@ -132,7 +132,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         }
 
         vm.prank(lender);
-        return deployment.config.createLoan(newProposal, _buildLenderSpec(false), "");
+        return deployment.config.createLoan(newProposal, _buildLenderSpec(false), "", "");
     }
 
     function _cancelProposal(Spro.Proposal memory _proposal) internal {

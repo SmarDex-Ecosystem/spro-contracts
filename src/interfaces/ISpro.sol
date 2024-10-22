@@ -17,9 +17,9 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Set new protocol fee value.
-     * @param fee New fee value in amount SDEX tokens (units 1e18)
+     * @param newFee New fee value in amount SDEX tokens (units 1e18)
      */
-    function setFee(uint256 fee) external;
+    function setFee(uint256 newFee) external;
 
     /**
      * @notice Set percentage of a proposal's availableCreditLimit which can be used in partial lending.
@@ -124,8 +124,9 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /**
      * @notice Create a borrow request proposal and transfers collateral to the vault and SDEX to fee sink.
      * @param proposal Proposal struct.
+     * @param permit2Data Permit data.
      */
-    function createProposal(Proposal memory proposal) external;
+    function createProposal(Proposal calldata proposal, bytes calldata permit2Data) external;
 
     /* ------------------------------------------------------------ */
     /*        CANCEL PROPOSAL AND WITHDRAW UNUSED COLLATERAL        */
@@ -149,11 +150,15 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param proposal Proposal struct.
      * @param lenderSpec Lender specification struct.
      * @param extra Auxiliary data that are emitted in the loan creation event. They are not used in the contract logic.
+     * @param permit2Data Permit data.
      * @return loanId_ Id of the created Loan token.
      */
-    function createLoan(Proposal memory proposal, ISproTypes.LenderSpec memory lenderSpec, bytes memory extra)
-        external
-        returns (uint256 loanId_);
+    function createLoan(
+        Proposal memory proposal,
+        ISproTypes.LenderSpec memory lenderSpec,
+        bytes memory extra,
+        bytes calldata permit2Data
+    ) external returns (uint256 loanId_);
 
     /* ------------------------------------------------------------ */
     /*                          REPAY LOAN                          */
@@ -166,27 +171,24 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      *      If the Loan token holder is the same as the original lender, the repayment credit asset will be
      *      transferred to the Loan token holder directly. Otherwise it will transfer the repayment credit asset to
      *      a vault, waiting on a Loan token holder to claim it. The function assumes a prior token approval to a
-     * contract address
-     *      or a signed permit.
+     * contract address or a signed permit.
      * @param loanId Id of a loan that is being repaid.
-     * @param permitData Callers credit permit data.
+     * @param permit2Data Permit data.
      */
-    function repayLoan(uint256 loanId, bytes calldata permitData) external;
+    function repayLoan(uint256 loanId, bytes calldata permit2Data) external;
 
     /**
      * @notice Repay running loans.
      * @dev Any address can repay a running loan, but a collateral will be transferred to a borrower address associated
-     * with the loan.
-     *      If the Loan token holder is the same as the original lender, the repayment credit asset will be
-     *      transferred to the Loan token holder directly. Otherwise it will transfer the repayment credit asset to
-     *      a vault, waiting on a Loan token holder to claim it. The function assumes a prior token approval to a
-     * contract address
-     *      or a signed permit.
+     * with the loan. If the Loan token holder is the same as the original lender, the repayment credit asset will be
+     * transferred to the Loan token holder directly. Otherwise it will transfer the repayment credit asset to a vault,
+     * waiting on a Loan token holder to claim it. The function assumes a prior token approval to a contract address or
+     * a signed permit.
      * @param loanIds Id array of loans that are being repaid.
      * @param creditAddress Expected credit address for all loan ids.
-     * @param permitData Callers credit permit data.
+     * @param permit2Data Permit data.
      */
-    function repayMultipleLoans(uint256[] calldata loanIds, address creditAddress, bytes calldata permitData)
+    function repayMultipleLoans(uint256[] calldata loanIds, address creditAddress, bytes calldata permit2Data)
         external;
 
     /* ------------------------------------------------------------ */

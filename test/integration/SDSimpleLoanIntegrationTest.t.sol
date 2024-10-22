@@ -71,7 +71,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Lender: creates the loan
         vm.prank(lender);
-        uint256 loanId = deployment.config.createLoan(proposal, _buildLenderSpec(false), "");
+        uint256 loanId = deployment.config.createLoan(proposal, _buildLenderSpec(false), "", "");
 
         // Borrower: cancels proposal, withdrawing unused collateral
         vm.startPrank(borrower);
@@ -117,7 +117,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
                 (PERCENTAGE - DEFAULT_THRESHOLD) * CREDIT_LIMIT / 1e4
             )
         );
-        deployment.config.createLoan(proposal, lenderSpec, "");
+        deployment.config.createLoan(proposal, lenderSpec, "", "");
         vm.stopPrank();
     }
 
@@ -131,7 +131,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         vm.expectRevert(ISproErrors.ProposalAlreadyExists.selector);
         vm.prank(borrower);
-        deployment.config.createProposal(proposal);
+        deployment.config.createProposal(proposal, "");
     }
 
     function test_shouldFail_getProposalCreditStatus_ProposalNotMade() external {
@@ -195,60 +195,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         assertEq(2000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(borrower)); // 20% since 4 loans @ 5% minimum amount
         assertEq(8000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(address(deployment.config)));
-    }
-
-    function test_MultiplePartialLoans_RepayMultiple_PermitCreditTokens() external {
-        uint256[] memory loanIds = _setupMultipleRepayCreditPermit();
-
-        permit.asset = address(creditPermit);
-        permit.owner = borrower;
-        permit.amount = deployment.config.totalLoanRepaymentAmount(loanIds, address(creditPermit));
-        permit.deadline = 8 days;
-
-        SigUtils.Permit memory p = SigUtils.Permit(
-            permit.owner, address(deployment.config), permit.amount, creditPermit.nonces(borrower), permit.deadline
-        );
-
-        bytes32 digest = sigUtils.getTypedDataHash(p);
-
-        vm.startPrank(borrower);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(borrowerPK, digest);
-
-        permit.v = v;
-        permit.r = r;
-        permit.s = s;
-
-        // zero the approvals before the repayment, tokens should be transferred via permit
-        creditPermit.approve(address(deployment.config), 0);
-
-        deployment.config.repayMultipleLoans(loanIds, address(creditPermit), abi.encode(permit));
-    }
-
-    function test_MultiplePartialLoans_RepayLoan_PermitCreditTokens() external {
-        uint256[] memory loanIds = _setupMultipleRepayCreditPermit();
-
-        permit.asset = address(creditPermit);
-        permit.owner = borrower;
-        permit.amount = deployment.config.loanRepaymentAmount(loanIds[0]);
-        permit.deadline = 8 days;
-
-        SigUtils.Permit memory p = SigUtils.Permit(
-            permit.owner, address(deployment.config), permit.amount, creditPermit.nonces(borrower), permit.deadline
-        );
-
-        bytes32 digest = sigUtils.getTypedDataHash(p);
-
-        vm.startPrank(borrower);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(borrowerPK, digest);
-
-        permit.v = v;
-        permit.r = r;
-        permit.s = s;
-
-        // zero the approvals before the repayment, tokens should be transferred via permit
-        creditPermit.approve(address(deployment.config), 0);
-
-        deployment.config.repayLoan(loanIds[0], abi.encode(permit));
     }
 
     function test_MultiplePartialLoans_RepayMultiple_RepayerNotOwner() external {
@@ -328,7 +274,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
                 ISproTypes.LenderSpec({ sourceOfFunds: lenders[i], creditAmount: minCreditAmount, permitData: "" });
 
             // Create loan
-            loanIds[i] = deployment.config.createLoan({ proposal: proposal, lenderSpec: lenderSpec, extra: "" });
+            loanIds[i] =
+                deployment.config.createLoan({ proposal: proposal, lenderSpec: lenderSpec, extra: "", permit2Data: "" });
             vm.stopPrank();
         }
 
@@ -373,7 +320,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
                 ISproTypes.LenderSpec({ sourceOfFunds: lenders[i], creditAmount: minCreditAmount, permitData: "" });
 
             // Create loan
-            loanIds[i] = deployment.config.createLoan({ proposal: proposal, lenderSpec: lenderSpec, extra: "" });
+            loanIds[i] =
+                deployment.config.createLoan({ proposal: proposal, lenderSpec: lenderSpec, extra: "", permit2Data: "" });
             vm.stopPrank();
         }
 
@@ -402,8 +350,12 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Lender: creates the loan
         vm.prank(lender);
-        uint256 loanId =
-            deployment.config.createLoan({ proposal: proposal, lenderSpec: _buildLenderSpec(false), extra: "" });
+        uint256 loanId = deployment.config.createLoan({
+            proposal: proposal,
+            lenderSpec: _buildLenderSpec(false),
+            extra: "",
+            permit2Data: ""
+        });
 
         vm.startPrank(borrower);
         // Borrower approvals for credit token
@@ -435,8 +387,12 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Lender: creates the loan
         vm.prank(lender);
-        uint256 loanId =
-            deployment.config.createLoan({ proposal: proposal, lenderSpec: _buildLenderSpec(true), extra: "" });
+        uint256 loanId = deployment.config.createLoan({
+            proposal: proposal,
+            lenderSpec: _buildLenderSpec(true),
+            extra: "",
+            permit2Data: ""
+        });
 
         // Borrower approvals for credit token
         vm.startPrank(borrower);
@@ -468,8 +424,12 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Lender: creates the loan
         vm.prank(lender);
-        uint256 loanId =
-            deployment.config.createLoan({ proposal: proposal, lenderSpec: _buildLenderSpec(false), extra: "" });
+        uint256 loanId = deployment.config.createLoan({
+            proposal: proposal,
+            lenderSpec: _buildLenderSpec(false),
+            extra: "",
+            permit2Data: ""
+        });
 
         vm.startPrank(borrower);
         // Borrower approvals for credit token
@@ -505,7 +465,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Lender creates loan
         vm.startPrank(lender);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
-        uint256 id = deployment.config.createLoan(proposal, lenderSpec, "");
+        uint256 id = deployment.config.createLoan(proposal, lenderSpec, "", "");
         vm.stopPrank();
 
         // Borrower approvals for credit token
@@ -550,7 +510,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         ISproTypes.LenderSpec memory lenderSpec =
             ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: amount, permitData: "" });
 
-        uint256 loanId = deployment.config.createLoan(proposal, lenderSpec, "");
+        uint256 loanId = deployment.config.createLoan(proposal, lenderSpec, "", "");
 
         // skip to the future
         skip(future);
