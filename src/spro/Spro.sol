@@ -573,10 +573,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             revert InvalidDurationStartTime();
         }
 
-        if (proposal.availableCreditLimit == 0) {
-            revert AvailableCreditLimitZero();
-        }
-
         // Make proposal hash
         bytes32 proposalHash = keccak256(abi.encode(proposal));
 
@@ -696,7 +692,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             revert Expired(block.timestamp, proposal.startTimestamp);
         }
 
-        if (creditUsed[proposalHash] + creditAmount < proposal.availableCreditLimit) {
+        if (proposal.availableCreditLimit == 0) {
+            revert AvailableCreditLimitZero();
+        } else if (creditUsed[proposalHash] + creditAmount < proposal.availableCreditLimit) {
             // Credit may only be between min and max amounts if it is not exact
             uint256 minCreditAmount =
                 Math.mulDiv(proposal.availableCreditLimit, partialPositionBps, Constants.BPS_DIVISOR);
