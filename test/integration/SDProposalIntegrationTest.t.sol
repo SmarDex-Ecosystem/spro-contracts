@@ -8,7 +8,6 @@ import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 contract SDProposalIntegrationTest is SDBaseIntegrationTest {
     function test_RevertWhen_AvailableCreditLimitZero() public {
         proposal.availableCreditLimit = 0;
-
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.AvailableCreditLimitZero.selector));
         vm.prank(borrower);
         deployment.config.createProposal(proposal, "");
