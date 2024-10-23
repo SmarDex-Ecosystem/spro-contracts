@@ -49,17 +49,17 @@ contract SproVault is ISproVault {
      * @param pool An address of a pool.
      * @param owner An address on which behalf the assets are withdrawn.
      */
-    function _withdrawFromPool(address asset, uint256 amount, IPoolAdapter poolAdapter, address pool, address owner)
+    function _withdrawFromPool(address asset, uint256 amount, address poolAdapter, address pool, address owner)
         internal
     {
         uint256 originalBalance = IERC20Metadata(asset).balanceOf(owner);
 
-        poolAdapter.withdraw(pool, owner, asset, amount);
+        IPoolAdapter(poolAdapter).withdraw(pool, owner, asset, amount);
         if (IERC20Metadata(asset).balanceOf(owner) != originalBalance + amount) {
             revert InvalidAmountTransfer();
         }
 
-        emit PoolWithdraw(asset, address(poolAdapter), pool, owner, amount);
+        emit PoolWithdraw(asset, poolAdapter, pool, owner, amount);
     }
 
     /**

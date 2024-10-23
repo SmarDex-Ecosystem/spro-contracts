@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
@@ -98,24 +97,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @return Repayment amount.
      */
     function loanRepaymentAmount(uint256 loanId) external view returns (uint256);
-
-    /* ------------------------------------------------------------ */
-    /*                          POOL ADAPTER                        */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Registers a pool adapter for a given pool.
-     * @param pool The pool for which the adapter is registered.
-     * @param adapter The adapter to be registered.
-     */
-    function registerPoolAdapter(address pool, address adapter) external;
-
-    /**
-     * @notice Returns the pool adapter for a given pool.
-     * @param pool The pool for which the adapter is requested.
-     * @return The adapter for the given pool.
-     */
-    function getPoolAdapter(address pool) external view returns (IPoolAdapter);
 
     /* ------------------------------------------------------------ */
     /*                      CREATE PROPOSAL                         */

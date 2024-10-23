@@ -36,13 +36,14 @@ interface ISproTypes {
 
     /**
      * @notice Lender specification during loan creation.
+     * @param poolAdapter Address of a pool adapter.
      * @param sourceOfFunds Address of a source of funds. This can be the lenders address, if the loan is funded
-     * directly,
-     *                      or a pool address from with the funds are withdrawn on the lenders behalf.
+     * directly, or a pool address from with the funds are withdrawn on the lenders behalf.
      * @param creditAmount Amount of credit tokens to lend.
      * @param permitData Callers permit data for a loans credit asset.
      */
     struct LenderSpec {
+        address poolAdapter;
         address sourceOfFunds;
         uint256 creditAmount;
         bytes permitData;
@@ -66,6 +67,7 @@ interface ISproTypes {
      * @notice Struct defining a simple loan.
      * @param status Loan status.
      * @param creditAddress Address of an asset used as a loan credit.
+     * @param poolAdapter Address of a pool adapter.
      * @param originalSourceOfFunds Address of a source of funds that was used to fund the loan.
      * @param startTimestamp Unix timestamp (in seconds) of a start date.
      * @param loanExpiration Unix timestamp (in seconds) of a default date.
@@ -83,6 +85,7 @@ interface ISproTypes {
     struct Loan {
         LoanStatus status;
         address creditAddress;
+        address poolAdapter;
         address originalSourceOfFunds;
         uint40 startTimestamp;
         uint40 loanExpiration;

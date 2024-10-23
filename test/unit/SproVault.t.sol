@@ -21,7 +21,7 @@ contract SproVaultHarness is SproVault {
         _pushFrom(asset, amount, origin, beneficiary);
     }
 
-    function withdrawFromPool(address asset, uint256 amount, IPoolAdapter poolAdapter, address pool, address owner)
+    function withdrawFromPool(address asset, uint256 amount, address poolAdapter, address pool, address owner)
         external
     {
         _withdrawFromPool(asset, amount, poolAdapter, pool, owner);
@@ -106,20 +106,20 @@ contract SproVault_WithdrawFromPool_Test is SproVaultTest {
             address(poolAdapter), abi.encodeWithSelector(IPoolAdapter.withdraw.selector, pool, alice, asset, amount)
         );
 
-        vault.withdrawFromPool(asset, amount, poolAdapter, pool, alice);
+        vault.withdrawFromPool(asset, amount, address(poolAdapter), pool, alice);
     }
 
     function test_shouldFail_whenIncompleteTransaction() external {
         vm.mockCall(asset, abi.encodeWithSignature("balanceOf(address)", alice), abi.encode(amount));
         vm.expectRevert(abi.encodeWithSelector(ISproVault.InvalidAmountTransfer.selector));
-        vault.withdrawFromPool(asset, amount, poolAdapter, pool, alice);
+        vault.withdrawFromPool(asset, amount, address(poolAdapter), pool, alice);
     }
 
     function test_shouldEmitEvent_PoolWithdraw() external {
         vm.expectEmit();
         emit ISproVault.PoolWithdraw(asset, address(poolAdapter), pool, alice, amount);
 
-        vault.withdrawFromPool(asset, amount, poolAdapter, pool, alice);
+        vault.withdrawFromPool(asset, amount, address(poolAdapter), pool, alice);
     }
 }
 

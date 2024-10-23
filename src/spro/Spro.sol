@@ -163,20 +163,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     }
 
     /* ------------------------------------------------------------ */
-    /*                          POOL ADAPTER                        */
-    /* ------------------------------------------------------------ */
-
-    /// @inheritdoc ISpro
-    function registerPoolAdapter(address pool, address adapter) external onlyOwner {
-        _poolAdapterRegistry[pool] = adapter;
-    }
-
-    /// @inheritdoc ISpro
-    function getPoolAdapter(address pool) public view returns (IPoolAdapter) {
-        return IPoolAdapter(_poolAdapterRegistry[pool]);
-    }
-
-    /* ------------------------------------------------------------ */
     /*                      CREATE PROPOSAL                         */
     /* ------------------------------------------------------------ */
 
@@ -261,7 +247,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             _permit2Workflows(permit2Data, loanTerms.creditAmount.toUint160(), loanTerms.credit);
         } else {
             // Settle the loan - Transfer credit to borrower
-            _settleNewLoan(loanTerms, lenderSpec.sourceOfFunds);
+            _settleNewLoan(loanTerms, lenderSpec.poolAdapter, lenderSpec.sourceOfFunds);
         }
     }
 
@@ -414,7 +400,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         if (destinationOfFunds == loanOwner) {
             _push(credit, creditAmount, loanOwner);
         } else {
-            IPoolAdapter poolAdapter = getPoolAdapter(destinationOfFunds);
+            IPoolAdapter poolAdapter = IPoolAdapter(loan.poolAdapter);
             // Check that pool has registered adapter
             if (address(poolAdapter) == address(0)) {
                 // Note: Adapter can be unregistered during the loan lifetime, so the pool might not have an adapter.
@@ -526,12 +512,16 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @param credit Asset to be pulled from the pool.
      * @param creditAmount Amount of an asset to be pulled.
      * @param lender Address of a lender.
+     * @param poolAdapter Address of a pool adapter.
      * @param sourceOfFunds Address of a source of funds.
      */
-    function _withdrawCreditFromPool(address credit, uint256 creditAmount, address lender, address sourceOfFunds)
-        internal
-    {
-        IPoolAdapter poolAdapter = getPoolAdapter(sourceOfFunds);
+    function _withdrawCreditFromPool(
+        address credit,
+        uint256 creditAmount,
+        address lender,
+        address poolAdapter,
+        address sourceOfFunds
+    ) internal {
         if (address(poolAdapter) == address(0)) {
             revert InvalidSourceOfFunds(sourceOfFunds);
         }
@@ -731,6 +721,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         Loan storage loan = Loans[loanId_];
         loan.status = LoanStatus.RUNNING;
         loan.creditAddress = loanTerms.credit;
+        loan.poolAdapter = lenderSpec.poolAdapter;
         loan.originalSourceOfFunds = lenderSpec.sourceOfFunds;
         loan.startTimestamp = loanTerms.startTimestamp;
         loan.loanExpiration = loanTerms.loanExpiration;
@@ -747,13 +738,16 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @notice Transfers credit to borrower
      * @dev The function assumes a prior token approval to a contract address or signed permits.
      * @param loanTerms Loan terms struct.
+     * @param poolAdapter Address of a pool adapter.
      * @param sourceOfFunds Address of a source of funds.
      */
-    function _settleNewLoan(Terms memory loanTerms, address sourceOfFunds) private {
+    function _settleNewLoan(Terms memory loanTerms, address poolAdapter, address sourceOfFunds) private {
         // Lender is not the source of funds
         if (sourceOfFunds != loanTerms.lender) {
             // Withdraw credit asset to the lender first
-            _withdrawCreditFromPool(loanTerms.credit, loanTerms.creditAmount, loanTerms.lender, sourceOfFunds);
+            _withdrawCreditFromPool(
+                loanTerms.credit, loanTerms.creditAmount, loanTerms.lender, poolAdapter, sourceOfFunds
+            );
         }
 
         // Transfer credit to borrower

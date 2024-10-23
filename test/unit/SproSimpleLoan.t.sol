@@ -25,8 +25,6 @@ contract SproSimpleLoanTest is Test {
     function setUp() public {
         vm.etch(config, bytes("data"));
         sproHandler = new SproHandler(sdex, permit2, 1, 1);
-
-        vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(poolAdapter));
     }
 
     function testFuzz_shouldFail_withdrawCreditFromPool_InvalidSourceOfFunds(
@@ -36,10 +34,12 @@ contract SproSimpleLoanTest is Test {
     ) external {
         address credit_;
         Spro.Terms memory loanTerms;
-        Spro.LenderSpec memory lenderSpec =
-            ISproTypes.LenderSpec({ sourceOfFunds: source, creditAmount: amount, permitData: data });
-
-        vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(address(0)));
+        Spro.LenderSpec memory lenderSpec = ISproTypes.LenderSpec({
+            poolAdapter: address(0),
+            sourceOfFunds: source,
+            creditAmount: amount,
+            permitData: data
+        });
 
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidSourceOfFunds.selector, lenderSpec.sourceOfFunds));
         sproHandler.exposed_withdrawCreditFromPool(credit_, amount, loanTerms, lenderSpec);

@@ -4,8 +4,6 @@ pragma solidity ^0.8.26;
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { SDBaseIntegrationTest, Spro } from "test/integration/SDBaseIntegrationTest.t.sol";
-import { SigUtils } from "test/utils/SigUtils.sol";
-import { IPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
@@ -107,7 +105,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.startPrank(lender);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        ISproTypes.LenderSpec memory lenderSpec = ISproTypes.LenderSpec(lender, amount, "");
+        ISproTypes.LenderSpec memory lenderSpec = ISproTypes.LenderSpec(address(0), lender, amount, "");
 
         // Create loan, expecting revert
         vm.expectRevert(
@@ -270,8 +268,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             credit.approve(address(deployment.config), minCreditAmount);
 
             // Lender spec
-            ISproTypes.LenderSpec memory lenderSpec =
-                ISproTypes.LenderSpec({ sourceOfFunds: lenders[i], creditAmount: minCreditAmount, permitData: "" });
+            ISproTypes.LenderSpec memory lenderSpec = ISproTypes.LenderSpec(address(0), lenders[i], minCreditAmount, "");
 
             // Create loan
             loanIds[i] =
@@ -316,8 +313,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             creditPermit.approve(address(deployment.config), minCreditAmount);
 
             // Lender spec
-            ISproTypes.LenderSpec memory lenderSpec =
-                ISproTypes.LenderSpec({ sourceOfFunds: lenders[i], creditAmount: minCreditAmount, permitData: "" });
+            ISproTypes.LenderSpec memory lenderSpec = ISproTypes.LenderSpec(address(0), lenders[i], minCreditAmount, "");
 
             // Create loan
             loanIds[i] =
@@ -444,24 +440,16 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     }
 
     function test_RepayToPool() external {
-        // Setup repay to pool
-        vm.mockCall(
-            address(deployment.config),
-            abi.encodeWithSignature("getPoolAdapter(address)", address(this)),
-            abi.encode(IPoolAdapter(poolAdapter))
-        );
-
         _createERC20Proposal();
 
         Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
+        lenderSpec.poolAdapter = address(poolAdapter);
         lenderSpec.sourceOfFunds = address(this);
 
         // Mint to source of funds and approve pool adapter
         credit.mint(address(this), INITIAL_CREDIT_BALANCE);
         credit.approve(address(poolAdapter), CREDIT_LIMIT);
 
-        vm.prank(deployment.protocolAdmin);
-        deployment.config.registerPoolAdapter(address(this), address(poolAdapter));
         // Lender creates loan
         vm.startPrank(lender);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
@@ -507,8 +495,12 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
         // Create loan
-        ISproTypes.LenderSpec memory lenderSpec =
-            ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: amount, permitData: "" });
+        ISproTypes.LenderSpec memory lenderSpec = ISproTypes.LenderSpec({
+            poolAdapter: address(0),
+            sourceOfFunds: lender,
+            creditAmount: amount,
+            permitData: ""
+        });
 
         uint256 loanId = deployment.config.createLoan(proposal, lenderSpec, "", "");
 
