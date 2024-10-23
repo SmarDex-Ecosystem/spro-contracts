@@ -46,6 +46,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /// @inheritdoc ISpro
     function setFee(uint256 newFee) external onlyOwner {
+        if (newFee > Constants.MAX_SDEX_FEE) {
+            revert ExcessiveFee(newFee);
+        }
         emit FeeUpdated(fee, newFee);
         fee = newFee;
     }

@@ -6,6 +6,8 @@ library SproConstantsLibrary {
     uint256 internal constant WAD = 1e18;
     /// @dev Percentage denominator (10_000 = 100%)
     uint256 internal constant BPS_DIVISOR = 10_000;
+    /// @dev The maximum SDEX fee.
+    uint256 internal constant MAX_SDEX_FEE = 1_000_000e18; // 1,000,000 SDEX
 
     /* -------------------------------------------------------------------------- */
     /*                                    LOAN                                    */
