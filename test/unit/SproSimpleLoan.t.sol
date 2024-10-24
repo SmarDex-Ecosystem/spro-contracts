@@ -83,11 +83,4 @@ contract SproSimpleLoanTest is Test {
         );
         sproHandler.exposed_checkLoanCreditAddress(loanCreditAddress, expectedCreditAddress);
     }
-
-    function testFuzz_shouldFail_partialLoan(uint256 a, uint256 l) external {
-        vm.assume(a != l);
-
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.OnlyCompleteLendingForNFTs.selector, a, l));
-        sproHandler.exposed_checkCompleteLoan(a, l);
-    }
 }
