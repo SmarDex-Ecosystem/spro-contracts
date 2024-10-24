@@ -541,17 +541,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         }
     }
 
-    /**
-     * @notice Checks for a complete loan with credit amount equal to available credit limit
-     * @param _creditAmount Credit amount of the proposal.
-     * @param _availableCreditLimit Available credit limit of the proposal.
-     */
-    function _checkCompleteLoan(uint256 _creditAmount, uint256 _availableCreditLimit) internal pure {
-        if (_creditAmount != _availableCreditLimit) {
-            revert OnlyCompleteLendingForNFTs(_creditAmount, _availableCreditLimit);
-        }
-    }
-
     /* -------------------------------------------------------------------------- */
     /*                                   PRIVATE                                  */
     /* -------------------------------------------------------------------------- */
