@@ -80,6 +80,12 @@ contract TestSproSetUnlistedFee is SproTest {
         assertEq(config.fee(), fee);
     }
 
+    function test_RevertWhen_ExcessiveFee() external {
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.ExcessiveFee.selector, 1_000_000e18 + 1));
+        vm.prank(owner);
+        config.setFee(1_000_000e18 + 1);
+    }
+
     function test_shouldEmitEvent_FeeUpdated() external {
         vm.expectEmit(true, true, true, true);
         emit ISproEvents.FeeUpdated(fee, 50e18);
