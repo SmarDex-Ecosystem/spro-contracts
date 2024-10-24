@@ -46,6 +46,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /// @inheritdoc ISpro
     function setFee(uint256 newFee) external onlyOwner {
+        if (newFee > Constants.MAX_SDEX_FEE) {
+            revert ExcessiveFee(newFee);
+        }
         emit FeeUpdated(fee, newFee);
         fee = newFee;
     }
@@ -531,17 +534,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         }
     }
 
-    /**
-     * @notice Checks for a complete loan with credit amount equal to available credit limit
-     * @param _creditAmount Credit amount of the proposal.
-     * @param _availableCreditLimit Available credit limit of the proposal.
-     */
-    function _checkCompleteLoan(uint256 _creditAmount, uint256 _availableCreditLimit) internal pure {
-        if (_creditAmount != _availableCreditLimit) {
-            revert OnlyCompleteLendingForNFTs(_creditAmount, _availableCreditLimit);
-        }
-    }
-
     /* -------------------------------------------------------------------------- */
     /*                                   PRIVATE                                  */
     /* -------------------------------------------------------------------------- */
@@ -561,6 +553,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Decode proposal data
         if (proposal.startTimestamp > proposal.loanExpiration) {
             revert InvalidDurationStartTime();
+        }
+
+        if (proposal.availableCreditLimit == 0) {
+            revert AvailableCreditLimitZero();
         }
 
         // Check minimum loan duration
@@ -692,9 +688,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             revert Expired(block.timestamp, proposal.startTimestamp);
         }
 
-        if (proposal.availableCreditLimit == 0) {
-            revert AvailableCreditLimitZero();
-        } else if (creditUsed[proposalHash] + creditAmount < proposal.availableCreditLimit) {
+        if (creditUsed[proposalHash] + creditAmount < proposal.availableCreditLimit) {
             // Credit may only be between min and max amounts if it is not exact
             uint256 minCreditAmount =
                 Math.mulDiv(proposal.availableCreditLimit, partialPositionBps, Constants.BPS_DIVISOR);
