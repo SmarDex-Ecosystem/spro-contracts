@@ -171,6 +171,9 @@ interface ISproErrors {
      */
     error InvalidDurationStartTime();
 
+    /// @notice Thrown when the borrower don't give the right partialPositionBps.
+    error InvalidPartialPositionBps();
+
     /* -------------------------------------------------------------------------- */
     /*                                   PERMIT                                   */
     /* -------------------------------------------------------------------------- */

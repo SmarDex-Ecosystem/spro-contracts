@@ -78,7 +78,8 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
             borrower,
             keccak256(abi.encode(borrower)),
             0,
-            address(deployment.config)
+            address(deployment.config),
+            DEFAULT_THRESHOLD
         );
 
         // Mint and approve SDEX

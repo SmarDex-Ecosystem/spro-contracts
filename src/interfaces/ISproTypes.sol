@@ -114,6 +114,7 @@ interface ISproTypes {
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
      * an identical proposal again.
      * @param loanContract Address of a loan contract that will create a loan from the proposal.
+     * @param partialPositionBps Partial position in basis points.
      */
     struct Proposal {
         address collateralAddress;
@@ -128,6 +129,7 @@ interface ISproTypes {
         bytes32 proposerSpecHash;
         uint256 nonce;
         address loanContract;
+        uint16 partialPositionBps;
     }
 
     /**
@@ -175,6 +177,7 @@ interface ISproTypes {
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
      * an identical proposal again.
      * @param loanContract Address of a loan contract that will create a loan from the proposal.
+     * @param partialPositionBps Partial position in basis points.
      */
     struct ProposalBase {
         address collateralAddress;
@@ -183,6 +186,7 @@ interface ISproTypes {
         address proposer;
         uint256 nonce;
         address loanContract;
+        uint16 partialPositionBps;
     }
 
     /**

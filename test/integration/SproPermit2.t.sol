@@ -45,7 +45,8 @@ contract TestForkPermit2 is SproForkBase {
             borrower,
             keccak256(abi.encode(borrower)),
             0,
-            address(deployment.config)
+            address(deployment.config),
+            PARTIAL_POSITION_PERCENTAGE
         );
 
         // Mint and approve SDEX
