@@ -171,6 +171,12 @@ interface ISproErrors {
      */
     error InvalidDurationStartTime();
 
+    /**
+     * @notice Thrown when owner set a fee that is too high.
+     * @param fee The fee amount.
+     */
+    error ExcessiveFee(uint256 fee);
+
     /// @notice Thrown when the borrower don't give the right partialPositionBps.
     error InvalidPartialPositionBps();
 

@@ -46,6 +46,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
     /// @inheritdoc ISpro
     function setFee(uint256 newFee) external onlyOwner {
+        if (newFee > Constants.MAX_SDEX_FEE) {
+            revert ExcessiveFee(newFee);
+        }
         emit FeeUpdated(fee, newFee);
         fee = newFee;
     }
@@ -573,6 +576,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             revert InvalidDurationStartTime();
         }
 
+        if (proposal.availableCreditLimit == 0) {
+            revert AvailableCreditLimitZero();
+        }
+
         if (proposal.partialPositionBps != partialPositionBps) {
             revert InvalidPartialPositionBps();
         }
@@ -697,9 +704,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             revert Expired(block.timestamp, proposal.startTimestamp);
         }
 
-        if (proposal.availableCreditLimit == 0) {
-            revert AvailableCreditLimitZero();
-        } else if (creditUsed[proposalHash] + creditAmount < proposal.availableCreditLimit) {
+        if (creditUsed[proposalHash] + creditAmount < proposal.availableCreditLimit) {
             // Credit may only be between min and max amounts if it is not exact
             uint256 minCreditAmount =
                 Math.mulDiv(proposal.availableCreditLimit, proposal.partialPositionBps, Constants.BPS_DIVISOR);
