@@ -5,6 +5,7 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
@@ -15,7 +16,7 @@ import { SproLoan } from "src/spro/SproLoan.sol";
 import { SproVault } from "src/spro/SproVault.sol";
 import { SproStorage } from "src/spro/SproStorage.sol";
 
-contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataProvider {
+contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataProvider, ReentrancyGuard {
     using SafeCast for uint256;
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
@@ -218,7 +219,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function cancelProposal(Proposal calldata proposal) external {
+    function cancelProposal(Proposal calldata proposal) external nonReentrant {
         Proposal memory newProposal = _cancelProposal(proposal);
 
         // The caller must be the proposer
@@ -240,7 +241,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         LenderSpec calldata lenderSpec,
         bytes calldata extra,
         bytes calldata permit2Data
-    ) external returns (uint256 loanId_) {
+    ) external nonReentrant returns (uint256 loanId_) {
         // Accept proposal and get loan terms
         (bytes32 proposalHash, Terms memory loanTerms) = _acceptProposal(msg.sender, lenderSpec.creditAmount, proposal);
 
@@ -263,7 +264,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function repayLoan(uint256 loanId, bytes calldata permit2Data) external {
+    function repayLoan(uint256 loanId, bytes calldata permit2Data) external nonReentrant {
         Loan memory loan = Loans[loanId];
 
         _checkLoanCanBeRepaid(loan.status, loan.loanExpiration);
@@ -295,6 +296,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /// @inheritdoc ISpro
     function repayMultipleLoans(uint256[] calldata loanIds, address creditAddress, bytes calldata permit2Data)
         external
+        nonReentrant
     {
         uint256 totalRepaymentAmount;
 
@@ -368,7 +370,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     }
 
     /// @inheritdoc ISpro
-    function claimMultipleLoans(uint256[] calldata loanIds) external {
+    function claimMultipleLoans(uint256[] calldata loanIds) external nonReentrant {
         uint256 l = loanIds.length;
         for (uint256 i; i < l; ++i) {
             claimLoan(loanIds[i]);
