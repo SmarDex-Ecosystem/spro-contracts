@@ -370,7 +370,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     }
 
     /// @inheritdoc ISpro
-    function claimMultipleLoans(uint256[] calldata loanIds) external nonReentrant {
+    function claimMultipleLoans(uint256[] calldata loanIds) external {
         uint256 l = loanIds.length;
         for (uint256 i; i < l; ++i) {
             claimLoan(loanIds[i]);
