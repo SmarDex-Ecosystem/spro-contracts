@@ -185,7 +185,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function createProposal(Proposal calldata proposal, bytes calldata permit2Data) external {
+    function createProposal(Proposal calldata proposal, bytes calldata permit2Data) external nonReentrant {
         // Make the proposal
         (address proposer, address collateral, uint256 collateralAmount) = _makeProposal(proposal);
 
