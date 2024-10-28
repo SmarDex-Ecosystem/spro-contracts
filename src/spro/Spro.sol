@@ -244,16 +244,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Accept proposal and get loan terms
         (bytes32 proposalHash, Terms memory loanTerms) = _acceptProposal(msg.sender, lenderSpec.creditAmount, proposal);
 
-        // Check minimum loan duration
-        if (loanTerms.loanExpiration - loanTerms.startTimestamp < Constants.MIN_LOAN_DURATION) {
-            revert InvalidDuration(loanTerms.loanExpiration - loanTerms.startTimestamp, Constants.MIN_LOAN_DURATION);
-        }
-
-        // Check maximum accruing interest APR
-        if (loanTerms.accruingInterestAPR > Constants.MAX_ACCRUING_INTEREST_APR) {
-            revert InterestAPROutOfBounds(loanTerms.accruingInterestAPR, Constants.MAX_ACCRUING_INTEREST_APR);
-        }
-
         // Create a new loan
         loanId_ = _createLoan(loanTerms, lenderSpec);
 
@@ -544,17 +534,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         }
     }
 
-    /**
-     * @notice Checks for a complete loan with credit amount equal to available credit limit
-     * @param _creditAmount Credit amount of the proposal.
-     * @param _availableCreditLimit Available credit limit of the proposal.
-     */
-    function _checkCompleteLoan(uint256 _creditAmount, uint256 _availableCreditLimit) internal pure {
-        if (_creditAmount != _availableCreditLimit) {
-            revert OnlyCompleteLendingForNFTs(_creditAmount, _availableCreditLimit);
-        }
-    }
-
     /* -------------------------------------------------------------------------- */
     /*                                   PRIVATE                                  */
     /* -------------------------------------------------------------------------- */
@@ -578,6 +557,16 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
         if (proposal.availableCreditLimit == 0) {
             revert AvailableCreditLimitZero();
+        }
+
+        // Check minimum loan duration
+        if (proposal.loanExpiration - proposal.startTimestamp < Constants.MIN_LOAN_DURATION) {
+            revert InvalidDuration(proposal.loanExpiration - proposal.startTimestamp, Constants.MIN_LOAN_DURATION);
+        }
+
+        // Check maximum accruing interest APR
+        if (proposal.accruingInterestAPR > Constants.MAX_ACCRUING_INTEREST_APR) {
+            revert InterestAPROutOfBounds(proposal.accruingInterestAPR, Constants.MAX_ACCRUING_INTEREST_APR);
         }
 
         if (proposal.partialPositionBps != partialPositionBps) {

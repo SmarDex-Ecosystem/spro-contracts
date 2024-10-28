@@ -4,6 +4,9 @@ pragma solidity ^0.8.26;
 import { SDBaseIntegrationTest } from "test/integration/SDBaseIntegrationTest.t.sol";
 
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationTest {
     modifier proposalContractHasTag() {
@@ -98,6 +101,58 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
 
         vm.prank(borrower);
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidDurationStartTime.selector));
+        deployment.config.createProposal(proposal, "");
+    }
+
+    function test_RevertWhen_InvalidLoanDuration()
+        external
+        proposalContractHasTag
+        whenValidProposalData
+        whenCallerIsProposer
+        whenValidCollateral
+        whenFeeAmountGtZero
+        whenListedFee
+    {
+        // Set bad timestamp value
+        uint256 minDuration = Constants.MIN_LOAN_DURATION;
+        proposal.loanExpiration = proposal.startTimestamp + uint32(minDuration - 1);
+
+        // Mint initial state & approve collateral
+        t20.mint(borrower, proposal.collateralAmount);
+        vm.prank(borrower);
+        t20.approve(address(deployment.config), proposal.collateralAmount);
+
+        vm.prank(borrower);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ISproErrors.InvalidDuration.selector, proposal.loanExpiration - proposal.startTimestamp, minDuration
+            )
+        );
+        deployment.config.createProposal(proposal, "");
+    }
+
+    function test_RevertWhen_InvalidMaxApr()
+        external
+        proposalContractHasTag
+        whenValidProposalData
+        whenCallerIsProposer
+        whenValidCollateral
+        whenFeeAmountGtZero
+        whenListedFee
+    {
+        // Set bad max accruing interest apr
+        uint256 maxApr = Constants.MAX_ACCRUING_INTEREST_APR;
+        proposal.accruingInterestAPR = uint24(maxApr + 1);
+
+        // Mint initial state & approve collateral
+        t20.mint(borrower, proposal.collateralAmount);
+        vm.prank(borrower);
+        t20.approve(address(deployment.config), proposal.collateralAmount);
+
+        vm.prank(borrower);
+        vm.expectRevert(
+            abi.encodeWithSelector(ISproErrors.InterestAPROutOfBounds.selector, proposal.accruingInterestAPR, maxApr)
+        );
         deployment.config.createProposal(proposal, "");
     }
 
