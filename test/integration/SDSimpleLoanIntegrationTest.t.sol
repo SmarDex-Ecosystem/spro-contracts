@@ -528,4 +528,18 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         assertEq(deployment.config.loanRepaymentAmount(loanId), amount + loanInfo.fixedInterestAmount + accruedInterest);
     }
+
+    function test_RevertWhen_InvalidSourceOfFunds() external {
+        _createERC20Proposal();
+        address sourceOfFunds = makeAddr("sourceOfFunds");
+
+        vm.prank(lender);
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidSourceOfFunds.selector, sourceOfFunds));
+        deployment.config.createLoan({
+            proposal: proposal,
+            lenderSpec: ISproTypes.LenderSpec(sourceOfFunds, CREDIT_LIMIT, ""),
+            extra: "",
+            permit2Data: ""
+        });
+    }
 }
