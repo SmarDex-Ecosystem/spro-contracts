@@ -4,12 +4,10 @@ pragma solidity ^0.8.26;
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { SDBaseIntegrationTest, Spro } from "test/integration/SDBaseIntegrationTest.t.sol";
-import { SigUtils } from "test/utils/SigUtils.sol";
 import { IPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
-import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     function test_shouldCreateERC20Proposal_shouldCreatePartialLoan_shouldWithdrawRemainingCollateral() external {
@@ -81,15 +79,16 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
         // Borrower approvals for credit token
-        credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
-        credit.approve(address(deployment.config), CREDIT_AMOUNT + FIXED_INTEREST_AMOUNT);
+        uint256 interest = deployment.config.getLoan(loanId).fixedInterestAmount;
+        credit.mint(borrower, interest); // helper step: mint fixed interest amount for the borrower
+        credit.approve(address(deployment.config), CREDIT_AMOUNT + interest);
 
         // Borrower: repays loan
         deployment.config.repayLoan(loanId, "");
 
         // Assertions
         assertEq(credit.balanceOf(borrower), 0);
-        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + FIXED_INTEREST_AMOUNT);
+        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + interest);
 
         assertEq(t20.balanceOf(borrower), COLLATERAL_AMOUNT);
     }
@@ -157,7 +156,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     }
 
     function testGas_MultiplePartialLoans_Original() external {
-        uint256[] memory loanIds = _setupMultipleRepay();
+        (uint256[] memory loanIds,) = _setupMultipleRepay();
         vm.startPrank(borrower);
         uint256 startGas = gasleft();
         for (uint256 i; i < 4; ++i) {
@@ -167,15 +166,15 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     }
 
     function testGas_MultiplePartialLoans_RepayMultiple() external {
-        uint256[] memory loanIds = _setupMultipleRepay();
+        (uint256[] memory loanIds,) = _setupMultipleRepay();
         vm.startPrank(borrower);
         uint256 startGas = gasleft();
         deployment.config.repayMultipleLoans(loanIds, address(credit), "");
         emit log_named_uint("Gas used", startGas - gasleft());
     }
 
-    function test_MultiplePartialLoans_RepayMultiple() external {
-        uint256[] memory loanIds = _setupMultipleRepay();
+    function test_MultiplePartialLoans_RepayMultiple_Owner() external {
+        (uint256[] memory loanIds, uint256 fixedInterestAmount) = _setupMultipleRepay();
 
         vm.startPrank(borrower);
         deployment.config.repayMultipleLoans(loanIds, address(credit), "");
@@ -186,7 +185,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             credit.balanceOf(lender) == credit.balanceOf(alice) && credit.balanceOf(lender) == credit.balanceOf(bob)
                 && credit.balanceOf(lender) == credit.balanceOf(charlee)
         );
-        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + FIXED_INTEREST_AMOUNT);
+        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + fixedInterestAmount);
 
         assertEq(0, deployment.loanToken.balanceOf(lender));
         assertEq(0, deployment.loanToken.balanceOf(alice));
@@ -198,7 +197,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     }
 
     function test_MultiplePartialLoans_RepayMultiple_RepayerNotOwner() external {
-        uint256[] memory loanIds = _setupMultipleRepay();
+        (uint256[] memory loanIds, uint256 fixedInterestAmount) = _setupMultipleRepay();
 
         address repayer = makeAddr("repayer");
         uint256 repayAmount = deployment.config.totalLoanRepaymentAmount(loanIds, address(credit));
@@ -210,12 +209,15 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.stopPrank();
 
         // Assertions
-        assertEq(credit.balanceOf(borrower), 8 * FIXED_INTEREST_AMOUNT); // 4x minted in _setupMultipleRepay & not used
+        assertEq(
+            credit.balanceOf(borrower),
+            4 * (proposal.availableCreditLimit * deployment.config.partialPositionBps()) / 1e4 + 4 * fixedInterestAmount
+        ); // 4x minted in _setupMultipleRepay & not used
         require(
             credit.balanceOf(lender) == credit.balanceOf(alice) && credit.balanceOf(lender) == credit.balanceOf(bob)
                 && credit.balanceOf(lender) == credit.balanceOf(charlee)
         );
-        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + FIXED_INTEREST_AMOUNT);
+        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + fixedInterestAmount);
 
         assertEq(0, deployment.loanToken.balanceOf(lender));
         assertEq(0, deployment.loanToken.balanceOf(alice));
@@ -226,7 +228,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     }
 
     function test_MultiplePartialLoans_RepayMultiple_ClaimMultiple() external {
-        uint256[] memory loanIds = _setupMultipleRepay();
+        (uint256[] memory loanIds,) = _setupMultipleRepay();
 
         vm.prank(alice);
         deployment.loanToken.transferFrom(alice, lender, 2);
@@ -245,7 +247,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         deployment.config.claimMultipleLoans(ids);
     }
 
-    function _setupMultipleRepay() internal returns (uint256[] memory loanIds) {
+    function _setupMultipleRepay() internal returns (uint256[] memory loanIds, uint256 fixedInterestAmount) {
         vm.prank(borrower);
         _createERC20Proposal();
 
@@ -284,7 +286,10 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Approve repayment amount
         uint256 totalAmount = deployment.config.totalLoanRepaymentAmount(loanIds, address(credit));
-        credit.mint(borrower, 4 * FIXED_INTEREST_AMOUNT);
+        fixedInterestAmount = Math.mulDiv(
+            minCreditAmount, proposal.fixedInterestAmount, proposal.availableCreditLimit, Math.Rounding.Ceil
+        );
+        credit.mint(borrower, 4 * fixedInterestAmount);
         vm.prank(borrower);
         credit.approve(address(deployment.config), totalAmount);
     }
@@ -490,12 +495,9 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
     }
 
-    function testFuzz_loanAccruedInterest(uint256 amount, uint256 apr, uint256 future) external {
+    function testFuzz_loanAccruedInterest(uint256 amount, uint256 future) external {
         amount = bound(amount, ((500 * CREDIT_LIMIT) / 1e4), ((9500 * CREDIT_LIMIT) / 1e4));
-        apr = bound(apr, 1, Constants.MAX_ACCRUING_INTEREST_APR);
         future = bound(future, 1 days, proposal.startTimestamp);
-
-        proposal.accruingInterestAPR = uint24(apr);
 
         // Create the proposal
         vm.prank(borrower);
@@ -517,15 +519,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         (ISproTypes.LoanInfo memory loanInfo) = deployment.config.getLoan(loanId);
 
-        // Assertions
-        uint256 accruingMinutes = (loanInfo.loanExpiration - loanInfo.startTimestamp) / 1 minutes;
-        uint256 accruedInterest = Math.mulDiv(
-            amount,
-            uint256(loanInfo.accruingInterestAPR) * accruingMinutes,
-            Constants.ACCRUING_INTEREST_APR_DENOMINATOR,
-            Math.Rounding.Ceil
-        );
-
-        assertEq(deployment.config.loanRepaymentAmount(loanId), amount + loanInfo.fixedInterestAmount + accruedInterest);
+        assertEq(deployment.config.getLoan(loanId).repaymentAmount, amount + loanInfo.fixedInterestAmount);
     }
 }
