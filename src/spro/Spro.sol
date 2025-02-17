@@ -269,9 +269,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         _checkLoanCanBeRepaid(loan.status, loan.loanExpiration);
 
         // Update loan to repaid state
-        _updateRepaidLoan(loanId);
+        uint256 repaymentAmount = _updateRepaidLoan(loanId);
 
-        uint256 repaymentAmount = loanRepaymentAmount(loanId);
         // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
             _permit2Workflows(permit2Data, repaymentAmount.toUint160(), loan.creditAddress);
@@ -306,11 +305,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             _checkLoanCanBeRepaid(loan.status, loan.loanExpiration);
             _checkLoanCreditAddress(loan.creditAddress, creditAddress);
 
-            // Update loan to repaid state
-            _updateRepaidLoan(loanId);
-
-            // Increment the total repayment amount
-            totalRepaymentAmount += loanRepaymentAmount(loanId);
+            // Update loan to repaid state an increment the total repayment amount
+            totalRepaymentAmount += _updateRepaidLoan(loanId);
         }
 
         if (permit2Data.length > 0) {
@@ -757,8 +753,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /**
      * @notice Update loan to repaid state.
      * @param loanId Id of a loan that is being repaid.
+     * @return repaidAmount_ Amount of the repaid loan.
      */
-    function _updateRepaidLoan(uint256 loanId) private {
+    function _updateRepaidLoan(uint256 loanId) private returns (uint256 repaidAmount_) {
         Loan storage loan = Loans[loanId];
 
         // Move loan to repaid state and wait for the loan owner to claim the repaid credit
@@ -770,8 +767,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
         // Note: Reusing `fixedInterestAmount` to store accrued interest at the time of repayment
         // to have the value at the time of claim and stop accruing new interest.
-
         emit LoanPaidBack(loanId);
+        return loan.principalAmount + loan.fixedInterestAmount;
     }
 
     /**
