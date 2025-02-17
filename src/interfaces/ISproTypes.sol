@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
+
 interface ISproTypes {
     /**
      * @notice Struct defining a simple loan terms.
@@ -67,6 +69,8 @@ interface ISproTypes {
      * @param status Loan status.
      * @param creditAddress Address of an asset used as a loan credit.
      * @param originalSourceOfFunds Address of a source of funds that was used to fund the loan.
+     * @param poolAdapter Address of a pool adapter used to withdraw and supply assets to the pool. address(0) if the
+     * originalSourceOfFound is the lender.
      * @param startTimestamp Unix timestamp (in seconds) of a start date.
      * @param loanExpiration Unix timestamp (in seconds) of a default date.
      * @param borrower Address of a borrower.
@@ -84,6 +88,7 @@ interface ISproTypes {
         LoanStatus status;
         address creditAddress;
         address originalSourceOfFunds;
+        IPoolAdapter poolAdapter;
         uint40 startTimestamp;
         uint40 loanExpiration;
         address borrower;
