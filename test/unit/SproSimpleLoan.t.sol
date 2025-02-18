@@ -29,22 +29,6 @@ contract SproSimpleLoanTest is Test {
         vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(poolAdapter));
     }
 
-    function testFuzz_shouldFail_withdrawCreditFromPool_InvalidSourceOfFunds(
-        address source,
-        uint256 amount,
-        bytes memory data
-    ) external {
-        address credit_;
-        Spro.Terms memory loanTerms;
-        Spro.LenderSpec memory lenderSpec =
-            ISproTypes.LenderSpec({ sourceOfFunds: source, creditAmount: amount, permitData: data });
-
-        vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(address(0)));
-
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidSourceOfFunds.selector, lenderSpec.sourceOfFunds));
-        sproHandler.exposed_withdrawCreditFromPool(credit_, amount, loanTerms, lenderSpec);
-    }
-
     function test_loanRepaymentAmount_shouldReturnZeroForNonExistingLoan() external view {
         uint256 amount = sproHandler.getLoan(0).repaymentAmount;
 

@@ -229,11 +229,16 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         bytes calldata extra,
         bytes calldata permit2Data
     ) external returns (uint256 loanId_) {
+        address poolAdapter = _poolAdapterRegistry[lenderSpec.sourceOfFunds];
+        if (lenderSpec.sourceOfFunds != msg.sender && poolAdapter == address(0)) {
+            revert InvalidSourceOfFunds(lenderSpec.sourceOfFunds);
+        }
+
         // Accept proposal and get loan terms
         (bytes32 proposalHash, Terms memory loanTerms) = _acceptProposal(msg.sender, lenderSpec.creditAmount, proposal);
 
         // Create a new loan
-        loanId_ = _createLoan(loanTerms, lenderSpec);
+        loanId_ = _createLoan(loanTerms, lenderSpec, poolAdapter);
 
         emit LoanCreated(loanId_, proposalHash, loanTerms, lenderSpec, extra);
 
@@ -242,7 +247,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             _permit2Workflows(permit2Data, loanTerms.creditAmount.toUint160(), loanTerms.credit);
         } else {
             // Settle the loan - Transfer credit to borrower
-            _settleNewLoan(loanTerms, lenderSpec.sourceOfFunds);
+            _settleNewLoan(loanTerms, poolAdapter, lenderSpec.sourceOfFunds);
         }
     }
 
@@ -256,10 +261,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
         _checkLoanCanBeRepaid(loan.status, loan.loanExpiration);
 
-        // Update loan to repaid state
-        _updateRepaidLoan(loanId);
+        // Update loan to repaid state and get the repayment amount
+        uint256 repaymentAmount = _updateRepaidLoan(loanId);
 
-        uint256 repaymentAmount = loan.principalAmount + loan.fixedInterestAmount;
         // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
             _permit2Workflows(permit2Data, repaymentAmount.toUint160(), loan.creditAddress);
@@ -294,11 +298,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             _checkLoanCanBeRepaid(loan.status, loan.loanExpiration);
             _checkLoanCreditAddress(loan.creditAddress, creditAddress);
 
-            // Update loan to repaid state
-            _updateRepaidLoan(loanId);
-
-            // Increment the total repayment amount
-            totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
+            // Update loan to repaid state and increment the total repayment amount
+            totalRepaymentAmount += _updateRepaidLoan(loanId);
         }
 
         if (permit2Data.length > 0) {
@@ -396,17 +397,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         if (destinationOfFunds == loanOwner) {
             _push(credit, creditAmount, loanOwner);
         } else {
-            IPoolAdapter poolAdapter = getPoolAdapter(destinationOfFunds);
-            // Check that pool has registered adapter
-            if (address(poolAdapter) == address(0)) {
-                // Note: Adapter can be unregistered during the loan lifetime, so the pool might not have an adapter.
-                // In that case, the loan owner will be able to claim the repaid credit.
-
-                revert InvalidSourceOfFunds(destinationOfFunds);
-            }
-
             // Supply the repaid credit to the original pool
-            _supplyToPool(credit, creditAmount, poolAdapter, destinationOfFunds, loanOwner);
+            _supplyToPool(credit, creditAmount, loan.poolAdapter, destinationOfFunds, loanOwner);
         }
 
         // Note: If the transfer fails, the Loan token will remain in repaid state and the Loan token owner
@@ -499,27 +491,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     function _checkLoanCreditAddress(address loanCreditAddress, address expectedCreditAddress) internal pure {
         if (loanCreditAddress != expectedCreditAddress) {
             revert DifferentCreditAddress(loanCreditAddress, expectedCreditAddress);
-        }
-    }
-
-    /**
-     * @notice Withdraw a credit asset from a pool to the Vault.
-     * @dev The function will revert if pool doesn't have registered pool adapter.
-     * @param credit Asset to be pulled from the pool.
-     * @param creditAmount Amount of an asset to be pulled.
-     * @param lender Address of a lender.
-     * @param sourceOfFunds Address of a source of funds.
-     */
-    function _withdrawCreditFromPool(address credit, uint256 creditAmount, address lender, address sourceOfFunds)
-        internal
-    {
-        IPoolAdapter poolAdapter = getPoolAdapter(sourceOfFunds);
-        if (address(poolAdapter) == address(0)) {
-            revert InvalidSourceOfFunds(sourceOfFunds);
-        }
-
-        if (creditAmount > 0) {
-            _withdrawFromPool(credit, creditAmount, poolAdapter, sourceOfFunds, lender);
         }
     }
 
@@ -700,9 +671,13 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @notice Mint Loan token and store loan data under loan id.
      * @param loanTerms Loan terms struct.
      * @param lenderSpec Lender specification struct.
+     * @param poolAdapter Address of a pool adapter.
      * @return loanId_ Id of the created Loan token.
      */
-    function _createLoan(Terms memory loanTerms, LenderSpec calldata lenderSpec) private returns (uint256 loanId_) {
+    function _createLoan(Terms memory loanTerms, LenderSpec calldata lenderSpec, address poolAdapter)
+        private
+        returns (uint256 loanId_)
+    {
         // Mint Loan token for lender
         loanId_ = loanToken.mint(loanTerms.lender);
 
@@ -711,6 +686,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         loan.status = LoanStatus.RUNNING;
         loan.creditAddress = loanTerms.credit;
         loan.originalSourceOfFunds = lenderSpec.sourceOfFunds;
+        loan.poolAdapter = IPoolAdapter(poolAdapter);
         loan.startTimestamp = loanTerms.startTimestamp;
         loan.loanExpiration = loanTerms.loanExpiration;
         loan.borrower = loanTerms.borrower;
@@ -725,13 +701,16 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @notice Transfers credit to borrower
      * @dev The function assumes a prior token approval to a contract address or signed permits.
      * @param loanTerms Loan terms struct.
+     * @param poolAdapter Address of a pool adapter.
      * @param sourceOfFunds Address of a source of funds.
      */
-    function _settleNewLoan(Terms memory loanTerms, address sourceOfFunds) private {
+    function _settleNewLoan(Terms memory loanTerms, address poolAdapter, address sourceOfFunds) private {
         // Lender is not the source of funds
-        if (sourceOfFunds != loanTerms.lender) {
+        if (sourceOfFunds != loanTerms.lender && loanTerms.creditAmount > 0) {
             // Withdraw credit asset to the lender first
-            _withdrawCreditFromPool(loanTerms.credit, loanTerms.creditAmount, loanTerms.lender, sourceOfFunds);
+            _withdrawFromPool(
+                loanTerms.credit, loanTerms.creditAmount, IPoolAdapter(poolAdapter), sourceOfFunds, loanTerms.lender
+            );
         }
 
         // Transfer credit to borrower
@@ -741,11 +720,16 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /**
      * @notice Update loan to repaid state.
      * @param loanId Id of a loan that is being repaid.
+     * @return repaidAmount_ Amount of the repaid loan.
      */
-    function _updateRepaidLoan(uint256 loanId) private {
+    function _updateRepaidLoan(uint256 loanId) private returns (uint256 repaidAmount_) {
+        Loan storage loan = Loans[loanId];
+
         // Move loan to repaid state and wait for the loan owner to claim the repaid credit
-        Loans[loanId].status = LoanStatus.PAID_BACK;
+        loan.status = LoanStatus.PAID_BACK;
+
         emit LoanPaidBack(loanId);
+        return loan.principalAmount + loan.fixedInterestAmount;
     }
 
     /**
