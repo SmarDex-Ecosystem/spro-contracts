@@ -15,9 +15,7 @@ interface ISproTypes {
      * @param collateralAmount Amount of a collateral asset.
      * @param credit Address of a credit asset.
      * @param creditAmount Amount of a credit asset.
-     * @param fixedInterestAmount Fixed interest amount in credit asset tokens. It is the minimum amount of interest
-     * which has to be paid by a borrower.
-     * @param accruingInterestAPR Accruing interest APR with 2 decimals.
+     * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      * @param lenderSpecHash Hash of a lender specification.
      * @param borrowerSpecHash Hash of a borrower specification.
      */
@@ -31,7 +29,6 @@ interface ISproTypes {
         address credit;
         uint256 creditAmount;
         uint256 fixedInterestAmount;
-        uint24 accruingInterestAPR;
         bytes32 lenderSpecHash;
         bytes32 borrowerSpecHash;
     }
@@ -75,11 +72,7 @@ interface ISproTypes {
      * @param loanExpiration Unix timestamp (in seconds) of a default date.
      * @param borrower Address of a borrower.
      * @param originalLender Address of a lender that funded the loan.
-     * @param accruingInterestAPR Accruing interest APR with 2 decimals.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
-     *                            It is the minimum amount of interest which has to be paid by a borrower.
-     *                            This property is reused to store the final interest amount if the loan is repaid and
-     * waiting to be claimed.
      * @param principalAmount Principal amount in credit asset tokens.
      * @param collateral Address of a collateral asset.
      * @param collateralAmount Amount of a collateral asset.
@@ -93,7 +86,6 @@ interface ISproTypes {
         uint40 loanExpiration;
         address borrower;
         address originalLender;
-        uint24 accruingInterestAPR;
         uint256 fixedInterestAmount;
         uint256 principalAmount;
         address collateral;
@@ -108,9 +100,7 @@ interface ISproTypes {
      * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
      * be borrowed using the proposal. If non-zero, proposal can be accepted more than once, until the credit limit is
      * reached.
-     * @param fixedInterestAmount Fixed interest amount in credit tokens. It is the minimum amount of interest which has
-     * to be paid by a borrower.
-     * @param accruingInterestAPR Accruing interest APR with 2 decimals.
+     * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      * @param startTimestamp Proposal start timestamp in seconds.
      * @param loanExpiration Proposal default timestamp in seconds.
      * @param proposer Address of a proposal signer. If `isOffer` is true, the proposer is the lender. If `isOffer` is
@@ -126,7 +116,6 @@ interface ISproTypes {
         address creditAddress;
         uint256 availableCreditLimit;
         uint256 fixedInterestAmount;
-        uint24 accruingInterestAPR;
         uint40 startTimestamp;
         uint40 loanExpiration;
         address proposer;
@@ -143,7 +132,6 @@ interface ISproTypes {
      * @param borrower Address of a loan borrower.
      * @param originalLender Address of a loan original lender.
      * @param loanOwner Address of a Loan token holder.
-     * @param accruingInterestAPR Accruing interest APR with 2 decimal places.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      * @param credit Address of a credit asset.
      * @param collateral Address of a collateral asset.
@@ -159,7 +147,6 @@ interface ISproTypes {
         address borrower;
         address originalLender;
         address loanOwner;
-        uint24 accruingInterestAPR;
         uint256 fixedInterestAmount;
         address credit;
         address collateral;

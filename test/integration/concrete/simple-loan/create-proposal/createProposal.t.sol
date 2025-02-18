@@ -130,29 +130,4 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         );
         deployment.config.createProposal(proposal, "");
     }
-
-    function test_RevertWhen_InvalidMaxApr()
-        external
-        proposalContractHasTag
-        whenValidProposalData
-        whenCallerIsProposer
-        whenValidCollateral
-        whenFeeAmountGtZero
-        whenListedFee
-    {
-        // Set bad max accruing interest apr
-        uint256 maxApr = Constants.MAX_ACCRUING_INTEREST_APR;
-        proposal.accruingInterestAPR = uint24(maxApr + 1);
-
-        // Mint initial state & approve collateral
-        t20.mint(borrower, proposal.collateralAmount);
-        vm.prank(borrower);
-        t20.approve(address(deployment.config), proposal.collateralAmount);
-
-        vm.prank(borrower);
-        vm.expectRevert(
-            abi.encodeWithSelector(ISproErrors.InterestAPROutOfBounds.selector, proposal.accruingInterestAPR, maxApr)
-        );
-        deployment.config.createProposal(proposal, "");
-    }
 }
