@@ -17,7 +17,6 @@ interface ISproTypes {
      * @param creditAmount Amount of a credit asset.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      * @param lenderSpecHash Hash of a lender specification.
-     * @param borrowerSpecHash Hash of a borrower specification.
      */
     struct Terms {
         address lender;
@@ -30,7 +29,6 @@ interface ISproTypes {
         uint256 creditAmount;
         uint256 fixedInterestAmount;
         bytes32 lenderSpecHash;
-        bytes32 borrowerSpecHash;
     }
 
     /**
@@ -105,7 +103,6 @@ interface ISproTypes {
      * @param loanExpiration Proposal default timestamp in seconds.
      * @param proposer Address of a proposal signer. If `isOffer` is true, the proposer is the lender. If `isOffer` is
      * false, the proposer is the borrower.
-     * @param proposerSpecHash Hash of a proposer specific data, which must be provided during a loan creation.
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
      * an identical proposal again.
      * @param loanContract Address of a loan contract that will create a loan from the proposal.
@@ -119,7 +116,6 @@ interface ISproTypes {
         uint40 startTimestamp;
         uint40 loanExpiration;
         address proposer;
-        bytes32 proposerSpecHash;
         uint256 nonce;
         address loanContract;
     }
