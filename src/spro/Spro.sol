@@ -582,8 +582,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             proposal.creditAddress,
             creditAmount,
             fixedInterestAmount,
-            bytes32(0),
-            proposal.proposerSpecHash
+            bytes32(0)
         );
 
         withdrawableCollateral[proposalHash_] -= collateralUsed_;

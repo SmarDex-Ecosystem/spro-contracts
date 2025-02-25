@@ -75,7 +75,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
             uint40(block.timestamp) + 5 days,
             uint40(block.timestamp) + 10 days,
             borrower,
-            keccak256(abi.encode(borrower)),
             0,
             address(deployment.config)
         );
