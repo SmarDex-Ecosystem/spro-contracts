@@ -96,7 +96,7 @@ interface ISproTypes {
      * @notice Construct defining a simple proposal.
      * @param collateralAddress Address of an asset used as a collateral.
      * @param collateralAmount Amount of tokens used as a collateral, in case of ERC721 should be 0.
-     * @param creditAddress Address of an asset which is lended to a borrower.
+     * @param creditAddress Address of an asset which is lent to a borrower.
      * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
      * be borrowed using the proposal. If non-zero, proposal can be accepted more than once, until the credit limit is
      * reached.
@@ -137,7 +137,7 @@ interface ISproTypes {
      * @param collateral Address of a collateral asset.
      * @param collateralAmount Amount of a collateral asset.
      * @param originalSourceOfFunds Address of a source of funds for the loan. Original lender address, if the loan was
-     * funded directly, or a pool address from witch credit funds were withdrawn / borrowred.
+     * funded directly, or a pool address from witch credit funds were withdrawn / borrowed.
      * @param repaymentAmount Loan repayment amount in credit asset tokens.
      */
     struct LoanInfo {
