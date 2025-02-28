@@ -6,6 +6,9 @@ pragma solidity ^0.8.26;
  * @notice Errors for the Spro Protocol
  */
 interface ISproErrors {
+    // @notice Thrown when the address is zero.
+    error ZeroAddress();
+
     /**
      * @notice Thrown when a proposal is expired.
      * @param current The current timestamp.
@@ -31,10 +34,10 @@ interface ISproErrors {
     error DefaultLoanContract();
 
     /**
-     * @notice Thrown when trying to set a percentage value higher than `BPS_DIVISOR`.
+     * @notice Thrown when trying to set an incorrect percentage value.
      * @param percentage The percentage value.
      */
-    error ExcessivePercentageValue(uint16 percentage);
+    error IncorrectPercentageValue(uint16 percentage);
 
     /**
      * @notice Thrown when trying to set a percentage value equal to zero.
