@@ -142,16 +142,12 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @dev The function assumes a prior token approval to a contract address or signed permits.
      * @param proposal Proposal struct.
      * @param lenderSpec Lender specification struct.
-     * @param extra Auxiliary data that are emitted in the loan creation event. They are not used in the contract logic.
      * @param permit2Data Permit data.
      * @return loanId_ Id of the created Loan token.
      */
-    function createLoan(
-        Proposal memory proposal,
-        ISproTypes.LenderSpec memory lenderSpec,
-        bytes memory extra,
-        bytes calldata permit2Data
-    ) external returns (uint256 loanId_);
+    function createLoan(Proposal memory proposal, ISproTypes.LenderSpec memory lenderSpec, bytes calldata permit2Data)
+        external
+        returns (uint256 loanId_);
 
     /* ------------------------------------------------------------ */
     /*                          REPAY LOAN                          */

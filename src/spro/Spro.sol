@@ -223,12 +223,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function createLoan(
-        Proposal calldata proposal,
-        LenderSpec calldata lenderSpec,
-        bytes calldata extra,
-        bytes calldata permit2Data
-    ) external returns (uint256 loanId_) {
+    function createLoan(Proposal calldata proposal, LenderSpec calldata lenderSpec, bytes calldata permit2Data)
+        external
+        returns (uint256 loanId_)
+    {
         address poolAdapter = _poolAdapterRegistry[lenderSpec.sourceOfFunds];
         if (lenderSpec.sourceOfFunds != msg.sender && poolAdapter == address(0)) {
             revert InvalidSourceOfFunds(lenderSpec.sourceOfFunds);
@@ -240,7 +238,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Create a new loan
         loanId_ = _createLoan(loanTerms, lenderSpec, poolAdapter);
 
-        emit LoanCreated(loanId_, proposalHash, loanTerms, lenderSpec, extra);
+        emit LoanCreated(loanId_, proposalHash, loanTerms, lenderSpec);
 
         // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
