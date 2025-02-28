@@ -160,8 +160,6 @@ interface ISproTypes {
      * @param startTimestamp Proposal start timestamp in seconds.
      * @param proposer Address of a proposal signer. If `isOffer` is true, the proposer is the lender. If `isOffer` is
      * false, the proposer is the borrower.
-     * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
-     * an identical proposal again.
      * @param loanContract Address of a loan contract that will create a loan from the proposal.
      */
     struct ProposalBase {
@@ -169,7 +167,6 @@ interface ISproTypes {
         uint256 availableCreditLimit;
         uint40 startTimestamp;
         address proposer;
-        uint256 nonce;
         address loanContract;
     }
 
