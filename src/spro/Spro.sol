@@ -511,7 +511,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         returns (address proposer_, address collateral_, uint256 collateralAmount_)
     {
         // Decode proposal data
-        if (proposal.startTimestamp > proposal.loanExpiration) {
+        if (proposal.startTimestamp >= proposal.loanExpiration) {
             revert InvalidDurationStartTime();
         }
 
