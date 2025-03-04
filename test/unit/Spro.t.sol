@@ -26,7 +26,6 @@ abstract contract SproTest is Test {
     bytes32 internal constant TOKEN_FACTORS_SLOT = bytes32(uint256(5));
     bytes32 internal constant LOAN_METADATA_URI_SLOT = bytes32(uint256(6)); // `loanMetadataUri` mapping position
     bytes32 internal constant SFC_REGISTRY_SLOT = bytes32(uint256(7)); // `_sfComputerRegistry` mapping position
-    bytes32 internal constant POOL_ADAPTER_REGISTRY_SLOT = bytes32(uint256(8)); // `_poolAdapterRegistry` mapping
         // position
 
     Spro config;
