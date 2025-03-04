@@ -8,7 +8,6 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
-import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { ISproLoanMetadataProvider } from "src/interfaces/ISproLoanMetadataProvider.sol";
 import { ISpro } from "src/interfaces/ISpro.sol";
 import { SproLoan } from "src/spro/SproLoan.sol";
@@ -109,13 +108,12 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         loanInfo_.startTimestamp = loan.startTimestamp;
         loanInfo_.loanExpiration = loan.loanExpiration;
         loanInfo_.borrower = loan.borrower;
-        loanInfo_.originalLender = loan.originalLender;
+        loanInfo_.lender = loan.lender;
         loanInfo_.loanOwner = loan.status != LoanStatus.NONE ? loanToken.ownerOf(loanId) : address(0);
         loanInfo_.fixedInterestAmount = loan.fixedInterestAmount;
         loanInfo_.credit = loan.creditAddress;
         loanInfo_.collateral = loan.collateral;
         loanInfo_.collateralAmount = loan.collateralAmount;
-        loanInfo_.originalSourceOfFunds = loan.originalSourceOfFunds;
         loanInfo_.repaymentAmount = loan.principalAmount + loan.fixedInterestAmount;
     }
 
@@ -151,20 +149,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         uri_ = _loanMetadataUri[loanContract];
         // If there is no metadata uri for a loan contract, use default metadata uri.
         if (bytes(uri_).length == 0) uri_ = _loanMetadataUri[address(0)];
-    }
-
-    /* ------------------------------------------------------------ */
-    /*                          POOL ADAPTER                        */
-    /* ------------------------------------------------------------ */
-
-    /// @inheritdoc ISpro
-    function registerPoolAdapter(address pool, address adapter) external onlyOwner {
-        _poolAdapterRegistry[pool] = adapter;
-    }
-
-    /// @inheritdoc ISpro
-    function getPoolAdapter(address pool) public view returns (IPoolAdapter) {
-        return IPoolAdapter(_poolAdapterRegistry[pool]);
     }
 
     /* ------------------------------------------------------------ */
@@ -225,29 +209,24 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /// @inheritdoc ISpro
     function createLoan(
         Proposal calldata proposal,
-        LenderSpec calldata lenderSpec,
+        uint256 creditAmount,
         bytes calldata extra,
         bytes calldata permit2Data
     ) external returns (uint256 loanId_) {
-        address poolAdapter = _poolAdapterRegistry[lenderSpec.sourceOfFunds];
-        if (lenderSpec.sourceOfFunds != msg.sender && poolAdapter == address(0)) {
-            revert InvalidSourceOfFunds(lenderSpec.sourceOfFunds);
-        }
-
         // Accept proposal and get loan terms
-        (bytes32 proposalHash, Terms memory loanTerms) = _acceptProposal(msg.sender, lenderSpec.creditAmount, proposal);
+        (bytes32 proposalHash, Terms memory loanTerms) = _acceptProposal(msg.sender, creditAmount, proposal);
 
         // Create a new loan
-        loanId_ = _createLoan(loanTerms, lenderSpec, poolAdapter);
+        loanId_ = _createLoan(loanTerms);
 
-        emit LoanCreated(loanId_, proposalHash, loanTerms, lenderSpec, extra);
+        emit LoanCreated(loanId_, proposalHash, loanTerms, extra);
 
         // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
             _permit2Workflows(permit2Data, loanTerms.creditAmount.toUint160(), loanTerms.credit);
         } else {
-            // Settle the loan - Transfer credit to borrower
-            _settleNewLoan(loanTerms, poolAdapter, lenderSpec.sourceOfFunds);
+            // Transfer credit to borrower
+            _pushFrom(loanTerms.credit, loanTerms.creditAmount, loanTerms.lender, loanTerms.borrower);
         }
     }
 
@@ -376,11 +355,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         if (loan.status != LoanStatus.PAID_BACK) return;
 
         // If current loan owner is not original lender, the loan cannot be repaid directly, return without revert.
-        if (loan.originalLender != loanOwner) return;
+        if (loan.lender != loanOwner) return;
 
         // Note: The loan owner is the original lender at this point.
-
-        address destinationOfFunds = loan.originalSourceOfFunds;
         address credit = loan.creditAddress;
 
         // Delete loan data & burn Loan token before calling safe transfer
@@ -394,12 +371,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Note: Zero credit amount can happen when the loan is refinanced by the original lender.
 
         // Repay the original lender
-        if (destinationOfFunds == loanOwner) {
-            _push(credit, creditAmount, loanOwner);
-        } else {
-            // Supply the repaid credit to the original pool
-            _supplyToPool(credit, creditAmount, loan.poolAdapter, destinationOfFunds, loanOwner);
-        }
+        _push(credit, creditAmount, loanOwner);
 
         // Note: If the transfer fails, the Loan token will remain in repaid state and the Loan token owner
         // will be able to claim the repaid credit. Otherwise lender would be able to prevent borrower from
@@ -669,14 +641,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /**
      * @notice Mint Loan token and store loan data under loan id.
      * @param loanTerms Loan terms struct.
-     * @param lenderSpec Lender specification struct.
-     * @param poolAdapter Address of a pool adapter.
      * @return loanId_ Id of the created Loan token.
      */
-    function _createLoan(Terms memory loanTerms, LenderSpec calldata lenderSpec, address poolAdapter)
-        private
-        returns (uint256 loanId_)
-    {
+    function _createLoan(Terms memory loanTerms) private returns (uint256 loanId_) {
         // Mint Loan token for lender
         loanId_ = loanToken.mint(loanTerms.lender);
 
@@ -684,36 +651,14 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         Loan storage loan = Loans[loanId_];
         loan.status = LoanStatus.RUNNING;
         loan.creditAddress = loanTerms.credit;
-        loan.originalSourceOfFunds = lenderSpec.sourceOfFunds;
-        loan.poolAdapter = IPoolAdapter(poolAdapter);
         loan.startTimestamp = loanTerms.startTimestamp;
         loan.loanExpiration = loanTerms.loanExpiration;
         loan.borrower = loanTerms.borrower;
-        loan.originalLender = loanTerms.lender;
+        loan.lender = loanTerms.lender;
         loan.fixedInterestAmount = loanTerms.fixedInterestAmount;
         loan.principalAmount = loanTerms.creditAmount;
         loan.collateral = loanTerms.collateral;
         loan.collateralAmount = loanTerms.collateralAmount;
-    }
-
-    /**
-     * @notice Transfers credit to borrower
-     * @dev The function assumes a prior token approval to a contract address or signed permits.
-     * @param loanTerms Loan terms struct.
-     * @param poolAdapter Address of a pool adapter.
-     * @param sourceOfFunds Address of a source of funds.
-     */
-    function _settleNewLoan(Terms memory loanTerms, address poolAdapter, address sourceOfFunds) private {
-        // Lender is not the source of funds
-        if (sourceOfFunds != loanTerms.lender && loanTerms.creditAmount > 0) {
-            // Withdraw credit asset to the lender first
-            _withdrawFromPool(
-                loanTerms.credit, loanTerms.creditAmount, IPoolAdapter(poolAdapter), sourceOfFunds, loanTerms.lender
-            );
-        }
-
-        // Transfer credit to borrower
-        _pushFrom(loanTerms.credit, loanTerms.creditAmount, loanTerms.lender, loanTerms.borrower);
     }
 
     /**

@@ -36,9 +36,6 @@ interface ISproStorage {
      */
     function _loanMetadataUri(address loanContract) external view returns (string memory);
 
-    /// @notice Get registered pool adapter for a pool address.
-    function _poolAdapterRegistry(address poolAddress) external view returns (address);
-
     /* -------------------------------------------------------------------------- */
     /*                                    LOAN                                    */
     /* -------------------------------------------------------------------------- */

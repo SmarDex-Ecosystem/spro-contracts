@@ -3,7 +3,6 @@ pragma solidity ^0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
-import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { SproHandler } from "test/helper/SproHandler.sol";
 
 import { Spro } from "src/spro/Spro.sol";
@@ -18,15 +17,11 @@ contract SproSimpleLoanTest is Test {
     address public permitAsset = makeAddr("permitAsset");
     address public credit = makeAddr("credit");
 
-    address poolAdapter = address(new DummyPoolAdapter());
-
     SproHandler sproHandler;
 
     function setUp() public {
         vm.etch(config, bytes("data"));
         sproHandler = new SproHandler(sdex, permit2, 1, 1);
-
-        vm.mockCall(config, abi.encodeWithSignature("getPoolAdapter(address)"), abi.encode(poolAdapter));
     }
 
     function test_loanRepaymentAmount_shouldReturnZeroForNonExistingLoan() external view {

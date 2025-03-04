@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
@@ -93,24 +92,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     function loanMetadataUri(address loanContract) external view returns (string memory uri_);
 
     /* ------------------------------------------------------------ */
-    /*                          POOL ADAPTER                        */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Registers a pool adapter for a given pool.
-     * @param pool The pool for which the adapter is registered.
-     * @param adapter The adapter to be registered.
-     */
-    function registerPoolAdapter(address pool, address adapter) external;
-
-    /**
-     * @notice Returns the pool adapter for a given pool.
-     * @param pool The pool for which the adapter is requested.
-     * @return The adapter for the given pool.
-     */
-    function getPoolAdapter(address pool) external view returns (IPoolAdapter);
-
-    /* ------------------------------------------------------------ */
     /*                      CREATE PROPOSAL                         */
     /* ------------------------------------------------------------ */
 
@@ -141,17 +122,14 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @notice Create a new loan.
      * @dev The function assumes a prior token approval to a contract address or signed permits.
      * @param proposal Proposal struct.
-     * @param lenderSpec Lender specification struct.
+     * @param creditAmount Amount of credit tokens.
      * @param extra Auxiliary data that are emitted in the loan creation event. They are not used in the contract logic.
      * @param permit2Data Permit data.
      * @return loanId_ Id of the created Loan token.
      */
-    function createLoan(
-        Proposal memory proposal,
-        ISproTypes.LenderSpec memory lenderSpec,
-        bytes memory extra,
-        bytes calldata permit2Data
-    ) external returns (uint256 loanId_);
+    function createLoan(Proposal memory proposal, uint256 creditAmount, bytes memory extra, bytes calldata permit2Data)
+        external
+        returns (uint256 loanId_);
 
     /* ------------------------------------------------------------ */
     /*                          REPAY LOAN                          */

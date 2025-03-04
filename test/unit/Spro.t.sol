@@ -228,37 +228,3 @@ contract TestSproLoanMetadataUri is SproTest {
         assertEq(uri, tokenUri);
     }
 }
-
-/* ------------------------------------------------------------ */
-/*  GET POOL ADAPTER                                         */
-/* ------------------------------------------------------------ */
-
-contract TestSproGetPoolAdapter is SproTest {
-    function testFuzz_shouldReturnStoredAdapter_whenIsRegistered(address pool, address adapter) external {
-        vm.prank(owner);
-        config.registerPoolAdapter(pool, adapter);
-
-        assertEq(address(config.getPoolAdapter(pool)), adapter);
-    }
-}
-
-/* ------------------------------------------------------------ */
-/*  REGISTER POOL ADAPTER                                    */
-/* ------------------------------------------------------------ */
-
-contract TestSproRegisterPoolAdapter is SproTest {
-    function testFuzz_shouldFail_whenCallerIsNotOwner(address caller) external {
-        vm.assume(caller != owner);
-
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, caller));
-        vm.prank(caller);
-        config.registerPoolAdapter(address(0), address(0));
-    }
-
-    function testFuzz_shouldStoreAdapter(address pool, address adapter) external {
-        vm.prank(owner);
-        config.registerPoolAdapter(pool, adapter);
-
-        assertEq(address(config.getPoolAdapter(pool)), adapter);
-    }
-}

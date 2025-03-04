@@ -62,11 +62,10 @@ contract TestForkPermit2 is SproForkBase {
         bytes memory signature = getPermitSignature(permitSign, SIG_USER1_PK, deployment.permit2.DOMAIN_SEPARATOR());
 
         _createERC20Proposal();
-        Spro.LenderSpec memory lenderSpec = ISproTypes.LenderSpec(sigUser1, CREDIT_LIMIT, "");
 
         // Lender: creates the loan
         vm.prank(sigUser1);
-        deployment.config.createLoan(proposal, lenderSpec, "", abi.encode(permitSign, signature));
+        deployment.config.createLoan(proposal, CREDIT_LIMIT, "", abi.encode(permitSign, signature));
     }
 
     function test_RevertWhen_permit2CreateLoan() public {
@@ -77,12 +76,11 @@ contract TestForkPermit2 is SproForkBase {
         bytes memory signature = getPermitSignature(permitSign, SIG_USER1_PK, deployment.permit2.DOMAIN_SEPARATOR());
 
         _createERC20Proposal();
-        Spro.LenderSpec memory lenderSpec = ISproTypes.LenderSpec(sigUser1, CREDIT_LIMIT, "");
 
         vm.expectRevert(abi.encodeWithSelector(IAllowanceTransfer.InsufficientAllowance.selector, CREDIT_LIMIT - 1));
         // Lender: creates the loan
         vm.prank(sigUser1);
-        deployment.config.createLoan(proposal, lenderSpec, "", abi.encode(permitSign, signature));
+        deployment.config.createLoan(proposal, CREDIT_LIMIT, "", abi.encode(permitSign, signature));
     }
 
     function test_permit2CreateProposal() public {
@@ -145,8 +143,7 @@ contract TestForkPermit2 is SproForkBase {
 
         // Lender: creates the loan
         vm.prank(sigUser1);
-        uint256 loanId =
-            deployment.config.createLoan(proposal, ISproTypes.LenderSpec(sigUser1, CREDIT_AMOUNT, ""), "", "");
+        uint256 loanId = deployment.config.createLoan(proposal, CREDIT_AMOUNT, "", "");
 
         // Borrower: cancels proposal, withdrawing unused collateral
         vm.prank(borrower);
@@ -177,8 +174,7 @@ contract TestForkPermit2 is SproForkBase {
 
         // Lender: creates the loan
         vm.prank(sigUser1);
-        uint256 loanId =
-            deployment.config.createLoan(proposal, ISproTypes.LenderSpec(sigUser1, CREDIT_AMOUNT, ""), "", "");
+        uint256 loanId = deployment.config.createLoan(proposal, CREDIT_AMOUNT, "", "");
 
         // Borrower: cancels proposal, withdrawing unused collateral
         vm.prank(borrower);
@@ -212,12 +208,9 @@ contract TestForkPermit2 is SproForkBase {
         vm.startPrank(sigUser1);
         // Setup loanIds array
         uint256[] memory loanIds = new uint256[](3);
-        loanIds[0] =
-            deployment.config.createLoan(proposal, ISproTypes.LenderSpec(sigUser1, CREDIT_AMOUNT / 3, ""), "", "");
-        loanIds[1] =
-            deployment.config.createLoan(proposal, ISproTypes.LenderSpec(sigUser1, CREDIT_AMOUNT / 3, ""), "", "");
-        loanIds[2] =
-            deployment.config.createLoan(proposal, ISproTypes.LenderSpec(sigUser1, CREDIT_AMOUNT / 3, ""), "", "");
+        loanIds[0] = deployment.config.createLoan(proposal, CREDIT_AMOUNT / 3, "", "");
+        loanIds[1] = deployment.config.createLoan(proposal, CREDIT_AMOUNT / 3, "", "");
+        loanIds[2] = deployment.config.createLoan(proposal, CREDIT_AMOUNT / 3, "", "");
         vm.stopPrank();
 
         // Borrower: cancels proposal, withdrawing unused collateral
@@ -255,12 +248,9 @@ contract TestForkPermit2 is SproForkBase {
         vm.startPrank(sigUser1);
         // Setup loanIds array
         uint256[] memory loanIds = new uint256[](3);
-        loanIds[0] =
-            deployment.config.createLoan(proposal, ISproTypes.LenderSpec(sigUser1, CREDIT_AMOUNT / 3, ""), "", "");
-        loanIds[1] =
-            deployment.config.createLoan(proposal, ISproTypes.LenderSpec(sigUser1, CREDIT_AMOUNT / 3, ""), "", "");
-        loanIds[2] =
-            deployment.config.createLoan(proposal, ISproTypes.LenderSpec(sigUser1, CREDIT_AMOUNT / 3, ""), "", "");
+        loanIds[0] = deployment.config.createLoan(proposal, CREDIT_AMOUNT / 3, "", "");
+        loanIds[1] = deployment.config.createLoan(proposal, CREDIT_AMOUNT / 3, "", "");
+        loanIds[2] = deployment.config.createLoan(proposal, CREDIT_AMOUNT / 3, "", "");
         vm.stopPrank();
 
         // Borrower: cancels proposal, withdrawing unused collateral

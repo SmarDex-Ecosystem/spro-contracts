@@ -21,13 +21,11 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
     function test_CreateLoan_ERC20() external proposalContractHasTag whenLoanTermsValid whenERC20Collateral {
         _createERC20Proposal();
 
-        Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
-
         vm.startPrank(lender);
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        uint256 id = deployment.config.createLoan(proposal, lenderSpec, "", "");
+        uint256 id = deployment.config.createLoan(proposal, CREDIT_LIMIT, "", "");
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
@@ -38,7 +36,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         (Spro.LoanInfo memory loanInfo) = deployment.config.getLoan(id);
         assertTrue(loanInfo.status == ISproTypes.LoanStatus.RUNNING);
 
-        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE - lenderSpec.creditAmount);
-        assertEq(credit.balanceOf(borrower), lenderSpec.creditAmount);
+        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE - CREDIT_LIMIT);
+        assertEq(credit.balanceOf(borrower), CREDIT_LIMIT);
     }
 }

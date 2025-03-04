@@ -3,7 +3,6 @@ pragma solidity ^0.8.26;
 
 import { SigUtils } from "test/utils/SigUtils.sol";
 import { CreditPermit } from "test/helper/CreditPermit.sol";
-import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { T20 } from "test/helper/T20.sol";
 import { SDDeploymentTest, Spro } from "test/integration/SDDeploymentTest.t.sol";
 
@@ -29,9 +28,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     // permit
     CreditPermit creditPermit;
     SigUtils sigUtils;
-
-    // pool adapter
-    DummyPoolAdapter poolAdapter;
 
     // Constants
     uint256 public constant COLLATERAL_ID = 42;
@@ -60,10 +56,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         // Permit
         creditPermit = new CreditPermit();
         sigUtils = new SigUtils(creditPermit.DOMAIN_SEPARATOR());
-
-        // Pool adapter
-        poolAdapter = new DummyPoolAdapter();
-        vm.label(address(poolAdapter), "poolAdapter");
 
         // Deploy protocol contracts
         proposal = ISproTypes.Proposal(
@@ -130,16 +122,10 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         }
 
         vm.prank(lender);
-        return deployment.config.createLoan(newProposal, _buildLenderSpec(false), "", "");
+        return deployment.config.createLoan(newProposal, CREDIT_AMOUNT, "", "");
     }
 
     function _cancelProposal(Spro.Proposal memory _proposal) internal {
         deployment.config.cancelProposal(_proposal);
-    }
-
-    function _buildLenderSpec(bool complete) internal view returns (ISproTypes.LenderSpec memory lenderSpec) {
-        lenderSpec = complete
-            ? ISproTypes.LenderSpec(lender, CREDIT_LIMIT, "")
-            : ISproTypes.LenderSpec(lender, CREDIT_AMOUNT, "");
     }
 }

@@ -5,7 +5,6 @@ import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproVault } from "src/interfaces/ISproVault.sol";
 
@@ -38,47 +37,6 @@ contract SproVault is ISproVault {
         IERC20Metadata(asset).safeTransferFrom(origin, beneficiary, amount);
 
         emit VaultPushFrom(asset, origin, beneficiary, amount);
-    }
-
-    /**
-     * @notice Function withdrawing an asset from a Compound pool to the owner.
-     * @dev The function assumes a prior check for a valid pool address.
-     * @param asset Address of an asset to be withdrawn.
-     * @param amount Amount of an asset to be withdrawn.
-     * @param poolAdapter An address of a pool adapter.
-     * @param pool An address of a pool.
-     * @param owner An address on which behalf the assets are withdrawn.
-     */
-    function _withdrawFromPool(address asset, uint256 amount, IPoolAdapter poolAdapter, address pool, address owner)
-        internal
-    {
-        uint256 originalBalance = IERC20Metadata(asset).balanceOf(owner);
-
-        poolAdapter.withdraw(pool, owner, asset, amount);
-        if (IERC20Metadata(asset).balanceOf(owner) != originalBalance + amount) {
-            revert InvalidAmountTransfer();
-        }
-
-        emit PoolWithdraw(asset, address(poolAdapter), pool, owner, amount);
-    }
-
-    /**
-     * @notice Function supplying an asset to a pool from a vault via a pool adapter.
-     * @dev The function assumes a prior check for a valid pool address.
-     *      Assuming pool will revert supply transaction if it fails.
-     * @param asset Address of an asset to be supplied.
-     * @param amount Amount of an asset to be supplied.
-     * @param poolAdapter An address of a pool adapter.
-     * @param pool An address of a pool.
-     * @param owner An address on which behalf the asset is supplied.
-     */
-    function _supplyToPool(address asset, uint256 amount, IPoolAdapter poolAdapter, address pool, address owner)
-        internal
-    {
-        IERC20Metadata(asset).safeTransfer(address(poolAdapter), amount);
-        poolAdapter.supply(pool, owner, asset, amount);
-        // Note: Assuming pool will revert supply transaction if it fails.
-        emit PoolSupply(asset, address(poolAdapter), pool, owner, amount);
     }
 
     /* ------------------------------------------------------------ */
