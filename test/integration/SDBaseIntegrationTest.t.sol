@@ -18,7 +18,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     uint256 borrowerPK = uint256(888);
     address borrower = vm.addr(borrowerPK);
     Spro.Proposal proposal;
-    Spro.Permit permit;
 
     // Additional lenders
     address alice;

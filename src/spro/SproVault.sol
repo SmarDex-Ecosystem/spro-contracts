@@ -80,29 +80,4 @@ contract SproVault is ISproVault {
         // Note: Assuming pool will revert supply transaction if it fails.
         emit PoolSupply(asset, address(poolAdapter), pool, owner, amount);
     }
-
-    /* ------------------------------------------------------------ */
-    /*                            PERMIT                            */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Try to execute a permit for an ERC20 token.
-     * @dev If the permit execution fails, the function will not revert.
-     * @param permit The permit data.
-     */
-    function _tryPermit(ISproTypes.Permit memory permit) internal {
-        if (permit.asset != address(0)) {
-            try IERC20Permit(permit.asset).permit({
-                owner: permit.owner,
-                spender: address(this),
-                value: permit.amount,
-                deadline: permit.deadline,
-                v: permit.v,
-                r: permit.r,
-                s: permit.s
-            }) { } catch {
-                // Note: Permit execution can be frontrun, so we don't revert on failure.
-            }
-        }
-    }
 }

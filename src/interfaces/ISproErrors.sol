@@ -176,22 +176,4 @@ interface ISproErrors {
      * @param fee The fee amount.
      */
     error ExcessiveFee(uint256 fee);
-
-    /* -------------------------------------------------------------------------- */
-    /*                                   PERMIT                                   */
-    /* -------------------------------------------------------------------------- */
-
-    /**
-     * @notice Thrown when the permit owner is not matching.
-     * @param current The current owner.
-     * @param expected The expected owner.
-     */
-    error InvalidPermitOwner(address current, address expected);
-
-    /**
-     * @notice Thrown when the permit asset is not matching.
-     * @param current The current asset.
-     * @param expected The expected asset.
-     */
-    error InvalidPermitAsset(address current, address expected);
 }
