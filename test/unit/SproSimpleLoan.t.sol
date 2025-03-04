@@ -35,24 +35,24 @@ contract SproSimpleLoanTest is Test {
         assertEq(amount, 0);
     }
 
-    function test_shouldFail_checkLoanCanBeRepaid_NonExistingLoan() external {
-        vm.expectRevert(ISproErrors.NonExistingLoan.selector);
-        sproHandler.checkLoanCanBeRepaid(ISproTypes.LoanStatus.NONE, 0);
+    function test_shouldFail__checkLoanCanBeRepaid_NonExistingLoan() external view {
+        bool canBeRepaid = sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.NONE, 0);
+        assertFalse(canBeRepaid, "Loan shouldn't be repayable");
 
-        vm.expectRevert(ISproErrors.LoanNotRunning.selector);
-        sproHandler.checkLoanCanBeRepaid(ISproTypes.LoanStatus.PAID_BACK, 0);
+        canBeRepaid = sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.PAID_BACK, 0);
+        assertFalse(canBeRepaid, "Loan shouldn't be repayable");
     }
 
-    function test_shouldFail_checkLoanCanBeRepaid_LoanNotRunning() external {
-        vm.expectRevert(ISproErrors.LoanNotRunning.selector);
-        sproHandler.checkLoanCanBeRepaid(ISproTypes.LoanStatus.PAID_BACK, 0);
+    function test_shouldFail__checkLoanCanBeRepaid_LoanNotRunning() external view {
+        bool canBeRepaid = sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.PAID_BACK, 0);
+        assertFalse(canBeRepaid, "Loan shouldn't be repayable");
     }
 
-    function test_shouldFail_checkLoanCanBeRepaid_LoanDefaulted() external {
+    function test_shouldFail__checkLoanCanBeRepaid_LoanDefaulted() external {
         skip(30 days);
         uint40 ts = uint40(block.timestamp - 1);
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.LoanDefaulted.selector, ts));
-        sproHandler.checkLoanCanBeRepaid(ISproTypes.LoanStatus.RUNNING, ts);
+        bool canBeRepaid = sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.RUNNING, ts);
+        assertFalse(canBeRepaid, "Loan shouldn't be repayable");
     }
 
     function test_shouldFail_DifferentCreditAddress(address loanCreditAddress, address expectedCreditAddress)

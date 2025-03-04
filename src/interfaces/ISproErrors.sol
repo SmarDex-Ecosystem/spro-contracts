@@ -48,9 +48,9 @@ interface ISproErrors {
     error CallerIsNotStatedProposer(address addr);
 
     /**
-     * @notice Thrown when managed loan is running.
+     * @notice Thrown when managed loan cannot be repaid.
      */
-    error LoanNotRunning();
+    error LoanCannotBeRepaid();
 
     /**
      * @notice Thrown when manged loan is still running.

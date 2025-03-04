@@ -255,32 +255,13 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /*                          REPAY LOAN                          */
     /* ------------------------------------------------------------ */
 
-    /**
-     * @notice Check if the loan can be repaid.
-     * @dev The function will revert if the loan cannot be repaid.
-     * @param status Loan status.
-     * @param loanExpiration Loan default timestamp.
-     */
-    function checkLoanCanBeRepaid(LoanStatus status, uint40 loanExpiration) external view {
-        // Check that loan exists and is not from a different loan contract
-        if (status == LoanStatus.NONE) {
-            revert NonExistingLoan();
-        }
-        // Check that loan is running
-        if (status != LoanStatus.RUNNING) {
-            revert LoanNotRunning();
-        }
-        // Check that loan is not defaulted
-        if (loanExpiration <= block.timestamp) {
-            revert LoanDefaulted(loanExpiration);
-        }
-    }
-
     /// @inheritdoc ISpro
     function repayLoan(uint256 loanId, bytes calldata permit2Data) external {
         Loan memory loan = Loans[loanId];
 
-        this.checkLoanCanBeRepaid(loan.status, loan.loanExpiration);
+        if (!_checkLoanCanBeRepaid(loan.status, loan.loanExpiration)) {
+            revert LoanCannotBeRepaid();
+        }
 
         // Update loan to repaid state and get the repayment amount
         uint256 repaymentAmount = _updateRepaidLoan(loanId);
@@ -313,23 +294,22 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         uint256[] memory loansToRepay = new uint256[](loanIds.length);
         uint256 numLoansToRepay;
 
+        // Filter loans that can be repaid
         for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
             Loan memory loan = Loans[loanId];
 
             // Checks: loan can be repaid & credit address is the same for all loanIds
-            try this.checkLoanCanBeRepaid(loan.status, loan.loanExpiration) {
+            if (_checkLoanCanBeRepaid(loan.status, loan.loanExpiration)) {
                 _checkLoanCreditAddress(loan.creditAddress, creditAddress);
                 // Update loan to repaid state and increment the total repayment amount
                 totalRepaymentAmount += _updateRepaidLoan(loanId);
                 loansToRepay[numLoansToRepay] = loanId;
                 numLoansToRepay++;
-            } catch {
-                // If the loan cannot be repaid (e.g., already repaid), skip to the next loan
-                continue;
             }
         }
 
+        // Transfer the repaid credit to the Vault
         if (permit2Data.length > 0) {
             _permit2Workflows(permit2Data, totalRepaymentAmount.toUint160(), creditAddress);
         } else {
@@ -337,6 +317,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             _pushFrom(creditAddress, totalRepaymentAmount, msg.sender, address(this));
         }
 
+        // Transfer collateral back to borrower and try to repay directly for each loanId
         for (uint256 i; i < numLoansToRepay; ++i) {
             uint256 loanId = loansToRepay[i];
             Loan memory loan = Loans[loanId];
@@ -499,6 +480,33 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         if (loanCreditAddress != expectedCreditAddress) {
             revert DifferentCreditAddress(loanCreditAddress, expectedCreditAddress);
         }
+    }
+
+    /**
+     * @notice Check if the loan can be repaid.
+     * @dev The function will revert if the loan cannot be repaid.
+     * @param status Loan status.
+     * @param loanExpiration Loan default timestamp.
+     * @return canBeRepaid_ True if the loan can be repaid.
+     */
+    function _checkLoanCanBeRepaid(LoanStatus status, uint40 loanExpiration)
+        internal
+        view
+        returns (bool canBeRepaid_)
+    {
+        // Check that loan exists and is not from a different loan contract
+        if (status == LoanStatus.NONE) {
+            return canBeRepaid_;
+        }
+        // Check that loan is running
+        if (status != LoanStatus.RUNNING) {
+            return canBeRepaid_;
+        }
+        // Check that loan is not defaulted
+        if (loanExpiration <= block.timestamp) {
+            return canBeRepaid_;
+        }
+        return true;
     }
 
     /* -------------------------------------------------------------------------- */
