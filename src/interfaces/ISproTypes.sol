@@ -14,7 +14,6 @@ interface ISproTypes {
      * @param credit Address of a credit asset.
      * @param creditAmount Amount of a credit asset.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
-     * @param lenderSpecHash Hash of a lender specification.
      */
     struct Terms {
         address lender;
@@ -26,7 +25,6 @@ interface ISproTypes {
         address credit;
         uint256 creditAmount;
         uint256 fixedInterestAmount;
-        bytes32 lenderSpecHash;
     }
 
     /**
@@ -97,34 +95,6 @@ interface ISproTypes {
         address proposer;
         uint256 nonce;
         address loanContract;
-    }
-
-    /**
-     * @notice Loan information struct.
-     * @param status Loan status.
-     * @param startTimestamp Unix timestamp (in seconds) of a loan creation date.
-     * @param loanExpiration Unix timestamp (in seconds) of a loan default date.
-     * @param borrower Address of a loan borrower.
-     * @param lender Address of a loan lender.
-     * @param loanOwner Address of a Loan token holder.
-     * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
-     * @param credit Address of a credit asset.
-     * @param collateral Address of a collateral asset.
-     * @param collateralAmount Amount of a collateral asset.
-     * @param repaymentAmount Loan repayment amount in credit asset tokens.
-     */
-    struct LoanInfo {
-        LoanStatus status;
-        uint40 startTimestamp;
-        uint40 loanExpiration;
-        address borrower;
-        address lender;
-        address loanOwner;
-        uint256 fixedInterestAmount;
-        address credit;
-        address collateral;
-        uint256 collateralAmount;
-        uint256 repaymentAmount;
     }
 
     /**

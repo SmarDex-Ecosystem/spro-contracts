@@ -152,7 +152,7 @@ contract TestForkPermit2 is SproForkBase {
         // Warp ahead, just before loan default
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
-        uint256 repaymentAmount = deployment.config.getLoan(loanId).repaymentAmount;
+        (, uint256 repaymentAmount,) = deployment.config.getLoan(loanId);
         IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(repaymentAmount), 0, 0);
         IAllowanceTransfer.PermitSingle memory permitSign =
@@ -183,7 +183,7 @@ contract TestForkPermit2 is SproForkBase {
         // Warp ahead, just before loan default
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
-        uint256 repaymentAmount = deployment.config.getLoan(loanId).repaymentAmount;
+        (, uint256 repaymentAmount,) = deployment.config.getLoan(loanId);
         IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(repaymentAmount - 1), 0, 0);
         IAllowanceTransfer.PermitSingle memory permitSign =
@@ -220,9 +220,13 @@ contract TestForkPermit2 is SproForkBase {
         // Warp ahead, just before loan default
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
-        uint256 totalRepaymentAmount = deployment.config.getLoan(loanIds[0]).repaymentAmount;
-        totalRepaymentAmount += deployment.config.getLoan(loanIds[1]).repaymentAmount;
-        totalRepaymentAmount += deployment.config.getLoan(loanIds[2]).repaymentAmount;
+        uint256 totalRepaymentAmount;
+        (, uint256 repaymentAmount,) = deployment.config.getLoan(loanIds[0]);
+        totalRepaymentAmount += repaymentAmount;
+        (, repaymentAmount,) = deployment.config.getLoan(loanIds[1]);
+        totalRepaymentAmount += repaymentAmount;
+        (, repaymentAmount,) = deployment.config.getLoan(loanIds[2]);
+        totalRepaymentAmount += repaymentAmount;
         IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(totalRepaymentAmount), 0, 0);
         IAllowanceTransfer.PermitSingle memory permitSign =
@@ -260,9 +264,13 @@ contract TestForkPermit2 is SproForkBase {
         // Warp ahead, just before loan default
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
-        uint256 totalRepaymentAmount = deployment.config.getLoan(loanIds[0]).repaymentAmount;
-        totalRepaymentAmount += deployment.config.getLoan(loanIds[1]).repaymentAmount;
-        totalRepaymentAmount += deployment.config.getLoan(loanIds[2]).repaymentAmount;
+        uint256 totalRepaymentAmount;
+        (, uint256 repaymentAmount,) = deployment.config.getLoan(loanIds[0]);
+        totalRepaymentAmount += repaymentAmount;
+        (, repaymentAmount,) = deployment.config.getLoan(loanIds[1]);
+        totalRepaymentAmount += repaymentAmount;
+        (, repaymentAmount,) = deployment.config.getLoan(loanIds[2]);
+        totalRepaymentAmount += repaymentAmount;
         IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(totalRepaymentAmount - 1), 0, 0);
         IAllowanceTransfer.PermitSingle memory permitSign =

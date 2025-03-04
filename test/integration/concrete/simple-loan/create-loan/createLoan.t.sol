@@ -33,7 +33,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fee());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
-        (Spro.LoanInfo memory loanInfo) = deployment.config.getLoan(id);
+        (Spro.Loan memory loanInfo,,) = deployment.config.getLoan(id);
         assertTrue(loanInfo.status == ISproTypes.LoanStatus.RUNNING);
 
         assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE - CREDIT_LIMIT);

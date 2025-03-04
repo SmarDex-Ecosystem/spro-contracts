@@ -101,20 +101,15 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     }
 
     /// @inheritdoc ISpro
-    function getLoan(uint256 loanId) external view returns (LoanInfo memory loanInfo_) {
-        Loan memory loan = Loans[loanId];
-
-        loanInfo_.status = _getLoanStatus(loanId);
-        loanInfo_.startTimestamp = loan.startTimestamp;
-        loanInfo_.loanExpiration = loan.loanExpiration;
-        loanInfo_.borrower = loan.borrower;
-        loanInfo_.lender = loan.lender;
-        loanInfo_.loanOwner = loan.status != LoanStatus.NONE ? loanToken.ownerOf(loanId) : address(0);
-        loanInfo_.fixedInterestAmount = loan.fixedInterestAmount;
-        loanInfo_.credit = loan.creditAddress;
-        loanInfo_.collateral = loan.collateral;
-        loanInfo_.collateralAmount = loan.collateralAmount;
-        loanInfo_.repaymentAmount = loan.principalAmount + loan.fixedInterestAmount;
+    function getLoan(uint256 loanId)
+        external
+        view
+        returns (Loan memory loan_, uint256 repaymentAmount_, address loanOwner_)
+    {
+        loan_ = Loans[loanId];
+        loan_.status = _getLoanStatus(loanId);
+        loanOwner_ = loan_.status != LoanStatus.NONE ? loanToken.ownerOf(loanId) : address(0);
+        repaymentAmount_ = loan_.principalAmount + loan_.fixedInterestAmount;
     }
 
     /// @inheritdoc ISpro
@@ -552,8 +547,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             collateralUsed_,
             proposal.creditAddress,
             creditAmount,
-            fixedInterestAmount,
-            ""
+            fixedInterestAmount
         );
 
         withdrawableCollateral[proposalHash_] -= collateralUsed_;

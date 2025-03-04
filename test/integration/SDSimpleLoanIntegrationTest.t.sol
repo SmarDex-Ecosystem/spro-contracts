@@ -78,16 +78,16 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
         // Borrower approvals for credit token
-        uint256 interest = deployment.config.getLoan(loanId).fixedInterestAmount;
-        credit.mint(borrower, interest); // helper step: mint fixed interest amount for the borrower
-        credit.approve(address(deployment.config), CREDIT_AMOUNT + interest);
+        (ISproTypes.Loan memory loan,,) = deployment.config.getLoan(loanId);
+        credit.mint(borrower, loan.fixedInterestAmount); // helper step: mint fixed interest amount for the borrower
+        credit.approve(address(deployment.config), CREDIT_AMOUNT + loan.fixedInterestAmount);
 
         // Borrower: repays loan
         deployment.config.repayLoan(loanId, "");
 
         // Assertions
         assertEq(credit.balanceOf(borrower), 0);
-        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + interest);
+        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + loan.fixedInterestAmount);
 
         assertEq(t20.balanceOf(borrower), COLLATERAL_AMOUNT);
     }
@@ -439,8 +439,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // skip to the future
         skip(future);
 
-        (ISproTypes.LoanInfo memory loanInfo) = deployment.config.getLoan(loanId);
+        (ISproTypes.Loan memory loanInfo, uint256 repaymentAmount,) = deployment.config.getLoan(loanId);
 
-        assertEq(deployment.config.getLoan(loanId).repaymentAmount, amount + loanInfo.fixedInterestAmount);
+        assertEq(repaymentAmount, amount + loanInfo.fixedInterestAmount);
     }
 }

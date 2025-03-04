@@ -25,9 +25,9 @@ contract SproSimpleLoanTest is Test {
     }
 
     function test_loanRepaymentAmount_shouldReturnZeroForNonExistingLoan() external view {
-        uint256 amount = sproHandler.getLoan(0).repaymentAmount;
+        (, uint256 repaymentAmount,) = sproHandler.getLoan(0);
 
-        assertEq(amount, 0);
+        assertEq(repaymentAmount, 0);
     }
 
     function test_shouldFail_checkLoanCanBeRepaid_NonExistingLoan() external {
