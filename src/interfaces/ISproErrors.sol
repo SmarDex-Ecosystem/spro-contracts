@@ -98,12 +98,6 @@ interface ISproErrors {
     error CallerNotProposer();
 
     /**
-     * @notice Thrown when pool based source of funds doesn't have a registered adapter.
-     * @param sourceOfFunds The address of the source of funds.
-     */
-    error InvalidSourceOfFunds(address sourceOfFunds);
-
-    /**
      * @notice Thrown when the loan credit address is different than the expected credit address.
      * @param loanCreditAddress The address of the loan credit.
      * @param expectedCreditAddress The expected address of the credit.

@@ -257,9 +257,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Try to repay directly
         try this.tryClaimRepaidLoan(loanId, repaymentAmount, loanToken.ownerOf(loanId)) { }
         catch {
-            // Note: Safe transfer or supply to a pool can fail. In that case leave the Loan token in repaid state and
-            // wait for the Loan token owner to claim the repaid credit. Otherwise lender would be able to prevent
-            // borrower from repaying the loan.
+            // Note: Safe transfer can fail. In that case leave the Loan token in repaid state and wait for the Loan
+            // token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower from
+            // repaying the loan.
         }
     }
 
@@ -299,10 +299,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             try this.tryClaimRepaidLoan(
                 loanId, loan.principalAmount + loan.fixedInterestAmount, loanToken.ownerOf(loanId)
             ) { } catch {
-                // Note: Safe transfer or supply to a pool can fail. In that case leave the Loan token in repaid state
-                // and
-                // wait for the Loan token owner to claim the repaid credit. Otherwise lender would be able to prevent
-                // borrower from repaying the loan.
+                // Note: Safe transfer can fail. In that case leave the Loan token in repaid state and wait for the Loan
+                // token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower from
+                // repaying the loan.
             }
         }
     }
