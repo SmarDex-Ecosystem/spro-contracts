@@ -196,6 +196,32 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(8000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(address(deployment.config)));
     }
 
+    function test_MultiplePartialLoans_NotRevertIfOneLess() external {
+        (uint256[] memory loanIds, uint256 fixedInterestAmount) = _setupMultipleRepay();
+
+        vm.startPrank(borrower);
+        // Simulate someone repaying one loan
+        deployment.config.repayLoan(loanIds[2], "");
+        // Must not revert
+        deployment.config.repayMultipleLoans(loanIds, address(credit), "");
+
+        // Assertions
+        assertEq(credit.balanceOf(borrower), 0);
+        require(
+            credit.balanceOf(lender) == credit.balanceOf(alice) && credit.balanceOf(lender) == credit.balanceOf(bob)
+                && credit.balanceOf(lender) == credit.balanceOf(charlee)
+        );
+        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + fixedInterestAmount);
+
+        assertEq(0, deployment.loanToken.balanceOf(lender));
+        assertEq(0, deployment.loanToken.balanceOf(alice));
+        assertEq(0, deployment.loanToken.balanceOf(bob));
+        assertEq(0, deployment.loanToken.balanceOf(charlee));
+
+        assertEq(2000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(borrower)); // 20% since 4 loans @ 5% minimum amount
+        assertEq(8000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(address(deployment.config)));
+    }
+
     function test_MultiplePartialLoans_RepayMultiple_RepayerNotOwner() external {
         (uint256[] memory loanIds, uint256 fixedInterestAmount) = _setupMultipleRepay();
 

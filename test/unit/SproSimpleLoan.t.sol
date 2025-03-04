@@ -37,22 +37,22 @@ contract SproSimpleLoanTest is Test {
 
     function test_shouldFail_checkLoanCanBeRepaid_NonExistingLoan() external {
         vm.expectRevert(ISproErrors.NonExistingLoan.selector);
-        sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.NONE, 0);
+        sproHandler.checkLoanCanBeRepaid(ISproTypes.LoanStatus.NONE, 0);
 
         vm.expectRevert(ISproErrors.LoanNotRunning.selector);
-        sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.PAID_BACK, 0);
+        sproHandler.checkLoanCanBeRepaid(ISproTypes.LoanStatus.PAID_BACK, 0);
     }
 
     function test_shouldFail_checkLoanCanBeRepaid_LoanNotRunning() external {
         vm.expectRevert(ISproErrors.LoanNotRunning.selector);
-        sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.PAID_BACK, 0);
+        sproHandler.checkLoanCanBeRepaid(ISproTypes.LoanStatus.PAID_BACK, 0);
     }
 
     function test_shouldFail_checkLoanCanBeRepaid_LoanDefaulted() external {
         skip(30 days);
         uint40 ts = uint40(block.timestamp - 1);
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.LoanDefaulted.selector, ts));
-        sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.RUNNING, ts);
+        sproHandler.checkLoanCanBeRepaid(ISproTypes.LoanStatus.RUNNING, ts);
     }
 
     function test_shouldFail_DifferentCreditAddress(address loanCreditAddress, address expectedCreditAddress)
