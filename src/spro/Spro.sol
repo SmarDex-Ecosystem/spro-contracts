@@ -130,7 +130,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
             Loan memory loan = Loans[loanId];
-            _checkLoanCreditAddress(loan.creditAddress, creditAddress);
+            _checkLoanCreditAddress(loan.credit, creditAddress);
             // Check non-existent loan
             if (loan.status == LoanStatus.NONE) return 0;
 
@@ -240,10 +240,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
         // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
-            _permit2Workflows(permit2Data, repaymentAmount.toUint160(), loan.creditAddress);
+            _permit2Workflows(permit2Data, repaymentAmount.toUint160(), loan.credit);
         } else {
             // Transfer the repaid credit to the Vault
-            _pushFrom(loan.creditAddress, repaymentAmount, msg.sender, address(this));
+            _pushFrom(loan.credit, repaymentAmount, msg.sender, address(this));
         }
 
         // Transfer collateral back to borrower
@@ -270,7 +270,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
 
             // Checks: loan can be repaid & credit address is the same for all loanIds
             _checkLoanCanBeRepaid(loan.status, loan.loanExpiration);
-            _checkLoanCreditAddress(loan.creditAddress, creditAddress);
+            _checkLoanCreditAddress(loan.credit, creditAddress);
 
             // Update loan to repaid state and increment the total repayment amount
             totalRepaymentAmount += _updateRepaidLoan(loanId);
@@ -351,9 +351,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // If current loan owner is not original lender, the loan cannot be repaid directly, return without revert.
         if (loan.lender != loanOwner) return;
 
-        // Note: The loan owner is the original lender at this point.
-        address credit = loan.creditAddress;
-
         // Delete loan data & burn Loan token before calling safe transfer
         _deleteLoan(loanId);
 
@@ -365,7 +362,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Note: Zero credit amount can happen when the loan is refinanced by the original lender.
 
         // Repay the original lender
-        _push(credit, creditAmount, loanOwner);
+        _push(loan.credit, creditAmount, loanOwner);
 
         // Note: If the transfer fails, the Loan token will remain in repaid state and the Loan token owner
         // will be able to claim the repaid credit. Otherwise lender would be able to prevent borrower from
@@ -382,7 +379,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         Loan memory loan = Loans[loanId];
 
         // Store in memory before deleting the loan
-        address asset = defaulted ? loan.collateral : loan.creditAddress;
+        address asset = defaulted ? loan.collateral : loan.credit;
         uint256 assetAmount = defaulted ? loan.collateralAmount : loan.principalAmount + loan.fixedInterestAmount;
 
         // Delete loan data & burn Loan token before calling safe transfer
@@ -643,15 +640,15 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Store loan data under loan id
         Loan storage loan = Loans[loanId_];
         loan.status = LoanStatus.RUNNING;
-        loan.creditAddress = loanTerms.credit;
+        loan.lender = loanTerms.lender;
+        loan.borrower = loanTerms.borrower;
         loan.startTimestamp = loanTerms.startTimestamp;
         loan.loanExpiration = loanTerms.loanExpiration;
-        loan.borrower = loanTerms.borrower;
-        loan.lender = loanTerms.lender;
-        loan.fixedInterestAmount = loanTerms.fixedInterestAmount;
-        loan.principalAmount = loanTerms.creditAmount;
         loan.collateral = loanTerms.collateral;
         loan.collateralAmount = loanTerms.collateralAmount;
+        loan.credit = loanTerms.credit;
+        loan.principalAmount = loanTerms.creditAmount;
+        loan.fixedInterestAmount = loanTerms.fixedInterestAmount;
     }
 
     /**

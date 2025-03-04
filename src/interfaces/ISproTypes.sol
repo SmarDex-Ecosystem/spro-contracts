@@ -44,27 +44,27 @@ interface ISproTypes {
     /**
      * @notice Struct defining a simple loan.
      * @param status Loan status.
-     * @param creditAddress Address of an asset used as a loan credit.
+     * @param lender Address of a lender that funded the loan.
+     * @param borrower Address of a borrower.
      * @param startTimestamp Unix timestamp (in seconds) of a start date.
      * @param loanExpiration Unix timestamp (in seconds) of a default date.
-     * @param borrower Address of a borrower.
-     * @param lender Address of a lender that funded the loan.
-     * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
-     * @param principalAmount Principal amount in credit asset tokens.
      * @param collateral Address of a collateral asset.
      * @param collateralAmount Amount of a collateral asset.
+     * @param credit Address of an asset used as a loan credit.
+     * @param principalAmount Principal amount in credit asset tokens.
+     * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      */
     struct Loan {
         LoanStatus status;
-        address creditAddress;
+        address lender;
+        address borrower;
         uint40 startTimestamp;
         uint40 loanExpiration;
-        address borrower;
-        address lender;
-        uint256 fixedInterestAmount;
-        uint256 principalAmount;
         address collateral;
         uint256 collateralAmount;
+        address credit;
+        uint256 principalAmount;
+        uint256 fixedInterestAmount;
     }
 
     /**
