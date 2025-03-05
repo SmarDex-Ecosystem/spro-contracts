@@ -2,8 +2,6 @@
 pragma solidity 0.8.26;
 
 library SproConstantsLibrary {
-    /// @dev The decimal precision.
-    uint256 internal constant WAD = 1e18;
     /// @dev Percentage denominator (10_000 = 100%)
     uint256 internal constant BPS_DIVISOR = 10_000;
     /// @dev The maximum SDEX fee.
@@ -15,12 +13,4 @@ library SproConstantsLibrary {
 
     /// @dev The minimum loan duration.
     uint32 public constant MIN_LOAN_DURATION = 10 minutes;
-    /// @dev The maximum interest rate.
-    uint40 public constant MAX_ACCRUING_INTEREST_APR = 16e6; // 160,000 APR (with 2 decimals)
-    /// @dev The interest rate decimals.
-    uint256 public constant ACCRUING_INTEREST_APR_DECIMALS = 1e2;
-    /// @dev The number of minutes in a year.
-    uint256 public constant MINUTES_IN_YEAR = 525_600; // Note: Assuming 365 days in a year
-    /// @dev The accruing interest APR denominator.
-    uint256 public constant ACCRUING_INTEREST_APR_DENOMINATOR = ACCRUING_INTEREST_APR_DECIMALS * MINUTES_IN_YEAR * 100;
 }

@@ -92,13 +92,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      */
     function loanMetadataUri(address loanContract) external view returns (string memory uri_);
 
-    /**
-     * @notice Calculate the loan repayment amount with fixed and accrued interest.
-     * @param loanId Id of a loan.
-     * @return Repayment amount.
-     */
-    function loanRepaymentAmount(uint256 loanId) external view returns (uint256);
-
     /* ------------------------------------------------------------ */
     /*                          POOL ADAPTER                        */
     /* ------------------------------------------------------------ */

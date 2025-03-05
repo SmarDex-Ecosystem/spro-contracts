@@ -15,13 +15,4 @@ contract SproHandler is Spro {
     function exposed_checkLoanCreditAddress(address loanCreditAddress, address expectedCreditAddress) external pure {
         _checkLoanCreditAddress(loanCreditAddress, expectedCreditAddress);
     }
-
-    function exposed_withdrawCreditFromPool(
-        address credit,
-        uint256 creditAmount,
-        Terms memory loanTerms,
-        LenderSpec calldata lenderSpec
-    ) external {
-        _withdrawCreditFromPool(credit, creditAmount, loanTerms.lender, lenderSpec.sourceOfFunds);
-    }
 }

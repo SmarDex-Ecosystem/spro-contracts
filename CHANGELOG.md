@@ -1,5 +1,63 @@
 # Changelog
 
+## [0.1.2](https://github.com/SmarDex-Ecosystem/SPRO_contracts/compare/v0.1.1...v0.1.2) (2025-02-25)
+
+
+### Features
+
+* add all interfaces ([682b454](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/682b454be0f0a3b5338fc8f39904fd430d384448))
+* add interfaces ([11560b4](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/11560b4f8044a460d3c69e3ffe9d9da1c35a7c32))
+* add ISproLOAN ([c61a42f](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/c61a42f4ed1ee5a7032fe0d09fc697bfffabf004))
+* add ISproStorage ([e6e474b](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/e6e474bf16babf2dfee16298e91e8e21ae6b671f))
+* add max set fee ([#19](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/19)) ([f37335d](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/f37335d67004f79020cce49af5b7467236fe15bd))
+* add pool adapter in loan ([#29](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/29)) ([b51487d](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/b51487de7498aefb2eb33e1ad399e6ae93ef8ecb))
+* change visibility function ([6cae5c2](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/6cae5c25453455383438c2d99d09d767a93ea5f4))
+* fix fees logic ([#16](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/16)) ([818b6a2](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/818b6a269c61c885c2b760c292e2b63b26272344))
+* fix fingerprint ([3d46cc0](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/3d46cc08c168c58c3664ba85d7c80db1fbd4b2c2))
+* merge pull request [#12](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/12) from SmarDex-Ecosystem/feature/remove-fingerprint ([c3e785f](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/c3e785f49e7d49a2617838d7a0c5f748f41e22e6))
+* merge pull request [#13](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/13) from SmarDex-Ecosystem/feature/add-interfaces ([11560b4](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/11560b4f8044a460d3c69e3ffe9d9da1c35a7c32))
+* move availableCreditLimit check ([d60b918](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/d60b91879b6338b593d9296f637236dfcaa38cf7))
+* move availableCreditLimit check ([#20](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/20)) ([64b1136](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/64b1136a7aba1e916aecb0e1b03852174bedd689))
+* move loanTerms checks in proposal creation ([#23](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/23)) ([6e659f5](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/6e659f5ee7d26c2b1764017c348dbd987274fe05))
+* remove  _pull ([93888cb](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/93888cbc2e81accbd17921461168f5f0d3a2bfee))
+* remove _checkCompleteLoan ([#22](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/22)) ([29caf7f](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/29caf7f5d13325f2af3f34412091ad28ad09d62c))
+* remove deployments ([f1aceaf](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/f1aceaf544f9372eb6e12acea5777338d3954a1c))
+* remove domain and typehash ([#18](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/18)) ([bad440b](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/bad440b19c11944b3f3cb4f67778517a9662f109))
+* remove encode and decode ([c836808](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/c836808388896782a233021558a167afa6405981))
+* remove fingerprint ([c3e785f](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/c3e785f49e7d49a2617838d7a0c5f748f41e22e6))
+* remove fingerprint ([795492c](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/795492c91378743fb09779c91d3804028acdcec3))
+* remove IPWNDeployer ([69aa24a](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/69aa24a03e7b11e5ada10eba6a16b88fc6e0a6bf))
+* remove library ([51cf363](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/51cf363493defdcbbdd8eb35de53964251703d88))
+* remove LOAN caps ([86c79c5](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/86c79c5f91032be670a2559d3827550b28dce059))
+* remove nonce ([#15](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/15)) ([851ee23](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/851ee23956fa57d74057390a047c97a540d6b394))
+* remove pool check ([8b86ac9](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/8b86ac9f161e6c35dcb3e2d7470e9ec9defd291c))
+* remove private ([3671522](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/3671522a686fed393e8ddcf0d98638277e1b0950))
+* remove storage to memory ([2ff5846](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/2ff5846bd1d5b16b63e1bd617d9087a97928f31a))
+* remove unused file ([14c3a1c](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/14c3a1c17a8924eb45d13ee41f4ce7881b7f662f))
+* remove unused file ([1c21baa](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/1c21baaa8078bf95422306b8be9c82ec89fcc65e))
+* remove unused function ([239c488](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/239c4888bf1593664a30dfbd468bb55ff8360c4a))
+* remove unused import ([bd9ab15](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/bd9ab15332b9ecf27ce8d7981fa5ccc4eba94f09))
+* remove version ([ff8c1ad](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/ff8c1ad27f47e8732aebdef71ebff1b32c29225f))
+* rename loanExpiration ([91567e8](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/91567e8062bc17229890b56e2a1a4699a886f995))
+* rename with bps ([f378cdf](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/f378cdf2c504f5d3cc5e70be166108df60343d67))
+* reorder functions ([f563aa5](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/f563aa53a545715be6f7f6447ad6257ee2fa556c))
+* return directly Proposal ([3c625f1](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/3c625f189d13f7b3ec8778bab9a70d9554052312))
+* simplify arguments ([82c7bc1](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/82c7bc17952ac0ac6f5a523aaeebcc7a961971d3))
+* simplify loan ([980e0cd](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/980e0cd900600613c7cab2a125cc927a43c91d5f))
+* use directly address(0xdead) ([493e325](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/493e325913c423539e55f9efe7c5e692e7fe1819))
+* use DOMAIN_SEPARATOR_PROPOSAL in parameter ([8200e9e](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/8200e9e2df4dfbca9c97d6d16ea8d6fbc1741166))
+* use enum for loanStatus ([25cb600](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/25cb600ed855da8c97e1621f6dbb9ccadb50828e))
+* use internal function ([a275c57](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/a275c57a20248eeef2512dfb4416f0ad91a89f6c))
+* use msg.sender ([597d69d](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/597d69d6c21b7fcae027bff5a852ecc7ea645cfc))
+* use only fixedInterestAmount by remove accruingInterestAPR ([#30](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/30)) ([ea98e11](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/ea98e11d8b612942036eba974113c7ff10913dac))
+* use permit2 ([#17](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/17)) ([80b4c3c](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/80b4c3cb534595e1fdc40a7da058d8ca8146ec98))
+* use the return function directly instead of executing two functions to calculate interest ([#28](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/28)) ([8f3258e](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/8f3258e29a0f5846002ce7b37852443d985e6e97))
+
+
+### Performance Improvements
+
+* remove unused variables ([#32](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/32)) ([68b3031](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/68b3031ffbd93fdd4cbc20b01f9ded03d0388f41))
+
 ## [0.1.1](https://github.com/SmarDex-Ecosystem/SPRO_contracts/compare/v0.1.0...v0.1.1) (2024-10-09)
 
 
