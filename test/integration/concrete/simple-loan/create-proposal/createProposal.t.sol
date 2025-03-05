@@ -156,17 +156,9 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         deployment.config.createProposal(proposal, "");
     }
 
-    function test_RevertWhen_InvalidPartialPositionBps()
-        external
-        proposalContractHasTag
-        whenValidProposalData
-        whenCallerIsProposer
-        whenValidCollateral
-        whenFeeAmountGtZero
-        whenListedFee
-    {
+    function test_RevertWhen_InvalidPartialPositionBps() external {
         // Set bad partial position value
-        proposal.partialPositionBps = 200;
+        proposal.partialPositionBps = deployment.config.partialPositionBps() + 1;
 
         vm.prank(borrower);
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidPartialPositionBps.selector));

@@ -177,7 +177,7 @@ interface ISproErrors {
      */
     error ExcessiveFee(uint256 fee);
 
-    /// @notice Thrown when the borrower don't give the right partialPositionBps.
+    /// @notice Thrown when the borrower doesn't give the value stored in the contract.
     error InvalidPartialPositionBps();
 
     /* -------------------------------------------------------------------------- */
