@@ -93,13 +93,13 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(t20.balanceOf(borrower), COLLATERAL_AMOUNT);
     }
 
-    function test_PartialLoan_GtCreditThreshold() external {
+    function test_RevertWhen_PartialLoanGtCreditThreshold() external {
         // Create the proposal
         vm.prank(borrower);
         _createERC20Proposal();
 
-        // 97% of available credit limit
-        uint256 amount = 9700 * CREDIT_LIMIT / 1e4;
+        // 95.01% of available credit limit
+        uint256 amount = (10_000 - deployment.config.partialPositionBps() + 1) * CREDIT_LIMIT / 1e4;
 
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
@@ -111,9 +111,32 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Create loan, expecting revert
         vm.expectRevert(
             abi.encodeWithSelector(
-                ISproErrors.CreditAmountLeavesTooLittle.selector,
-                amount,
-                (PERCENTAGE - DEFAULT_THRESHOLD) * CREDIT_LIMIT / 1e4
+                ISproErrors.CreditAmountLeavesTooSmall.selector, amount, DEFAULT_THRESHOLD * CREDIT_LIMIT / 1e4
+            )
+        );
+        deployment.config.createLoan(proposal, lenderSpec, "", "");
+        vm.stopPrank();
+    }
+
+    function test_RevertWhen_PartialLoanLtCreditThreshold() external {
+        // Create the proposal
+        vm.prank(borrower);
+        _createERC20Proposal();
+
+        // 4.99% of available credit limit
+        uint256 amount = deployment.config.partialPositionBps() - 1;
+
+        // Mint initial state & approve credit
+        credit.mint(lender, INITIAL_CREDIT_BALANCE);
+        vm.startPrank(lender);
+        credit.approve(address(deployment.config), CREDIT_LIMIT);
+
+        ISproTypes.LenderSpec memory lenderSpec = ISproTypes.LenderSpec(lender, amount, "");
+
+        // Create loan, expecting revert
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ISproErrors.CreditAmountTooSmall.selector, amount, DEFAULT_THRESHOLD * CREDIT_LIMIT / 1e4
             )
         );
         deployment.config.createLoan(proposal, lenderSpec, "", "");

@@ -127,11 +127,11 @@ interface ISproErrors {
     error CreditAmountTooSmall(uint256 amount, uint256 minimum);
 
     /**
-     * @notice Thrown when credit amount is above the maximum amount for the proposal, but not 100% of available.
+     * @notice Thrown when the lander leaves too small an amount of potential credit.
      * @param amount The credit amount.
-     * @param maximum The maximum credit amount.
+     * @param minimum The minimum leaved credit amount.
      */
-    error CreditAmountLeavesTooLittle(uint256 amount, uint256 maximum);
+    error CreditAmountLeavesTooSmall(uint256 amount, uint256 minimum);
 
     /**
      * @notice Thrown when a proposal would exceed the available credit limit.
