@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
-import { CreditPermit } from "test/helper/CreditPermit.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { T20 } from "test/helper/T20.sol";
 import { SDDeploymentTest, Spro } from "test/integration/SDDeploymentTest.t.sol";
@@ -23,8 +22,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     uint256 aliceKey;
     address bob;
     address charlee;
-
-    CreditPermit creditPermit;
 
     // pool adapter
     DummyPoolAdapter poolAdapter;
@@ -52,8 +49,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         // Deploy tokens
         t20 = new T20();
         credit = new T20();
-
-        creditPermit = new CreditPermit();
 
         // Pool adapter
         poolAdapter = new DummyPoolAdapter();
