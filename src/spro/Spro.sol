@@ -28,10 +28,12 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @param _percentage Partial position percentage.
      */
     constructor(address _sdex, address _permit2, uint256 _fee, uint16 _percentage) Ownable(msg.sender) {
-        require(_sdex != address(0), "SDEX is zero address");
-        require(
-            _percentage > 0 && _percentage < Constants.BPS_DIVISOR / 2, "Partial percentage position value is invalid"
-        );
+        if (_sdex == address(0) || _permit2 == address(0)) {
+            revert ZeroAddress();
+        }
+        if (_percentage == 0 || _percentage > Constants.BPS_DIVISOR / 2) {
+            revert IncorrectPercentageValue(_percentage);
+        }
 
         PERMIT2 = IAllowanceTransfer(_permit2);
         SDEX = _sdex;
@@ -58,8 +60,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         if (percentage == 0) {
             revert ZeroPercentageValue();
         }
-        if (percentage >= Constants.BPS_DIVISOR / 2) {
-            revert ExcessivePercentageValue(percentage);
+        if (percentage > Constants.BPS_DIVISOR / 2) {
+            revert IncorrectPercentageValue(percentage);
         }
         partialPositionBps = percentage;
     }
