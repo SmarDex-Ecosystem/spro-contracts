@@ -6,7 +6,6 @@ import { Test } from "forge-std/Test.sol";
 import { T20 } from "test/helper/T20.sol";
 
 import { SproVault } from "src/spro/SproVault.sol";
-import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproVault } from "src/interfaces/ISproVault.sol";
 import { Spro } from "src/spro/Spro.sol";
 
@@ -17,10 +16,6 @@ contract SproVaultHarness is SproVault {
 
     function pushFrom(address asset, uint256 amount, address origin, address beneficiary) external {
         _pushFrom(asset, amount, origin, beneficiary);
-    }
-
-    function exposed_tryPermit(ISproTypes.Permit calldata permit) external {
-        _tryPermit(permit);
     }
 }
 
@@ -63,65 +58,5 @@ contract SproVault_PushFrom_Test is SproVaultTest {
         vm.expectEmit(true, true, true, true);
         emit ISproVault.VaultPushFrom(token, alice, bob, 42);
         vault.pushFrom(token, 42, alice, bob);
-    }
-}
-
-/* ------------------------------------------------------------ */
-/*  TRY PERMIT                                               */
-/* ------------------------------------------------------------ */
-
-contract SproVault_TryPermit_Test is SproVaultTest {
-    Spro.Permit permit;
-    string permitSignature = "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)";
-
-    function setUp() public override {
-        super.setUp();
-
-        vm.mockCall(
-            token,
-            abi.encodeWithSignature("permit(address,address,uint256,uint256,uint8,bytes32,bytes32)"),
-            abi.encode("")
-        );
-
-        permit = ISproTypes.Permit({
-            asset: token,
-            owner: alice,
-            amount: 100,
-            deadline: 1,
-            v: 4,
-            r: bytes32(uint256(2)),
-            s: bytes32(uint256(3))
-        });
-    }
-
-    function test_shouldCallPermit_whenPermitAssetNonZero() external {
-        vm.expectCall(
-            token,
-            abi.encodeWithSignature(
-                permitSignature,
-                permit.owner,
-                address(vault),
-                permit.amount,
-                permit.deadline,
-                permit.v,
-                permit.r,
-                permit.s
-            )
-        );
-
-        vault.exposed_tryPermit(permit);
-    }
-
-    function test_shouldNotCallPermit_whenPermitIsZero() external {
-        vm.expectCall({ callee: token, data: abi.encodeWithSignature(permitSignature), count: 0 });
-
-        permit.asset = address(0);
-        vault.exposed_tryPermit(permit);
-    }
-
-    function test_shouldNotFail_whenPermitReverts() external {
-        vm.mockCallRevert(token, abi.encodeWithSignature(permitSignature), abi.encode(""));
-
-        vault.exposed_tryPermit(permit);
     }
 }

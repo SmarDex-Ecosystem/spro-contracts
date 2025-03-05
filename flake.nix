@@ -27,7 +27,6 @@
             just
             lcov
             nodejs_20
-            slither-analyzer
             solc_0_8_26
             (solc.mkDefault pkgs solc_0_8_26)
             trufflehog
