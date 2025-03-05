@@ -17,11 +17,6 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         _;
     }
 
-    function test_RevertWhen_CallerIsNotProposer() external proposalContractHasTag whenValidProposalData {
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.CallerIsNotStatedProposer.selector, borrower));
-        deployment.config.createProposal(proposal, "");
-    }
-
     modifier whenCallerIsProposer() {
         _;
     }
@@ -92,7 +87,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
     {
         // Set bad timestamp value
         proposal.startTimestamp = uint40(block.timestamp);
-        proposal.loanExpiration = proposal.startTimestamp - 1;
+        proposal.loanExpiration = proposal.startTimestamp;
 
         // Mint initial state & approve collateral
         t20.mint(borrower, proposal.collateralAmount);

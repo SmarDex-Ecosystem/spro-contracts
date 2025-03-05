@@ -106,14 +106,14 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.startPrank(lender);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        ISproTypes.LenderSpec memory lenderSpec = ISproTypes.LenderSpec(lender, amount, "");
+        ISproTypes.LenderSpec memory lenderSpec = ISproTypes.LenderSpec(lender, amount);
 
         // Create loan, expecting revert
         vm.expectRevert(
             abi.encodeWithSelector(
                 ISproErrors.CreditAmountLeavesTooLittle.selector,
                 amount,
-                (PERCENTAGE - DEFAULT_THRESHOLD) * CREDIT_LIMIT / 1e4
+                (PERCENTAGE - PARTIAL_POSITION_PERCENTAGE) * CREDIT_LIMIT / 1e4
             )
         );
         deployment.config.createLoan(proposal, lenderSpec, "");
@@ -273,7 +273,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
             // Lender spec
             ISproTypes.LenderSpec memory lenderSpec =
-                ISproTypes.LenderSpec({ sourceOfFunds: lenders[i], creditAmount: minCreditAmount, permitData: "" });
+                ISproTypes.LenderSpec({ sourceOfFunds: lenders[i], creditAmount: minCreditAmount });
 
             // Create loan
             loanIds[i] = deployment.config.createLoan({ proposal: proposal, lenderSpec: lenderSpec, permit2Data: "" });
@@ -291,51 +291,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         credit.mint(borrower, 4 * fixedInterestAmount);
         vm.prank(borrower);
         credit.approve(address(deployment.config), totalAmount);
-    }
-
-    function _setupMultipleRepayCreditPermit() internal returns (uint256[] memory loanIds) {
-        proposal.creditAddress = address(creditPermit);
-
-        vm.prank(borrower);
-        _createERC20Proposal();
-
-        // Setup lenders array
-        address[] memory lenders = new address[](4);
-        lenders[0] = lender;
-        lenders[1] = alice;
-        lenders[2] = bob;
-        lenders[3] = charlee;
-
-        // Minimum credit amount
-        uint256 minCreditAmount = (proposal.availableCreditLimit * deployment.config.partialPositionBps()) / 1e4;
-
-        // Setup loanIds array
-        loanIds = new uint256[](4);
-
-        // Create loans for lenders
-        for (uint256 i; i < 4; ++i) {
-            // Mint initial state & approve credit
-            creditPermit.mint(lenders[i], INITIAL_CREDIT_BALANCE);
-            vm.startPrank(lenders[i]);
-            creditPermit.approve(address(deployment.config), minCreditAmount);
-
-            // Lender spec
-            ISproTypes.LenderSpec memory lenderSpec =
-                ISproTypes.LenderSpec({ sourceOfFunds: lenders[i], creditAmount: minCreditAmount, permitData: "" });
-
-            // Create loan
-            loanIds[i] = deployment.config.createLoan({ proposal: proposal, lenderSpec: lenderSpec, permit2Data: "" });
-            vm.stopPrank();
-        }
-
-        // Warp forward 4 days
-        skip(4 days);
-
-        // Approve repayment amount
-        uint256 totalAmount = deployment.config.totalLoanRepaymentAmount(loanIds, address(creditPermit));
-        creditPermit.mint(borrower, 4 * FIXED_INTEREST_AMOUNT);
-        vm.prank(borrower);
-        creditPermit.approve(address(deployment.config), totalAmount);
     }
 
     function test_loanMetadataUri() external view {
@@ -495,8 +450,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
         // Create loan
-        ISproTypes.LenderSpec memory lenderSpec =
-            ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: amount, permitData: "" });
+        ISproTypes.LenderSpec memory lenderSpec = ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: amount });
 
         uint256 loanId = deployment.config.createLoan(proposal, lenderSpec, "");
 
@@ -516,7 +470,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidSourceOfFunds.selector, sourceOfFunds));
         deployment.config.createLoan({
             proposal: proposal,
-            lenderSpec: ISproTypes.LenderSpec(sourceOfFunds, CREDIT_LIMIT, ""),
+            lenderSpec: ISproTypes.LenderSpec(sourceOfFunds, CREDIT_LIMIT),
             permit2Data: ""
         });
     }

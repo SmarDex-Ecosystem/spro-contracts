@@ -5,6 +5,7 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
@@ -15,7 +16,7 @@ import { SproLoan } from "src/spro/SproLoan.sol";
 import { SproVault } from "src/spro/SproVault.sol";
 import { SproStorage } from "src/spro/SproStorage.sol";
 
-contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataProvider {
+contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataProvider, ReentrancyGuard {
     using SafeCast for uint256;
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
@@ -28,10 +29,12 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @param _percentage Partial position percentage.
      */
     constructor(address _sdex, address _permit2, uint256 _fee, uint16 _percentage) Ownable(msg.sender) {
-        require(_sdex != address(0), "SDEX is zero address");
-        require(
-            _percentage > 0 && _percentage < Constants.BPS_DIVISOR / 2, "Partial percentage position value is invalid"
-        );
+        if (_sdex == address(0) || _permit2 == address(0)) {
+            revert ZeroAddress();
+        }
+        if (_percentage == 0 || _percentage > Constants.BPS_DIVISOR / 2) {
+            revert IncorrectPercentageValue(_percentage);
+        }
 
         PERMIT2 = IAllowanceTransfer(_permit2);
         SDEX = _sdex;
@@ -58,8 +61,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         if (percentage == 0) {
             revert ZeroPercentageValue();
         }
-        if (percentage >= Constants.BPS_DIVISOR / 2) {
-            revert ExcessivePercentageValue(percentage);
+        if (percentage > Constants.BPS_DIVISOR / 2) {
+            revert IncorrectPercentageValue(percentage);
         }
         partialPositionBps = percentage;
     }
@@ -172,14 +175,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function createProposal(Proposal calldata proposal, bytes calldata permit2Data) external {
+    function createProposal(Proposal calldata proposal, bytes calldata permit2Data) external nonReentrant {
         // Make the proposal
         (address collateral, uint256 collateralAmount) = _makeProposal(proposal);
-
-        // Check caller is the proposer
-        if (msg.sender != proposal.proposer) {
-            revert CallerIsNotStatedProposer(proposal.proposer);
-        }
 
         // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
@@ -206,7 +204,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function cancelProposal(Proposal calldata proposal) external {
+    function cancelProposal(Proposal calldata proposal) external nonReentrant {
         Proposal memory newProposal = _cancelProposal(proposal);
 
         // The caller must be the proposer
@@ -225,6 +223,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /// @inheritdoc ISpro
     function createLoan(Proposal calldata proposal, LenderSpec calldata lenderSpec, bytes calldata permit2Data)
         external
+        nonReentrant
         returns (uint256 loanId_)
     {
         address poolAdapter = _poolAdapterRegistry[lenderSpec.sourceOfFunds];
@@ -254,7 +253,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function repayLoan(uint256 loanId, bytes calldata permit2Data) external {
+    function repayLoan(uint256 loanId, bytes calldata permit2Data) external nonReentrant {
         Loan memory loan = Loans[loanId];
 
         _checkLoanCanBeRepaid(loan.status, loan.loanExpiration);
@@ -285,6 +284,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /// @inheritdoc ISpro
     function repayMultipleLoans(uint256[] calldata loanIds, address creditAddress, bytes calldata permit2Data)
         external
+        nonReentrant
     {
         uint256 totalRepaymentAmount;
 
@@ -467,10 +467,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @param loanExpiration Loan default timestamp.
      */
     function _checkLoanCanBeRepaid(LoanStatus status, uint40 loanExpiration) internal view {
-        // Check that loan exists and is not from a different loan contract
-        if (status == LoanStatus.NONE) {
-            revert NonExistingLoan();
-        }
         // Check that loan is running
         if (status != LoanStatus.RUNNING) {
             revert LoanNotRunning();
@@ -505,7 +501,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      */
     function _makeProposal(Proposal memory proposal) private returns (address collateral_, uint256 collateralAmount_) {
         // Decode proposal data
-        if (proposal.startTimestamp > proposal.loanExpiration) {
+        if (proposal.startTimestamp >= proposal.loanExpiration) {
             revert InvalidDurationStartTime();
         }
 
@@ -517,6 +513,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         if (proposal.loanExpiration - proposal.startTimestamp < Constants.MIN_LOAN_DURATION) {
             revert InvalidDuration(proposal.loanExpiration - proposal.startTimestamp, Constants.MIN_LOAN_DURATION);
         }
+
+        proposal.partialPositionBps = partialPositionBps;
+        proposal.proposer = msg.sender;
 
         // Make proposal hash
         bytes32 proposalHash = keccak256(abi.encode(proposal));
@@ -556,7 +555,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
                 proposal.availableCreditLimit,
                 proposal.startTimestamp,
                 proposal.proposer,
-                proposal.loanContract
+                proposal.loanContract,
+                proposal.partialPositionBps
             )
         );
 
@@ -639,13 +639,15 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         if (creditUsed[proposalHash] + creditAmount < proposal.availableCreditLimit) {
             // Credit may only be between min and max amounts if it is not exact
             uint256 minCreditAmount =
-                Math.mulDiv(proposal.availableCreditLimit, partialPositionBps, Constants.BPS_DIVISOR);
+                Math.mulDiv(proposal.availableCreditLimit, proposal.partialPositionBps, Constants.BPS_DIVISOR);
             if (creditAmount < minCreditAmount) {
                 revert CreditAmountTooSmall(creditAmount, minCreditAmount);
             }
 
             uint256 maxCreditAmount = Math.mulDiv(
-                proposal.availableCreditLimit, (Constants.BPS_DIVISOR - partialPositionBps), Constants.BPS_DIVISOR
+                proposal.availableCreditLimit,
+                (Constants.BPS_DIVISOR - proposal.partialPositionBps),
+                Constants.BPS_DIVISOR
             );
             if (creditAmount > maxCreditAmount) {
                 revert CreditAmountLeavesTooLittle(creditAmount, maxCreditAmount);

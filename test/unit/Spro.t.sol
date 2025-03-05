@@ -9,6 +9,7 @@ import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable
 import { Spro } from "src/spro/Spro.sol";
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 // forge inspect src/config/Spro.sol:Spro storage --pretty
 
@@ -59,6 +60,24 @@ contract TestSproConstructor is SproTest {
         assertEq(config.partialPositionBps(), partialPositionBps);
         assertEq(config.fee(), fee);
         assertEq(sdex, config.SDEX());
+    }
+
+    function test_RevertWhen_incorrectPartialPositionBps() external {
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, 0));
+        new Spro(sdex, permit2, fee, 0);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, Constants.BPS_DIVISOR / 2 + 1)
+        );
+        new Spro(sdex, permit2, fee, uint16(Constants.BPS_DIVISOR / 2 + 1));
+    }
+
+    function test_RevertWhen_zeroAddress() external {
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.ZeroAddress.selector));
+        new Spro(address(0), permit2, fee, partialPositionBps);
+
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.ZeroAddress.selector));
+        new Spro(sdex, address(0), fee, partialPositionBps);
     }
 }
 
@@ -127,7 +146,7 @@ contract TestSproPartialLendingThresholds is SproTest {
         vm.assume(percentage > PERCENTAGE);
         vm.startPrank(owner);
 
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.ExcessivePercentageValue.selector, percentage));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, percentage));
         config.setPartialPositionPercentage(percentage);
     }
 }

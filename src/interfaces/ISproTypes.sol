@@ -37,12 +37,10 @@ interface ISproTypes {
      * directly,
      *                      or a pool address from with the funds are withdrawn on the lenders behalf.
      * @param creditAmount Amount of credit tokens to lend.
-     * @param permitData Callers permit data for a loans credit asset.
      */
     struct LenderSpec {
         address sourceOfFunds;
         uint256 creditAmount;
-        bytes permitData;
     }
 
     /**
@@ -106,6 +104,7 @@ interface ISproTypes {
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
      * an identical proposal again.
      * @param loanContract Address of a loan contract that will create a loan from the proposal.
+     * @param partialPositionBps Minimum percentage that can be borrowed from the initial proposal.
      */
     struct Proposal {
         address collateralAddress;
@@ -118,6 +117,7 @@ interface ISproTypes {
         address proposer;
         uint256 nonce;
         address loanContract;
+        uint16 partialPositionBps;
     }
 
     /**
@@ -161,6 +161,7 @@ interface ISproTypes {
      * @param proposer Address of a proposal signer. If `isOffer` is true, the proposer is the lender. If `isOffer` is
      * false, the proposer is the borrower.
      * @param loanContract Address of a loan contract that will create a loan from the proposal.
+     * @param partialPositionBps Minimum percentage that can be borrowed from the initial proposal.
      */
     struct ProposalBase {
         address collateralAddress;
@@ -168,25 +169,6 @@ interface ISproTypes {
         uint40 startTimestamp;
         address proposer;
         address loanContract;
-    }
-
-    /**
-     * @notice Struct to hold the permit data.
-     * @param asset The address of the ERC20 token.
-     * @param owner The owner of the tokens.
-     * @param amount The amount of tokens.
-     * @param deadline The deadline for the permit.
-     * @param v The v value of the signature.
-     * @param r The r value of the signature.
-     * @param s The s value of the signature.
-     */
-    struct Permit {
-        address asset;
-        address owner;
-        uint256 amount;
-        uint256 deadline;
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
+        uint16 partialPositionBps;
     }
 }
