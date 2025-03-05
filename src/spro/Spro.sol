@@ -60,7 +60,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         if (percentage == 0) {
             revert ZeroPercentageValue();
         }
-        if (percentage >= Constants.BPS_DIVISOR / 2) {
+        if (percentage > Constants.BPS_DIVISOR / 2) {
             revert IncorrectPercentageValue(percentage);
         }
         partialPositionBps = percentage;
