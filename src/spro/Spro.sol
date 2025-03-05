@@ -178,11 +178,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Make the proposal
         (address proposer, address collateral, uint256 collateralAmount) = _makeProposal(proposal);
 
-        // Check caller is the proposer
-        if (msg.sender != proposer) {
-            revert CallerIsNotStatedProposer(proposer);
-        }
-
         // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
             (IAllowanceTransfer.PermitBatch memory permitBatch, bytes memory data) =
@@ -522,9 +517,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             revert InvalidDuration(proposal.loanExpiration - proposal.startTimestamp, Constants.MIN_LOAN_DURATION);
         }
 
-        if (proposal.partialPositionBps != partialPositionBps) {
-            revert InvalidPartialPositionBps();
-        }
+        proposal.partialPositionBps = partialPositionBps;
+        proposal.proposer = msg.sender;
 
         // Make proposal hash
         bytes32 proposalHash = keccak256(abi.encode(proposal));

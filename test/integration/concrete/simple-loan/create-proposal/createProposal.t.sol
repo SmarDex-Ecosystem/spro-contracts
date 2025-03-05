@@ -17,11 +17,6 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         _;
     }
 
-    function test_RevertWhen_CallerIsNotProposer() external proposalContractHasTag whenValidProposalData {
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.CallerIsNotStatedProposer.selector, borrower));
-        deployment.config.createProposal(proposal, "");
-    }
-
     modifier whenCallerIsProposer() {
         _;
     }
@@ -128,15 +123,6 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
                 ISproErrors.InvalidDuration.selector, proposal.loanExpiration - proposal.startTimestamp, minDuration
             )
         );
-        deployment.config.createProposal(proposal, "");
-    }
-
-    function test_RevertWhen_InvalidPartialPositionBps() external {
-        // Set bad partial position value
-        proposal.partialPositionBps = deployment.config.partialPositionBps() + 1;
-
-        vm.prank(borrower);
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidPartialPositionBps.selector));
         deployment.config.createProposal(proposal, "");
     }
 }
