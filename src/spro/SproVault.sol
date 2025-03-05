@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
-import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
-import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproVault } from "src/interfaces/ISproVault.sol";
 
 contract SproVault is ISproVault {
@@ -79,30 +77,5 @@ contract SproVault is ISproVault {
         poolAdapter.supply(pool, owner, asset, amount);
         // Note: Assuming pool will revert supply transaction if it fails.
         emit PoolSupply(asset, address(poolAdapter), pool, owner, amount);
-    }
-
-    /* ------------------------------------------------------------ */
-    /*                            PERMIT                            */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Try to execute a permit for an ERC20 token.
-     * @dev If the permit execution fails, the function will not revert.
-     * @param permit The permit data.
-     */
-    function _tryPermit(ISproTypes.Permit memory permit) internal {
-        if (permit.asset != address(0)) {
-            try IERC20Permit(permit.asset).permit({
-                owner: permit.owner,
-                spender: address(this),
-                value: permit.amount,
-                deadline: permit.deadline,
-                v: permit.v,
-                r: permit.r,
-                s: permit.s
-            }) { } catch {
-                // Note: Permit execution can be frontrun, so we don't revert on failure.
-            }
-        }
     }
 }

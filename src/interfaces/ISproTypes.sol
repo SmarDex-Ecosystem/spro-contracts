@@ -37,12 +37,10 @@ interface ISproTypes {
      * directly,
      *                      or a pool address from with the funds are withdrawn on the lenders behalf.
      * @param creditAmount Amount of credit tokens to lend.
-     * @param permitData Callers permit data for a loans credit asset.
      */
     struct LenderSpec {
         address sourceOfFunds;
         uint256 creditAmount;
-        bytes permitData;
     }
 
     /**
@@ -175,25 +173,5 @@ interface ISproTypes {
         uint256 nonce;
         address loanContract;
         uint16 partialPositionBps;
-    }
-
-    /**
-     * @notice Struct to hold the permit data.
-     * @param asset The address of the ERC20 token.
-     * @param owner The owner of the tokens.
-     * @param amount The amount of tokens.
-     * @param deadline The deadline for the permit.
-     * @param v The v value of the signature.
-     * @param r The r value of the signature.
-     * @param s The s value of the signature.
-     */
-    struct Permit {
-        address asset;
-        address owner;
-        uint256 amount;
-        uint256 deadline;
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
     }
 }
