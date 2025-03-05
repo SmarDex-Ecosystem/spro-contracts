@@ -47,7 +47,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
 
     uint256 public constant INITIAL_SDEX_BALANCE = 1_000_000e18;
 
-    uint16 public constant DEFAULT_THRESHOLD = 500;
     uint16 public constant PERCENTAGE = 1e4;
 
     function setUp() public virtual override {
@@ -76,7 +75,8 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
             uint40(block.timestamp) + 10 days,
             borrower,
             0,
-            address(deployment.config)
+            address(deployment.config),
+            PARTIAL_POSITION_PERCENTAGE
         );
 
         // Mint and approve SDEX
@@ -89,7 +89,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
 
         // Set thresholds in config
         vm.startPrank(deployment.protocolAdmin);
-        Spro(deployment.config).setPartialPositionPercentage(DEFAULT_THRESHOLD);
+        Spro(deployment.config).setPartialPositionPercentage(PARTIAL_POSITION_PERCENTAGE);
         vm.stopPrank();
 
         // Add labels

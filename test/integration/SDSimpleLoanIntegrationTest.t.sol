@@ -113,7 +113,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             abi.encodeWithSelector(
                 ISproErrors.CreditAmountLeavesTooLittle.selector,
                 amount,
-                (PERCENTAGE - DEFAULT_THRESHOLD) * CREDIT_LIMIT / 1e4
+                (PERCENTAGE - PARTIAL_POSITION_PERCENTAGE) * CREDIT_LIMIT / 1e4
             )
         );
         deployment.config.createLoan(proposal, lenderSpec, "", "");

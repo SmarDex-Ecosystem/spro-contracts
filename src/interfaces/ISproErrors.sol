@@ -45,12 +45,6 @@ interface ISproErrors {
     error ZeroPercentageValue();
 
     /**
-     * @notice Thrown when a caller is not a stated proposer.
-     * @param addr The address of the caller.
-     */
-    error CallerIsNotStatedProposer(address addr);
-
-    /**
      * @notice Thrown when managed loan is running.
      */
     error LoanNotRunning();

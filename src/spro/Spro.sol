@@ -178,11 +178,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Make the proposal
         (address proposer, address collateral, uint256 collateralAmount) = _makeProposal(proposal);
 
-        // Check caller is the proposer
-        if (msg.sender != proposer) {
-            revert CallerIsNotStatedProposer(proposer);
-        }
-
         // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
             (IAllowanceTransfer.PermitBatch memory permitBatch, bytes memory data) =
@@ -522,6 +517,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             revert InvalidDuration(proposal.loanExpiration - proposal.startTimestamp, Constants.MIN_LOAN_DURATION);
         }
 
+        proposal.partialPositionBps = partialPositionBps;
+        proposal.proposer = msg.sender;
+
         // Make proposal hash
         bytes32 proposalHash = keccak256(abi.encode(proposal));
 
@@ -561,7 +559,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
                 proposal.startTimestamp,
                 proposal.proposer,
                 proposal.nonce,
-                proposal.loanContract
+                proposal.loanContract,
+                proposal.partialPositionBps
             )
         );
 
@@ -644,13 +643,15 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         if (creditUsed[proposalHash] + creditAmount < proposal.availableCreditLimit) {
             // Credit may only be between min and max amounts if it is not exact
             uint256 minCreditAmount =
-                Math.mulDiv(proposal.availableCreditLimit, partialPositionBps, Constants.BPS_DIVISOR);
+                Math.mulDiv(proposal.availableCreditLimit, proposal.partialPositionBps, Constants.BPS_DIVISOR);
             if (creditAmount < minCreditAmount) {
                 revert CreditAmountTooSmall(creditAmount, minCreditAmount);
             }
 
             uint256 maxCreditAmount = Math.mulDiv(
-                proposal.availableCreditLimit, (Constants.BPS_DIVISOR - partialPositionBps), Constants.BPS_DIVISOR
+                proposal.availableCreditLimit,
+                (Constants.BPS_DIVISOR - proposal.partialPositionBps),
+                Constants.BPS_DIVISOR
             );
             if (creditAmount > maxCreditAmount) {
                 revert CreditAmountLeavesTooLittle(creditAmount, maxCreditAmount);
