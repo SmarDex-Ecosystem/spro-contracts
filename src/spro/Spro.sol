@@ -191,7 +191,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             }
         } else {
             // Transfer collateral to Vault
-            _pushFrom(collateral, collateralAmount, proposal.proposer, address(this));
+            _pushFrom(collateral, collateralAmount, msg.sender, address(this));
             // Fees to address(0xdead)(burned)
             if (fee > 0) {
                 _pushFrom(SDEX, fee, msg.sender, address(0xdead));
