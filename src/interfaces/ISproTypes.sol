@@ -37,12 +37,10 @@ interface ISproTypes {
      * directly,
      *                      or a pool address from with the funds are withdrawn on the lenders behalf.
      * @param creditAmount Amount of credit tokens to lend.
-     * @param permitData Callers permit data for a loans credit asset.
      */
     struct LenderSpec {
         address sourceOfFunds;
         uint256 creditAmount;
-        bytes permitData;
     }
 
     /**

@@ -106,7 +106,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.startPrank(lender);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        ISproTypes.LenderSpec memory lenderSpec = ISproTypes.LenderSpec(lender, amount, "");
+        ISproTypes.LenderSpec memory lenderSpec = ISproTypes.LenderSpec(lender, amount);
 
         // Create loan, expecting revert
         vm.expectRevert(
@@ -273,7 +273,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
             // Lender spec
             ISproTypes.LenderSpec memory lenderSpec =
-                ISproTypes.LenderSpec({ sourceOfFunds: lenders[i], creditAmount: minCreditAmount, permitData: "" });
+                ISproTypes.LenderSpec({ sourceOfFunds: lenders[i], creditAmount: minCreditAmount });
 
             // Create loan
             loanIds[i] =
@@ -463,8 +463,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
         // Create loan
-        ISproTypes.LenderSpec memory lenderSpec =
-            ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: amount, permitData: "" });
+        ISproTypes.LenderSpec memory lenderSpec = ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: amount });
 
         uint256 loanId = deployment.config.createLoan(proposal, lenderSpec, "", "");
 
@@ -484,7 +483,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidSourceOfFunds.selector, sourceOfFunds));
         deployment.config.createLoan({
             proposal: proposal,
-            lenderSpec: ISproTypes.LenderSpec(sourceOfFunds, CREDIT_LIMIT, ""),
+            lenderSpec: ISproTypes.LenderSpec(sourceOfFunds, CREDIT_LIMIT),
             extra: "",
             permit2Data: ""
         });

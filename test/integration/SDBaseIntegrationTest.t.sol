@@ -127,8 +127,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     }
 
     function _buildLenderSpec(bool complete) internal view returns (ISproTypes.LenderSpec memory lenderSpec) {
-        lenderSpec = complete
-            ? ISproTypes.LenderSpec(lender, CREDIT_LIMIT, "")
-            : ISproTypes.LenderSpec(lender, CREDIT_AMOUNT, "");
+        lenderSpec =
+            complete ? ISproTypes.LenderSpec(lender, CREDIT_LIMIT) : ISproTypes.LenderSpec(lender, CREDIT_AMOUNT);
     }
 }
