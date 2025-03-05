@@ -469,10 +469,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @param loanExpiration Loan default timestamp.
      */
     function _checkLoanCanBeRepaid(LoanStatus status, uint40 loanExpiration) internal view {
-        // Check that loan exists and is not from a different loan contract
-        if (status == LoanStatus.NONE) {
-            revert NonExistingLoan();
-        }
         // Check that loan is running
         if (status != LoanStatus.RUNNING) {
             revert LoanNotRunning();

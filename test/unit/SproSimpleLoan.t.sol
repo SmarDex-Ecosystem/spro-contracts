@@ -35,17 +35,15 @@ contract SproSimpleLoanTest is Test {
         assertEq(amount, 0);
     }
 
-    function test_shouldFail_checkLoanCanBeRepaid_NonExistingLoan() external {
-        vm.expectRevert(ISproErrors.NonExistingLoan.selector);
-        sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.NONE, 0);
-
-        vm.expectRevert(ISproErrors.LoanNotRunning.selector);
-        sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.PAID_BACK, 0);
-    }
-
     function test_shouldFail_checkLoanCanBeRepaid_LoanNotRunning() external {
         vm.expectRevert(ISproErrors.LoanNotRunning.selector);
         sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.PAID_BACK, 0);
+
+        vm.expectRevert(ISproErrors.LoanNotRunning.selector);
+        sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.NONE, 0);
+
+        vm.expectRevert(ISproErrors.LoanNotRunning.selector);
+        sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.EXPIRED, 0);
     }
 
     function test_shouldFail_checkLoanCanBeRepaid_LoanDefaulted() external {
