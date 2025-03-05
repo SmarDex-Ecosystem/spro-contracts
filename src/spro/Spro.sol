@@ -52,8 +52,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         if (newFee > Constants.MAX_SDEX_FEE) {
             revert ExcessiveFee(newFee);
         }
-        emit FeeUpdated(fee, newFee);
         fee = newFee;
+        emit FeeUpdated(newFee);
     }
 
     /// @inheritdoc ISpro
@@ -65,6 +65,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             revert IncorrectPercentageValue(percentage);
         }
         partialPositionBps = percentage;
+        emit PartialPositionBpsUpdated(percentage);
     }
 
     /// @inheritdoc ISpro
@@ -602,6 +603,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         delete withdrawableCollateral[proposalHash];
 
         proposalsMade[proposalHash] = false;
+
+        emit ProposalCanceled(proposalHash);
     }
 
     /**
