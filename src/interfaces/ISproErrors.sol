@@ -6,7 +6,7 @@ pragma solidity ^0.8.26;
  * @notice Errors for the Spro Protocol
  */
 interface ISproErrors {
-    // @notice Thrown when the address is zero.
+    /// @notice Thrown when the address is zero.
     error ZeroAddress();
 
     /**
