@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
-import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
-import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproVault } from "src/interfaces/ISproVault.sol";
 
 contract SproVault is ISproVault {
