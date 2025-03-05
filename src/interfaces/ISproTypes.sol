@@ -106,8 +106,7 @@ interface ISproTypes {
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
      * an identical proposal again.
      * @param loanContract Address of a loan contract that will create a loan from the proposal.
-     * @param partialPositionBps Percentage of a proposal's available credit limit used in partial lending (in basis
-     * points).
+     * @param partialPositionBps Minimum percentage that can be borrowed from the initial proposal.
      */
     struct Proposal {
         address collateralAddress;
@@ -166,8 +165,7 @@ interface ISproTypes {
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
      * an identical proposal again.
      * @param loanContract Address of a loan contract that will create a loan from the proposal.
-     * @param partialPositionBps Percentage of a proposal's available credit limit used in partial lending (in basis
-     * points).
+     * @param partialPositionBps Minimum percentage that can be borrowed from the initial proposal.
      */
     struct ProposalBase {
         address collateralAddress;
