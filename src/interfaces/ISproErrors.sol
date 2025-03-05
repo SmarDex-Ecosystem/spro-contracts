@@ -6,6 +6,9 @@ pragma solidity ^0.8.26;
  * @notice Errors for the Spro Protocol
  */
 interface ISproErrors {
+    /// @notice Thrown when the address is zero.
+    error ZeroAddress();
+
     /**
      * @notice Thrown when a proposal is expired.
      * @param current The current timestamp.
@@ -31,21 +34,15 @@ interface ISproErrors {
     error DefaultLoanContract();
 
     /**
-     * @notice Thrown when trying to set a percentage value higher than `BPS_DIVISOR`.
+     * @notice Thrown when trying to set an incorrect percentage value.
      * @param percentage The percentage value.
      */
-    error ExcessivePercentageValue(uint16 percentage);
+    error IncorrectPercentageValue(uint16 percentage);
 
     /**
      * @notice Thrown when trying to set a percentage value equal to zero.
      */
     error ZeroPercentageValue();
-
-    /**
-     * @notice Thrown when a caller is not a stated proposer.
-     * @param addr The address of the caller.
-     */
-    error CallerIsNotStatedProposer(address addr);
 
     /**
      * @notice Thrown when managed loan cannot be repaid.
@@ -176,22 +173,4 @@ interface ISproErrors {
      * @param fee The fee amount.
      */
     error ExcessiveFee(uint256 fee);
-
-    /* -------------------------------------------------------------------------- */
-    /*                                   PERMIT                                   */
-    /* -------------------------------------------------------------------------- */
-
-    /**
-     * @notice Thrown when the permit owner is not matching.
-     * @param current The current owner.
-     * @param expected The expected owner.
-     */
-    error InvalidPermitOwner(address current, address expected);
-
-    /**
-     * @notice Thrown when the permit asset is not matching.
-     * @param current The current asset.
-     * @param expected The expected asset.
-     */
-    error InvalidPermitAsset(address current, address expected);
 }

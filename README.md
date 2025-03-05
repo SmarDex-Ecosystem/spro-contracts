@@ -72,7 +72,6 @@ The environment provides the following tools:
 - load `.env` file as environment variables
 - foundry
 - solc v0.8.26
-- slither
 - lcov
 - Node 20 + Typescript
 - Rust toolchain
@@ -122,7 +121,3 @@ The pre-commit configuration for Husky runs `forge fmt --check` to check the cod
 checks the gas snapshot and prevents committing if it has changed.
 
 In order to setup the git pre-commit hook, run `npm install`.
-
-### Slither
-
-Slither is integrated into a GitHub workflow and runs on every push to the master branch.

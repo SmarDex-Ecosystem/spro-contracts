@@ -35,24 +35,22 @@ contract SproSimpleLoanTest is Test {
         assertEq(amount, 0);
     }
 
-    function test_shouldFail__checkLoanCanBeRepaid_NonExistingLoan() external view {
-        bool canBeRepaid = sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.NONE, 0);
-        assertFalse(canBeRepaid, "Loan shouldn't be repayable");
-
-        canBeRepaid = sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.PAID_BACK, 0);
-        assertFalse(canBeRepaid, "Loan shouldn't be repayable");
-    }
-
-    function test_shouldFail__checkLoanCanBeRepaid_LoanNotRunning() external view {
+    function test_checkLoanCanBeRepaid() external {
         bool canBeRepaid = sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.PAID_BACK, 0);
         assertFalse(canBeRepaid, "Loan shouldn't be repayable");
-    }
 
-    function test_shouldFail__checkLoanCanBeRepaid_LoanDefaulted() external {
-        skip(30 days);
-        uint40 ts = uint40(block.timestamp - 1);
-        bool canBeRepaid = sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.RUNNING, ts);
+        canBeRepaid = sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.NONE, 0);
         assertFalse(canBeRepaid, "Loan shouldn't be repayable");
+
+        canBeRepaid = sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.EXPIRED, 0);
+        assertFalse(canBeRepaid, "Loan shouldn't be repayable");
+
+        canBeRepaid = sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.RUNNING, 0);
+        assertFalse(canBeRepaid, "Loan shouldn't be repayable");
+
+        canBeRepaid =
+            sproHandler.exposed_checkLoanCanBeRepaid(ISproTypes.LoanStatus.RUNNING, uint40(block.timestamp + 1));
+        assertTrue(canBeRepaid, "Loan should be repayable");
     }
 
     function test_shouldFail_DifferentCreditAddress(address loanCreditAddress, address expectedCreditAddress)

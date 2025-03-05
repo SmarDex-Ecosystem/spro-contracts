@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
-import { SigUtils } from "test/utils/SigUtils.sol";
-import { CreditPermit } from "test/helper/CreditPermit.sol";
 import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { T20 } from "test/helper/T20.sol";
 import { SDDeploymentTest, Spro } from "test/integration/SDDeploymentTest.t.sol";
@@ -18,17 +16,12 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     uint256 borrowerPK = uint256(888);
     address borrower = vm.addr(borrowerPK);
     Spro.Proposal proposal;
-    Spro.Permit permit;
 
     // Additional lenders
     address alice;
     uint256 aliceKey;
     address bob;
     address charlee;
-
-    // permit
-    CreditPermit creditPermit;
-    SigUtils sigUtils;
 
     // pool adapter
     DummyPoolAdapter poolAdapter;
@@ -47,7 +40,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
 
     uint256 public constant INITIAL_SDEX_BALANCE = 1_000_000e18;
 
-    uint16 public constant DEFAULT_THRESHOLD = 500;
     uint16 public constant PERCENTAGE = 1e4;
 
     function setUp() public virtual override {
@@ -56,10 +48,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         // Deploy tokens
         t20 = new T20();
         credit = new T20();
-
-        // Permit
-        creditPermit = new CreditPermit();
-        sigUtils = new SigUtils(creditPermit.DOMAIN_SEPARATOR());
 
         // Pool adapter
         poolAdapter = new DummyPoolAdapter();
@@ -76,7 +64,8 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
             uint40(block.timestamp) + 10 days,
             borrower,
             0,
-            address(deployment.config)
+            address(deployment.config),
+            PARTIAL_POSITION_PERCENTAGE
         );
 
         // Mint and approve SDEX
@@ -89,7 +78,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
 
         // Set thresholds in config
         vm.startPrank(deployment.protocolAdmin);
-        Spro(deployment.config).setPartialPositionPercentage(DEFAULT_THRESHOLD);
+        Spro(deployment.config).setPartialPositionPercentage(PARTIAL_POSITION_PERCENTAGE);
         vm.stopPrank();
 
         // Add labels
@@ -138,8 +127,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     }
 
     function _buildLenderSpec(bool complete) internal view returns (ISproTypes.LenderSpec memory lenderSpec) {
-        lenderSpec = complete
-            ? ISproTypes.LenderSpec(lender, CREDIT_LIMIT, "")
-            : ISproTypes.LenderSpec(lender, CREDIT_AMOUNT, "");
+        lenderSpec =
+            complete ? ISproTypes.LenderSpec(lender, CREDIT_LIMIT) : ISproTypes.LenderSpec(lender, CREDIT_AMOUNT);
     }
 }
