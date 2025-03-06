@@ -31,8 +31,8 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
-        assertEq(deployment.sdex.balanceOf(address(0xdead)), deployment.config.fee());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fee());
+        assertEq(deployment.sdex.balanceOf(address(0xdead)), deployment.config._fee());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config._fee());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
         (Spro.LoanInfo memory loanInfo) = deployment.config.getLoan(id);

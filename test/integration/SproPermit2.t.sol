@@ -43,7 +43,6 @@ contract TestForkPermit2 is SproForkBase {
             uint40(block.timestamp) + 10 days,
             borrower,
             0,
-            address(deployment.config),
             PARTIAL_POSITION_PERCENTAGE
         );
 
@@ -96,7 +95,7 @@ contract TestForkPermit2 is SproForkBase {
             address(proposal.collateralAddress), uint160(COLLATERAL_AMOUNT), uint48(block.timestamp), 0
         );
         details[1] = IAllowanceTransfer.PermitDetails(
-            address(deployment.sdex), uint160(deployment.config.fee()), uint48(block.timestamp), 0
+            address(deployment.sdex), uint160(deployment.config._fee()), uint48(block.timestamp), 0
         );
         IAllowanceTransfer.PermitBatch memory permitBatch =
             IAllowanceTransfer.PermitBatch(details, address(deployment.config), block.timestamp);
@@ -119,7 +118,7 @@ contract TestForkPermit2 is SproForkBase {
             address(proposal.collateralAddress), uint160(COLLATERAL_AMOUNT - 1), uint48(block.timestamp), 0
         );
         details[1] = IAllowanceTransfer.PermitDetails(
-            address(deployment.sdex), uint160(deployment.config.fee()), uint48(block.timestamp), 0
+            address(deployment.sdex), uint160(deployment.config._fee()), uint48(block.timestamp), 0
         );
         IAllowanceTransfer.PermitBatch memory permitBatch =
             IAllowanceTransfer.PermitBatch(details, address(deployment.config), block.timestamp);

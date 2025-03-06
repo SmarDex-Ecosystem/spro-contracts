@@ -53,7 +53,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // sdex fees
         assertEq(
             deployment.sdex.balanceOf(address(0xdead)),
-            deployment.config.fee(),
+            deployment.config._fee(),
             "9: address(0xdead) should contain the sdex unlisted fee"
         );
     }
@@ -211,7 +211,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Assertions
         assertEq(
             credit.balanceOf(borrower),
-            4 * (proposal.availableCreditLimit * deployment.config.partialPositionBps()) / 1e4 + 4 * fixedInterestAmount
+            4 * (proposal.availableCreditLimit * deployment.config._partialPositionBps()) / 1e4
+                + 4 * fixedInterestAmount
         ); // 4x minted in _setupMultipleRepay & not used
         require(
             credit.balanceOf(lender) == credit.balanceOf(alice) && credit.balanceOf(lender) == credit.balanceOf(bob)
@@ -259,7 +260,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         lenders[3] = charlee;
 
         // Minimum credit amount
-        uint256 minCreditAmount = (proposal.availableCreditLimit * deployment.config.partialPositionBps()) / 1e4;
+        uint256 minCreditAmount = (proposal.availableCreditLimit * deployment.config._partialPositionBps()) / 1e4;
 
         // Setup loanIds array
         loanIds = new uint256[](4);
@@ -295,7 +296,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     }
 
     function test_loanMetadataUri() external view {
-        string memory uri = deployment.config.loanMetadataUri();
+        string memory uri = deployment.config._metadataUri();
         assertEq(uri, "");
     }
 
@@ -444,8 +445,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(t20.balanceOf(address(deployment.config)), 0);
         assertEq(t20.balanceOf(lender), 0);
 
-        assertEq(deployment.sdex.balanceOf(address(0xdead)), deployment.config.fee());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fee());
+        assertEq(deployment.sdex.balanceOf(address(0xdead)), deployment.config._fee());
+        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config._fee());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
     }
 

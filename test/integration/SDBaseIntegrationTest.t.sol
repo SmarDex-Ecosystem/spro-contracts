@@ -64,7 +64,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
             uint40(block.timestamp) + 10 days,
             borrower,
             0,
-            address(deployment.config),
             PARTIAL_POSITION_PERCENTAGE
         );
 

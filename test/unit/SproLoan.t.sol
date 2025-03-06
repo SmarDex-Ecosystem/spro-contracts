@@ -5,6 +5,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { IERC721Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { SproLoan } from "src/spro/SproLoan.sol";
 import { ISproLoan } from "src/interfaces/ISproLoan.sol";
@@ -22,9 +23,9 @@ contract SproLoanTest is Test {
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  CONSTRUCTOR                                              */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                                 CONSTRUCTOR                                */
+/* -------------------------------------------------------------------------- */
 
 contract SproLoan_Constructor_Test is SproLoanTest {
     function test_shouldHaveCorrectNameAndSymbol() external view {
@@ -33,9 +34,9 @@ contract SproLoan_Constructor_Test is SproLoanTest {
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  MINT                                                     */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                                    MINT                                    */
+/* -------------------------------------------------------------------------- */
 
 contract SproLoan_Mint_Test is SproLoanTest {
     function test_shouldFail_whenCallerIsNotActiveLoanContract() external {
@@ -73,9 +74,9 @@ contract SproLoan_Mint_Test is SproLoanTest {
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  BURN                                                     */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                                    BURN                                    */
+/* -------------------------------------------------------------------------- */
 
 contract SproLoan_Burn_Test is SproLoanTest {
     uint256 loanId;
@@ -107,9 +108,9 @@ contract SproLoan_Burn_Test is SproLoanTest {
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  TOKEN URI                                                */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                                  TOKEN URI                                 */
+/* -------------------------------------------------------------------------- */
 
 contract SproLoan_TokenUri_Test is SproLoanTest {
     string tokenUri;
@@ -119,19 +120,16 @@ contract SproLoan_TokenUri_Test is SproLoanTest {
         super.setUp();
 
         tokenUri = "test.uri.xyz";
-
-        vm.mockCall(address(this), abi.encodeWithSignature("loanMetadataUri()"), abi.encode(tokenUri));
-
         loanId = loanToken.mint(alice);
     }
 
-    function test_shouldCallLoanContract() external {
-        vm.expectCall(address(this), abi.encodeWithSignature("loanMetadataUri()"));
-        loanToken.tokenURI(loanId);
-    }
-
-    function test_shouldReturnCorrectValue() external view {
+    function test_shouldReturnCorrectValue() external {
+        vm.mockCall(
+            address(loanToken),
+            abi.encodeWithSignature("tokenURI(uint256)", loanId),
+            abi.encode(string.concat(tokenUri, Strings.toString(loanId)))
+        );
         string memory _tokenUri = loanToken.tokenURI(loanId);
-        assertEq(tokenUri, _tokenUri);
+        assertEq(string.concat(tokenUri, Strings.toString(loanId)), _tokenUri);
     }
 }

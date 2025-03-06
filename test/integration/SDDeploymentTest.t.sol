@@ -57,7 +57,7 @@ abstract contract SDDeploymentTest is Test {
         deployment.config =
             new Spro(address(deployment.sdex), address(deployment.permit2), FEE, PARTIAL_POSITION_PERCENTAGE);
         vm.stopPrank();
-        deployment.loanToken = deployment.config.loanToken();
+        deployment.loanToken = deployment.config._loanToken();
 
         // Labels
         vm.label(deployment.proxyAdmin, "proxyAdmin");
