@@ -113,7 +113,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
                 PARTIAL_POSITION_PERCENTAGE * CREDIT_LIMIT / 1e4
             )
         );
-        deployment.config.createLoan(proposal, lenderSpec, "");
+        deployment.config.createLoan(proposal, amount, "");
         vm.stopPrank();
     }
 
@@ -129,8 +129,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
         vm.startPrank(lender);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
-
-        ISproTypes.LenderSpec memory lenderSpec = ISproTypes.LenderSpec(lender, amount);
 
         // Create loan, expecting revert
         vm.expectRevert(
