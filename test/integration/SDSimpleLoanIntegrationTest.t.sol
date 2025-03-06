@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { SDBaseIntegrationTest, Spro } from "test/integration/SDBaseIntegrationTest.t.sol";
+import { SDBaseIntegrationTest } from "test/integration/SDBaseIntegrationTest.t.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
