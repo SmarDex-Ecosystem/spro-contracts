@@ -7,16 +7,17 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
-import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { ISproLoanMetadataProvider } from "src/interfaces/ISproLoanMetadataProvider.sol";
+import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { ISpro } from "src/interfaces/ISpro.sol";
 import { SproLoan } from "src/spro/SproLoan.sol";
 import { SproVault } from "src/spro/SproVault.sol";
 import { SproStorage } from "src/spro/SproStorage.sol";
 
-contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataProvider, ReentrancyGuard {
+contract Spro is SproVault, SproStorage, ISpro, ISproLoanMetadataProvider, Ownable2Step, ReentrancyGuard {
     using SafeCast for uint256;
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
@@ -69,21 +70,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     }
 
     /// @inheritdoc ISpro
-    function setLoanMetadataUri(address loanContract, string memory metadataUri) external onlyOwner {
-        if (loanContract == address(0)) {
-            // address(0) is used as a default metadata uri. Use `setDefaultLoanMetadataUri` to set default metadata
-            // uri.
-            revert DefaultLoanContract();
-        }
-
-        _loanMetadataUri[loanContract] = metadataUri;
-        emit LoanMetadataUriUpdated(loanContract, metadataUri);
-    }
-
-    /// @inheritdoc ISpro
-    function setDefaultLoanMetadataUri(string memory metadataUri) external onlyOwner {
-        _loanMetadataUri[address(0)] = metadataUri;
-        emit DefaultLoanMetadataUriUpdated(metadataUri);
+    function setLoanMetadataUri(string memory newMetadataUri) external onlyOwner {
+        metadataUri = newMetadataUri;
+        emit LoanMetadataUriUpdated(newMetadataUri);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -150,11 +139,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         }
     }
 
-    /// @inheritdoc ISpro
-    function loanMetadataUri(address loanContract) public view returns (string memory uri_) {
-        uri_ = _loanMetadataUri[loanContract];
-        // If there is no metadata uri for a loan contract, use default metadata uri.
-        if (bytes(uri_).length == 0) uri_ = _loanMetadataUri[address(0)];
+    /// @inheritdoc ISproLoanMetadataProvider
+    function loanMetadataUri(uint256 tokenId) public view returns (string memory uri_) {
+        return string.concat(metadataUri, Strings.toString(tokenId));
     }
 
     /* ------------------------------------------------------------ */
@@ -447,15 +434,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         return (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp)
             ? LoanStatus.EXPIRED
             : loan.status;
-    }
-
-    /* ------------------------------------------------------------ */
-    /*                      ISproLoanMetadataProvider                */
-    /* ------------------------------------------------------------ */
-
-    /// @inheritdoc ISproLoanMetadataProvider
-    function loanMetadataUri() external view returns (string memory) {
-        return loanMetadataUri(address(this));
     }
 
     /* -------------------------------------------------------------------------- */

@@ -9,7 +9,8 @@ pragma solidity >=0.8.0;
 interface ISproLoanMetadataProvider {
     /**
      * @notice Get a loan metadata uri for a Loan token minted by this contract.
-     * @return Loan token metadata uri.
+     * @param tokenId Loan token id.
+     * @return uri_ Loan metadata uri.
      */
-    function loanMetadataUri() external view returns (string memory);
+    function loanMetadataUri(uint256 tokenId) external view returns (string memory uri_);
 }

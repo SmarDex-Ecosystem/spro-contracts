@@ -31,10 +31,9 @@ interface ISproStorage {
 
     /**
      * @notice Get loan metadata URI for a loan contract address.
-     * @dev Loan token minted by a loan contract will return metadata uri stored in this mapping.
-     *      If there is no metadata uri for a loan contract, default metadata uri will be used stored under address(0).
+     * @dev Loan token minted by a loan contract will return metadata uri stored in this string.
      */
-    function _loanMetadataUri(address loanContract) external view returns (string memory);
+    function metadataUri() external view returns (string memory);
 
     /// @notice Get registered pool adapter for a pool address.
     function _poolAdapterRegistry(address poolAddress) external view returns (address);
