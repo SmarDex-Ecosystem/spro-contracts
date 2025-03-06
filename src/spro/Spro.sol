@@ -51,8 +51,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         if (newFee > Constants.MAX_SDEX_FEE) {
             revert ExcessiveFee(newFee);
         }
-        emit FeeUpdated(fee, newFee);
         fee = newFee;
+        emit FeeUpdated(newFee);
     }
 
     /// @inheritdoc ISpro
@@ -64,6 +64,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             revert IncorrectPercentageValue(percentage);
         }
         partialPositionBps = percentage;
+        emit PartialPositionBpsUpdated(percentage);
     }
 
     /// @inheritdoc ISpro
@@ -156,7 +157,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /// @inheritdoc ISpro
     function createProposal(Proposal calldata proposal, bytes calldata permit2Data) external nonReentrant {
         // Make the proposal
-        (address proposer, address collateral, uint256 collateralAmount) = _makeProposal(proposal);
+        (address collateral, uint256 collateralAmount) = _makeProposal(proposal);
 
         // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
@@ -170,7 +171,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             }
         } else {
             // Transfer collateral to Vault
-            _pushFrom(collateral, collateralAmount, proposer, address(this));
+            _pushFrom(collateral, collateralAmount, msg.sender, address(this));
             // Fees to address(0xdead)(burned)
             if (fee > 0) {
                 _pushFrom(SDEX, fee, msg.sender, address(0xdead));
@@ -200,19 +201,18 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function createLoan(
-        Proposal calldata proposal,
-        uint256 creditAmount,
-        bytes calldata extra,
-        bytes calldata permit2Data
-    ) external nonReentrant returns (uint256 loanId_) {
+    function createLoan(Proposal calldata proposal, uint256 creditAmount, bytes calldata permit2Data)
+        external
+        nonReentrant
+        returns (uint256 loanId_)
+    {
         // Accept proposal and get loan terms
         (bytes32 proposalHash, Terms memory loanTerms) = _acceptProposal(msg.sender, creditAmount, proposal);
 
         // Create a new loan
         loanId_ = _createLoan(loanTerms);
 
-        emit LoanCreated(loanId_, proposalHash, loanTerms, extra);
+        emit LoanCreated(loanId_, proposalHash, loanTerms);
 
         // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
@@ -460,14 +460,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @notice Make an on-chain proposal.
      * @dev Function will mark a proposal hash as proposed.
      * @param proposal Proposal struct.
-     * @return proposer_ Address of the borrower/proposer
      * @return collateral_ Address of the collateral token.
      * @return collateralAmount_ Amount of the collateral token.
      */
-    function _makeProposal(Proposal memory proposal)
-        private
-        returns (address proposer_, address collateral_, uint256 collateralAmount_)
-    {
+    function _makeProposal(Proposal memory proposal) private returns (address collateral_, uint256 collateralAmount_) {
         // Decode proposal data
         if (proposal.startTimestamp >= proposal.loanExpiration) {
             revert InvalidDurationStartTime();
@@ -495,7 +491,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         collateralAmount_ = proposal.collateralAmount;
         withdrawableCollateral[proposalHash] = collateralAmount_;
 
-        emit ProposalMade(proposalHash, proposer_ = proposal.proposer, proposal);
+        emit ProposalMade(proposalHash, proposal.proposer, proposal);
     }
 
     /**
@@ -523,7 +519,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
                 proposal.availableCreditLimit,
                 proposal.startTimestamp,
                 proposal.proposer,
-                proposal.nonce,
                 proposal.loanContract,
                 proposal.partialPositionBps
             )
@@ -564,6 +559,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         delete withdrawableCollateral[proposalHash];
 
         proposalsMade[proposalHash] = false;
+
+        emit ProposalCanceled(proposalHash);
     }
 
     /**

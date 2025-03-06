@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity >=0.8.0;
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
@@ -128,11 +128,10 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @dev The function assumes a prior token approval to a contract address or signed permits.
      * @param proposal Proposal struct.
      * @param creditAmount Amount of credit tokens.
-     * @param extra Auxiliary data that are emitted in the loan creation event. They are not used in the contract logic.
      * @param permit2Data Permit data.
      * @return loanId_ Id of the created Loan token.
      */
-    function createLoan(Proposal memory proposal, uint256 creditAmount, bytes memory extra, bytes calldata permit2Data)
+    function createLoan(Proposal memory proposal, uint256 creditAmount, bytes calldata permit2Data)
         external
         returns (uint256 loanId_);
 

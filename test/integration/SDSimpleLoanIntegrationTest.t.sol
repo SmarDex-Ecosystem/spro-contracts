@@ -68,7 +68,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Lender: creates the loan
         vm.prank(lender);
-        uint256 loanId = deployment.config.createLoan(proposal, CREDIT_AMOUNT, "", "");
+        uint256 loanId = deployment.config.createLoan(proposal, CREDIT_AMOUNT, "");
 
         // Borrower: cancels proposal, withdrawing unused collateral
         vm.startPrank(borrower);
@@ -113,7 +113,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
                 (PERCENTAGE - PARTIAL_POSITION_PERCENTAGE) * CREDIT_LIMIT / 1e4
             )
         );
-        deployment.config.createLoan(proposal, amount, "", "");
+        deployment.config.createLoan(proposal, amount, "");
         vm.stopPrank();
     }
 
@@ -269,7 +269,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             credit.approve(address(deployment.config), minCreditAmount);
 
             // Create loan
-            loanIds[i] = deployment.config.createLoan(proposal, minCreditAmount, "", "");
+            loanIds[i] = deployment.config.createLoan(proposal, minCreditAmount, "");
             vm.stopPrank();
         }
 
@@ -301,7 +301,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Lender: creates the loan
         vm.prank(lender);
-        uint256 loanId = deployment.config.createLoan(proposal, CREDIT_AMOUNT, "", "");
+        uint256 loanId = deployment.config.createLoan(proposal, CREDIT_AMOUNT, "");
 
         vm.startPrank(borrower);
         // Borrower approvals for credit token
@@ -333,7 +333,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Lender: creates the loan
         vm.prank(lender);
-        uint256 loanId = deployment.config.createLoan(proposal, CREDIT_LIMIT, "", "");
+        uint256 loanId = deployment.config.createLoan(proposal, CREDIT_LIMIT, "");
 
         // Borrower approvals for credit token
         vm.startPrank(borrower);
@@ -366,7 +366,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Lender: creates the loan
         uint256 creditAmount = CREDIT_AMOUNT;
         vm.prank(lender);
-        uint256 loanId = deployment.config.createLoan(proposal, creditAmount, "", "");
+        uint256 loanId = deployment.config.createLoan(proposal, creditAmount, "");
 
         vm.startPrank(borrower);
         // Borrower approvals for credit token
@@ -393,7 +393,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.startPrank(lender);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        uint256 loanId = deployment.config.createLoan(proposal, amount, "", "");
+        uint256 loanId = deployment.config.createLoan(proposal, amount, "");
 
         // skip to the future
         skip(future);
