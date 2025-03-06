@@ -24,9 +24,6 @@ contract SproStorage is ISproStorage {
     /// @inheritdoc ISproStorage
     uint256 public _fee;
 
-    /// @inheritdoc ISproStorage
-    mapping(address => address) public _poolAdapterRegistry;
-
     /* -------------------------------------------------------------------------- */
     /*                                    LOAN                                    */
     /* -------------------------------------------------------------------------- */

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.26;
 
-import { DummyPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
 import { T20 } from "test/helper/T20.sol";
 import { SDDeploymentTest, Spro } from "test/integration/SDDeploymentTest.t.sol";
 
@@ -22,9 +21,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     uint256 aliceKey;
     address bob;
     address charlee;
-
-    // pool adapter
-    DummyPoolAdapter poolAdapter;
 
     // Constants
     uint256 public constant COLLATERAL_ID = 42;
@@ -48,10 +44,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         // Deploy tokens
         t20 = new T20();
         credit = new T20();
-
-        // Pool adapter
-        poolAdapter = new DummyPoolAdapter();
-        vm.label(address(poolAdapter), "poolAdapter");
 
         // Deploy protocol contracts
         proposal = ISproTypes.Proposal(
@@ -118,15 +110,10 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         }
 
         vm.prank(lender);
-        return deployment.config.createLoan(newProposal, _buildLenderSpec(false), "");
+        return deployment.config.createLoan(newProposal, CREDIT_AMOUNT, "");
     }
 
     function _cancelProposal(Spro.Proposal memory _proposal) internal {
         deployment.config.cancelProposal(_proposal);
-    }
-
-    function _buildLenderSpec(bool complete) internal view returns (ISproTypes.LenderSpec memory lenderSpec) {
-        lenderSpec =
-            complete ? ISproTypes.LenderSpec(lender, CREDIT_LIMIT) : ISproTypes.LenderSpec(lender, CREDIT_AMOUNT);
     }
 }

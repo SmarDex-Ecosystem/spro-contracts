@@ -29,9 +29,6 @@ interface ISproStorage {
      */
     function _fee() external view returns (uint256);
 
-    /// @notice Get registered pool adapter for a pool address.
-    function _poolAdapterRegistry(address poolAddress) external view returns (address);
-
     /* -------------------------------------------------------------------------- */
     /*                                    LOAN                                    */
     /* -------------------------------------------------------------------------- */
