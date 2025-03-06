@@ -119,7 +119,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         }
 
         vm.prank(lender);
-        return deployment.config.createLoan(newProposal, _buildLenderSpec(false), "", "");
+        return deployment.config.createLoan(newProposal, _buildLenderSpec(false), "");
     }
 
     function _cancelProposal(Spro.Proposal memory _proposal) internal {

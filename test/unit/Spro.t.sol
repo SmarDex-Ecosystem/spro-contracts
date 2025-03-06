@@ -107,16 +107,16 @@ contract TestSproSetUnlistedFee is SproTest {
 
     function test_shouldEmitEvent_FeeUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit ISproEvents.FeeUpdated(fee, 50e18);
+        emit ISproEvents.FeeUpdated(50e18);
 
         vm.prank(owner);
         config.setFee(50e18);
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  PARTIAL LENDING THRESHOLDS                               */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                         PARTIAL LENDING THRESHOLDS                         */
+/* -------------------------------------------------------------------------- */
 
 contract TestSproPartialLendingThresholds is SproTest {
     uint16 internal constant DEFAULT_THRESHOLD = 500;
@@ -127,6 +127,14 @@ contract TestSproPartialLendingThresholds is SproTest {
         vm.startPrank(owner);
         config.setPartialPositionPercentage(DEFAULT_THRESHOLD);
         vm.stopPrank();
+    }
+
+    function test_shouldEmitEvent_PartialPositionBpsUpdated() external {
+        vm.expectEmit(true, true, true, true);
+        emit ISproEvents.PartialPositionBpsUpdated(1000);
+
+        vm.prank(owner);
+        config.setPartialPositionPercentage(1000);
     }
 
     function test_shouldFail_whenCallerIsNotOwner() external {
