@@ -120,7 +120,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.stopPrank();
     }
 
-    function test_RevertWhen_PartialLoanLtCreditThreshold() external {
+    function test_RevertWhen_partialLoanLtCreditThreshold() external {
         // Create the proposal
         vm.prank(borrower);
         _createERC20Proposal();
