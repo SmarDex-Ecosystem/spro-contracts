@@ -99,7 +99,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         _createERC20Proposal();
 
         // 95.01% of available credit limit
-        uint256 amount = (10_000 - deployment.config.partialPositionBps() + 1) * CREDIT_LIMIT / 1e4;
+        uint256 amount = (1e4 - deployment.config.partialPositionBps() + 1) * CREDIT_LIMIT / 1e4;
 
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
