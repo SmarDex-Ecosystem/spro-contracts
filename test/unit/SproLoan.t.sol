@@ -131,5 +131,6 @@ contract SproLoan_TokenUri_Test is SproLoanTest {
         );
         string memory _tokenUri = loanToken.tokenURI(loanId);
         assertEq(string.concat(tokenUri, Strings.toString(loanId)), _tokenUri);
+        assertEq("test.uri.xyz1", _tokenUri);
     }
 }
