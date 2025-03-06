@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
@@ -58,9 +57,14 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /**
      * @notice Return a Loan data struct associated with a loan id.
      * @param loanId Id of a loan in question.
-     * @return loanInfo_ Loan information struct.
+     * @return loan_ Loan data struct.
+     * @return repaymentAmount_ Repayment amount for the loan.
+     * @return loanOwner_ Current owner of the Loan token.
      */
-    function getLoan(uint256 loanId) external view returns (ISproTypes.LoanInfo memory loanInfo_);
+    function getLoan(uint256 loanId)
+        external
+        view
+        returns (Loan memory loan_, uint256 repaymentAmount_, address loanOwner_);
 
     /**
      * @notice Get the proposal hash for a given proposal struct.
@@ -93,24 +97,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     function loanMetadataUri(address loanContract) external view returns (string memory uri_);
 
     /* ------------------------------------------------------------ */
-    /*                          POOL ADAPTER                        */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Registers a pool adapter for a given pool.
-     * @param pool The pool for which the adapter is registered.
-     * @param adapter The adapter to be registered.
-     */
-    function registerPoolAdapter(address pool, address adapter) external;
-
-    /**
-     * @notice Returns the pool adapter for a given pool.
-     * @param pool The pool for which the adapter is requested.
-     * @return The adapter for the given pool.
-     */
-    function getPoolAdapter(address pool) external view returns (IPoolAdapter);
-
-    /* ------------------------------------------------------------ */
     /*                      CREATE PROPOSAL                         */
     /* ------------------------------------------------------------ */
 
@@ -141,11 +127,11 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @notice Create a new loan.
      * @dev The function assumes a prior token approval to a contract address or signed permits.
      * @param proposal Proposal struct.
-     * @param lenderSpec Lender specification struct.
+     * @param creditAmount Amount of credit tokens.
      * @param permit2Data Permit data.
      * @return loanId_ Id of the created Loan token.
      */
-    function createLoan(Proposal memory proposal, ISproTypes.LenderSpec memory lenderSpec, bytes calldata permit2Data)
+    function createLoan(Proposal memory proposal, uint256 creditAmount, bytes calldata permit2Data)
         external
         returns (uint256 loanId_);
 
