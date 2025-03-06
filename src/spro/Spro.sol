@@ -609,7 +609,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
                 revert CreditAmountTooSmall(creditAmount, minAmount);
             }
             if (proposal.availableCreditLimit - minAmount < creditUsed[proposalHash] + creditAmount) {
-                revert CreditAmountLeavesTooSmall(creditAmount, minAmount);
+                revert CreditAmountRemainingBelowMinimum(creditAmount, minAmount);
             }
         } else if (creditUsed[proposalHash] + creditAmount > proposal.availableCreditLimit) {
             // Revert, credit limit is exceeded

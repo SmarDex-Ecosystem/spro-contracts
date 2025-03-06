@@ -108,7 +108,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Create loan, expecting revert
         vm.expectRevert(
             abi.encodeWithSelector(
-                ISproErrors.CreditAmountLeavesTooSmall.selector,
+                ISproErrors.CreditAmountRemainingBelowMinimum.selector,
                 amount,
                 PARTIAL_POSITION_PERCENTAGE * CREDIT_LIMIT / 1e4
             )

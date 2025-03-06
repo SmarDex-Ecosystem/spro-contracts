@@ -115,11 +115,12 @@ interface ISproErrors {
     error CreditAmountTooSmall(uint256 amount, uint256 minimum);
 
     /**
-     * @notice Thrown when the lender leaves too small an amount of potential credit.
-     * @param amount The credit amount.
-     * @param minimum The minimum leaved credit amount.
+     * @notice Thrown when the credit amount remaining is insufficient, smaller than the minimum required for a future
+     * loan.
+     * @param amount The credit amount provided by the lender.
+     * @param minimum The minimum credit amount that should remain.
      */
-    error CreditAmountLeavesTooSmall(uint256 amount, uint256 minimum);
+    error CreditAmountRemainingBelowMinimum(uint256 amount, uint256 minimum);
 
     /**
      * @notice Thrown when a proposal would exceed the available credit limit.

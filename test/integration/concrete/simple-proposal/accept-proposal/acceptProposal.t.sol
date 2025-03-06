@@ -261,7 +261,7 @@
 //         vm.prank(proposal.loanContract);
 //         vm.expectRevert(
 //             abi.encodeWithSelector(
-//                 ISproErrors.CreditAmountLeavesTooSmall.selector,
+//                 ISproErrors.CreditAmountRemainingBelowMinimum.selector,
 //                 (CREDIT_LIMIT * 9501) / 1e4,
 //                 (PERCENTAGE - DEFAULT_THRESHOLD) * CREDIT_LIMIT / 1e4
 //             )
