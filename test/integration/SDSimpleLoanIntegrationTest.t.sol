@@ -3,8 +3,7 @@ pragma solidity ^0.8.26;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { SDBaseIntegrationTest, Spro } from "test/integration/SDBaseIntegrationTest.t.sol";
-import { IPoolAdapter } from "test/helper/DummyPoolAdapter.sol";
+import { SDBaseIntegrationTest } from "test/integration/SDBaseIntegrationTest.t.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
@@ -69,7 +68,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Lender: creates the loan
         vm.prank(lender);
-        uint256 loanId = deployment.config.createLoan(proposal, _buildLenderSpec(false), "");
+        uint256 loanId = deployment.config.createLoan(proposal, CREDIT_AMOUNT, "");
 
         // Borrower: cancels proposal, withdrawing unused collateral
         vm.startPrank(borrower);
@@ -79,16 +78,16 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
         // Borrower approvals for credit token
-        uint256 interest = deployment.config.getLoan(loanId).fixedInterestAmount;
-        credit.mint(borrower, interest); // helper step: mint fixed interest amount for the borrower
-        credit.approve(address(deployment.config), CREDIT_AMOUNT + interest);
+        (ISproTypes.Loan memory loan,,) = deployment.config.getLoan(loanId);
+        credit.mint(borrower, loan.fixedInterestAmount); // helper step: mint fixed interest amount for the borrower
+        credit.approve(address(deployment.config), CREDIT_AMOUNT + loan.fixedInterestAmount);
 
         // Borrower: repays loan
         deployment.config.repayLoan(loanId, "");
 
         // Assertions
         assertEq(credit.balanceOf(borrower), 0);
-        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + interest);
+        assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + loan.fixedInterestAmount);
 
         assertEq(t20.balanceOf(borrower), COLLATERAL_AMOUNT);
     }
@@ -105,8 +104,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
         vm.startPrank(lender);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
-
-        ISproTypes.LenderSpec memory lenderSpec = ISproTypes.LenderSpec(lender, amount);
 
         // Create loan, expecting revert
         vm.expectRevert(
@@ -141,7 +138,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
                 ISproErrors.CreditAmountTooSmall.selector, amount, PARTIAL_POSITION_PERCENTAGE * CREDIT_LIMIT / 1e4
             )
         );
-        deployment.config.createLoan(proposal, lenderSpec, "");
+        deployment.config.createLoan(proposal, amount, "");
         vm.stopPrank();
     }
 
@@ -296,12 +293,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             vm.startPrank(lenders[i]);
             credit.approve(address(deployment.config), minCreditAmount);
 
-            // Lender spec
-            ISproTypes.LenderSpec memory lenderSpec =
-                ISproTypes.LenderSpec({ sourceOfFunds: lenders[i], creditAmount: minCreditAmount });
-
             // Create loan
-            loanIds[i] = deployment.config.createLoan({ proposal: proposal, lenderSpec: lenderSpec, permit2Data: "" });
+            loanIds[i] = deployment.config.createLoan(proposal, minCreditAmount, "");
             vm.stopPrank();
         }
 
@@ -333,8 +326,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Lender: creates the loan
         vm.prank(lender);
-        uint256 loanId =
-            deployment.config.createLoan({ proposal: proposal, lenderSpec: _buildLenderSpec(false), permit2Data: "" });
+        uint256 loanId = deployment.config.createLoan(proposal, CREDIT_AMOUNT, "");
 
         vm.startPrank(borrower);
         // Borrower approvals for credit token
@@ -366,8 +358,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Lender: creates the loan
         vm.prank(lender);
-        uint256 loanId =
-            deployment.config.createLoan({ proposal: proposal, lenderSpec: _buildLenderSpec(true), permit2Data: "" });
+        uint256 loanId = deployment.config.createLoan(proposal, CREDIT_LIMIT, "");
 
         // Borrower approvals for credit token
         vm.startPrank(borrower);
@@ -398,9 +389,9 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
         // Lender: creates the loan
+        uint256 creditAmount = CREDIT_AMOUNT;
         vm.prank(lender);
-        uint256 loanId =
-            deployment.config.createLoan({ proposal: proposal, lenderSpec: _buildLenderSpec(false), permit2Data: "" });
+        uint256 loanId = deployment.config.createLoan(proposal, creditAmount, "");
 
         vm.startPrank(borrower);
         // Borrower approvals for credit token
@@ -412,53 +403,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.startPrank(lender);
         vm.expectRevert(ISproErrors.LoanRunning.selector);
         deployment.config.claimLoan(loanId);
-    }
-
-    function test_RepayToPool() external {
-        // Setup repay to pool
-        vm.mockCall(
-            address(deployment.config),
-            abi.encodeWithSignature("getPoolAdapter(address)", address(this)),
-            abi.encode(IPoolAdapter(poolAdapter))
-        );
-
-        _createERC20Proposal();
-
-        Spro.LenderSpec memory lenderSpec = _buildLenderSpec(true);
-        lenderSpec.sourceOfFunds = address(this);
-
-        // Mint to source of funds and approve pool adapter
-        credit.mint(address(this), INITIAL_CREDIT_BALANCE);
-        credit.approve(address(poolAdapter), CREDIT_LIMIT);
-
-        vm.prank(deployment.protocolAdmin);
-        deployment.config.registerPoolAdapter(address(this), address(poolAdapter));
-        // Lender creates loan
-        vm.startPrank(lender);
-        credit.approve(address(deployment.config), CREDIT_LIMIT);
-        uint256 id = deployment.config.createLoan(proposal, lenderSpec, "");
-        vm.stopPrank();
-
-        // Borrower approvals for credit token
-        vm.startPrank(borrower);
-        credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
-        credit.approve(address(deployment.config), CREDIT_LIMIT + FIXED_INTEREST_AMOUNT);
-
-        // End of setup
-        deployment.config.repayLoan(id, "");
-
-        // Assertions
-        assertEq(credit.balanceOf(borrower), 0);
-        assertEq(credit.balanceOf(lender), 0);
-        assertEq(credit.balanceOf(address(this)), INITIAL_CREDIT_BALANCE + FIXED_INTEREST_AMOUNT);
-
-        assertEq(t20.balanceOf(borrower), COLLATERAL_AMOUNT);
-        assertEq(t20.balanceOf(address(deployment.config)), 0);
-        assertEq(t20.balanceOf(lender), 0);
-
-        assertEq(deployment.sdex.balanceOf(address(0xdead)), deployment.config.fee());
-        assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config.fee());
-        assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
     }
 
     function testFuzz_loanAccruedInterest(uint256 amount, uint256 future) external {
@@ -474,29 +418,13 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.startPrank(lender);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        // Create loan
-        ISproTypes.LenderSpec memory lenderSpec = ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: amount });
-
-        uint256 loanId = deployment.config.createLoan(proposal, lenderSpec, "");
+        uint256 loanId = deployment.config.createLoan(proposal, amount, "");
 
         // skip to the future
         skip(future);
 
-        (ISproTypes.LoanInfo memory loanInfo) = deployment.config.getLoan(loanId);
+        (ISproTypes.Loan memory loanInfo, uint256 repaymentAmount,) = deployment.config.getLoan(loanId);
 
-        assertEq(deployment.config.getLoan(loanId).repaymentAmount, amount + loanInfo.fixedInterestAmount);
-    }
-
-    function test_RevertWhen_InvalidSourceOfFunds() external {
-        _createERC20Proposal();
-        address sourceOfFunds = makeAddr("sourceOfFunds");
-
-        vm.prank(lender);
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidSourceOfFunds.selector, sourceOfFunds));
-        deployment.config.createLoan({
-            proposal: proposal,
-            lenderSpec: ISproTypes.LenderSpec(sourceOfFunds, CREDIT_LIMIT),
-            permit2Data: ""
-        });
+        assertEq(repaymentAmount, amount + loanInfo.fixedInterestAmount);
     }
 }

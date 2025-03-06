@@ -27,7 +27,6 @@ abstract contract SproTest is Test {
     bytes32 internal constant TOKEN_FACTORS_SLOT = bytes32(uint256(5));
     bytes32 internal constant LOAN_METADATA_URI_SLOT = bytes32(uint256(6)); // `loanMetadataUri` mapping position
     bytes32 internal constant SFC_REGISTRY_SLOT = bytes32(uint256(7)); // `_sfComputerRegistry` mapping position
-    bytes32 internal constant POOL_ADAPTER_REGISTRY_SLOT = bytes32(uint256(8)); // `_poolAdapterRegistry` mapping
         // position
 
     Spro config;
@@ -253,39 +252,5 @@ contract TestSproLoanMetadataUri is SproTest {
 
         string memory uri = config.loanMetadataUri(loanContract);
         assertEq(uri, tokenUri);
-    }
-}
-
-/* ------------------------------------------------------------ */
-/*  GET POOL ADAPTER                                         */
-/* ------------------------------------------------------------ */
-
-contract TestSproGetPoolAdapter is SproTest {
-    function testFuzz_shouldReturnStoredAdapter_whenIsRegistered(address pool, address adapter) external {
-        vm.prank(owner);
-        config.registerPoolAdapter(pool, adapter);
-
-        assertEq(address(config.getPoolAdapter(pool)), adapter);
-    }
-}
-
-/* ------------------------------------------------------------ */
-/*  REGISTER POOL ADAPTER                                    */
-/* ------------------------------------------------------------ */
-
-contract TestSproRegisterPoolAdapter is SproTest {
-    function testFuzz_shouldFail_whenCallerIsNotOwner(address caller) external {
-        vm.assume(caller != owner);
-
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, caller));
-        vm.prank(caller);
-        config.registerPoolAdapter(address(0), address(0));
-    }
-
-    function testFuzz_shouldStoreAdapter(address pool, address adapter) external {
-        vm.prank(owner);
-        config.registerPoolAdapter(pool, adapter);
-
-        assertEq(address(config.getPoolAdapter(pool)), adapter);
     }
 }
