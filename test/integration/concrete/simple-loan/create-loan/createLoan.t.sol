@@ -27,7 +27,7 @@ contract CreateLoan_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationT
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        uint256 id = deployment.config.createLoan(proposal, lenderSpec, "", "");
+        uint256 id = deployment.config.createLoan(proposal, lenderSpec, "");
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);

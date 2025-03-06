@@ -69,7 +69,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Lender: creates the loan
         vm.prank(lender);
-        uint256 loanId = deployment.config.createLoan(proposal, _buildLenderSpec(false), "", "");
+        uint256 loanId = deployment.config.createLoan(proposal, _buildLenderSpec(false), "");
 
         // Borrower: cancels proposal, withdrawing unused collateral
         vm.startPrank(borrower);
@@ -116,7 +116,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
                 (PERCENTAGE - PARTIAL_POSITION_PERCENTAGE) * CREDIT_LIMIT / 1e4
             )
         );
-        deployment.config.createLoan(proposal, lenderSpec, "", "");
+        deployment.config.createLoan(proposal, lenderSpec, "");
         vm.stopPrank();
     }
 
@@ -302,8 +302,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
                 ISproTypes.LenderSpec({ sourceOfFunds: lenders[i], creditAmount: minCreditAmount });
 
             // Create loan
-            loanIds[i] =
-                deployment.config.createLoan({ proposal: proposal, lenderSpec: lenderSpec, extra: "", permit2Data: "" });
+            loanIds[i] = deployment.config.createLoan({ proposal: proposal, lenderSpec: lenderSpec, permit2Data: "" });
             vm.stopPrank();
         }
 
@@ -335,12 +334,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Lender: creates the loan
         vm.prank(lender);
-        uint256 loanId = deployment.config.createLoan({
-            proposal: proposal,
-            lenderSpec: _buildLenderSpec(false),
-            extra: "",
-            permit2Data: ""
-        });
+        uint256 loanId =
+            deployment.config.createLoan({ proposal: proposal, lenderSpec: _buildLenderSpec(false), permit2Data: "" });
 
         vm.startPrank(borrower);
         // Borrower approvals for credit token
@@ -372,12 +367,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Lender: creates the loan
         vm.prank(lender);
-        uint256 loanId = deployment.config.createLoan({
-            proposal: proposal,
-            lenderSpec: _buildLenderSpec(true),
-            extra: "",
-            permit2Data: ""
-        });
+        uint256 loanId =
+            deployment.config.createLoan({ proposal: proposal, lenderSpec: _buildLenderSpec(true), permit2Data: "" });
 
         // Borrower approvals for credit token
         vm.startPrank(borrower);
@@ -409,12 +400,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Lender: creates the loan
         vm.prank(lender);
-        uint256 loanId = deployment.config.createLoan({
-            proposal: proposal,
-            lenderSpec: _buildLenderSpec(false),
-            extra: "",
-            permit2Data: ""
-        });
+        uint256 loanId =
+            deployment.config.createLoan({ proposal: proposal, lenderSpec: _buildLenderSpec(false), permit2Data: "" });
 
         vm.startPrank(borrower);
         // Borrower approvals for credit token
@@ -450,7 +437,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Lender creates loan
         vm.startPrank(lender);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
-        uint256 id = deployment.config.createLoan(proposal, lenderSpec, "", "");
+        uint256 id = deployment.config.createLoan(proposal, lenderSpec, "");
         vm.stopPrank();
 
         // Borrower approvals for credit token
@@ -491,7 +478,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Create loan
         ISproTypes.LenderSpec memory lenderSpec = ISproTypes.LenderSpec({ sourceOfFunds: lender, creditAmount: amount });
 
-        uint256 loanId = deployment.config.createLoan(proposal, lenderSpec, "", "");
+        uint256 loanId = deployment.config.createLoan(proposal, lenderSpec, "");
 
         // skip to the future
         skip(future);
@@ -510,7 +497,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         deployment.config.createLoan({
             proposal: proposal,
             lenderSpec: ISproTypes.LenderSpec(sourceOfFunds, CREDIT_LIMIT),
-            extra: "",
             permit2Data: ""
         });
     }
