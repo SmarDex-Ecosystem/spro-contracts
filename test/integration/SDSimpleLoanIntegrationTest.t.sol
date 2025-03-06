@@ -116,7 +116,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
                 PARTIAL_POSITION_PERCENTAGE * CREDIT_LIMIT / 1e4
             )
         );
-        deployment.config.createLoan(proposal, lenderSpec, "", "");
+        deployment.config.createLoan(proposal, lenderSpec, "");
         vm.stopPrank();
     }
 
