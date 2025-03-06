@@ -3,8 +3,9 @@ pragma solidity ^0.8.26;
 
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC4906 } from "@openzeppelin/contracts/interfaces/IERC4906.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { ISproLoanMetadataProvider } from "src/interfaces/ISproLoanMetadataProvider.sol";
 import { ISproLoan } from "src/interfaces/ISproLoan.sol";
 
 contract SproLoan is ISproLoan, ERC721, Ownable {
@@ -13,7 +14,10 @@ contract SproLoan is ISproLoan, ERC721, Ownable {
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISproLoan
-    uint256 public lastLoanId;
+    uint256 public _lastLoanId;
+
+    /// @inheritdoc ISproLoan
+    string public _metadataUri;
 
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
@@ -31,7 +35,7 @@ contract SproLoan is ISproLoan, ERC721, Ownable {
 
     /// @inheritdoc ISproLoan
     function mint(address to) external onlyOwner returns (uint256 loanId_) {
-        loanId_ = ++lastLoanId;
+        loanId_ = ++_lastLoanId;
         _mint(to, loanId_);
         emit LoanMinted(loanId_, to);
     }
@@ -49,7 +53,13 @@ contract SproLoan is ISproLoan, ERC721, Ownable {
     /// @inheritdoc ISproLoan
     function tokenURI(uint256 tokenId) public view virtual override(ERC721, ISproLoan) returns (string memory uri_) {
         _requireOwned(tokenId);
+        return string.concat(_metadataUri, Strings.toString(tokenId), ".json");
+    }
 
-        return ISproLoanMetadataProvider(owner()).loanMetadataUri(tokenId);
+    /// @inheritdoc ISproLoan
+    function setLoanMetadataUri(string memory newMetadataUri) external onlyOwner {
+        _metadataUri = newMetadataUri;
+        emit LoanMetadataUriUpdated(newMetadataUri);
+        emit IERC4906.BatchMetadataUpdate(0, type(uint256).max);
     }
 }

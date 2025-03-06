@@ -25,9 +25,6 @@ contract SproStorage is ISproStorage {
     uint256 public _fee;
 
     /// @inheritdoc ISproStorage
-    string public _metadataUri;
-
-    /// @inheritdoc ISproStorage
     mapping(address => address) public _poolAdapterRegistry;
 
     /* -------------------------------------------------------------------------- */

@@ -176,15 +176,7 @@ contract TestSprosetLoanMetadataUri is SproTest {
         vm.prank(owner);
         config.setLoanMetadataUri(uri);
 
-        assertEq(config._metadataUri(), uri);
-    }
-
-    function test_shouldEmitEvent_LoanMetadataUriUpdated() external {
-        vm.expectEmit(true, true, true, true);
-        emit ISproEvents.LoanMetadataUriUpdated(tokenUri);
-
-        vm.prank(owner);
-        config.setLoanMetadataUri(tokenUri);
+        assertEq(config._loanToken()._metadataUri(), uri);
     }
 }
 

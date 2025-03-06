@@ -4,7 +4,6 @@ pragma solidity >=0.8.0;
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 
 import { SproLoan } from "src/spro/SproLoan.sol";
-import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 /**
  * @title ISproStorage
@@ -29,9 +28,6 @@ interface ISproStorage {
      * @dev Amount of SDEX tokens (units 1e18).
      */
     function _fee() external view returns (uint256);
-
-    /// @notice Get loan metadata URI.
-    function _metadataUri() external view returns (string memory);
 
     /// @notice Get registered pool adapter for a pool address.
     function _poolAdapterRegistry(address poolAddress) external view returns (address);

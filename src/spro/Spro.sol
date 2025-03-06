@@ -7,17 +7,15 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
-import { ISproLoanMetadataProvider } from "src/interfaces/ISproLoanMetadataProvider.sol";
 import { IPoolAdapter } from "src/interfaces/IPoolAdapter.sol";
 import { ISpro } from "src/interfaces/ISpro.sol";
 import { SproLoan } from "src/spro/SproLoan.sol";
 import { SproVault } from "src/spro/SproVault.sol";
 import { SproStorage } from "src/spro/SproStorage.sol";
 
-contract Spro is SproVault, SproStorage, ISpro, ISproLoanMetadataProvider, Ownable2Step, ReentrancyGuard {
+contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     using SafeCast for uint256;
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
@@ -71,8 +69,7 @@ contract Spro is SproVault, SproStorage, ISpro, ISproLoanMetadataProvider, Ownab
 
     /// @inheritdoc ISpro
     function setLoanMetadataUri(string memory newMetadataUri) external onlyOwner {
-        _metadataUri = newMetadataUri;
-        emit LoanMetadataUriUpdated(newMetadataUri);
+        _loanToken.setLoanMetadataUri(newMetadataUri);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -137,11 +134,6 @@ contract Spro is SproVault, SproStorage, ISpro, ISproLoanMetadataProvider, Ownab
             // Add loan principal with accrued interest
             amount_ += loan.principalAmount + loan.fixedInterestAmount;
         }
-    }
-
-    /// @inheritdoc ISproLoanMetadataProvider
-    function loanMetadataUri(uint256 tokenId) public view returns (string memory uri_) {
-        return string.concat(_metadataUri, Strings.toString(tokenId));
     }
 
     /* ------------------------------------------------------------ */

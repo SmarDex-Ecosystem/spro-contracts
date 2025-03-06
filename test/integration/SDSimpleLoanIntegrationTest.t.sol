@@ -294,11 +294,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         credit.approve(address(deployment.config), totalAmount);
     }
 
-    function test_loanMetadataUri() external view {
-        string memory uri = deployment.config._metadataUri();
-        assertEq(uri, "");
-    }
-
     function test_shouldFail_claimLoan_CallerNotLoanTokenHolder() external {
         _createERC20Proposal();
 

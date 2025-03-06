@@ -6,6 +6,7 @@ import { Test } from "forge-std/Test.sol";
 import { IERC721Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { IERC4906 } from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 
 import { SproLoan } from "src/spro/SproLoan.sol";
 import { ISproLoan } from "src/interfaces/ISproLoan.sol";
@@ -46,11 +47,11 @@ contract SproLoan_Mint_Test is SproLoanTest {
     }
 
     function test_shouldIncreaseLastLoanId() external {
-        uint256 lastLoanId = loanToken.lastLoanId();
+        uint256 lastLoanId = loanToken._lastLoanId();
 
         loanToken.mint(alice);
 
-        uint256 lastLoanIdValue = loanToken.lastLoanId();
+        uint256 lastLoanIdValue = loanToken._lastLoanId();
         assertTrue(lastLoanIdValue == lastLoanId + 1);
     }
 
@@ -119,18 +120,27 @@ contract SproLoan_TokenUri_Test is SproLoanTest {
     function setUp() public override {
         super.setUp();
 
-        tokenUri = "test.uri.xyz";
+        tokenUri = "test.uri.xyz/";
         loanId = loanToken.mint(alice);
     }
 
     function test_shouldReturnCorrectValue() external {
-        vm.mockCall(
-            address(loanToken),
-            abi.encodeWithSignature("tokenURI(uint256)", loanId),
-            abi.encode(string.concat(tokenUri, Strings.toString(loanId)))
-        );
+        loanToken.setLoanMetadataUri(tokenUri);
         string memory _tokenUri = loanToken.tokenURI(loanId);
-        assertEq(string.concat(tokenUri, Strings.toString(loanId)), _tokenUri);
-        assertEq("test.uri.xyz1", _tokenUri);
+        assertEq(string.concat(tokenUri, Strings.toString(loanId), ".json"), _tokenUri);
+        assertEq("test.uri.xyz/1.json", _tokenUri);
+    }
+
+    function test_loanMetadataUri() external view {
+        string memory uri = loanToken._metadataUri();
+        assertEq(uri, "");
+    }
+
+    function test_shouldEmitEvent_LoanMetadataUriUpdated() external {
+        vm.expectEmit(true, true, true, true);
+        emit ISproLoan.LoanMetadataUriUpdated(tokenUri);
+        emit IERC4906.BatchMetadataUpdate(0, type(uint256).max);
+
+        loanToken.setLoanMetadataUri(tokenUri);
     }
 }
