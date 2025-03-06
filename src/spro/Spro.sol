@@ -178,7 +178,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /// @inheritdoc ISpro
     function createProposal(Proposal calldata proposal, bytes calldata permit2Data) external nonReentrant {
         // Make the proposal
-        (address proposer, address collateral, uint256 collateralAmount) = _makeProposal(proposal);
+        (address collateral, uint256 collateralAmount) = _makeProposal(proposal);
 
         // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
@@ -192,7 +192,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             }
         } else {
             // Transfer collateral to Vault
-            _pushFrom(collateral, collateralAmount, proposer, address(this));
+            _pushFrom(collateral, collateralAmount, msg.sender, address(this));
             // Fees to address(0xdead)(burned)
             if (fee > 0) {
                 _pushFrom(SDEX, fee, msg.sender, address(0xdead));
@@ -222,12 +222,11 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
     /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
-    function createLoan(
-        Proposal calldata proposal,
-        LenderSpec calldata lenderSpec,
-        bytes calldata extra,
-        bytes calldata permit2Data
-    ) external nonReentrant returns (uint256 loanId_) {
+    function createLoan(Proposal calldata proposal, LenderSpec calldata lenderSpec, bytes calldata permit2Data)
+        external
+        nonReentrant
+        returns (uint256 loanId_)
+    {
         address poolAdapter = _poolAdapterRegistry[lenderSpec.sourceOfFunds];
         if (lenderSpec.sourceOfFunds != msg.sender && poolAdapter == address(0)) {
             revert InvalidSourceOfFunds(lenderSpec.sourceOfFunds);
@@ -239,7 +238,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         // Create a new loan
         loanId_ = _createLoan(loanTerms, lenderSpec, poolAdapter);
 
-        emit LoanCreated(loanId_, proposalHash, loanTerms, lenderSpec, extra);
+        emit LoanCreated(loanId_, proposalHash, loanTerms, lenderSpec);
 
         // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
@@ -498,14 +497,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
      * @notice Make an on-chain proposal.
      * @dev Function will mark a proposal hash as proposed.
      * @param proposal Proposal struct.
-     * @return proposer_ Address of the borrower/proposer
      * @return collateral_ Address of the collateral token.
      * @return collateralAmount_ Amount of the collateral token.
      */
-    function _makeProposal(Proposal memory proposal)
-        private
-        returns (address proposer_, address collateral_, uint256 collateralAmount_)
-    {
+    function _makeProposal(Proposal memory proposal) private returns (address collateral_, uint256 collateralAmount_) {
         // Decode proposal data
         if (proposal.startTimestamp >= proposal.loanExpiration) {
             revert InvalidDurationStartTime();
@@ -533,7 +528,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
         collateralAmount_ = proposal.collateralAmount;
         withdrawableCollateral[proposalHash] = collateralAmount_;
 
-        emit ProposalMade(proposalHash, proposer_ = proposal.proposer, proposal);
+        emit ProposalMade(proposalHash, proposal.proposer, proposal);
     }
 
     /**
@@ -561,7 +556,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
                 proposal.availableCreditLimit,
                 proposal.startTimestamp,
                 proposal.proposer,
-                proposal.nonce,
                 proposal.loanContract,
                 proposal.partialPositionBps
             )
