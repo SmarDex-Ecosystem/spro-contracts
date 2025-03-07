@@ -127,8 +127,8 @@ contract SproLoan_TokenUri_Test is SproLoanTest {
     function test_shouldReturnCorrectValue() external {
         loanToken.setLoanMetadataUri(tokenUri);
         string memory _tokenUri = loanToken.tokenURI(loanId);
-        assertEq(string.concat(tokenUri, Strings.toString(loanId), ".json"), _tokenUri);
-        assertEq("test.uri.xyz/1.json", _tokenUri);
+        assertEq(string.concat(tokenUri, Strings.toString(loanId)), _tokenUri);
+        assertEq("test.uri.xyz/1", _tokenUri);
     }
 
     function test_loanMetadataUri() external view {
