@@ -7,6 +7,7 @@ import { SDBaseIntegrationTest } from "test/integration/SDBaseIntegrationTest.t.
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     function test_shouldCreateERC20Proposal_shouldCreatePartialLoan_shouldWithdrawRemainingCollateral() external {
@@ -98,7 +99,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         _createERC20Proposal();
 
         // 95.01% of available credit limit
-        uint256 amount = (1e4 - deployment.config.partialPositionBps() + 1) * CREDIT_LIMIT / 1e4;
+        uint256 amount =
+            (Constants.BPS_DIVISOR - deployment.config.partialPositionBps() + 1) * CREDIT_LIMIT / Constants.BPS_DIVISOR;
 
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
@@ -110,7 +112,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             abi.encodeWithSelector(
                 ISproErrors.CreditAmountRemainingBelowMinimum.selector,
                 amount,
-                PARTIAL_POSITION_PERCENTAGE * CREDIT_LIMIT / 1e4
+                deployment.config.partialPositionBps() * CREDIT_LIMIT / 1e4
             )
         );
         deployment.config.createLoan(proposal, amount, "");

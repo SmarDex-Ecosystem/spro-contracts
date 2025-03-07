@@ -601,19 +601,20 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ISproLoanMetadataP
             revert Expired(block.timestamp, proposal.startTimestamp);
         }
 
-        if (creditUsed[proposalHash] + creditAmount < proposal.availableCreditLimit) {
+        uint256 used = creditUsed[proposalHash];
+        if (used + creditAmount < proposal.availableCreditLimit) {
             // Credit may only be between min and max amounts if it is not exact
             uint256 minAmount =
                 Math.mulDiv(proposal.availableCreditLimit, proposal.partialPositionBps, Constants.BPS_DIVISOR);
             if (creditAmount < minAmount) {
                 revert CreditAmountTooSmall(creditAmount, minAmount);
             }
-            if (proposal.availableCreditLimit - minAmount < creditUsed[proposalHash] + creditAmount) {
+            if (proposal.availableCreditLimit - minAmount < used + creditAmount) {
                 revert CreditAmountRemainingBelowMinimum(creditAmount, minAmount);
             }
-        } else if (creditUsed[proposalHash] + creditAmount > proposal.availableCreditLimit) {
+        } else if (used + creditAmount > proposal.availableCreditLimit) {
             // Revert, credit limit is exceeded
-            revert AvailableCreditLimitExceeded(creditUsed[proposalHash] + creditAmount, proposal.availableCreditLimit);
+            revert AvailableCreditLimitExceeded(used + creditAmount, proposal.availableCreditLimit);
         }
 
         // Apply increase if credit amount checks pass
