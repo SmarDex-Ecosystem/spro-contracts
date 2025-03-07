@@ -8,8 +8,12 @@ contract SproHandler is Spro {
         Spro(_sdex, _permit2, _fee, _percentage)
     { }
 
-    function exposed_checkLoanCanBeRepaid(LoanStatus status, uint40 loanExpiration) external view {
-        _checkLoanCanBeRepaid(status, loanExpiration);
+    function exposed_isLoanRepayable(LoanStatus status, uint40 loanExpiration)
+        external
+        view
+        returns (bool canBeRepaid_)
+    {
+        canBeRepaid_ = _isLoanRepayable(status, loanExpiration);
     }
 
     function exposed_checkLoanCreditAddress(address loanCreditAddress, address expectedCreditAddress) external pure {
