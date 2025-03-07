@@ -16,6 +16,17 @@ import { SproStorage } from "src/spro/SproStorage.sol";
 
 contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     using SafeCast for uint256;
+
+    /**
+     * @dev Data structure for the {repayMultipleLoans} function.
+     * @param loanId Id of a loan.
+     * @param loan Loan struct.
+     */
+    struct loanWithId {
+        uint256 loanId;
+        Loan loan;
+    }
+
     /* ------------------------------------------------------------ */
     /*                          CONSTRUCTOR                         */
     /* ------------------------------------------------------------ */
@@ -242,7 +253,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         nonReentrant
     {
         uint256 totalRepaymentAmount;
-        uint256[] memory loansToRepay = new uint256[](loanIds.length);
+        loanWithId[] memory loansToRepay = new loanWithId[](loanIds.length);
         uint256 numLoansToRepay;
 
         // Filter loans that can be repaid
@@ -255,7 +266,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
                 _checkLoanCreditAddress(loan.credit, creditAddress);
                 // Update loan to repaid state and increment the total repayment amount
                 totalRepaymentAmount += _updateRepaidLoan(loanId);
-                loansToRepay[numLoansToRepay] = loanId;
+                loansToRepay[numLoansToRepay] = loanWithId(loanId, loan);
                 numLoansToRepay++;
             }
         }
@@ -269,8 +280,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
 
         for (uint256 i; i < numLoansToRepay; ++i) {
-            uint256 loanId = loansToRepay[i];
-            Loan memory loan = _loans[loanId];
+            loanWithId memory loanData = loansToRepay[i];
+            Loan memory loan = loanData.loan;
+            uint256 loanId = loanData.loanId;
 
             // Transfer collateral back to the borrower
             _push(loan.collateral, loan.collateralAmount, loan.borrower);
