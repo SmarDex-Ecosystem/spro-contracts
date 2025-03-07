@@ -19,34 +19,31 @@ contract SproStorage is ISproStorage {
     IAllowanceTransfer public immutable PERMIT2;
 
     /// @inheritdoc ISproStorage
-    uint16 public partialPositionBps;
+    uint16 public _partialPositionBps;
 
     /// @inheritdoc ISproStorage
-    uint256 public fee;
-
-    /// @inheritdoc ISproStorage
-    mapping(address => string) public _loanMetadataUri;
+    uint256 public _fee;
 
     /* -------------------------------------------------------------------------- */
     /*                                    LOAN                                    */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISproStorage
-    SproLoan public immutable loanToken;
+    SproLoan public immutable _loanToken;
 
     /// @notice  Mapping of all Loan data by loan id.
-    mapping(uint256 => ISproTypes.Loan) internal Loans;
+    mapping(uint256 => ISproTypes.Loan) internal _loans;
 
     /* -------------------------------------------------------------------------- */
     /*                                  PROPOSAL                                  */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISproStorage
-    mapping(bytes32 => uint256) public withdrawableCollateral;
+    mapping(bytes32 => uint256) public _withdrawableCollateral;
 
     /// @inheritdoc ISproStorage
-    mapping(bytes32 => bool) public proposalsMade;
+    mapping(bytes32 => bool) public _proposalsMade;
 
     /// @inheritdoc ISproStorage
-    mapping(bytes32 => uint256) public creditUsed;
+    mapping(bytes32 => uint256) public _creditUsed;
 }

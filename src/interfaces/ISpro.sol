@@ -27,17 +27,10 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     function setPartialPositionPercentage(uint16 percentage) external;
 
     /**
-     * @notice Set a Loan token metadata uri for a specific loan contract.
-     * @param loanContract Address of a loan contract.
-     * @param metadataUri New value of Loan token metadata uri for given `loanContract`.
+     * @notice Set metadata uri for loan tokens.
+     * @param newMetadataUri New value of token metadata uri.
      */
-    function setLoanMetadataUri(address loanContract, string memory metadataUri) external;
-
-    /**
-     * @notice Set a default Loan token metadata uri.
-     * @param metadataUri New value of default Loan token metadata uri.
-     */
-    function setDefaultLoanMetadataUri(string memory metadataUri) external;
+    function setLoanMetadataUri(string memory newMetadataUri) external;
 
     /* -------------------------------------------------------------------------- */
     /*                                   GETTER                                   */
@@ -88,13 +81,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
         external
         view
         returns (uint256 amount_);
-
-    /**
-     * @notice Return a Loan token metadata uri base on a loan contract that minted the token.
-     * @param loanContract Address of a loan contract.
-     * @return uri_ Metadata uri for given loan contract.
-     */
-    function loanMetadataUri(address loanContract) external view returns (string memory uri_);
 
     /* ------------------------------------------------------------ */
     /*                      CREATE PROPOSAL                         */

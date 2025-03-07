@@ -18,7 +18,7 @@ contract Deploy is Script {
         Spro spro = new Spro(SDEX_MAINNET, PERMIT2, FEE, PERCENTAGE);
 
         console.log("Spro address", address(spro));
-        console.log("loanToken address", address(spro.loanToken()));
+        console.log("loanToken address", address(spro._loanToken()));
 
         vm.stopBroadcast();
     }
