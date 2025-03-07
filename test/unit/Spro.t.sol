@@ -56,8 +56,8 @@ abstract contract SproTest is Test {
 contract TestSproConstructor is SproTest {
     function test_shouldInitializeWithCorrectValues() external view {
         assertEq(config.owner(), owner);
-        assertEq(config.partialPositionBps(), partialPositionBps);
-        assertEq(config.fee(), fee);
+        assertEq(config._partialPositionBps(), partialPositionBps);
+        assertEq(config._fee(), fee);
         assertEq(sdex, config.SDEX());
     }
 
@@ -95,7 +95,7 @@ contract TestSproSetUnlistedFee is SproTest {
         vm.prank(owner);
         config.setFee(fee);
 
-        assertEq(config.fee(), fee);
+        assertEq(config._fee(), fee);
     }
 
     function test_RevertWhen_ExcessiveFee() external {
@@ -164,93 +164,17 @@ contract TestSproPartialLendingThresholds is SproTest {
 
 contract TestSprosetLoanMetadataUri is SproTest {
     string tokenUri = "test.token.uri";
-    address loanContract = address(0x63);
 
     function test_shouldFail_whenCallerIsNotOwner() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         vm.prank(alice);
-        config.setLoanMetadataUri(loanContract, tokenUri);
+        config.setLoanMetadataUri(tokenUri);
     }
 
-    function test_shouldFail_whenZeroLoanContract() external {
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.DefaultLoanContract.selector));
+    function testFuzz_shouldStoreLoanMetadataUriToLoanContract(string memory uri) external {
         vm.prank(owner);
-        config.setLoanMetadataUri(address(0), tokenUri);
-    }
+        config.setLoanMetadataUri(uri);
 
-    function testFuzz_shouldStoreLoanMetadataUriToLoanContract(address _loanContract) external {
-        vm.assume(_loanContract != address(0));
-        loanContract = _loanContract;
-
-        vm.prank(owner);
-        config.setLoanMetadataUri(loanContract, tokenUri);
-
-        assertEq(config._loanMetadataUri(loanContract), tokenUri);
-    }
-
-    function test_shouldEmitEvent_LoanMetadataUriUpdated() external {
-        vm.expectEmit(true, true, true, true);
-        emit ISproEvents.LoanMetadataUriUpdated(loanContract, tokenUri);
-
-        vm.prank(owner);
-        config.setLoanMetadataUri(loanContract, tokenUri);
-    }
-}
-
-/* ------------------------------------------------------------ */
-/*  SET DEFAULT LOAN METADATA URI                            */
-/* ------------------------------------------------------------ */
-
-contract TestSprosetDefaultLoanMetadataUri is SproTest {
-    string tokenUri = "test.token.uri";
-
-    function test_shouldFail_whenCallerIsNotOwner() external {
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
-        vm.prank(alice);
-        config.setDefaultLoanMetadataUri(tokenUri);
-    }
-
-    function test_shouldStoreDefaultLoanMetadataUri() external {
-        vm.prank(owner);
-        config.setDefaultLoanMetadataUri(tokenUri);
-
-        assertEq(config._loanMetadataUri(address(0)), tokenUri);
-    }
-
-    function test_shouldEmitEvent_DefaultLoanMetadataUriUpdated() external {
-        vm.expectEmit(true, true, true, true);
-        emit ISproEvents.DefaultLoanMetadataUriUpdated(tokenUri);
-
-        vm.prank(owner);
-        config.setDefaultLoanMetadataUri(tokenUri);
-    }
-}
-
-/* ------------------------------------------------------------ */
-/*  LOAN METADATA URI                                        */
-/* ------------------------------------------------------------ */
-
-contract TestSproLoanMetadataUri is SproTest {
-    function testFuzz_shouldReturnDefaultLoanMetadataUri_whenNoStoreValueForLoanContract(address loanContract)
-        external
-    {
-        string memory defaultUri = "default.token.uri";
-
-        vm.prank(owner);
-        config.setDefaultLoanMetadataUri(defaultUri);
-
-        string memory uri = config.loanMetadataUri(loanContract);
-        assertEq(uri, defaultUri);
-    }
-
-    function testFuzz_shouldReturnLoanMetadataUri_whenStoredValueForLoanContract(address loanContract) external {
-        vm.assume(loanContract != address(0));
-        string memory tokenUri = "test.token.uri";
-
-        vm.prank(owner);
-        config.setLoanMetadataUri(loanContract, tokenUri);
-
-        string memory uri = config.loanMetadataUri(loanContract);
-        assertEq(uri, tokenUri);
+        assertEq(config._loanToken()._metadataUri(), uri);
     }
 }

@@ -12,8 +12,11 @@ interface ISproLoan {
     /*                VARIABLES & CONSTANTS DEFINITIONS             */
     /* ------------------------------------------------------------ */
 
-    /// @dev Last used Loan id. First Loan id is 1. This value is incremental.
-    function lastLoanId() external view returns (uint256);
+    /// @notice Get last used Loan id. First Loan id is 1. This value is incremental.
+    function _lastLoanId() external view returns (uint256);
+
+    /// @notice Get loan metadata URI.
+    function _metadataUri() external view returns (string memory);
 
     /* ------------------------------------------------------------ */
     /*                          EVENTS                              */
@@ -31,6 +34,12 @@ interface ISproLoan {
      * @param loanId Id of a burned Loan token.
      */
     event LoanBurned(uint256 indexed loanId);
+
+    /**
+     * @notice Emitted when new token metadata uri is set.
+     * @param newUri The new uri.
+     */
+    event LoanMetadataUriUpdated(string newUri);
 
     /* ------------------------------------------------------------ */
     /*                          FUNCTIONS                            */
@@ -58,4 +67,11 @@ interface ISproLoan {
      * @return Metadata uri for given token id (loan id).
      */
     function tokenURI(uint256 tokenId) external view returns (string memory);
+
+    /**
+     * @notice Set a new metadata uri for Loan tokens.
+     * @dev Only owner can set a new metadata uri.
+     * @param newMetadataUri New value of token metadata uri.
+     */
+    function setLoanMetadataUri(string memory newMetadataUri) external;
 }

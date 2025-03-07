@@ -21,38 +21,31 @@ interface ISproStorage {
     function PERMIT2() external view returns (IAllowanceTransfer);
 
     /// @notice Get percentage of a proposal's available credit limit used in partial lending (in basis points).
-    function partialPositionBps() external view returns (uint16);
+    function _partialPositionBps() external view returns (uint16);
 
     /**
      * @notice Get protocol fee value.
      * @dev Amount of SDEX tokens (units 1e18).
      */
-    function fee() external view returns (uint256);
-
-    /**
-     * @notice Get loan metadata URI for a loan contract address.
-     * @dev Loan token minted by a loan contract will return metadata uri stored in this mapping.
-     *      If there is no metadata uri for a loan contract, default metadata uri will be used stored under address(0).
-     */
-    function _loanMetadataUri(address loanContract) external view returns (string memory);
+    function _fee() external view returns (uint256);
 
     /* -------------------------------------------------------------------------- */
     /*                                    LOAN                                    */
     /* -------------------------------------------------------------------------- */
 
     /// @notice Get SproLoan contract.
-    function loanToken() external view returns (SproLoan);
+    function _loanToken() external view returns (SproLoan);
 
     /* -------------------------------------------------------------------------- */
     /*                                  PROPOSAL                                  */
     /* -------------------------------------------------------------------------- */
 
     /// @notice Get withdrawable collateral tokens for a given proposal hash.
-    function withdrawableCollateral(bytes32 proposalHash) external view returns (uint256);
+    function _withdrawableCollateral(bytes32 proposalHash) external view returns (uint256);
 
     /// @notice Check if a proposal is made for a given proposal hash.
-    function proposalsMade(bytes32 proposalHash) external view returns (bool);
+    function _proposalsMade(bytes32 proposalHash) external view returns (bool);
 
     /// @notice Get the credit used by a proposal for a given proposal hash.
-    function creditUsed(bytes32 proposalHash) external view returns (uint256);
+    function _creditUsed(bytes32 proposalHash) external view returns (uint256);
 }

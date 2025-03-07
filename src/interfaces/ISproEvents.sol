@@ -21,19 +21,6 @@ interface ISproEvents is ISproTypes {
     event PartialPositionBpsUpdated(uint256 newPartialPositionBps);
 
     /**
-     * @notice Emitted when new Loan token metadata uri is set.
-     * @param loanContract The address of the loan contract.
-     * @param newUri The new uri.
-     */
-    event LoanMetadataUriUpdated(address indexed loanContract, string newUri);
-
-    /**
-     * @notice Emitted when new default Loan token metadata uri is set.
-     * @param newUri The new default uri.
-     */
-    event DefaultLoanMetadataUriUpdated(string newUri);
-
-    /**
      * @notice Emitted when a new loan in created.
      * @param loanId The id of the loan.
      * @param proposalHash The hash of the proposal.

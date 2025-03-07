@@ -29,11 +29,6 @@ interface ISproErrors {
     error InvalidComputerContract(address computer, address asset);
 
     /**
-     * @notice Thrown when trying to set a Loan token metadata uri for zero address loan contract.
-     */
-    error DefaultLoanContract();
-
-    /**
      * @notice Thrown when trying to set an incorrect percentage value.
      * @param percentage The percentage value.
      */
