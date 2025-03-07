@@ -7,6 +7,7 @@ import { SDBaseIntegrationTest } from "test/integration/SDBaseIntegrationTest.t.
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     function test_shouldCreateERC20Proposal_shouldCreatePartialLoan_shouldWithdrawRemainingCollateral() external {
@@ -92,13 +93,14 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(t20.balanceOf(borrower), COLLATERAL_AMOUNT);
     }
 
-    function test_PartialLoan_GtCreditThreshold() external {
+    function test_RevertWhen_PartialLoanGtCreditThreshold() external {
         // Create the proposal
         vm.prank(borrower);
         _createERC20Proposal();
 
-        // 97% of available credit limit
-        uint256 amount = 9700 * CREDIT_LIMIT / 1e4;
+        // 95.01% of available credit limit
+        uint256 amount =
+            (Constants.BPS_DIVISOR - deployment.config._partialPositionBps() + 1) * CREDIT_LIMIT / Constants.BPS_DIVISOR;
 
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
@@ -108,9 +110,32 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Create loan, expecting revert
         vm.expectRevert(
             abi.encodeWithSelector(
-                ISproErrors.CreditAmountLeavesTooLittle.selector,
+                ISproErrors.CreditAmountRemainingBelowMinimum.selector,
                 amount,
-                (PERCENTAGE - PARTIAL_POSITION_PERCENTAGE) * CREDIT_LIMIT / 1e4
+                deployment.config._partialPositionBps() * CREDIT_LIMIT / 1e4
+            )
+        );
+        deployment.config.createLoan(proposal, amount, "");
+        vm.stopPrank();
+    }
+
+    function test_RevertWhen_partialLoanLtCreditThreshold() external {
+        // Create the proposal
+        vm.prank(borrower);
+        _createERC20Proposal();
+
+        // 4.99% of available credit limit
+        uint256 amount = deployment.config._partialPositionBps() - 1;
+
+        // Mint initial state & approve credit
+        credit.mint(lender, INITIAL_CREDIT_BALANCE);
+        vm.startPrank(lender);
+        credit.approve(address(deployment.config), CREDIT_LIMIT);
+
+        // Create loan, expecting revert
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ISproErrors.CreditAmountTooSmall.selector, amount, PARTIAL_POSITION_PERCENTAGE * CREDIT_LIMIT / 1e4
             )
         );
         deployment.config.createLoan(proposal, amount, "");

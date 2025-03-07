@@ -590,25 +590,20 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             revert Expired(block.timestamp, proposal.startTimestamp);
         }
 
-        if (_creditUsed[proposalHash] + creditAmount < proposal.availableCreditLimit) {
+        uint256 used = _creditUsed[proposalHash];
+        if (used + creditAmount < proposal.availableCreditLimit) {
             // Credit may only be between min and max amounts if it is not exact
-            uint256 minCreditAmount =
+            uint256 minAmount =
                 Math.mulDiv(proposal.availableCreditLimit, proposal.partialPositionBps, Constants.BPS_DIVISOR);
-            if (creditAmount < minCreditAmount) {
-                revert CreditAmountTooSmall(creditAmount, minCreditAmount);
+            if (creditAmount < minAmount) {
+                revert CreditAmountTooSmall(creditAmount, minAmount);
             }
-
-            uint256 maxCreditAmount = Math.mulDiv(
-                proposal.availableCreditLimit,
-                (Constants.BPS_DIVISOR - proposal.partialPositionBps),
-                Constants.BPS_DIVISOR
-            );
-            if (creditAmount > maxCreditAmount) {
-                revert CreditAmountLeavesTooLittle(creditAmount, maxCreditAmount);
+            if (proposal.availableCreditLimit - minAmount < used + creditAmount) {
+                revert CreditAmountRemainingBelowMinimum(creditAmount, minAmount);
             }
-        } else if (_creditUsed[proposalHash] + creditAmount > proposal.availableCreditLimit) {
+        } else if (used + creditAmount > proposal.availableCreditLimit) {
             // Revert, credit limit is exceeded
-            revert AvailableCreditLimitExceeded(_creditUsed[proposalHash] + creditAmount, proposal.availableCreditLimit);
+            revert AvailableCreditLimitExceeded(used + creditAmount, proposal.availableCreditLimit);
         }
 
         // Apply increase if credit amount checks pass
