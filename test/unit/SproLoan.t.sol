@@ -5,6 +5,8 @@ import { Test } from "forge-std/Test.sol";
 
 import { IERC721Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { IERC4906 } from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 
 import { SproLoan } from "src/spro/SproLoan.sol";
 import { ISproLoan } from "src/interfaces/ISproLoan.sol";
@@ -22,9 +24,9 @@ contract SproLoanTest is Test {
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  CONSTRUCTOR                                              */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                                 CONSTRUCTOR                                */
+/* -------------------------------------------------------------------------- */
 
 contract SproLoan_Constructor_Test is SproLoanTest {
     function test_shouldHaveCorrectNameAndSymbol() external view {
@@ -33,9 +35,9 @@ contract SproLoan_Constructor_Test is SproLoanTest {
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  MINT                                                     */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                                    MINT                                    */
+/* -------------------------------------------------------------------------- */
 
 contract SproLoan_Mint_Test is SproLoanTest {
     function test_shouldFail_whenCallerIsNotActiveLoanContract() external {
@@ -45,11 +47,11 @@ contract SproLoan_Mint_Test is SproLoanTest {
     }
 
     function test_shouldIncreaseLastLoanId() external {
-        uint256 lastLoanId = loanToken.lastLoanId();
+        uint256 lastLoanId = loanToken._lastLoanId();
 
         loanToken.mint(alice);
 
-        uint256 lastLoanIdValue = loanToken.lastLoanId();
+        uint256 lastLoanIdValue = loanToken._lastLoanId();
         assertTrue(lastLoanIdValue == lastLoanId + 1);
     }
 
@@ -73,9 +75,9 @@ contract SproLoan_Mint_Test is SproLoanTest {
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  BURN                                                     */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                                    BURN                                    */
+/* -------------------------------------------------------------------------- */
 
 contract SproLoan_Burn_Test is SproLoanTest {
     uint256 loanId;
@@ -107,9 +109,9 @@ contract SproLoan_Burn_Test is SproLoanTest {
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  TOKEN URI                                                */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                                  TOKEN URI                                 */
+/* -------------------------------------------------------------------------- */
 
 contract SproLoan_TokenUri_Test is SproLoanTest {
     string tokenUri;
@@ -118,20 +120,27 @@ contract SproLoan_TokenUri_Test is SproLoanTest {
     function setUp() public override {
         super.setUp();
 
-        tokenUri = "test.uri.xyz";
-
-        vm.mockCall(address(this), abi.encodeWithSignature("loanMetadataUri()"), abi.encode(tokenUri));
-
+        tokenUri = "test.uri.xyz/";
         loanId = loanToken.mint(alice);
     }
 
-    function test_shouldCallLoanContract() external {
-        vm.expectCall(address(this), abi.encodeWithSignature("loanMetadataUri()"));
-        loanToken.tokenURI(loanId);
+    function test_shouldReturnCorrectValue() external {
+        loanToken.setLoanMetadataUri(tokenUri);
+        string memory _tokenUri = loanToken.tokenURI(loanId);
+        assertEq(string.concat(tokenUri, Strings.toString(loanId)), _tokenUri);
+        assertEq("test.uri.xyz/1", _tokenUri);
     }
 
-    function test_shouldReturnCorrectValue() external view {
-        string memory _tokenUri = loanToken.tokenURI(loanId);
-        assertEq(tokenUri, _tokenUri);
+    function test_loanMetadataUri() external view {
+        string memory uri = loanToken._metadataUri();
+        assertEq(uri, "");
+    }
+
+    function test_shouldEmitEvent_LoanMetadataUriUpdated() external {
+        vm.expectEmit(true, true, true, true);
+        emit ISproLoan.LoanMetadataUriUpdated(tokenUri);
+        emit IERC4906.BatchMetadataUpdate(0, type(uint256).max);
+
+        loanToken.setLoanMetadataUri(tokenUri);
     }
 }
