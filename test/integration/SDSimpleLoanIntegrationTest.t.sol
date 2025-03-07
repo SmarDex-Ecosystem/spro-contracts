@@ -100,7 +100,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // 95.01% of available credit limit
         uint256 amount =
-            (Constants.BPS_DIVISOR - deployment.config.partialPositionBps() + 1) * CREDIT_LIMIT / Constants.BPS_DIVISOR;
+            (Constants.BPS_DIVISOR - deployment.config._partialPositionBps() + 1) * CREDIT_LIMIT / Constants.BPS_DIVISOR;
 
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
@@ -112,7 +112,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             abi.encodeWithSelector(
                 ISproErrors.CreditAmountRemainingBelowMinimum.selector,
                 amount,
-                deployment.config.partialPositionBps() * CREDIT_LIMIT / 1e4
+                deployment.config._partialPositionBps() * CREDIT_LIMIT / 1e4
             )
         );
         deployment.config.createLoan(proposal, amount, "");
@@ -125,7 +125,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         _createERC20Proposal();
 
         // 4.99% of available credit limit
-        uint256 amount = deployment.config.partialPositionBps() - 1;
+        uint256 amount = deployment.config._partialPositionBps() - 1;
 
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
