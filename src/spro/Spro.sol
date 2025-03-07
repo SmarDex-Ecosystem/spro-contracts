@@ -209,7 +209,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     function repayLoan(uint256 loanId, bytes calldata permit2Data) external nonReentrant {
         Loan memory loan = _loans[loanId];
 
-        if (!_checkLoanCanBeRepaid(loan.status, loan.loanExpiration)) {
+        if (!_isLoanRepayable(loan.status, loan.loanExpiration)) {
             revert LoanCannotBeRepaid();
         }
 
@@ -251,7 +251,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             Loan memory loan = _loans[loanId];
 
             // Checks: loan can be repaid & credit address is the same for all loanIds
-            if (_checkLoanCanBeRepaid(loan.status, loan.loanExpiration)) {
+            if (_isLoanRepayable(loan.status, loan.loanExpiration)) {
                 _checkLoanCreditAddress(loan.credit, creditAddress);
                 // Update loan to repaid state and increment the total repayment amount
                 totalRepaymentAmount += _updateRepaidLoan(loanId);
@@ -414,16 +414,11 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
     /**
      * @notice Check if the loan can be repaid.
-     * @dev The function will revert if the loan cannot be repaid.
      * @param status Loan status.
      * @param loanExpiration Loan default timestamp.
      * @return canBeRepaid_ True if the loan can be repaid.
      */
-    function _checkLoanCanBeRepaid(LoanStatus status, uint40 loanExpiration)
-        internal
-        view
-        returns (bool canBeRepaid_)
-    {
+    function _isLoanRepayable(LoanStatus status, uint40 loanExpiration) internal view returns (bool canBeRepaid_) {
         // Check that loan is running
         if (status != LoanStatus.RUNNING) {
             return canBeRepaid_;
