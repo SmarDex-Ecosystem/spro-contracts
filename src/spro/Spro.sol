@@ -22,7 +22,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      * @param loanId Id of a loan.
      * @param loan Loan struct.
      */
-    struct loanWithId {
+    struct LoadWithId {
         uint256 loanId;
         Loan loan;
     }
@@ -253,7 +253,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         nonReentrant
     {
         uint256 totalRepaymentAmount;
-        loanWithId[] memory loansToRepay = new loanWithId[](loanIds.length);
+        LoadWithId[] memory loansToRepay = new LoadWithId[](loanIds.length);
         uint256 numLoansToRepay;
 
         // Filter loans that can be repaid
@@ -266,7 +266,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
                 _checkLoanCreditAddress(loan.credit, creditAddress);
                 // Update loan to repaid state and increment the total repayment amount
                 totalRepaymentAmount += _updateRepaidLoan(loanId);
-                loansToRepay[numLoansToRepay] = loanWithId(loanId, loan);
+                loansToRepay[numLoansToRepay] = LoadWithId(loanId, loan);
                 numLoansToRepay++;
             }
         }
@@ -280,7 +280,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
 
         for (uint256 i; i < numLoansToRepay; ++i) {
-            loanWithId memory loanData = loansToRepay[i];
+            LoadWithId memory loanData = loansToRepay[i];
             Loan memory loan = loanData.loan;
             uint256 loanId = loanData.loanId;
 
