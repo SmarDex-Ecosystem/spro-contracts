@@ -22,14 +22,14 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      * @param loanId Id of a loan.
      * @param loan Loan struct.
      */
-    struct LoanWithId {
+    struct LoadWithId {
         uint256 loanId;
         Loan loan;
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                                 CONSTRUCTOR                                */
-    /* -------------------------------------------------------------------------- */
+    /* ------------------------------------------------------------ */
+    /*                          CONSTRUCTOR                         */
+    /* ------------------------------------------------------------ */
 
     /**
      * @param sdex Address of SDEX token.
@@ -139,9 +139,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                               CREATE PROPOSAL                              */
-    /* -------------------------------------------------------------------------- */
+    /* ------------------------------------------------------------ */
+    /*                      CREATE PROPOSAL                         */
+    /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
     function createProposal(Proposal calldata proposal, bytes calldata permit2Data) external nonReentrant {
@@ -168,9 +168,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*               CANCEL PROPOSAL AND WITHDRAW UNUSED COLLATERAL               */
-    /* -------------------------------------------------------------------------- */
+    /* ------------------------------------------------------------ */
+    /*        CANCEL PROPOSAL AND WITHDRAW UNUSED COLLATERAL        */
+    /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
     function cancelProposal(Proposal calldata proposal) external nonReentrant {
@@ -185,9 +185,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         _push(newProposal.collateralAddress, newProposal.collateralAmount, newProposal.proposer);
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                                 CREATE LOAN                                */
-    /* -------------------------------------------------------------------------- */
+    /* ------------------------------------------------------------ */
+    /*                          CREATE LOAN                         */
+    /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
     function createLoan(Proposal calldata proposal, uint256 creditAmount, bytes calldata permit2Data)
@@ -212,9 +212,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                                 REPAY LOAN                                 */
-    /* -------------------------------------------------------------------------- */
+    /* ------------------------------------------------------------ */
+    /*                          REPAY LOAN                          */
+    /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISpro
     function repayLoan(uint256 loanId, bytes calldata permit2Data) external nonReentrant {
@@ -253,7 +253,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         nonReentrant
     {
         uint256 totalRepaymentAmount;
-        LoanWithId[] memory loansToRepay = new LoanWithId[](loanIds.length);
+        LoadWithId[] memory loansToRepay = new LoadWithId[](loanIds.length);
         uint256 numLoansToRepay;
 
         // Filter loans that can be repaid
@@ -266,7 +266,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
                 _checkLoanCreditAddress(loan.credit, creditAddress);
                 // Update loan to repaid state and increment the total repayment amount
                 totalRepaymentAmount += _updateRepaidLoan(loanId);
-                loansToRepay[numLoansToRepay] = LoanWithId(loanId, loan);
+                loansToRepay[numLoansToRepay] = LoadWithId(loanId, loan);
                 numLoansToRepay++;
             }
         }
@@ -280,7 +280,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
 
         for (uint256 i; i < numLoansToRepay; ++i) {
-            LoanWithId memory loanData = loansToRepay[i];
+            LoadWithId memory loanData = loansToRepay[i];
             Loan memory loan = loanData.loan;
             uint256 loanId = loanData.loanId;
 
@@ -366,6 +366,49 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         // repaying the loan.
     }
 
+    /**
+     * @notice Settle the loan claim.
+     * @param loanId Id of a loan that is being claimed.
+     * @param loanOwner Address of the Loan token holder.
+     * @param defaulted If the loan is defaulted.
+     */
+    function _settleLoanClaim(uint256 loanId, address loanOwner, bool defaulted) private {
+        Loan memory loan = _loans[loanId];
+
+        // Store in memory before deleting the loan
+        address asset = defaulted ? loan.collateral : loan.credit;
+        uint256 assetAmount = defaulted ? loan.collateralAmount : loan.principalAmount + loan.fixedInterestAmount;
+
+        // Delete loan data & burn Loan token before calling safe transfer
+        _deleteLoan(loanId);
+
+        emit LoanClaimed(loanId, defaulted);
+
+        // Transfer asset to current Loan token owner
+        _push(asset, assetAmount, loanOwner);
+    }
+
+    /**
+     * @notice Delete loan data and burn Loan token.
+     * @param loanId Id of a loan that is being deleted.
+     */
+    function _deleteLoan(uint256 loanId) private {
+        _loanToken.burn(loanId);
+        delete _loans[loanId];
+    }
+
+    /**
+     * @notice Return a Loan status associated with a loan id.
+     * @param loanId Id of a loan in question.
+     * @return status Loan status.
+     */
+    function _getLoanStatus(uint256 loanId) private view returns (LoanStatus) {
+        Loan memory loan = _loans[loanId];
+        return (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp)
+            ? LoanStatus.EXPIRED
+            : loan.status;
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                                  INTERNAL                                  */
     /* -------------------------------------------------------------------------- */
@@ -404,18 +447,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Return a Loan status associated with a loan id.
-     * @param loanId Id of a loan in question.
-     * @return status Loan status.
-     */
-    function _getLoanStatus(uint256 loanId) private view returns (LoanStatus) {
-        Loan memory loan = _loans[loanId];
-        return (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp)
-            ? LoanStatus.EXPIRED
-            : loan.status;
-    }
-
-    /**
      * @notice Make an on-chain proposal.
      * @dev Function will mark a proposal hash as proposed.
      * @param proposal Proposal struct.
@@ -451,25 +482,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         _withdrawableCollateral[proposalHash] = collateralAmount_;
 
         emit ProposalMade(proposalHash, proposal.proposer, proposal);
-    }
-
-    /**
-     * @notice Cancels a proposal and resets withdrawable collateral.
-     * @param proposal Proposal struct.
-     * @return proposal_ Proposal struct.
-     */
-    function _cancelProposal(Proposal memory proposal) private returns (Proposal memory proposal_) {
-        proposal_ = proposal;
-
-        // Make proposal hash
-        bytes32 proposalHash = keccak256(abi.encode(proposal_));
-
-        proposal_.collateralAmount = _withdrawableCollateral[proposalHash];
-        delete _withdrawableCollateral[proposalHash];
-
-        _proposalsMade[proposalHash] = false;
-
-        emit ProposalCanceled(proposalHash);
     }
 
     /**
@@ -519,6 +531,25 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         );
 
         _withdrawableCollateral[proposalHash_] -= collateralUsed_;
+    }
+
+    /**
+     * @notice Cancels a proposal and resets withdrawable collateral.
+     * @param proposal Proposal struct.
+     * @return proposal_ Proposal struct.
+     */
+    function _cancelProposal(Proposal memory proposal) private returns (Proposal memory proposal_) {
+        proposal_ = proposal;
+
+        // Make proposal hash
+        bytes32 proposalHash = keccak256(abi.encode(proposal_));
+
+        proposal_.collateralAmount = _withdrawableCollateral[proposalHash];
+        delete _withdrawableCollateral[proposalHash];
+
+        _proposalsMade[proposalHash] = false;
+
+        emit ProposalCanceled(proposalHash);
     }
 
     /**
@@ -615,37 +646,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
         emit LoanPaidBack(loanId);
         return loan.principalAmount + loan.fixedInterestAmount;
-    }
-
-    /**
-     * @notice Settle the loan claim.
-     * @param loanId Id of a loan that is being claimed.
-     * @param loanOwner Address of the Loan token holder.
-     * @param defaulted If the loan is defaulted.
-     */
-    function _settleLoanClaim(uint256 loanId, address loanOwner, bool defaulted) private {
-        Loan memory loan = _loans[loanId];
-
-        // Store in memory before deleting the loan
-        address asset = defaulted ? loan.collateral : loan.credit;
-        uint256 assetAmount = defaulted ? loan.collateralAmount : loan.principalAmount + loan.fixedInterestAmount;
-
-        // Delete loan data & burn Loan token before calling safe transfer
-        _deleteLoan(loanId);
-
-        emit LoanClaimed(loanId, defaulted);
-
-        // Transfer asset to current Loan token owner
-        _push(asset, assetAmount, loanOwner);
-    }
-
-    /**
-     * @notice Delete loan data and burn Loan token.
-     * @param loanId Id of a loan that is being deleted.
-     */
-    function _deleteLoan(uint256 loanId) private {
-        _loanToken.burn(loanId);
-        delete _loans[loanId];
     }
 
     /**
