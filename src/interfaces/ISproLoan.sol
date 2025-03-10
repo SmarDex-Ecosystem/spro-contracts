@@ -2,7 +2,6 @@
 pragma solidity >=0.8.0;
 
 /**
- * @title ISproLoan
  * @notice A loan token representing a loan in Spro protocol.
  * @dev Token doesn't hold any loan logic. The owner, Spro, is responsible for loan logic.
  */

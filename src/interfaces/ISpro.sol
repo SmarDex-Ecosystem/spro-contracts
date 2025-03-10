@@ -5,10 +5,6 @@ import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 
-/**
- * @title ISpro
- * @notice Interface for Spro protocol.
- */
 interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /**
      * @notice Set new protocol fee value.

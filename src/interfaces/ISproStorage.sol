@@ -5,10 +5,6 @@ import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.so
 
 import { SproLoan } from "src/spro/SproLoan.sol";
 
-/**
- * @title ISproStorage
- * @notice Interface for the storage layer of the Spro protocol
- */
 interface ISproStorage {
     /// @notice Get percentage denominator (10_000 = 100%).
     function BPS_DIVISOR() external view returns (uint256);

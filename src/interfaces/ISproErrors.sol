@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-/**
- * @title ISproErrors
- * @notice Errors for the Spro Protocol
- */
 interface ISproErrors {
     /// @notice Thrown when the address is zero.
     error ZeroAddress();

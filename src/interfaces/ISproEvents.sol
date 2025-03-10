@@ -3,10 +3,6 @@ pragma solidity >=0.8.0;
 
 import { ISproTypes } from "./ISproTypes.sol";
 
-/**
- * @title ISproEvents
- * @notice Events for the Spro Protocol
- */
 interface ISproEvents is ISproTypes {
     /**
      * @notice The fee is updated.
