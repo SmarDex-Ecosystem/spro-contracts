@@ -32,21 +32,21 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      * @param sdex Address of SDEX token.
      * @param permit2 Address of the Permit2 contract.
      * @param fee Fee in SDEX.
-     * @param percentage Partial position percentage.
+     * @param partialPositionBps Partial position percentage.
      */
-    constructor(address sdex, address permit2, uint256 fee, uint16 percentage) Ownable(msg.sender) {
+    constructor(address sdex, address permit2, uint256 fee, uint16 partialPositionBps) Ownable(msg.sender) {
         if (sdex == address(0) || permit2 == address(0)) {
             revert ZeroAddress();
         }
-        if (percentage == 0 || percentage > BPS_DIVISOR / 2) {
-            revert IncorrectPercentageValue(percentage);
+        if (partialPositionBps == 0 || partialPositionBps > BPS_DIVISOR / 2) {
+            revert IncorrectPercentageValue(partialPositionBps);
         }
 
         PERMIT2 = IAllowanceTransfer(permit2);
         SDEX = sdex;
         _loanToken = new SproLoan(address(this));
         _fee = fee;
-        _partialPositionBps = percentage;
+        _partialPositionBps = partialPositionBps;
     }
 
     /* -------------------------------------------------------------------------- */
