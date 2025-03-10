@@ -88,7 +88,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /* ------------------------------------------------------------ */
 
     /**
-     * @notice Create a borrow request proposal and transfers collateral to the vault and SDEX to the dead address.
+     * @notice Create a borrow request proposal and transfers collateral to the protocol and SDEX to the dead address.
      * @param proposal Proposal struct.
      * @param permit2Data Permit data if user wants to use permit2 (optional).
      */
@@ -130,8 +130,8 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @notice Repay running loan.
      * @dev Any address can repay a running loan, but a collateral will be transferred to a borrower address associated
      * with the loan. If the loan token holder is the same as the original lender, the repayment credit asset will be
-     * transferred to the loan token holder directly. Otherwise it will transfer the repayment credit asset to a vault,
-     * waiting on a loan token holder to claim it.
+     * transferred to the loan token holder directly. Otherwise it will transfer the repayment credit asset to the
+     * protocol, waiting on a loan token holder to claim it.
      * @param loanId Id of a loan that is being repaid.
      * @param permit2Data Permit data if user wants to use permit2 (optional).
      */
@@ -141,8 +141,8 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @notice Repay running loans.
      * @dev Any address can repay a running loan, but a collateral will be transferred to a borrower address associated
      * with the loan. If the loan token holder is the same as the original lender, the repayment credit asset will be
-     * transferred to the loan token holder directly. Otherwise it will transfer the repayment credit asset to a vault,
-     * waiting on a loan token holder to claim it.
+     * transferred to the loan token holder directly. Otherwise it will transfer the repayment credit asset to the
+     * protocol, waiting on a loan token holder to claim it.
      * @param loanIds Id array of loans that are being repaid.
      * @param creditAddress Expected credit address for all loan ids. `creditAddress` must be the same for all
      * loan ids.
@@ -173,7 +173,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Try to claim a repaid loan for the loan owner.
-     * @dev The function is called only by the vault to repay a loan directly to the original lender. If the transfer
+     * @dev The function is called only by the protocol to repay a loan directly to the original lender. If the transfer
      * fails, the loan token will remain in repaid state and the loan token owner will be able to claim the repaid
      * credit. Otherwise lender would be able to prevent borrower from repaying the loan.
      * @param loanId Id of a loan that is being claimed.
