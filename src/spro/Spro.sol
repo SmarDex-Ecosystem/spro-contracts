@@ -109,7 +109,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /// @inheritdoc ISpro
-    function getProposalHash(Proposal calldata proposal) external pure returns (bytes32 proposalHash) {
+    function getProposalHash(Proposal calldata proposal) external pure returns (bytes32 proposalHash_) {
         return keccak256(abi.encode(proposal));
     }
 
@@ -369,9 +369,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     /**
      * @notice Return a Loan status associated with a loan id.
      * @param loanId Id of a loan in question.
-     * @return status Loan status.
+     * @return status_ Loan status.
      */
-    function _getLoanStatus(uint256 loanId) internal view returns (LoanStatus) {
+    function _getLoanStatus(uint256 loanId) internal view returns (LoanStatus status_) {
         Loan memory loan = _loans[loanId];
         return (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp)
             ? LoanStatus.EXPIRED
