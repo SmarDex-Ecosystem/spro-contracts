@@ -22,9 +22,9 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Set percentage of a proposal's availableCreditLimit which can be used in partial lending.
-     * @param percentage New percentage value.
+     * @param newPartialPositionBps New percentage value.
      */
-    function setPartialPositionPercentage(uint16 percentage) external;
+    function setPartialPositionPercentage(uint16 newPartialPositionBps) external;
 
     /**
      * @notice Set metadata uri for loan tokens.
