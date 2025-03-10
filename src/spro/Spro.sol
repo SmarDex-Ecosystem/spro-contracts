@@ -27,10 +27,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         Loan loan;
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                                 CONSTRUCTOR                                */
-    /* -------------------------------------------------------------------------- */
-
     /**
      * @param sdex Address of SDEX token.
      * @param permit2 Address of the Permit2 contract.
@@ -113,13 +109,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /// @inheritdoc ISpro
-    function getProposalHash(Proposal calldata proposal) external pure returns (bytes32) {
+    function getProposalHash(Proposal calldata proposal) external pure returns (bytes32 proposalHash) {
         return keccak256(abi.encode(proposal));
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                                    VIEW                                    */
-    /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
     function totalLoanRepaymentAmount(uint256[] calldata loanIds, address creditAddress)
@@ -131,21 +123,19 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             uint256 loanId = loanIds[i];
             Loan memory loan = _loans[loanId];
             _checkLoanCreditAddress(loan.credit, creditAddress);
-            // Check non-existent loan
+
             if (loan.status == LoanStatus.NONE) return 0;
 
-            // Add loan principal with accrued interest
             amount_ += loan.principalAmount + loan.fixedInterestAmount;
         }
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                               CREATE PROPOSAL                              */
+    /*                                  PROPOSAL                                  */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
     function createProposal(Proposal calldata proposal, bytes calldata permit2Data) external nonReentrant {
-        // Make the proposal
         (address collateral, uint256 collateralAmount) = _makeProposal(proposal);
 
         // Execute permit2Data for the caller
@@ -168,15 +158,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*               CANCEL PROPOSAL AND WITHDRAW UNUSED COLLATERAL               */
-    /* -------------------------------------------------------------------------- */
-
     /// @inheritdoc ISpro
     function cancelProposal(Proposal calldata proposal) external nonReentrant {
         Proposal memory newProposal = _cancelProposal(proposal);
 
-        // The caller must be the proposer
         if (msg.sender != newProposal.proposer) {
             revert CallerNotProposer();
         }
@@ -186,7 +171,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                                 CREATE LOAN                                */
+    /*                                    LOAN                                    */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
@@ -198,12 +183,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         // Accept proposal and get loan terms
         (bytes32 proposalHash, Terms memory loanTerms) = _acceptProposal(msg.sender, creditAmount, proposal);
 
-        // Create a new loan
         loanId_ = _createLoan(loanTerms);
 
         emit LoanCreated(loanId_, proposalHash, loanTerms);
 
-        // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
             _permit2Workflows(permit2Data, loanTerms.creditAmount.toUint160(), loanTerms.credit);
         } else {
@@ -211,10 +194,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             _pushFrom(loanTerms.credit, loanTerms.creditAmount, loanTerms.lender, loanTerms.borrower);
         }
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                                 REPAY LOAN                                 */
-    /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
     function repayLoan(uint256 loanId, bytes calldata permit2Data) external nonReentrant {
@@ -224,10 +203,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             revert LoanCannotBeRepaid();
         }
 
-        // Update loan to repaid state and get the repayment amount
         uint256 repaymentAmount = _updateRepaidLoan(loanId);
 
-        // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
             _permit2Workflows(permit2Data, repaymentAmount.toUint160(), loan.credit);
         } else {
@@ -241,7 +218,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         // Try to repay directly
         try this.tryClaimRepaidLoan(loanId, repaymentAmount, _loanToken.ownerOf(loanId)) { }
         catch {
-            // Note: Safe transfer can fail. In that case leave the Loan token in repaid state and wait for the Loan
+            // Note: Safe transfer can fail. In that case leave the loan token in repaid state and wait for the Loan
             // token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower from
             // repaying the loan.
         }
@@ -291,28 +268,22 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             try this.tryClaimRepaidLoan(
                 loanId, loan.principalAmount + loan.fixedInterestAmount, _loanToken.ownerOf(loanId)
             ) { } catch {
-                // Note: Safe transfer can fail. In that case leave the Loan token in repaid state and wait for the Loan
+                // Note: Safe transfer can fail. In that case leave the loan token in repaid state and wait for the Loan
                 // token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower from
                 // repaying the loan.
             }
         }
     }
 
-    /* ------------------------------------------------------------ */
-    /*                          CLAIM LOAN                          */
-    /* ------------------------------------------------------------ */
-
     /// @inheritdoc ISpro
     function claimLoan(uint256 loanId) public {
         Loan memory loan = _loans[loanId];
 
-        // Check that caller is Loan token holder
         if (_loanToken.ownerOf(loanId) != msg.sender) {
             revert CallerNotLoanTokenHolder();
         }
 
         if (loan.status == LoanStatus.NONE) {
-            // Loan is not existing or from a different loan contract
             revert NonExistingLoan();
         } else if (loan.status == LoanStatus.PAID_BACK) {
             // Loan has been paid back
@@ -320,9 +291,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         } else if (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp) {
             // Loan is running but expired
             _settleLoanClaim(loanId, msg.sender, true);
-        }
-        // Loan is in wrong state
-        else {
+        } else {
             revert LoanRunning();
         }
     }
@@ -348,7 +317,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         // If current loan owner is not original lender, the loan cannot be repaid directly, return without revert.
         if (loan.lender != loanOwner) return;
 
-        // Delete loan data & burn Loan token before calling safe transfer
+        // Delete loan data & burn loan token before calling safe transfer
         _deleteLoan(loanId);
 
         emit LoanClaimed(loanId, false);
@@ -361,7 +330,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         // Repay the original lender
         _push(loan.credit, creditAmount, loanOwner);
 
-        // Note: If the transfer fails, the Loan token will remain in repaid state and the Loan token owner
+        // Note: If the transfer fails, the loan token will remain in repaid state and the loan token owner
         // will be able to claim the repaid credit. Otherwise lender would be able to prevent borrower from
         // repaying the loan.
     }
@@ -388,27 +357,21 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      * @return canBeRepaid_ True if the loan can be repaid.
      */
     function _isLoanRepayable(LoanStatus status, uint40 loanExpiration) internal view returns (bool canBeRepaid_) {
-        // Check that loan is running
         if (status != LoanStatus.RUNNING) {
             return canBeRepaid_;
         }
-        // Check that loan is not defaulted
         if (loanExpiration <= block.timestamp) {
             return canBeRepaid_;
         }
         return true;
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                                   PRIVATE                                  */
-    /* -------------------------------------------------------------------------- */
-
     /**
      * @notice Return a Loan status associated with a loan id.
      * @param loanId Id of a loan in question.
      * @return status Loan status.
      */
-    function _getLoanStatus(uint256 loanId) private view returns (LoanStatus) {
+    function _getLoanStatus(uint256 loanId) internal view returns (LoanStatus) {
         Loan memory loan = _loans[loanId];
         return (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp)
             ? LoanStatus.EXPIRED
@@ -422,8 +385,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      * @return collateral_ Address of the collateral token.
      * @return collateralAmount_ Amount of the collateral token.
      */
-    function _makeProposal(Proposal memory proposal) private returns (address collateral_, uint256 collateralAmount_) {
-        // Decode proposal data
+    function _makeProposal(Proposal memory proposal)
+        internal
+        returns (address collateral_, uint256 collateralAmount_)
+    {
         if (proposal.startTimestamp >= proposal.loanExpiration) {
             revert InvalidDurationStartTime();
         }
@@ -440,17 +405,14 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         proposal.partialPositionBps = _partialPositionBps;
         proposal.proposer = msg.sender;
 
-        // Make proposal hash
         bytes32 proposalHash = keccak256(abi.encode(proposal));
-
-        // Try to make proposal
         _makeProposal(proposalHash);
 
         collateral_ = proposal.collateralAddress;
         collateralAmount_ = proposal.collateralAmount;
         _withdrawableCollateral[proposalHash] = collateralAmount_;
 
-        emit ProposalMade(proposalHash, proposal.proposer, proposal);
+        emit ProposalCreated(proposalHash, proposal.proposer, proposal);
     }
 
     /**
@@ -458,12 +420,10 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      * @param proposal Proposal struct.
      * @return proposal_ Proposal struct.
      */
-    function _cancelProposal(Proposal memory proposal) private returns (Proposal memory proposal_) {
+    function _cancelProposal(Proposal memory proposal) internal returns (Proposal memory proposal_) {
         proposal_ = proposal;
 
-        // Make proposal hash
         bytes32 proposalHash = keccak256(abi.encode(proposal_));
-
         proposal_.collateralAmount = _withdrawableCollateral[proposalHash];
         delete _withdrawableCollateral[proposalHash];
 
@@ -481,10 +441,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      * @return loanTerms_ Loan terms.
      */
     function _acceptProposal(address acceptor, uint256 creditAmount, Proposal memory proposal)
-        private
+        internal
         returns (bytes32 proposalHash_, Terms memory loanTerms_)
     {
-        // Make proposal hash
         proposalHash_ = keccak256(abi.encode(proposal));
 
         // Try to accept proposal
@@ -526,7 +485,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      * @dev Function will mark a proposal hash as proposed.
      * @param proposalHash Proposal hash.
      */
-    function _makeProposal(bytes32 proposalHash) private {
+    function _makeProposal(bytes32 proposalHash) internal {
         if (_proposalsMade[proposalHash]) {
             revert ProposalAlreadyExists();
         }
@@ -542,18 +501,14 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      * @param proposal Proposal base struct.
      */
     function _acceptProposal(address acceptor, uint256 creditAmount, bytes32 proposalHash, ProposalBase memory proposal)
-        private
+        internal
     {
-        // Check that the proposal was made on-chain
         if (!_proposalsMade[proposalHash]) {
             revert ProposalNotMade();
         }
-
-        // Check proposer is not acceptor
         if (proposal.proposer == acceptor) {
             revert AcceptorIsProposer(acceptor);
         }
-
         // Check proposal is not expired
         if (block.timestamp >= proposal.startTimestamp) {
             revert Expired(block.timestamp, proposal.startTimestamp);
@@ -571,24 +526,20 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
                 revert CreditAmountRemainingBelowMinimum(creditAmount, minAmount);
             }
         } else if (used + creditAmount > proposal.availableCreditLimit) {
-            // Revert, credit limit is exceeded
             revert AvailableCreditLimitExceeded(used + creditAmount, proposal.availableCreditLimit);
         }
 
-        // Apply increase if credit amount checks pass
         _creditUsed[proposalHash] += creditAmount;
     }
 
     /**
-     * @notice Mint Loan token and store loan data under loan id.
+     * @notice Mint loan token and store loan data under loan id.
      * @param loanTerms Loan terms struct.
-     * @return loanId_ Id of the created Loan token.
+     * @return loanId_ Id of the created loan token.
      */
-    function _createLoan(Terms memory loanTerms) private returns (uint256 loanId_) {
-        // Mint Loan token for lender
+    function _createLoan(Terms memory loanTerms) internal returns (uint256 loanId_) {
         loanId_ = _loanToken.mint(loanTerms.lender);
 
-        // Store loan data under loan id
         Loan storage loan = _loans[loanId_];
         loan.status = LoanStatus.RUNNING;
         loan.lender = loanTerms.lender;
@@ -607,7 +558,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      * @param loanId Id of a loan that is being repaid.
      * @return repaidAmount_ Amount of the repaid loan.
      */
-    function _updateRepaidLoan(uint256 loanId) private returns (uint256 repaidAmount_) {
+    function _updateRepaidLoan(uint256 loanId) internal returns (uint256 repaidAmount_) {
         Loan storage loan = _loans[loanId];
 
         // Move loan to repaid state and wait for the loan owner to claim the repaid credit
@@ -620,30 +571,30 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     /**
      * @notice Settle the loan claim.
      * @param loanId Id of a loan that is being claimed.
-     * @param loanOwner Address of the Loan token holder.
+     * @param loanOwner Address of the loan token holder.
      * @param defaulted If the loan is defaulted.
      */
-    function _settleLoanClaim(uint256 loanId, address loanOwner, bool defaulted) private {
+    function _settleLoanClaim(uint256 loanId, address loanOwner, bool defaulted) internal {
         Loan memory loan = _loans[loanId];
 
         // Store in memory before deleting the loan
         address asset = defaulted ? loan.collateral : loan.credit;
         uint256 assetAmount = defaulted ? loan.collateralAmount : loan.principalAmount + loan.fixedInterestAmount;
 
-        // Delete loan data & burn Loan token before calling safe transfer
+        // Delete loan data & burn loan token before calling safe transfer
         _deleteLoan(loanId);
 
         emit LoanClaimed(loanId, defaulted);
 
-        // Transfer asset to current Loan token owner
+        // Transfer asset to current loan token owner
         _push(asset, assetAmount, loanOwner);
     }
 
     /**
-     * @notice Delete loan data and burn Loan token.
+     * @notice Delete loan data and burn loan token.
      * @param loanId Id of a loan that is being deleted.
      */
-    function _deleteLoan(uint256 loanId) private {
+    function _deleteLoan(uint256 loanId) internal {
         _loanToken.burn(loanId);
         delete _loans[loanId];
     }
@@ -654,7 +605,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      * @param amount Amount of an asset to transfer.
      * @param token Address of an asset to transfer.
      */
-    function _permit2Workflows(bytes memory permit2Data, uint160 amount, address token) private {
+    function _permit2Workflows(bytes memory permit2Data, uint160 amount, address token) internal {
         (IAllowanceTransfer.PermitSingle memory permitSign, bytes memory data) =
             abi.decode(permit2Data, (IAllowanceTransfer.PermitSingle, bytes));
         PERMIT2.permit(msg.sender, permitSign, data);

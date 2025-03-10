@@ -9,29 +9,17 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { ISproLoan } from "src/interfaces/ISproLoan.sol";
 
 contract SproLoan is ISproLoan, ERC721, Ownable {
-    /* ------------------------------------------------------------ */
-    /*                VARIABLES & CONSTANTS DEFINITIONS             */
-    /* ------------------------------------------------------------ */
-
     /// @inheritdoc ISproLoan
     uint256 public _lastLoanId;
 
     /// @inheritdoc ISproLoan
     string public _metadataUri;
 
-    /* ------------------------------------------------------------ */
-    /*                          CONSTRUCTOR                         */
-    /* ------------------------------------------------------------ */
-
     /**
      * @notice Initialize SproLoan contract.
      * @param creator Address of the creator.
      */
     constructor(address creator) ERC721("Spro Loan", "LOAN") Ownable(creator) { }
-
-    /* ------------------------------------------------------------ */
-    /*                       TOKEN LIFECYCLE                        */
-    /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISproLoan
     function mint(address to) external onlyOwner returns (uint256 loanId_) {
@@ -45,10 +33,6 @@ contract SproLoan is ISproLoan, ERC721, Ownable {
         _burn(loanId);
         emit LoanBurned(loanId);
     }
-
-    /* ------------------------------------------------------------ */
-    /*                          METADATA                            */
-    /* ------------------------------------------------------------ */
 
     /// @inheritdoc ISproLoan
     function tokenURI(uint256 tokenId) public view virtual override(ERC721, ISproLoan) returns (string memory uri_) {

@@ -3,7 +3,21 @@ pragma solidity >=0.8.0;
 
 interface ISproTypes {
     /**
-     * @notice Struct defining a simple loan terms.
+     * @notice Loan status enum.
+     * @param NONE none/dead.
+     * @param RUNNING running/accepted offer/accepted request.
+     * @param PAID_BACK paid back.
+     * @param EXPIRED expired.
+     */
+    enum LoanStatus {
+        NONE,
+        RUNNING,
+        PAID_BACK,
+        EXPIRED
+    }
+
+    /**
+     * @notice Struct defining a loan terms.
      * @dev This struct is created by proposal contracts and never stored.
      * @param lender Address of a lender.
      * @param borrower Address of a borrower.
@@ -28,21 +42,7 @@ interface ISproTypes {
     }
 
     /**
-     * @notice Loan status enum.
-     * @param NONE none/dead.
-     * @param RUNNING running/accepted offer/accepted request.
-     * @param PAID_BACK paid back.
-     * @param EXPIRED expired.
-     */
-    enum LoanStatus {
-        NONE,
-        RUNNING,
-        PAID_BACK,
-        EXPIRED
-    }
-
-    /**
-     * @notice Struct defining a simple loan.
+     * @notice Struct defining a loan.
      * @param status Loan status.
      * @param lender Address of a lender that funded the loan.
      * @param borrower Address of a borrower.
@@ -68,18 +68,16 @@ interface ISproTypes {
     }
 
     /**
-     * @notice Construct defining a simple proposal.
+     * @notice Construct defining a proposal.
      * @param collateralAddress Address of an asset used as a collateral.
-     * @param collateralAmount Amount of tokens used as a collateral, in case of ERC721 should be 0.
+     * @param collateralAmount Amount of tokens used as a collateral.
      * @param creditAddress Address of an asset which is lent to a borrower.
      * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
-     * be borrowed using the proposal. If non-zero, proposal can be accepted more than once, until the credit limit is
-     * reached.
+     * be borrowed using the proposal.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      * @param startTimestamp Proposal start timestamp in seconds.
      * @param loanExpiration Proposal default timestamp in seconds.
-     * @param proposer Address of a proposal signer. If `isOffer` is true, the proposer is the lender. If `isOffer` is
-     * false, the proposer is the borrower.
+     * @param proposer Address of a proposal.
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
      * an identical proposal again.
      * @param partialPositionBps Minimum percentage that can be borrowed from the initial proposal.
@@ -99,13 +97,12 @@ interface ISproTypes {
 
     /**
      * @notice Base struct for a proposal.
+     * @dev This struct is created by proposal contracts and never stored.
      * @param collateralAddress Address of an asset used as a collateral.
      * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
-     * be borrowed using the proposal. If non-zero, proposal can be accepted more than once, until the credit limit is
-     * reached.
+     * be borrowed using the proposal.
      * @param startTimestamp Proposal start timestamp in seconds.
-     * @param proposer Address of a proposal signer. If `isOffer` is true, the proposer is the lender. If `isOffer` is
-     * false, the proposer is the borrower.
+     * @param proposer Address of a proposal.
      * @param partialPositionBps Minimum percentage that can be borrowed from the initial proposal.
      */
     struct ProposalBase {

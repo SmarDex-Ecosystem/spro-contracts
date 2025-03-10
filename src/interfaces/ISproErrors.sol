@@ -17,52 +17,25 @@ interface ISproErrors {
     error Expired(uint256 current, uint256 expiration);
 
     /**
-     * @notice Thrown when the Vault receives an asset that is not transferred by the Vault itself.
-     */
-    error UnsupportedTransferFunction();
-
-    /**
-     * @notice Thrown when registering a computer which does not support the asset it is registered for.
-     * @param computer The address of the computer.
-     * @param asset The address of the asset.
-     */
-    error InvalidComputerContract(address computer, address asset);
-
-    /**
      * @notice Thrown when trying to set an incorrect percentage value.
      * @param percentage The percentage value.
      */
     error IncorrectPercentageValue(uint16 percentage);
 
-    /**
-     * @notice Thrown when trying to set a percentage value equal to zero.
-     */
+    /// @notice Thrown when trying to set a percentage value equal to zero.
+
     error ZeroPercentageValue();
 
-    /**
-     * @notice Thrown when managed loan cannot be repaid.
-     */
+    /// @notice Thrown when managed loan cannot be repaid.
     error LoanCannotBeRepaid();
 
-    /**
-     * @notice Thrown when manged loan is still running.
-     */
+    /// @notice Thrown when manged loan is still running.
     error LoanRunning();
 
-    /**
-     * @notice Thrown when managed loan is defaulted.
-     * @param loanExpiration The timestamp of the end of the loan.
-     */
-    error LoanDefaulted(uint40 loanExpiration);
-
-    /**
-     * @notice Thrown when loan doesn't exist.
-     */
+    /// @notice Thrown when loan doesn't exist.
     error NonExistingLoan();
 
-    /**
-     * @notice Thrown when caller is not a Loan token holder.
-     */
+    /// @notice Thrown when caller is not a loan token holder.
     error CallerNotLoanTokenHolder();
 
     /**
@@ -72,21 +45,10 @@ interface ISproErrors {
      */
     error InvalidDuration(uint256 current, uint256 limit);
 
-    /**
-     * @notice Thrown when accruing interest APR is above the maximum.
-     * @param current The current APR.
-     * @param limit The maximum APR.
-     */
-    error InterestAPROutOfBounds(uint256 current, uint256 limit);
-
-    /**
-     * @notice Thrown when caller is not a vault.
-     */
+    /// @notice Thrown when caller is not a vault.
     error CallerNotVault();
 
-    /**
-     * @notice Thrown when caller is not the borrower/proposer
-     */
+    /// @notice Thrown when caller is not the borrower/proposer
     error CallerNotProposer();
 
     /**
@@ -124,38 +86,16 @@ interface ISproErrors {
      */
     error AvailableCreditLimitExceeded(uint256 used, uint256 limit);
 
-    /**
-     * @notice Thrown when a proposal has an available credit limit of zero.
-     */
+    /// @notice Thrown when a proposal has an available credit limit of zero.
     error AvailableCreditLimitZero();
 
-    /**
-     * @notice Thrown when caller is not allowed to accept a proposal.
-     * @param current The address of the caller.
-     * @param allowed The address of the allowed acceptor.
-     */
-    error CallerNotAllowedAcceptor(address current, address allowed);
-
-    /**
-     * @notice Thrown when the proposal already exists.
-     */
+    /// @notice Thrown when the proposal already exists.
     error ProposalAlreadyExists();
 
-    /**
-     * @notice Thrown when the proposal has not been made.
-     */
+    /// @notice Thrown when the proposal has not been made.
     error ProposalNotMade();
 
-    /**
-     * @notice Thrown when a partial loan is attempted for NFT collateral.
-     * @param creditAmount The amount of credit.
-     * @param availableCreditLimit The available credit limit.
-     */
-    error OnlyCompleteLendingForNFTs(uint256 creditAmount, uint256 availableCreditLimit);
-
-    /**
-     * @notice Thrown when the start timestamp is greater than the default timestamp.
-     */
+    /// @notice Thrown when the start timestamp is greater than the default timestamp.
     error InvalidDurationStartTime();
 
     /**

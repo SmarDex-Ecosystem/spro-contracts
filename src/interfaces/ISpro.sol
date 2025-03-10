@@ -21,7 +21,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     function setFee(uint256 newFee) external;
 
     /**
-     * @notice Set percentage of a proposal's availableCreditLimit which can be used in partial lending.
+     * @notice Set percentage of a proposal's available credit limit used in partial lending (in basis points).
      * @param percentage New percentage value.
      */
     function setPartialPositionPercentage(uint16 percentage) external;
@@ -37,7 +37,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Getter for credit used and credit remaining for a proposal.
+     * @notice Retrieves credit used and credit remaining for a proposal.
      * @param proposal Proposal struct.
      * @return used_ Credit used for the proposal.
      * @return remaining_ Credit remaining for the proposal.
@@ -48,11 +48,11 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
         returns (uint256 used_, uint256 remaining_);
 
     /**
-     * @notice Return a Loan data struct associated with a loan id.
-     * @param loanId Id of a loan in question.
+     * @notice Retrieves loan information.
+     * @param loanId Id of the loan.
      * @return loan_ Loan data struct.
      * @return repaymentAmount_ Repayment amount for the loan.
-     * @return loanOwner_ Current owner of the Loan token.
+     * @return loanOwner_ Current owner of the loan token.
      */
     function getLoan(uint256 loanId)
         external
@@ -60,11 +60,11 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
         returns (Loan memory loan_, uint256 repaymentAmount_, address loanOwner_);
 
     /**
-     * @notice Get the proposal hash for a given proposal struct.
+     * @notice Retrieves the proposal hash for a given proposal struct.
      * @param proposal Proposal struct to be hashed.
-     * @return Proposal struct hash.
+     * @return proposalHash_ Hash of the proposal.
      */
-    function getProposalHash(ISproTypes.Proposal memory proposal) external returns (bytes32);
+    function getProposalHash(ISproTypes.Proposal memory proposal) external returns (bytes32 proposalHash_);
 
     /* -------------------------------------------------------------------------- */
     /*                                    VIEW                                    */
@@ -72,10 +72,11 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Calculates the loan repayment amount with fixed and accrued interest for a set of loan ids.
-     * @dev Intended to be used to build permit data or credit token approvals
+     * @dev Intended to be used to build permit data or credit token approvals.
      * @param loanIds Array of loan ids.
-     * @param creditAddress Expected credit address for all loan ids.
-     * @return amount_ Total repayment amount for loan.
+     * @param creditAddress Expected credit address for all loan ids. `creditAddress` must be the same for all
+     * loan ids.
+     * @return amount_ Total repayment amount for all loans.
      */
     function totalLoanRepaymentAmount(uint256[] memory loanIds, address creditAddress)
         external
@@ -87,9 +88,9 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /* ------------------------------------------------------------ */
 
     /**
-     * @notice Create a borrow request proposal and transfers collateral to the vault and SDEX to fee sink.
+     * @notice Create a borrow request proposal and transfers collateral to the vault and SDEX to the dead address.
      * @param proposal Proposal struct.
-     * @param permit2Data Permit data.
+     * @param permit2Data Permit data if user wants to use permit2 (optional).
      */
     function createProposal(Proposal calldata proposal, bytes calldata permit2Data) external;
 
@@ -101,6 +102,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @notice A borrower can cancel their proposal and withdraw unused collateral.
      * @dev Resets withdrawable collateral, delete proposal, transfers unused collateral to the proposer.
      * @dev Fungible withdrawable collateral with amount == 0 calls should not revert, should transfer 0 tokens.
+     * @dev Loans already created are not affected.
      * @param proposal Proposal struct.
      */
     function cancelProposal(Proposal memory proposal) external;
@@ -111,11 +113,10 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Create a new loan.
-     * @dev The function assumes a prior token approval to a contract address or signed permits.
      * @param proposal Proposal struct.
      * @param creditAmount Amount of credit tokens.
-     * @param permit2Data Permit data.
-     * @return loanId_ Id of the created Loan token.
+     * @param permit2Data Permit data if user wants to use permit2 (optional).
+     * @return loanId_ Id of the created loan token.
      */
     function createLoan(Proposal memory proposal, uint256 creditAmount, bytes calldata permit2Data)
         external
@@ -128,26 +129,24 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /**
      * @notice Repay running loan.
      * @dev Any address can repay a running loan, but a collateral will be transferred to a borrower address associated
-     * with the loan.
-     *      If the Loan token holder is the same as the original lender, the repayment credit asset will be
-     *      transferred to the Loan token holder directly. Otherwise it will transfer the repayment credit asset to
-     *      a vault, waiting on a Loan token holder to claim it. The function assumes a prior token approval to a
-     * contract address or a signed permit.
+     * with the loan. If the loan token holder is the same as the original lender, the repayment credit asset will be
+     * transferred to the loan token holder directly. Otherwise it will transfer the repayment credit asset to a vault,
+     * waiting on a loan token holder to claim it.
      * @param loanId Id of a loan that is being repaid.
-     * @param permit2Data Permit data.
+     * @param permit2Data Permit data if user wants to use permit2 (optional).
      */
     function repayLoan(uint256 loanId, bytes calldata permit2Data) external;
 
     /**
      * @notice Repay running loans.
      * @dev Any address can repay a running loan, but a collateral will be transferred to a borrower address associated
-     * with the loan. If the Loan token holder is the same as the original lender, the repayment credit asset will be
-     * transferred to the Loan token holder directly. Otherwise it will transfer the repayment credit asset to a vault,
-     * waiting on a Loan token holder to claim it. The function assumes a prior token approval to a contract address or
-     * a signed permit.
+     * with the loan. If the loan token holder is the same as the original lender, the repayment credit asset will be
+     * transferred to the loan token holder directly. Otherwise it will transfer the repayment credit asset to a vault,
+     * waiting on a loan token holder to claim it.
      * @param loanIds Id array of loans that are being repaid.
-     * @param creditAddress Expected credit address for all loan ids.
-     * @param permit2Data Permit data.
+     * @param creditAddress Expected credit address for all loan ids. `creditAddress` must be the same for all
+     * loan ids.
+     * @param permit2Data Permit data if user wants to use permit2 (optional).
      */
     function repayMultipleLoans(uint256[] calldata loanIds, address creditAddress, bytes calldata permit2Data)
         external;
@@ -158,29 +157,28 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Claim a repaid or defaulted loan.
-     * @dev Only a Loan token holder can claim a repaid or defaulted loan.
-     *      Claim will transfer the repaid credit or collateral to a Loan token holder address and burn the Loan token.
+     * @dev Only a loan token holder can claim a repaid or defaulted loan. Claim will transfer the repaid credit or
+     * collateral to a loan token holder address and burn the loan token.
      * @param loanId Id of a loan that is being claimed.
      */
     function claimLoan(uint256 loanId) external;
 
     /**
-     * @notice Claims multiple repaid or defaulted loans.
-     * @dev Only a Loan token holder can claim a repaid or defaulted loan.
-     *      Claim will transfer the repaid credit or collateral to a Loan token holder address and burn the Loan token.
+     * @notice Claim multiple repaid or defaulted loans.
+     * @dev Only a loan token holder can claim a repaid or defaulted loan. Claim will transfer the repaid credit or
+     * collateral to a loan token holder address and burn the loan token.
      * @param loanIds Array of ids of loans that are being claimed.
      */
     function claimMultipleLoans(uint256[] memory loanIds) external;
 
     /**
      * @notice Try to claim a repaid loan for the loan owner.
-     * @dev The function is called by the vault to repay a loan directly to the original lender or its source of funds
-     *      if the loan owner is the original lender. If the transfer fails, the Loan token will remain in repaid state
-     *      and the Loan token owner will be able to claim the repaid credit. Otherwise lender would be able to prevent
-     *      borrower from repaying the loan.
+     * @dev The function is called only by the vault to repay a loan directly to the original lender. If the transfer
+     * fails, the loan token will remain in repaid state and the loan token owner will be able to claim the repaid
+     * credit. Otherwise lender would be able to prevent borrower from repaying the loan.
      * @param loanId Id of a loan that is being claimed.
      * @param creditAmount Amount of a credit to be claimed.
-     * @param loanOwner Address of the Loan token holder.
+     * @param loanOwner Address of the loan token holder.
      */
     function tryClaimRepaidLoan(uint256 loanId, uint256 creditAmount, address loanOwner) external;
 }
