@@ -59,7 +59,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     }
 
     function test_PartialLoan_ERC20Collateral_CancelProposal_RepayLoan() external {
-        // Borrower: creates proposal
         _createERC20Proposal();
 
         // Mint initial state & approve credit
@@ -93,9 +92,29 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(t20.balanceOf(borrower), COLLATERAL_AMOUNT);
     }
 
+    function test_RevertWhen_notRepayable() external {
+        vm.expectRevert(ISproErrors.LoanCannotBeRepaid.selector);
+        deployment.config.repayLoan(0, "");
+
+        _createERC20Proposal();
+
+        // Mint initial state & approve credit
+        credit.mint(lender, INITIAL_CREDIT_BALANCE);
+        vm.prank(lender);
+        credit.approve(address(deployment.config), CREDIT_LIMIT);
+
+        // Lender: creates the loan
+        vm.prank(lender);
+        uint256 loanId = deployment.config.createLoan(proposal, CREDIT_AMOUNT, "");
+
+        // Warp ahead, just when loan default
+        vm.warp(proposal.loanExpiration);
+
+        vm.expectRevert(ISproErrors.LoanCannotBeRepaid.selector);
+        deployment.config.repayLoan(loanId, "");
+    }
+
     function test_RevertWhen_PartialLoanGtCreditThreshold() external {
-        // Create the proposal
-        vm.prank(borrower);
         _createERC20Proposal();
 
         // 95.01% of available credit limit
@@ -120,8 +139,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     }
 
     function test_RevertWhen_partialLoanLtCreditThreshold() external {
-        // Create the proposal
-        vm.prank(borrower);
         _createERC20Proposal();
 
         // 4.99% of available credit limit
@@ -145,8 +162,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     }
 
     function test_RevertWhen_CreateAlreadyMadeProposal() external {
-        // Create the proposal
         _createERC20Proposal();
+
         // Mint initial state & approve collateral
         t20.mint(borrower, proposal.collateralAmount);
         vm.prank(borrower);
@@ -302,10 +319,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     }
 
     function _setupMultipleRepay() internal returns (uint256[] memory loanIds, uint256 fixedInterestAmount) {
-        vm.prank(borrower);
         _createERC20Proposal();
 
-        // Setup lenders array
         address[] memory lenders = new address[](4);
         lenders[0] = lender;
         lenders[1] = alice;
@@ -439,8 +454,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         );
         future = bound(future, 1 days, proposal.startTimestamp);
 
-        // Create the proposal
-        vm.prank(borrower);
         _createERC20Proposal();
 
         // Mint initial state & approve credit
@@ -450,7 +463,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         uint256 loanId = deployment.config.createLoan(proposal, amount, "");
 
-        // skip to the future
         skip(future);
 
         (ISproTypes.Loan memory loanInfo, uint256 repaymentAmount,) = deployment.config.getLoan(loanId);

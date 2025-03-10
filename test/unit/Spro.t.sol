@@ -148,3 +148,14 @@ contract TestSproSetLoanMetadataUri is SproTest {
         assertEq(config._loanToken()._metadataUri(), uri);
     }
 }
+
+/* -------------------------------------------------------------------------- */
+/*                             tryClaimRepaidLoan                             */
+/* -------------------------------------------------------------------------- */
+
+contract TestSproTryClaimRepaidLoan is SproTest {
+    function test_RevertWhen_tryClaimRepaidLoanUnauthorized() external {
+        vm.expectRevert(ISproErrors.UnauthorizedCaller.selector);
+        config.tryClaimRepaidLoan(0, 0, address(0));
+    }
+}

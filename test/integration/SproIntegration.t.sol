@@ -108,4 +108,31 @@ contract TestSproIntegration is SDBaseIntegrationTest {
         assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE - CREDIT_LIMIT);
         assertEq(credit.balanceOf(borrower), CREDIT_LIMIT);
     }
+
+    function test_RevertWhen_proposalNotMade() external {
+        vm.expectRevert(ISproErrors.ProposalNotMade.selector);
+        deployment.config.createLoan(proposal, CREDIT_LIMIT, "");
+    }
+
+    function test_RevertWhen_proposerIsAcceptor() external {
+        _createERC20Proposal();
+        vm.prank(proposal.proposer);
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.AcceptorIsProposer.selector, proposal.proposer));
+        deployment.config.createLoan(proposal, CREDIT_LIMIT, "");
+    }
+
+    function test_RevertWhen_proposalExpired() external {
+        _createERC20Proposal();
+        vm.warp(proposal.startTimestamp);
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.Expired.selector, block.timestamp, proposal.startTimestamp));
+        deployment.config.createLoan(proposal, CREDIT_LIMIT, "");
+    }
+
+    function test_RevertWhen_availableCreditExceeded() external {
+        _createERC20Proposal();
+        vm.expectRevert(
+            abi.encodeWithSelector(ISproErrors.AvailableCreditLimitExceeded.selector, CREDIT_LIMIT + 1, CREDIT_LIMIT)
+        );
+        deployment.config.createLoan(proposal, CREDIT_LIMIT + 1, "");
+    }
 }
