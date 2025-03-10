@@ -16,7 +16,6 @@ abstract contract SproTest is Test {
     address sdex = makeAddr("sdex");
     address public permit2 = makeAddr("permit2");
     address alice = makeAddr("alice");
-    address creditToken = makeAddr("creditToken");
 
     uint256 constant FEE = 500e18;
     uint16 partialPositionBps = 900;

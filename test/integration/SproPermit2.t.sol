@@ -22,8 +22,7 @@ contract TestForkPermit2 is SproForkBase {
 
     uint256 internal constant SIG_USER1_PK = 1;
     address internal sigUser1 = vm.addr(SIG_USER1_PK);
-    uint256 borrowerPK = uint256(888);
-    address borrower = vm.addr(borrowerPK);
+    address borrower = vm.addr(888);
     Spro.Proposal proposal;
 
     function setUp() public override {

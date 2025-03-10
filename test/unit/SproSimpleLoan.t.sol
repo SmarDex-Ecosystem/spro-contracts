@@ -13,7 +13,6 @@ contract SproSimpleLoanTest is Test {
     address public sdex = makeAddr("sdex");
     address public permit2 = makeAddr("permit2");
     address public config = makeAddr("config");
-    address public credit = makeAddr("credit");
 
     SproHandler sproHandler;
 

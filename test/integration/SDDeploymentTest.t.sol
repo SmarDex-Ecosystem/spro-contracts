@@ -13,9 +13,6 @@ abstract contract SDDeploymentTest is Test {
     uint256 public constant FEE = 50e18;
     uint16 public constant PARTIAL_POSITION_BPS = 500;
 
-    string public deploymentsSubpath;
-
-    uint256[] deployedChains;
     Deployment deployment;
 
     // Properties need to be in alphabetical order
