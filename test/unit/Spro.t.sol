@@ -18,11 +18,11 @@ abstract contract SproTest is Test {
     address alice = makeAddr("alice");
     address creditToken = makeAddr("creditToken");
 
-    uint256 fee = 500e18;
+    uint256 constant FEE = 500e18;
     uint16 partialPositionBps = 900;
 
     function setUp() public virtual {
-        config = new Spro(sdex, permit2, fee, partialPositionBps);
+        config = new Spro(sdex, permit2, FEE, partialPositionBps);
     }
 }
 
@@ -34,26 +34,26 @@ contract TestSproConstructor is SproTest {
     function test_shouldInitializeWithCorrectValues() external view {
         assertEq(config.owner(), owner);
         assertEq(config._partialPositionBps(), partialPositionBps);
-        assertEq(config._fee(), fee);
+        assertEq(config._fee(), FEE);
         assertEq(sdex, config.SDEX());
     }
 
     function test_RevertWhen_incorrectPartialPositionBps() external {
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, 0));
-        new Spro(sdex, permit2, fee, 0);
+        new Spro(sdex, permit2, FEE, 0);
 
         vm.expectRevert(
             abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, Constants.BPS_DIVISOR / 2 + 1)
         );
-        new Spro(sdex, permit2, fee, uint16(Constants.BPS_DIVISOR / 2 + 1));
+        new Spro(sdex, permit2, FEE, uint16(Constants.BPS_DIVISOR / 2 + 1));
     }
 
     function test_RevertWhen_zeroAddress() external {
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.ZeroAddress.selector));
-        new Spro(address(0), permit2, fee, partialPositionBps);
+        new Spro(address(0), permit2, FEE, partialPositionBps);
 
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.ZeroAddress.selector));
-        new Spro(sdex, address(0), fee, partialPositionBps);
+        new Spro(sdex, address(0), FEE, partialPositionBps);
     }
 }
 
@@ -65,14 +65,7 @@ contract TestSproSetFee is SproTest {
     function test_RevertWhen_callerIsNotOwner() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         vm.prank(alice);
-        config.setFee(fee);
-    }
-
-    function test_setFeeValue() external {
-        vm.prank(owner);
-        config.setFee(fee + 1);
-
-        assertEq(config._fee(), fee + 1);
+        config.setFee(FEE);
     }
 
     function test_RevertWhen_excessiveFee() external {
@@ -81,12 +74,13 @@ contract TestSproSetFee is SproTest {
         config.setFee(Constants.MAX_SDEX_FEE + 1);
     }
 
-    function test_feeUpdatedEmitEvent() external {
+    function test_feeUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit ISproEvents.FeeUpdated(50e18);
+        emit ISproEvents.FeeUpdated(FEE + 1);
 
         vm.prank(owner);
-        config.setFee(50e18);
+        config.setFee(FEE + 1);
+        assertEq(config._fee(), FEE + 1);
     }
 }
 
@@ -95,28 +89,29 @@ contract TestSproSetFee is SproTest {
 /* -------------------------------------------------------------------------- */
 
 contract TestSproPartialLendingThresholds is SproTest {
-    uint16 internal constant PARTIAL_POSITION_PERCENTAGE = 500;
+    uint16 internal constant PARTIAL_POSITION_BPS = 500;
 
     function setUp() public override {
         super.setUp();
 
         vm.startPrank(owner);
-        config.setPartialPositionPercentage(PARTIAL_POSITION_PERCENTAGE);
+        config.setPartialPositionPercentage(PARTIAL_POSITION_BPS);
         vm.stopPrank();
     }
 
     function test_partialPositionBpsUpdatedEmitEvent() external {
         vm.expectEmit(true, true, true, true);
-        emit ISproEvents.PartialPositionBpsUpdated(1000);
+        emit ISproEvents.PartialPositionBpsUpdated(PARTIAL_POSITION_BPS + 1);
 
         vm.prank(owner);
-        config.setPartialPositionPercentage(1000);
+        config.setPartialPositionPercentage(PARTIAL_POSITION_BPS + 1);
+        assertEq(config._partialPositionBps(), PARTIAL_POSITION_BPS + 1);
     }
 
     function test_RevertWhen_whenCallerIsNotOwner() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         vm.prank(alice);
-        config.setPartialPositionPercentage(2000);
+        config.setPartialPositionPercentage(PARTIAL_POSITION_BPS);
     }
 
     function test_RevertWhen_whenZeroPercentage() external {

@@ -11,7 +11,7 @@ import { SproLoan } from "src/spro/SproLoan.sol";
 
 abstract contract SDDeploymentTest is Test {
     uint256 public constant FEE = 50e18;
-    uint16 public constant PARTIAL_POSITION_PERCENTAGE = 500;
+    uint16 public constant PARTIAL_POSITION_BPS = 500;
 
     string public deploymentsSubpath;
 
@@ -40,8 +40,7 @@ abstract contract SDDeploymentTest is Test {
         vm.startPrank(deployment.protocolAdmin);
 
         // Deploy protocol
-        deployment.config =
-            new Spro(address(deployment.sdex), address(deployment.permit2), FEE, PARTIAL_POSITION_PERCENTAGE);
+        deployment.config = new Spro(address(deployment.sdex), address(deployment.permit2), FEE, PARTIAL_POSITION_BPS);
         vm.stopPrank();
         deployment.loanToken = deployment.config._loanToken();
 

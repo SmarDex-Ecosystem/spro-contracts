@@ -10,10 +10,8 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     T20 t20;
     T20 credit;
 
-    uint256 lenderPK = uint256(777);
-    address lender = vm.addr(lenderPK);
-    uint256 borrowerPK = uint256(888);
-    address borrower = vm.addr(borrowerPK);
+    address lender = vm.addr(777);
+    address borrower = vm.addr(888);
     Spro.Proposal proposal;
 
     // Additional lenders
@@ -29,7 +27,6 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     uint256 public constant CREDIT_LIMIT = 100e18;
     uint256 public constant FIXED_INTEREST_AMOUNT = 5e18;
     uint256 public constant INITIAL_SDEX_BALANCE = 1_000_000e18;
-    uint16 public constant PERCENTAGE = 1e4;
 
     function setUp() public virtual override {
         super.setUp();
@@ -49,7 +46,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
             uint40(block.timestamp) + 10 days,
             borrower,
             0,
-            PARTIAL_POSITION_PERCENTAGE
+            PARTIAL_POSITION_BPS
         );
 
         // Mint and approve SDEX
@@ -62,7 +59,7 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
 
         // Set thresholds in config
         vm.startPrank(deployment.protocolAdmin);
-        Spro(deployment.config).setPartialPositionPercentage(PARTIAL_POSITION_PERCENTAGE);
+        Spro(deployment.config).setPartialPositionPercentage(PARTIAL_POSITION_BPS);
         vm.stopPrank();
 
         // Add labels

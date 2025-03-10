@@ -13,7 +13,7 @@ import { SproLoan } from "src/spro/SproLoan.sol";
 abstract contract SproForkBase is Test, PermitSignature {
     address payable constant PERMIT = payable(address(0x000000000022D473030F116dDEE9F6B43aC78BA3));
     uint256 public constant FEE = 20e18;
-    uint16 public constant PARTIAL_POSITION_PERCENTAGE = 500;
+    uint16 public constant PARTIAL_POSITION_BPS = 500;
 
     string public deploymentsSubpath;
 
@@ -44,8 +44,7 @@ abstract contract SproForkBase is Test, PermitSignature {
         vm.startPrank(deployment.protocolAdmin);
 
         // Deploy protocol
-        deployment.config =
-            new Spro(address(deployment.sdex), address(deployment.permit2), FEE, PARTIAL_POSITION_PERCENTAGE);
+        deployment.config = new Spro(address(deployment.sdex), address(deployment.permit2), FEE, PARTIAL_POSITION_BPS);
         vm.stopPrank();
         deployment.loanToken = deployment.config._loanToken();
 

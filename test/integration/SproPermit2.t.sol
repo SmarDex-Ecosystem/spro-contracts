@@ -43,7 +43,7 @@ contract TestForkPermit2 is SproForkBase {
             uint40(block.timestamp) + 10 days,
             borrower,
             0,
-            PARTIAL_POSITION_PERCENTAGE
+            PARTIAL_POSITION_BPS
         );
 
         // Mint and approve SDEX
