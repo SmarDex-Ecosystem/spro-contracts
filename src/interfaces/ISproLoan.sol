@@ -6,7 +6,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 interface ISproLoan is IERC721 {
     /**
      * @notice Get the last used ID.
-     * @dev  The First id is 1, this value is incremental.
+     * @dev  The first id is 1, this value is incremental.
      */
     function _lastLoanId() external view returns (uint256);
 
