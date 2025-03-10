@@ -23,7 +23,6 @@ interface ISproErrors {
     error IncorrectPercentageValue(uint16 percentage);
 
     /// @notice Thrown when trying to set a percentage value equal to zero.
-
     error ZeroPercentageValue();
 
     /// @notice Thrown when managed loan cannot be repaid.
@@ -92,8 +91,8 @@ interface ISproErrors {
     /// @notice Thrown when the proposal already exists.
     error ProposalAlreadyExists();
 
-    /// @notice Thrown when the proposal has not been made.
-    error ProposalNotMade();
+    /// @notice Thrown when the proposal does not exist.
+    error ProposalNotExists();
 
     /// @notice Thrown when the start timestamp is greater than the default timestamp.
     error InvalidDurationStartTime();

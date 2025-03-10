@@ -91,7 +91,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             used_ = _creditUsed[proposalHash];
             remaining_ = proposal.availableCreditLimit - used_;
         } else {
-            revert ProposalNotMade();
+            revert ProposalNotExists();
         }
     }
 
@@ -485,7 +485,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         internal
     {
         if (!_proposalsMade[proposalHash]) {
-            revert ProposalNotMade();
+            revert ProposalNotExists();
         }
         if (proposal.proposer == acceptor) {
             revert AcceptorIsProposer(acceptor);
