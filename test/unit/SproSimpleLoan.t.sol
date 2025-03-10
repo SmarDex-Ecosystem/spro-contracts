@@ -30,7 +30,7 @@ contract SproSimpleLoanTest is Test {
         assertEq(repaymentAmount, 0);
     }
 
-    function test_isLoanRepayable() external {
+    function test_isLoanRepayable() external view {
         bool canBeRepaid = sproHandler.exposed_isLoanRepayable(ISproTypes.LoanStatus.PAID_BACK, 0);
         assertFalse(canBeRepaid, "Loan shouldn't be repayable");
 
