@@ -265,7 +265,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             }
         }
 
-        // Transfer the repaid credit to the Vault
+        // Transfer the repaid credit to the protocol
         if (permit2Data.length > 0) {
             _permit2Workflows(permit2Data, totalRepaymentAmount.toUint160(), creditAddress);
         } else {
@@ -330,7 +330,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     /// @inheritdoc ISpro
     function tryClaimRepaidLoan(uint256 loanId, uint256 creditAmount, address loanOwner) external {
         if (msg.sender != address(this)) {
-            revert CallerNotVault();
+            revert UnauthorizedCaller();
         }
 
         Loan memory loan = _loans[loanId];

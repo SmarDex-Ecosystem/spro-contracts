@@ -79,10 +79,8 @@ interface ISproErrors {
      */
     error InterestAPROutOfBounds(uint256 current, uint256 limit);
 
-    /**
-     * @notice Thrown when caller is not a vault.
-     */
-    error CallerNotVault();
+    /// @notice Thrown when the caller is not the protocol.
+    error UnauthorizedCaller();
 
     /**
      * @notice Thrown when caller is not the borrower/proposer
