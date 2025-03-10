@@ -33,7 +33,6 @@ contract SproVault is ISproVault {
      */
     function _pushFrom(address asset, uint256 amount, address origin, address beneficiary) internal {
         IERC20Metadata(asset).safeTransferFrom(origin, beneficiary, amount);
-
         emit VaultPushFrom(asset, origin, beneficiary, amount);
     }
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity ^0.8.26;
+pragma solidity >=0.8.0;
 
 import { Test } from "forge-std/Test.sol";
 
@@ -13,8 +13,6 @@ contract SproSimpleLoanTest is Test {
     address public sdex = makeAddr("sdex");
     address public permit2 = makeAddr("permit2");
     address public config = makeAddr("config");
-
-    address public permitAsset = makeAddr("permitAsset");
     address public credit = makeAddr("credit");
 
     SproHandler sproHandler;
@@ -30,7 +28,7 @@ contract SproSimpleLoanTest is Test {
         assertEq(repaymentAmount, 0);
     }
 
-    function test_isLoanRepayable() external {
+    function test_isLoanRepayable() external view {
         bool canBeRepaid = sproHandler.exposed_isLoanRepayable(ISproTypes.LoanStatus.PAID_BACK, 0);
         assertFalse(canBeRepaid, "Loan shouldn't be repayable");
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity ^0.8.26;
+pragma solidity >=0.8.0;
 
 import { Test } from "forge-std/Test.sol";
 
@@ -9,7 +9,7 @@ import { SproVault } from "src/spro/SproVault.sol";
 import { ISproVault } from "src/interfaces/ISproVault.sol";
 import { Spro } from "src/spro/Spro.sol";
 
-contract SproVaultHarness is SproVault {
+contract SproVaultHandler is SproVault {
     function push(address asset, uint256 amount, address beneficiary) external {
         _push(asset, amount, beneficiary);
     }
@@ -19,44 +19,43 @@ contract SproVaultHarness is SproVault {
     }
 }
 
-abstract contract SproVaultTest is Test {
-    SproVaultHarness vault;
-    address token = makeAddr("token");
+contract SproVaultTest is Test {
+    SproVaultHandler vault;
+    T20 token;
     address alice = makeAddr("alice");
     address bob = makeAddr("bob");
+    uint256 INITIAL_BALANCE = 1000e18;
 
-    T20 t20;
-
-    constructor() {
-        vm.etch(token, bytes("data"));
-    }
-
-    function setUp() public virtual {
-        vault = new SproVaultHarness();
-        t20 = new T20();
+    function setUp() public {
+        vault = new SproVaultHandler();
+        token = new T20();
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  PUSH                                                     */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                                    PUSH                                    */
+/* -------------------------------------------------------------------------- */
 
-contract SproVault_Push_Test is SproVaultTest {
+contract TestSproVaultPush is SproVaultTest {
     function test_pushEmitEvent() external {
+        token.mint(address(vault), INITIAL_BALANCE);
         vm.expectEmit(true, true, true, true);
-        emit ISproVault.VaultPushFrom(token, address(vault), alice, 99_999_999);
-        vault.push(token, 99_999_999, alice);
+        emit ISproVault.VaultPushFrom(address(token), address(vault), alice, INITIAL_BALANCE);
+        vault.push(address(token), INITIAL_BALANCE, alice);
     }
 }
 
-/* ------------------------------------------------------------ */
-/*  PUSH FROM                                                */
-/* ------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                                  PUSH_FROM                                 */
+/* -------------------------------------------------------------------------- */
 
-contract SproVault_PushFrom_Test is SproVaultTest {
+contract TestSproVaultPushFrom is SproVaultTest {
     function test_pushFromEmitEvent() external {
+        token.mint(address(alice), INITIAL_BALANCE);
+        vm.prank(alice);
+        token.approve(address(vault), INITIAL_BALANCE);
         vm.expectEmit(true, true, true, true);
-        emit ISproVault.VaultPushFrom(token, alice, bob, 42);
-        vault.pushFrom(token, 42, alice, bob);
+        emit ISproVault.VaultPushFrom(address(token), alice, bob, INITIAL_BALANCE);
+        vault.pushFrom(address(token), INITIAL_BALANCE, alice, bob);
     }
 }

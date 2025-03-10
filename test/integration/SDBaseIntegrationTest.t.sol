@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity ^0.8.26;
+pragma solidity >=0.8.0;
 
 import { T20 } from "test/helper/T20.sol";
 import { SDDeploymentTest, Spro } from "test/integration/SDDeploymentTest.t.sol";
@@ -23,19 +23,12 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
     address charlee;
 
     // Constants
-    uint256 public constant COLLATERAL_ID = 42;
     uint256 public constant COLLATERAL_AMOUNT = 10_000e18;
     uint256 public constant INITIAL_CREDIT_BALANCE = 1000e18;
     uint256 public constant CREDIT_AMOUNT = 60e18;
     uint256 public constant CREDIT_LIMIT = 100e18;
     uint256 public constant FIXED_INTEREST_AMOUNT = 5e18;
-
-    uint256 public constant SLOT_PROPOSALS_MADE = 0;
-    uint256 public constant SLOT_CREDIT_USED = 1;
-    uint256 public constant SLOT_WITHDRAWABLE_COLLATERAL = 2;
-
     uint256 public constant INITIAL_SDEX_BALANCE = 1_000_000e18;
-
     uint16 public constant PERCENTAGE = 1e4;
 
     function setUp() public virtual override {
