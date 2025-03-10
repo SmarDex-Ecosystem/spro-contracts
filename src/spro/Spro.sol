@@ -6,15 +6,17 @@ import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 import { ISpro } from "src/interfaces/ISpro.sol";
 import { SproLoan } from "src/spro/SproLoan.sol";
-import { SproVault } from "src/spro/SproVault.sol";
 import { SproStorage } from "src/spro/SproStorage.sol";
 
-contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
+contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
+    using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
 
     /**
@@ -154,16 +156,13 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
                 abi.decode(permit2Data, (IAllowanceTransfer.PermitBatch, bytes));
             PERMIT2.permit(msg.sender, permitBatch, data);
             PERMIT2.transferFrom(msg.sender, address(this), collateralAmount.toUint160(), collateral);
-            // Fees to address(0xdead)(burned)
             if (_fee > 0) {
                 PERMIT2.transferFrom(msg.sender, address(0xdead), _fee.toUint160(), address(SDEX));
             }
         } else {
-            // Transfer collateral to Vault
-            _pushFrom(collateral, collateralAmount, msg.sender, address(this));
-            // Fees to address(0xdead)(burned)
+            IERC20Metadata(collateral).safeTransferFrom(msg.sender, address(this), collateralAmount);
             if (_fee > 0) {
-                _pushFrom(SDEX, _fee, msg.sender, address(0xdead));
+                IERC20Metadata(SDEX).safeTransferFrom(msg.sender, address(0xdead), _fee);
             }
         }
     }
@@ -175,14 +174,11 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     /// @inheritdoc ISpro
     function cancelProposal(Proposal calldata proposal) external nonReentrant {
         Proposal memory newProposal = _cancelProposal(proposal);
-
-        // The caller must be the proposer
         if (msg.sender != newProposal.proposer) {
             revert CallerNotProposer();
         }
 
-        // Transfers withdrawable collateral to the proposer/borrower
-        _push(newProposal.collateralAddress, newProposal.collateralAmount, newProposal.proposer);
+        IERC20Metadata(newProposal.collateralAddress).safeTransfer(newProposal.proposer, newProposal.collateralAmount);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -207,8 +203,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         if (permit2Data.length > 0) {
             _permit2Workflows(permit2Data, loanTerms.creditAmount.toUint160(), loanTerms.credit);
         } else {
-            // Transfer credit to borrower
-            _pushFrom(loanTerms.credit, loanTerms.creditAmount, loanTerms.lender, loanTerms.borrower);
+            IERC20Metadata(loanTerms.credit).safeTransferFrom(
+                loanTerms.lender, loanTerms.borrower, loanTerms.creditAmount
+            );
         }
     }
 
@@ -231,12 +228,9 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         if (permit2Data.length > 0) {
             _permit2Workflows(permit2Data, repaymentAmount.toUint160(), loan.credit);
         } else {
-            // Transfer the repaid credit to the Vault
-            _pushFrom(loan.credit, repaymentAmount, msg.sender, address(this));
+            IERC20Metadata(loan.credit).safeTransferFrom(msg.sender, address(this), repaymentAmount);
         }
-
-        // Transfer collateral back to borrower
-        _push(loan.collateral, loan.collateralAmount, loan.borrower);
+        IERC20Metadata(loan.collateral).safeTransfer(loan.borrower, loan.collateralAmount);
 
         // Try to repay directly
         try this.tryClaimRepaidLoan(loanId, repaymentAmount, _loanToken.ownerOf(loanId)) { }
@@ -275,8 +269,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         if (permit2Data.length > 0) {
             _permit2Workflows(permit2Data, totalRepaymentAmount.toUint160(), creditAddress);
         } else {
-            // Transfer the repaid credit to the vault
-            _pushFrom(creditAddress, totalRepaymentAmount, msg.sender, address(this));
+            IERC20Metadata(creditAddress).safeTransferFrom(msg.sender, address(this), totalRepaymentAmount);
         }
 
         for (uint256 i; i < numLoansToRepay; ++i) {
@@ -284,8 +277,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             Loan memory loan = loanData.loan;
             uint256 loanId = loanData.loanId;
 
-            // Transfer collateral back to the borrower
-            _push(loan.collateral, loan.collateralAmount, loan.borrower);
+            IERC20Metadata(loan.collateral).safeTransfer(loan.borrower, loan.collateralAmount);
 
             // Try to repay directly (for each loanId)
             try this.tryClaimRepaidLoan(
@@ -358,8 +350,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
         // Note: Zero credit amount can happen when the loan is refinanced by the original lender.
 
-        // Repay the original lender
-        _push(loan.credit, creditAmount, loanOwner);
+        IERC20Metadata(loan.credit).safeTransfer(loanOwner, creditAmount);
 
         // Note: If the transfer fails, the Loan token will remain in repaid state and the Loan token owner
         // will be able to claim the repaid credit. Otherwise lender would be able to prevent borrower from
@@ -632,11 +623,8 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
         // Delete loan data & burn Loan token before calling safe transfer
         _deleteLoan(loanId);
-
         emit LoanClaimed(loanId, defaulted);
-
-        // Transfer asset to current Loan token owner
-        _push(asset, assetAmount, loanOwner);
+        IERC20Metadata(asset).safeTransfer(loanOwner, assetAmount);
     }
 
     /**
