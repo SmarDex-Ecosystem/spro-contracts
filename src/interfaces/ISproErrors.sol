@@ -17,11 +17,6 @@ interface ISproErrors {
     error Expired(uint256 current, uint256 expiration);
 
     /**
-     * @notice Thrown when the Vault receives an asset that is not transferred by the Vault itself.
-     */
-    error UnsupportedTransferFunction();
-
-    /**
      * @notice Thrown when registering a computer which does not support the asset it is registered for.
      * @param computer The address of the computer.
      * @param asset The address of the asset.
@@ -79,10 +74,8 @@ interface ISproErrors {
      */
     error InterestAPROutOfBounds(uint256 current, uint256 limit);
 
-    /**
-     * @notice Thrown when caller is not a vault.
-     */
-    error CallerNotVault();
+    /// @notice Thrown when the caller is not the protocol.
+    error UnauthorizedCaller();
 
     /**
      * @notice Thrown when caller is not the borrower/proposer
