@@ -10,7 +10,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 import { ISpro } from "src/interfaces/ISpro.sol";
 import { SproLoan } from "src/spro/SproLoan.sol";
 import { SproStorage } from "src/spro/SproStorage.sol";
@@ -39,7 +38,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         if (sdex == address(0) || permit2 == address(0)) {
             revert ZeroAddress();
         }
-        if (percentage == 0 || percentage > Constants.BPS_DIVISOR / 2) {
+        if (percentage == 0 || percentage > BPS_DIVISOR / 2) {
             revert IncorrectPercentageValue(percentage);
         }
 
@@ -56,7 +55,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
     /// @inheritdoc ISpro
     function setFee(uint256 newFee) external onlyOwner {
-        if (newFee > Constants.MAX_SDEX_FEE) {
+        if (newFee > MAX_SDEX_FEE) {
             revert ExcessiveFee(newFee);
         }
         _fee = newFee;
@@ -65,7 +64,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
     /// @inheritdoc ISpro
     function setPartialPositionPercentage(uint16 newPartialPositionBps) external onlyOwner {
-        if (newPartialPositionBps == 0 || newPartialPositionBps > Constants.BPS_DIVISOR / 2) {
+        if (newPartialPositionBps == 0 || newPartialPositionBps > BPS_DIVISOR / 2) {
             revert IncorrectPercentageValue(newPartialPositionBps);
         }
         _partialPositionBps = newPartialPositionBps;
@@ -376,8 +375,8 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
 
         // Check minimum loan duration
-        if (proposal.loanExpiration - proposal.startTimestamp < Constants.MIN_LOAN_DURATION) {
-            revert InvalidDuration(proposal.loanExpiration - proposal.startTimestamp, Constants.MIN_LOAN_DURATION);
+        if (proposal.loanExpiration - proposal.startTimestamp < MIN_LOAN_DURATION) {
+            revert InvalidDuration(proposal.loanExpiration - proposal.startTimestamp, MIN_LOAN_DURATION);
         }
 
         proposal.partialPositionBps = _partialPositionBps;
@@ -495,8 +494,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         uint256 used = _creditUsed[proposalHash];
         if (used + creditAmount < proposal.availableCreditLimit) {
             // Credit may only be between min and max amounts if it is not exact
-            uint256 minAmount =
-                Math.mulDiv(proposal.availableCreditLimit, proposal.partialPositionBps, Constants.BPS_DIVISOR);
+            uint256 minAmount = Math.mulDiv(proposal.availableCreditLimit, proposal.partialPositionBps, BPS_DIVISOR);
             if (creditAmount < minAmount) {
                 revert CreditAmountTooSmall(creditAmount, minAmount);
             }

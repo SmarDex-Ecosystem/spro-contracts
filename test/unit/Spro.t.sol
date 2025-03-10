@@ -9,7 +9,6 @@ import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable
 import { Spro } from "src/spro/Spro.sol";
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
-import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 // forge inspect src/config/Spro.sol:Spro storage --pretty
 
@@ -39,9 +38,11 @@ abstract contract SproTest is Test {
     uint256 fee = 500e18;
     uint16 partialPositionBps = 900;
     uint16 PERCENTAGE = 1e4;
+    uint256 BPS_DIVISOR;
 
     function setUp() public virtual {
         config = new Spro(sdex, permit2, fee, partialPositionBps);
+        BPS_DIVISOR = config.BPS_DIVISOR();
     }
 
     function _mockSupportsToken(address computer, address token, bool result) internal {
@@ -65,10 +66,8 @@ contract TestSproConstructor is SproTest {
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, 0));
         new Spro(sdex, permit2, fee, 0);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, Constants.BPS_DIVISOR / 2 + 1)
-        );
-        new Spro(sdex, permit2, fee, uint16(Constants.BPS_DIVISOR / 2 + 1));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, BPS_DIVISOR / 2 + 1));
+        new Spro(sdex, permit2, fee, uint16(BPS_DIVISOR / 2 + 1));
     }
 
     function test_RevertWhen_zeroAddress() external {

@@ -7,7 +7,6 @@ import { SDBaseIntegrationTest } from "test/integration/SDBaseIntegrationTest.t.
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
-import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     function test_shouldCreateERC20Proposal_shouldCreatePartialLoan_shouldWithdrawRemainingCollateral() external {
@@ -97,10 +96,10 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Create the proposal
         vm.prank(borrower);
         _createERC20Proposal();
+        uint256 BPS_DIVISOR = deployment.config.BPS_DIVISOR();
 
         // 95.01% of available credit limit
-        uint256 amount =
-            (Constants.BPS_DIVISOR - deployment.config._partialPositionBps() + 1) * CREDIT_LIMIT / Constants.BPS_DIVISOR;
+        uint256 amount = (BPS_DIVISOR - deployment.config._partialPositionBps() + 1) * CREDIT_LIMIT / BPS_DIVISOR;
 
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);

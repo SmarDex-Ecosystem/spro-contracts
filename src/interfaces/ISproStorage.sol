@@ -10,6 +10,15 @@ import { SproLoan } from "src/spro/SproLoan.sol";
  * @notice Interface for the storage layer of the Spro protocol
  */
 interface ISproStorage {
+    /// @notice Get percentage denominator (10_000 = 100%).
+    function BPS_DIVISOR() external view returns (uint256);
+
+    /// @notice Get the maximum SDEX fee.
+    function MAX_SDEX_FEE() external view returns (uint256);
+
+    /// @notice Get the minimum loan duration.
+    function MIN_LOAN_DURATION() external view returns (uint32);
+
     /// @notice Get SDEX token address.
     function SDEX() external view returns (address);
 

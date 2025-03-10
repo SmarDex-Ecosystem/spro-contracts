@@ -4,9 +4,7 @@ pragma solidity ^0.8.26;
 import { SDBaseIntegrationTest } from "test/integration/SDBaseIntegrationTest.t.sol";
 
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
-import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
-import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationTest {
     modifier proposalContractHasTag() {
@@ -109,7 +107,7 @@ contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrat
         whenListedFee
     {
         // Set bad timestamp value
-        uint256 minDuration = Constants.MIN_LOAN_DURATION;
+        uint256 minDuration = deployment.config.MIN_LOAN_DURATION();
         proposal.loanExpiration = proposal.startTimestamp + uint32(minDuration - 1);
 
         // Mint initial state & approve collateral
