@@ -10,10 +10,6 @@ import { ISproEvents } from "src/interfaces/ISproEvents.sol";
  * @notice Interface for Spro protocol.
  */
 interface ISpro is ISproTypes, ISproErrors, ISproEvents {
-    /* -------------------------------------------------------------------------- */
-    /*                                   SETTER                                   */
-    /* -------------------------------------------------------------------------- */
-
     /**
      * @notice Set new protocol fee value.
      * @param newFee New fee value in amount SDEX tokens (units 1e18)
@@ -31,10 +27,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param newMetadataUri New value of token metadata uri.
      */
     function setLoanMetadataUri(string memory newMetadataUri) external;
-
-    /* -------------------------------------------------------------------------- */
-    /*                                   GETTER                                   */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Retrieves credit used and credit remaining for a proposal.
@@ -66,10 +58,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      */
     function getProposalHash(ISproTypes.Proposal memory proposal) external returns (bytes32 proposalHash_);
 
-    /* -------------------------------------------------------------------------- */
-    /*                                    VIEW                                    */
-    /* -------------------------------------------------------------------------- */
-
     /**
      * @notice Calculates the loan repayment amount with fixed and accrued interest for a set of loan ids.
      * @dev Intended to be used to build permit data or credit token approvals.
@@ -83,20 +71,12 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
         view
         returns (uint256 amount_);
 
-    /* ------------------------------------------------------------ */
-    /*                      CREATE PROPOSAL                         */
-    /* ------------------------------------------------------------ */
-
     /**
      * @notice Create a borrow request proposal and transfers collateral to the protocol and SDEX to the dead address.
      * @param proposal Proposal struct.
      * @param permit2Data Permit data if user wants to use permit2 (optional).
      */
     function createProposal(Proposal calldata proposal, bytes calldata permit2Data) external;
-
-    /* ------------------------------------------------------------ */
-    /*        CANCEL PROPOSAL AND WITHDRAW UNUSED COLLATERAL        */
-    /* ------------------------------------------------------------ */
 
     /**
      * @notice A borrower can cancel their proposal and withdraw unused collateral.
@@ -106,10 +86,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param proposal Proposal struct.
      */
     function cancelProposal(Proposal memory proposal) external;
-
-    /* ------------------------------------------------------------ */
-    /*                          CREATE LOAN                         */
-    /* ------------------------------------------------------------ */
 
     /**
      * @notice Create a new loan.
@@ -121,10 +97,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     function createLoan(Proposal memory proposal, uint256 creditAmount, bytes calldata permit2Data)
         external
         returns (uint256 loanId_);
-
-    /* ------------------------------------------------------------ */
-    /*                          REPAY LOAN                          */
-    /* ------------------------------------------------------------ */
 
     /**
      * @notice Repay running loan.
@@ -151,26 +123,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     function repayMultipleLoans(uint256[] calldata loanIds, address creditAddress, bytes calldata permit2Data)
         external;
 
-    /* ------------------------------------------------------------ */
-    /*                          CLAIM LOAN                          */
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @notice Claim a repaid or defaulted loan.
-     * @dev Only a loan token holder can claim a repaid or defaulted loan. Claim will transfer the repaid credit or
-     * collateral to a loan token holder address and burn the loan token.
-     * @param loanId Id of a loan that is being claimed.
-     */
-    function claimLoan(uint256 loanId) external;
-
-    /**
-     * @notice Claim multiple repaid or defaulted loans.
-     * @dev Only a loan token holder can claim a repaid or defaulted loan. Claim will transfer the repaid credit or
-     * collateral to a loan token holder address and burn the loan token.
-     * @param loanIds Array of ids of loans that are being claimed.
-     */
-    function claimMultipleLoans(uint256[] memory loanIds) external;
-
     /**
      * @notice Try to claim a repaid loan for the loan owner.
      * @dev The function is called only by the protocol to repay a loan directly to the original lender. If the transfer
@@ -181,4 +133,20 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param loanOwner Address of the loan token holder.
      */
     function tryClaimRepaidLoan(uint256 loanId, uint256 creditAmount, address loanOwner) external;
+
+    /**
+     * @notice Claim multiple repaid or defaulted loans.
+     * @dev Only a loan token holder can claim a repaid or defaulted loan. Claim will transfer the repaid credit or
+     * collateral to a loan token holder address and burn the loan token.
+     * @param loanIds Array of ids of loans that are being claimed.
+     */
+    function claimMultipleLoans(uint256[] memory loanIds) external;
+
+    /**
+     * @notice Claim a repaid or defaulted loan.
+     * @dev Only a loan token holder can claim a repaid or defaulted loan. Claim will transfer the repaid credit or
+     * collateral to a loan token holder address and burn the loan token.
+     * @param loanId Id of a loan that is being claimed.
+     */
+    function claimLoan(uint256 loanId) external;
 }

@@ -10,10 +10,6 @@ import { SproLoan } from "src/spro/SproLoan.sol";
  * @notice Interface for the storage layer of the Spro protocol
  */
 interface ISproStorage {
-    /* -------------------------------------------------------------------------- */
-    /*                                   CONFIG                                   */
-    /* -------------------------------------------------------------------------- */
-
     /// @notice Get SDEX token address.
     function SDEX() external view returns (address);
 
@@ -29,16 +25,8 @@ interface ISproStorage {
      */
     function _fee() external view returns (uint256);
 
-    /* -------------------------------------------------------------------------- */
-    /*                                    LOAN                                    */
-    /* -------------------------------------------------------------------------- */
-
     /// @notice Get SproLoan contract.
     function _loanToken() external view returns (SproLoan);
-
-    /* -------------------------------------------------------------------------- */
-    /*                                  PROPOSAL                                  */
-    /* -------------------------------------------------------------------------- */
 
     /// @notice Get withdrawable collateral tokens for a given proposal hash.
     function _withdrawableCollateral(bytes32 proposalHash) external view returns (uint256);

@@ -7,19 +7,11 @@ pragma solidity >=0.8.0;
  * @dev Token doesn't hold any loan logic. The owner, Spro, is responsible for loan logic.
  */
 interface ISproLoan {
-    /* -------------------------------------------------------------------------- */
-    /*                      VARIABLES & CONSTANTS DEFINITIONS                     */
-    /* -------------------------------------------------------------------------- */
-
     /// @notice Get last used Loan id. First Loan id is 1. This value is incremental.
     function _lastLoanId() external view returns (uint256);
 
     /// @notice Get loan metadata URI.
     function _metadataUri() external view returns (string memory);
-
-    /* -------------------------------------------------------------------------- */
-    /*                                   EVENTS                                   */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice The loan token is minted.
@@ -39,10 +31,6 @@ interface ISproLoan {
      * @param newUri The new uri.
      */
     event LoanMetadataUriUpdated(string newUri);
-
-    /* -------------------------------------------------------------------------- */
-    /*                                  FUNCTIONS                                 */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Mint a new loan token.
