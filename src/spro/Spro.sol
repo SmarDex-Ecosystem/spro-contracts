@@ -300,10 +300,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             revert CallerNotLoanTokenHolder();
         }
 
-        if (loan.status == LoanStatus.NONE) {
-            // Loan is not existing or from a different loan contract
-            revert NonExistingLoan();
-        } else if (loan.status == LoanStatus.PAID_BACK) {
+        if (loan.status == LoanStatus.PAID_BACK) {
             // Loan has been paid back
             _settleLoanClaim(loanId, msg.sender, false);
         } else if (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp) {
