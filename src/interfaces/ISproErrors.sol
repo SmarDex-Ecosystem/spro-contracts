@@ -30,11 +30,6 @@ interface ISproErrors {
     error IncorrectPercentageValue(uint16 percentage);
 
     /**
-     * @notice Thrown when trying to set a percentage value equal to zero.
-     */
-    error ZeroPercentageValue();
-
-    /**
      * @notice Thrown when managed loan cannot be repaid.
      */
     error LoanCannotBeRepaid();

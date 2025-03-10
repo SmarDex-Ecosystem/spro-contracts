@@ -144,8 +144,7 @@ contract TestSproPartialLendingThresholds is SproTest {
 
     function test_shouldFail_whenZeroPercentage() external {
         vm.startPrank(owner);
-
-        vm.expectRevert(ISproErrors.ZeroPercentageValue.selector);
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, 0));
         config.setPartialPositionPercentage(0);
     }
 

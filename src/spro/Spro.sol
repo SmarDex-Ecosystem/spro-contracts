@@ -69,10 +69,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
     /// @inheritdoc ISpro
     function setPartialPositionPercentage(uint16 percentage) external onlyOwner {
-        if (percentage == 0) {
-            revert ZeroPercentageValue();
-        }
-        if (percentage > Constants.BPS_DIVISOR / 2) {
+        if (percentage == 0 || percentage > Constants.BPS_DIVISOR / 2) {
             revert IncorrectPercentageValue(percentage);
         }
         _partialPositionBps = percentage;
