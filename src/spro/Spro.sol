@@ -49,7 +49,7 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                                   SETTER                                   */
+    /*                                  EXTERNAL                                  */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
@@ -77,10 +77,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     function setLoanMetadataUri(string memory newMetadataUri) external onlyOwner {
         _loanToken.setLoanMetadataUri(newMetadataUri);
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                                   GETTER                                   */
-    /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
     function getProposalCreditStatus(Proposal calldata proposal)
@@ -130,10 +126,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                                  PROPOSAL                                  */
-    /* -------------------------------------------------------------------------- */
-
     /// @inheritdoc ISpro
     function createProposal(Proposal calldata proposal, bytes calldata permit2Data) external nonReentrant {
         (address collateral, uint256 collateralAmount) = _makeProposal(proposal);
@@ -169,10 +161,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         // Transfers withdrawable collateral to the proposer/borrower
         _push(newProposal.collateralAddress, newProposal.collateralAmount, newProposal.proposer);
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                                    LOAN                                    */
-    /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
     function createLoan(Proposal calldata proposal, uint256 creditAmount, bytes calldata permit2Data)
@@ -276,35 +264,6 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /// @inheritdoc ISpro
-    function claimLoan(uint256 loanId) public {
-        Loan memory loan = _loans[loanId];
-
-        if (_loanToken.ownerOf(loanId) != msg.sender) {
-            revert CallerNotLoanTokenHolder();
-        }
-
-        if (loan.status == LoanStatus.NONE) {
-            revert NonExistingLoan();
-        } else if (loan.status == LoanStatus.PAID_BACK) {
-            // Loan has been paid back
-            _settleLoanClaim(loanId, msg.sender, false);
-        } else if (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp) {
-            // Loan is running but expired
-            _settleLoanClaim(loanId, msg.sender, true);
-        } else {
-            revert LoanRunning();
-        }
-    }
-
-    /// @inheritdoc ISpro
-    function claimMultipleLoans(uint256[] calldata loanIds) external {
-        uint256 l = loanIds.length;
-        for (uint256 i; i < l; ++i) {
-            claimLoan(loanIds[i]);
-        }
-    }
-
-    /// @inheritdoc ISpro
     function tryClaimRepaidLoan(uint256 loanId, uint256 creditAmount, address loanOwner) external {
         if (msg.sender != address(this)) {
             revert CallerNotVault();
@@ -333,6 +292,35 @@ contract Spro is SproVault, SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         // Note: If the transfer fails, the loan token will remain in repaid state and the loan token owner
         // will be able to claim the repaid credit. Otherwise lender would be able to prevent borrower from
         // repaying the loan.
+    }
+
+    /// @inheritdoc ISpro
+    function claimMultipleLoans(uint256[] calldata loanIds) external {
+        uint256 l = loanIds.length;
+        for (uint256 i; i < l; ++i) {
+            claimLoan(loanIds[i]);
+        }
+    }
+
+    /// @inheritdoc ISpro
+    function claimLoan(uint256 loanId) public {
+        Loan memory loan = _loans[loanId];
+
+        if (_loanToken.ownerOf(loanId) != msg.sender) {
+            revert CallerNotLoanTokenHolder();
+        }
+
+        if (loan.status == LoanStatus.NONE) {
+            revert NonExistingLoan();
+        } else if (loan.status == LoanStatus.PAID_BACK) {
+            // Loan has been paid back
+            _settleLoanClaim(loanId, msg.sender, false);
+        } else if (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp) {
+            // Loan is running but expired
+            _settleLoanClaim(loanId, msg.sender, true);
+        } else {
+            revert LoanRunning();
+        }
     }
 
     /* -------------------------------------------------------------------------- */

@@ -8,10 +8,6 @@ import { ISproStorage } from "src/interfaces/ISproStorage.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract SproStorage is ISproStorage {
-    /* -------------------------------------------------------------------------- */
-    /*                                   CONFIG                                   */
-    /* -------------------------------------------------------------------------- */
-
     /// @inheritdoc ISproStorage
     address public immutable SDEX;
 
@@ -24,19 +20,11 @@ contract SproStorage is ISproStorage {
     /// @inheritdoc ISproStorage
     uint256 public _fee;
 
-    /* -------------------------------------------------------------------------- */
-    /*                                    LOAN                                    */
-    /* -------------------------------------------------------------------------- */
-
     /// @inheritdoc ISproStorage
     SproLoan public immutable _loanToken;
 
     /// @notice  Mapping of all Loan data by loan id.
     mapping(uint256 => ISproTypes.Loan) internal _loans;
-
-    /* -------------------------------------------------------------------------- */
-    /*                                  PROPOSAL                                  */
-    /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISproStorage
     mapping(bytes32 => uint256) public _withdrawableCollateral;
