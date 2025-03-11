@@ -74,9 +74,9 @@ interface ISproTypes {
      * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
      * be borrowed using the proposal.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
-     * @param proposer The address of a proposer.
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
      * an identical proposal again.
+     * @param proposer The address of a proposer.
      * @param startTimestamp The start timestamp of the proposal.
      * @param loanExpiration The expiration timestamp of the proposal.
      * @param partialPositionBps Minimum percentage that can be borrowed from the initial proposal.
@@ -87,8 +87,8 @@ interface ISproTypes {
         address creditAddress;
         uint256 availableCreditLimit;
         uint256 fixedInterestAmount;
-        address proposer;
         uint256 nonce;
+        address proposer;
         uint40 startTimestamp;
         uint40 loanExpiration;
         uint16 partialPositionBps;
