@@ -4,7 +4,6 @@ pragma solidity ^0.8.26;
 import { SDBaseIntegrationTest } from "test/integration/SDBaseIntegrationTest.t.sol";
 
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
-import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
 contract CreateProposal_SDSimpleLoan_Integration_Concrete_Test is SDBaseIntegrationTest {
     modifier proposalContractHasTag() {

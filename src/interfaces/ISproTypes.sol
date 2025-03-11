@@ -3,7 +3,7 @@ pragma solidity >=0.8.0;
 
 interface ISproTypes {
     /**
-     * @notice Loan status enum.
+     * @notice Represents the status of a loan.
      * @param NONE none/dead.
      * @param RUNNING running/accepted offer/accepted request.
      * @param PAID_BACK paid back.
@@ -17,7 +17,7 @@ interface ISproTypes {
     }
 
     /**
-     * @notice Struct defining a loan terms.
+     * @notice Structure defining a loan terms.
      * @dev This struct is created by proposal contracts and never stored.
      * @param lender Address of a lender.
      * @param borrower Address of a borrower.
@@ -68,15 +68,15 @@ interface ISproTypes {
     }
 
     /**
-     * @notice Construct defining a proposal.
-     * @param collateralAddress Address of an asset used as a collateral.
-     * @param collateralAmount Amount of tokens used as a collateral.
-     * @param creditAddress Address of an asset which is lent to a borrower.
+     * @notice Structure defining a proposal.
+     * @param collateralAddress The collateral asset address.
+     * @param collateralAmountThe The collateral asset amount.
+     * @param creditAddress The credit asset address.
      * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
      * be borrowed using the proposal.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
-     * @param startTimestamp Proposal start timestamp in seconds.
-     * @param loanExpiration Proposal default timestamp in seconds.
+     * @param startTimestamp The start timestamp of the proposal.
+     * @param loanExpiration The expiration timestamp of the proposal.
      * @param proposer Address of a proposal.
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
      * an identical proposal again.
@@ -96,14 +96,13 @@ interface ISproTypes {
     }
 
     /**
-     * @notice Base struct for a proposal.
-     * @dev This struct is created by proposal contracts and never stored.
-     * @param collateralAddress Address of an asset used as a collateral.
+     * @notice The base structure for a proposal.
+     * @param collateralAddress The address of the collateral asset.
      * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
      * be borrowed using the proposal.
-     * @param startTimestamp Proposal start timestamp in seconds.
-     * @param proposer Address of a proposal.
-     * @param partialPositionBps Minimum percentage that can be borrowed from the initial proposal.
+     * @param startTimestamp The proposal start timestamp.
+     * @param proposer The proposer address.
+     * @param partialPositionBps The minimum percentage that can be borrowed from the initial proposal.
      */
     struct ProposalBase {
         address collateralAddress;

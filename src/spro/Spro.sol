@@ -20,8 +20,8 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
     /**
      * @dev Data structure for the {repayMultipleLoans} function.
-     * @param loanId Id of a loan.
-     * @param loan Loan struct.
+     * @param loanId The Id of a loan.
+     * @param loan The loan structure.
      */
     struct LoanWithId {
         uint256 loanId;
@@ -29,10 +29,10 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /**
-     * @param sdex Address of SDEX token.
-     * @param permit2 Address of the Permit2 contract.
-     * @param fee Fee in SDEX.
-     * @param partialPositionBps Partial position percentage.
+     * @param sdex The SDEX token address.
+     * @param permit2 The permit2 contract address.
+     * @param fee The fixed SDEX fee value.
+     * @param partialPositionBps The minimum usage ratio for partial lending (in basis points).
      */
     constructor(address sdex, address permit2, uint256 fee, uint16 partialPositionBps) Ownable(msg.sender) {
         if (sdex == address(0) || permit2 == address(0)) {
@@ -87,7 +87,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             used_ = _creditUsed[proposalHash];
             remaining_ = proposal.availableCreditLimit - used_;
         } else {
-            revert ProposalNotExists();
+            revert ProposalDoesNotExists();
         }
     }
 
@@ -317,9 +317,9 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     /* -------------------------------------------------------------------------- */
 
     /**
-     * @notice Check that the loan credit address matches the expected credit address
-     * @param loanCreditAddress Loan credit address.
-     * @param expectedCreditAddress Expected credit address.
+     * @notice Check that the loan credit address matches the expected credit address.
+     * @param loanCreditAddress The loan credit address.
+     * @param expectedCreditAddress The expected credit address.
      */
     function _checkLoanCreditAddress(address loanCreditAddress, address expectedCreditAddress) internal pure {
         if (loanCreditAddress != expectedCreditAddress) {
@@ -329,8 +329,8 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
     /**
      * @notice Check if the loan can be repaid.
-     * @param status Loan status.
-     * @param loanExpiration Loan default timestamp.
+     * @param status The loan status.
+     * @param loanExpiration The loan expiration timestamp.
      * @return canBeRepaid_ True if the loan can be repaid.
      */
     function _isLoanRepayable(LoanStatus status, uint40 loanExpiration) internal view returns (bool canBeRepaid_) {
@@ -345,8 +345,8 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
     /**
      * @notice Return a Loan status associated with a loan id.
-     * @param loanId Id of a loan in question.
-     * @return status_ Loan status.
+     * @param loanId The Id of a loan.
+     * @return status_ The loan status.
      */
     function _getLoanStatus(uint256 loanId) internal view returns (LoanStatus status_) {
         Loan memory loan = _loans[loanId];
@@ -356,11 +356,10 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /**
-     * @notice Make an on-chain proposal.
-     * @dev Function will mark a proposal hash as proposed.
-     * @param proposal Proposal struct.
-     * @return collateral_ Address of the collateral token.
-     * @return collateralAmount_ Amount of the collateral token.
+     * @notice Make a proposal.
+     * @param proposal The proposal structure.
+     * @return collateral_ The address of the collateral token.
+     * @return collateralAmount_ The amount of collateral.
      */
     function _makeProposal(Proposal memory proposal)
         internal
@@ -393,9 +392,9 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /**
-     * @notice Cancels a proposal and resets withdrawable collateral.
-     * @param proposal Proposal struct.
-     * @return proposal_ Proposal struct.
+     * @notice Cancel a proposal.
+     * @param proposal The proposal structure.
+     * @return proposal_ The new proposal structure.
      */
     function _cancelProposal(Proposal memory proposal) internal returns (Proposal memory proposal_) {
         proposal_ = proposal;
@@ -411,11 +410,11 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
     /**
      * @notice Accept a proposal and create new loan terms.
-     * @param acceptor Address of a proposal acceptor.
-     * @param creditAmount Amount of credit to lend.
-     * @param proposal Proposal struct.
-     * @return proposalHash_ Proposal hash.
-     * @return loanTerms_ Loan terms.
+     * @param acceptor The address of the proposal acceptor.
+     * @param creditAmount The amount of credit to lend.
+     * @param proposal The proposal structure.
+     * @return proposalHash_ The hash of the proposal.
+     * @return loanTerms_ The terms of the loan.
      */
     function _acceptProposal(address acceptor, uint256 creditAmount, Proposal memory proposal)
         internal
@@ -471,17 +470,17 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /**
-     * @notice Try to accept proposal base.
-     * @param acceptor Address of a proposal acceptor.
-     * @param creditAmount Amount of credit to lend.
-     * @param proposalHash Proposal hash.
-     * @param proposal Proposal base struct.
+     * @notice Accept a proposal and update credit used.
+     * @param acceptor The address of the proposal acceptor.
+     * @param creditAmount The amount of credit to lend.
+     * @param proposalHash The hash of the proposal.
+     * @param proposal The proposal structure.
      */
     function _acceptProposal(address acceptor, uint256 creditAmount, bytes32 proposalHash, ProposalBase memory proposal)
         internal
     {
         if (!_proposalsMade[proposalHash]) {
-            revert ProposalNotExists();
+            revert ProposalDoesNotExists();
         }
         if (proposal.proposer == acceptor) {
             revert AcceptorIsProposer(acceptor);
@@ -509,9 +508,9 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /**
-     * @notice Mint loan token and store loan data under loan id.
-     * @param loanTerms Loan terms struct.
-     * @return loanId_ Id of the created loan token.
+     * @notice Create a new loan token and store loan data.
+     * @param loanTerms The terms of the loan.
+     * @return loanId_ The Id of the new loan.
      */
     function _createLoan(Terms memory loanTerms) internal returns (uint256 loanId_) {
         loanId_ = _loanToken.mint(loanTerms.lender);
@@ -530,9 +529,9 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /**
-     * @notice Update loan to repaid state.
-     * @param loanId Id of a loan that is being repaid.
-     * @return repaidAmount_ Amount of the repaid loan.
+     * @notice Update loan status to repaid.
+     * @param loanId The Id of the loan to update.
+     * @return repaidAmount_ The repaid amount.
      */
     function _updateRepaidLoan(uint256 loanId) internal returns (uint256 repaidAmount_) {
         Loan storage loan = _loans[loanId];
@@ -546,9 +545,9 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
     /**
      * @notice Settle the loan claim.
-     * @param loanId Id of a loan that is being claimed.
-     * @param loanOwner Address of the loan token holder.
-     * @param defaulted If the loan is defaulted.
+     * @param loanId The Id of the loan to settle.
+     * @param loanOwner The owner of the loan token.
+     * @param defaulted True if the loan was defaulted.
      */
     function _settleLoanClaim(uint256 loanId, address loanOwner, bool defaulted) internal {
         Loan memory loan = _loans[loanId];
@@ -560,13 +559,12 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         // Delete loan data & burn loan token before calling safe transfer
         _deleteLoan(loanId);
         emit LoanClaimed(loanId, defaulted);
-
         IERC20Metadata(asset).safeTransfer(loanOwner, assetAmount);
     }
 
     /**
-     * @notice Delete loan data and burn loan token.
-     * @param loanId Id of a loan that is being deleted.
+     * @notice Delete a loan from the storage and burn the token.
+     * @param loanId The Id of the loan to delete.
      */
     function _deleteLoan(uint256 loanId) internal {
         _loanToken.burn(loanId);
@@ -574,10 +572,10 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /**
-     * @notice Permit2 workflows for the caller.
-     * @param permit2Data Permit data.
-     * @param amount Amount of an asset to transfer.
-     * @param token Address of an asset to transfer.
+     * @notice Transfer an asset amount to the protocol via permit2.
+     * @param permit2Data The permit data.
+     * @param amount The amount to transfer.
+     * @param token The asset address.
      */
     function _permit2Workflows(bytes memory permit2Data, uint160 amount, address token) internal {
         (IAllowanceTransfer.PermitSingle memory permitSign, bytes memory data) =

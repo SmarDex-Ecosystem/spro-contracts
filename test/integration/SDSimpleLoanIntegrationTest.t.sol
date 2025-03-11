@@ -154,8 +154,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         deployment.config.createProposal(proposal, "");
     }
 
-    function test_shouldFail_getProposalCreditStatus_ProposalNotExists() external {
-        vm.expectRevert(ISproErrors.ProposalNotExists.selector);
+    function test_shouldFail_getProposalCreditStatus_ProposalDoesNotExists() external {
+        vm.expectRevert(ISproErrors.ProposalDoesNotExists.selector);
         deployment.config.getProposalCreditStatus(proposal);
     }
 
