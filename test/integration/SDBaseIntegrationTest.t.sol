@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity >=0.8.0;
 
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-
 import { T20 } from "test/helper/T20.sol";
 import { SDDeploymentTest, Spro } from "test/integration/SDDeploymentTest.t.sol";
 
