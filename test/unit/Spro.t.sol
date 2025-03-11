@@ -8,7 +8,6 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Spro } from "src/spro/Spro.sol";
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
-import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 abstract contract SproTest is Test {
     Spro config;
@@ -41,10 +40,9 @@ contract TestSproConstructor is SproTest {
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, 0));
         new Spro(sdex, permit2, FEE, 0);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, Constants.BPS_DIVISOR / 2 + 1)
-        );
-        new Spro(sdex, permit2, FEE, uint16(Constants.BPS_DIVISOR / 2 + 1));
+        uint256 bpsDivisor = config.BPS_DIVISOR();
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, bpsDivisor / 2 + 1));
+        new Spro(sdex, permit2, FEE, uint16(bpsDivisor / 2 + 1));
     }
 
     function test_RevertWhen_zeroAddress() external {
@@ -68,9 +66,10 @@ contract TestSproSetFee is SproTest {
     }
 
     function test_RevertWhen_excessiveFee() external {
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.ExcessiveFee.selector, Constants.MAX_SDEX_FEE + 1));
+        uint256 maxSdexFee = config.MAX_SDEX_FEE();
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.ExcessiveFee.selector, maxSdexFee + 1));
         vm.prank(owner);
-        config.setFee(Constants.MAX_SDEX_FEE + 1);
+        config.setFee(maxSdexFee + 1);
     }
 
     function test_feeUpdated() external {
@@ -120,7 +119,7 @@ contract TestSproPartialLendingThresholds is SproTest {
     }
 
     function testFuzz_RevertWhen_excessivePercentage(uint16 percentage) external {
-        vm.assume(percentage > Constants.BPS_DIVISOR / 2);
+        vm.assume(percentage > config.BPS_DIVISOR() / 2);
         vm.startPrank(owner);
 
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, percentage));
