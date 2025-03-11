@@ -8,7 +8,10 @@ import { ISproStorage } from "src/interfaces/ISproStorage.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract SproStorage is ISproStorage {
-    /// @dev Divisor for basis point (BPS) values.
+    /// @dev The address that will receive all fees.
+    address internal constant DEAD_ADDRESS = address(0xdead);
+
+    /// @dev The divisor for basis point (BPS) values.
     uint256 public constant BPS_DIVISOR = 10_000;
 
     /// @dev The maximum SDEX fee.

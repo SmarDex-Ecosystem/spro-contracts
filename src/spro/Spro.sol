@@ -111,7 +111,6 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     function totalLoanRepaymentAmount(uint256[] calldata loanIds) external view returns (uint256 amount_) {
         if (loanIds.length == 0) return 0;
         address firstCreditAddress = _loans[loanIds[0]].credit;
-
         for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
             Loan memory loan = _loans[loanId];
@@ -135,12 +134,12 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             PERMIT2.permit(msg.sender, permitBatch, data);
             PERMIT2.transferFrom(msg.sender, address(this), collateralAmount.toUint160(), collateral);
             if (_fee > 0) {
-                PERMIT2.transferFrom(msg.sender, address(0xdead), _fee.toUint160(), address(SDEX));
+                PERMIT2.transferFrom(msg.sender, DEAD_ADDRESS, _fee.toUint160(), address(SDEX));
             }
         } else {
             IERC20Metadata(collateral).safeTransferFrom(msg.sender, address(this), collateralAmount);
             if (_fee > 0) {
-                IERC20Metadata(SDEX).safeTransferFrom(msg.sender, address(0xdead), _fee);
+                IERC20Metadata(SDEX).safeTransferFrom(msg.sender, DEAD_ADDRESS, _fee);
             }
         }
     }
