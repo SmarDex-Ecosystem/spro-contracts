@@ -190,7 +190,6 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             revert LoanCannotBeRepaid();
         }
 
-        // Move loan to repaid state and wait for the loan owner to claim the repaid credit
         uint256 repaymentAmount = loan.principalAmount + loan.fixedInterestAmount;
         loan.status = LoanStatus.PAID_BACK;
         emit LoanPaidBack(loanId);
@@ -202,12 +201,16 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
         IERC20Metadata(loan.collateral).safeTransfer(loan.borrower, loan.collateralAmount);
 
-        // Try to repay directly
-        try this.tryClaimRepaidLoan(loanId, repaymentAmount, _loanToken.ownerOf(loanId)) { }
-        catch {
-            // Note: Safe transfer can fail. In that case leave the loan token in repaid state and wait for the Loan
-            // token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower from
-            // repaying the loan.
+        address loanOwner = _loanToken.ownerOf(loanId);
+        // If current loan owner is not original lender, the loan cannot be repaid directly
+        if (loan.lender == loanOwner) {
+            // Try to repay directly
+            try this.tryClaimRepaidLoan(loanId, repaymentAmount, loan.credit, loanOwner) { }
+            catch {
+                // Note: Safe transfer can fail. In that case leave the loan token in repaid state and wait for the Loan
+                // token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower from
+                // repaying the loan.
+            }
         }
     }
 
@@ -223,7 +226,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         // Filter loans that can be repaid
         for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
-            Loan memory loan = _loans[loanId];
+            Loan storage loan = _loans[loanId];
 
             // Checks: loan can be repaid & credit address is the same for all loanIds
             if (_isLoanRepayable(loan.status, loan.loanExpiration)) {
@@ -231,7 +234,10 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
                     revert DifferentCreditAddress(loan.credit, creditAddress);
                 }
                 // Update loan to repaid state and increment the total repayment amount
-                totalRepaymentAmount += _updateRepaidLoan(loanId);
+                totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
+                loan.status = LoanStatus.PAID_BACK;
+                emit LoanPaidBack(loanId);
+
                 loansToRepay[numLoansToRepay] = LoanWithId(loanId, loan);
                 numLoansToRepay++;
             }
@@ -251,45 +257,36 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
             IERC20Metadata(loan.collateral).safeTransfer(loan.borrower, loan.collateralAmount);
 
-            // Try to repay directly (for each loanId)
-            try this.tryClaimRepaidLoan(
-                loanId, loan.principalAmount + loan.fixedInterestAmount, _loanToken.ownerOf(loanId)
-            ) { } catch {
-                // Note: Safe transfer can fail. In that case leave the loan token in repaid state and wait for the Loan
-                // token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower from
-                // repaying the loan.
+            address loanOwner = _loanToken.ownerOf(loanId);
+            // If current loan owner is not original lender, the loan cannot be repaid directly
+            if (loan.lender == loanOwner) {
+                // Try to repay directly (for each loanId)
+                try this.tryClaimRepaidLoan(
+                    loanId, loan.principalAmount + loan.fixedInterestAmount, loan.credit, loanOwner
+                ) { } catch {
+                    // Note: Safe transfer can fail. In that case leave the loan token in repaid state and wait for the
+                    // Loan token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower
+                    // from repaying the loan.
+                }
             }
         }
     }
 
     /// @inheritdoc ISpro
-    function tryClaimRepaidLoan(uint256 loanId, uint256 creditAmount, address loanOwner) external {
+    function tryClaimRepaidLoan(uint256 loanId, uint256 creditAmount, address creditAddress, address loanOwner)
+        external
+    {
         if (msg.sender != address(this)) {
             revert UnauthorizedCaller();
         }
 
-        Loan memory loan = _loans[loanId];
-
-        if (loan.status != LoanStatus.PAID_BACK) return;
-
-        // If current loan owner is not original lender, the loan cannot be repaid directly, return without revert.
-        if (loan.lender != loanOwner) return;
-
         // Delete loan data & burn loan token before calling safe transfer
         _deleteLoan(loanId);
-
-        emit LoanClaimed(loanId, false);
-
-        // End here if the credit amount is zero
+        // TODO: check if a loan can be zero
         if (creditAmount == 0) return;
 
-        // Note: Zero credit amount can happen when the loan is refinanced by the original lender.
-
-        IERC20Metadata(loan.credit).safeTransfer(loanOwner, creditAmount);
-
-        // Note: If the transfer fails, the loan token will remain in repaid state and the loan token owner
-        // will be able to claim the repaid credit. Otherwise lender would be able to prevent borrower from
-        // repaying the loan.
+        IERC20Metadata(creditAddress).safeTransfer(loanOwner, creditAmount);
+        emit LoanClaimed(loanId, false);
     }
 
     /// @inheritdoc ISpro
@@ -497,21 +494,6 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         loan.credit = loanTerms.credit;
         loan.principalAmount = loanTerms.creditAmount;
         loan.fixedInterestAmount = loanTerms.fixedInterestAmount;
-    }
-
-    /**
-     * @notice Update loan status to repaid.
-     * @param loanId The Id of the loan to update.
-     * @return repaidAmount_ The repaid amount.
-     */
-    function _updateRepaidLoan(uint256 loanId) internal returns (uint256 repaidAmount_) {
-        Loan storage loan = _loans[loanId];
-
-        // Move loan to repaid state and wait for the loan owner to claim the repaid credit
-        loan.status = LoanStatus.PAID_BACK;
-
-        emit LoanPaidBack(loanId);
-        return loan.principalAmount + loan.fixedInterestAmount;
     }
 
     /**

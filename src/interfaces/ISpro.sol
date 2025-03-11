@@ -121,7 +121,8 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param creditAmount The amount of credit tokens to be claimed.
      * @param loanOwner The address of the loan token holder.
      */
-    function tryClaimRepaidLoan(uint256 loanId, uint256 creditAmount, address loanOwner) external;
+    function tryClaimRepaidLoan(uint256 loanId, uint256 creditAmount, address creditAddress, address loanOwner)
+        external;
 
     /**
      * @notice Claims multiple repaid or defaulted loans.
