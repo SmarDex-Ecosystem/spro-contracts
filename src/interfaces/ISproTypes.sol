@@ -18,11 +18,10 @@ interface ISproTypes {
 
     /**
      * @notice Structure defining a loan terms.
-     * @dev This struct is created by proposal contracts and never stored.
      * @param lender Address of a lender.
      * @param borrower Address of a borrower.
-     * @param startTimestamp Unix timestamp (in seconds) of a start date.
-     * @param loanExpiration Unix timestamp (in seconds) of a default date.
+     * @param startTimestamp The start timestamp of the proposal.
+     * @param loanExpiration The expiration timestamp of the proposal.
      * @param collateral Address of a collateral asset.
      * @param collateralAmount Amount of a collateral asset.
      * @param credit Address of a credit asset.
@@ -46,8 +45,8 @@ interface ISproTypes {
      * @param status Loan status.
      * @param lender Address of a lender that funded the loan.
      * @param borrower Address of a borrower.
-     * @param startTimestamp Unix timestamp (in seconds) of a start date.
-     * @param loanExpiration Unix timestamp (in seconds) of a default date.
+     * @param startTimestamp The start timestamp of the proposal.
+     * @param loanExpiration The expiration timestamp of the proposal.
      * @param collateral Address of a collateral asset.
      * @param collateralAmount Amount of a collateral asset.
      * @param credit Address of an asset used as a loan credit.
@@ -77,7 +76,7 @@ interface ISproTypes {
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      * @param startTimestamp The start timestamp of the proposal.
      * @param loanExpiration The expiration timestamp of the proposal.
-     * @param proposer Address of a proposal.
+     * @param proposer The address of a proposer
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
      * an identical proposal again.
      * @param partialPositionBps Minimum percentage that can be borrowed from the initial proposal.
