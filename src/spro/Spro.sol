@@ -184,13 +184,16 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
     /// @inheritdoc ISpro
     function repayLoan(uint256 loanId, bytes calldata permit2Data) external nonReentrant {
-        Loan memory loan = _loans[loanId];
+        Loan storage loan = _loans[loanId];
 
         if (!_isLoanRepayable(loan.status, loan.loanExpiration)) {
             revert LoanCannotBeRepaid();
         }
 
-        uint256 repaymentAmount = _updateRepaidLoan(loanId);
+        // Move loan to repaid state and wait for the loan owner to claim the repaid credit
+        uint256 repaymentAmount = loan.principalAmount + loan.fixedInterestAmount;
+        loan.status = LoanStatus.PAID_BACK;
+        emit LoanPaidBack(loanId);
 
         if (permit2Data.length > 0) {
             _permit2Workflows(permit2Data, repaymentAmount.toUint160(), loan.credit);
