@@ -431,9 +431,11 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         // Make proposal hash
         bytes32 proposalHash = keccak256(abi.encode(proposal));
 
-        // Try to make proposal
-        _makeProposal(proposalHash);
+        if (_proposalsMade[proposalHash]) {
+            revert ProposalAlreadyExists();
+        }
 
+        _proposalsMade[proposalHash] = true;
         collateral_ = proposal.collateralAddress;
         collateralAmount_ = proposal.collateralAmount;
         _withdrawableCollateral[proposalHash] = collateralAmount_;
@@ -507,19 +509,6 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         );
 
         _withdrawableCollateral[proposalHash_] -= collateralUsed_;
-    }
-
-    /**
-     * @notice Make an on-chain proposal.
-     * @dev Function will mark a proposal hash as proposed.
-     * @param proposalHash Proposal hash.
-     */
-    function _makeProposal(bytes32 proposalHash) private {
-        if (_proposalsMade[proposalHash]) {
-            revert ProposalAlreadyExists();
-        }
-
-        _proposalsMade[proposalHash] = true;
     }
 
     /**
