@@ -169,13 +169,18 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
-    function cancelProposal(Proposal calldata proposal) external nonReentrant {
-        Proposal memory newProposal = _cancelProposal(proposal);
-        if (msg.sender != newProposal.proposer) {
+    function cancelProposal(Proposal memory proposal) external nonReentrant {
+        if (msg.sender != proposal.proposer) {
             revert CallerNotProposer();
         }
 
-        IERC20Metadata(newProposal.collateralAddress).safeTransfer(newProposal.proposer, newProposal.collateralAmount);
+        bytes32 proposalHash = keccak256(abi.encode(proposal));
+        proposal.collateralAmount = _withdrawableCollateral[proposalHash];
+        _withdrawableCollateral[proposalHash] = 0;
+        _proposalsMade[proposalHash] = false;
+
+        IERC20Metadata(proposal.collateralAddress).safeTransfer(proposal.proposer, proposal.collateralAmount);
+        emit ProposalCanceled(proposalHash);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -439,25 +444,6 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         _withdrawableCollateral[proposalHash] = collateralAmount_;
 
         emit ProposalMade(proposalHash, proposal.proposer, proposal);
-    }
-
-    /**
-     * @notice Cancels a proposal and resets withdrawable collateral.
-     * @param proposal Proposal struct.
-     * @return proposal_ Proposal struct.
-     */
-    function _cancelProposal(Proposal memory proposal) private returns (Proposal memory proposal_) {
-        proposal_ = proposal;
-
-        // Make proposal hash
-        bytes32 proposalHash = keccak256(abi.encode(proposal_));
-
-        proposal_.collateralAmount = _withdrawableCollateral[proposalHash];
-        delete _withdrawableCollateral[proposalHash];
-
-        _proposalsMade[proposalHash] = false;
-
-        emit ProposalCanceled(proposalHash);
     }
 
     /**

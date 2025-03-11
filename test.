@@ -1,0 +1,24 @@
+| src/spro/Spro.sol:Spro contract |                 |        |        |        |         |
+|---------------------------------|-----------------|--------|--------|--------|---------|
+| Deployment Cost                 | Deployment Size |        |        |        |         |
+| 5333670                         | 25146           |        |        |        |         |
+| Function Name                   | min             | avg    | median | max    | # calls |
+| SDEX                            | 260             | 260    | 260    | 260    | 1       |
+| _fee                            | 405             | 1071   | 405    | 2405   | 9       |
+| _loanToken                      | 305             | 305    | 305    | 305    | 287     |
+| _partialPositionBps             | 379             | 545    | 379    | 2379   | 12      |
+| cancelProposal                  | 29700           | 58167  | 62920  | 62920  | 7       |
+| claimLoan                       | 42388           | 59450  | 42595  | 93368  | 3       |
+| claimMultipleLoans              | 125760          | 125760 | 125760 | 125760 | 1       |
+| createLoan                      | 36445           | 328824 | 335215 | 361256 | 298     |
+| createProposal                  | 30377           | 146977 | 147646 | 220304 | 541     |
+| getLoan                         | 3627            | 3627   | 3627   | 3627   | 266     |
+| getProposalCreditStatus         | 3739            | 4065   | 4067   | 4067   | 257     |
+| getProposalHash                 | 1521            | 1521   | 1521   | 1521   | 256     |
+| owner                           | 2441            | 2441   | 2441   | 2441   | 2       |
+| repayLoan                       | 87171           | 126594 | 124985 | 149960 | 9       |
+| repayMultipleLoans              | 131244          | 264754 | 258874 | 319317 | 7       |
+| setFee                          | 23826           | 26856  | 26860  | 29878  | 4       |
+| setLoanMetadataUri              | 24520           | 80130  | 100849 | 123886 | 257     |
+| setPartialPositionPercentage    | 23769           | 24268  | 23904  | 29939  | 286     |
+| totalLoanRepaymentAmount        | 7765            | 7765   | 7765   | 7765   | 7       |
