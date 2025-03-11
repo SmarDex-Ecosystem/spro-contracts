@@ -73,25 +73,25 @@ interface ISproTypes {
      * @param creditAddress The credit asset address.
      * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
      * be borrowed using the proposal.
-     * @param minAmountBorrowed the minimum amount that can be borrowed from the initial proposal.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      * @param startTimestamp The start timestamp of the proposal.
      * @param loanExpiration The expiration timestamp of the proposal.
      * @param proposer The address of a proposer.
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
      * an identical proposal again.
+     * @param partialPositionBps Minimum percentage that can be borrowed from the initial proposal.
      */
     struct Proposal {
         address collateralAddress;
         uint256 collateralAmount;
         address creditAddress;
         uint256 availableCreditLimit;
-        uint256 minAmountBorrowed;
         uint256 fixedInterestAmount;
         uint40 startTimestamp;
         uint40 loanExpiration;
         address proposer;
         uint256 nonce;
+        uint256 partialPositionBps;
     }
 
     /**
@@ -101,13 +101,13 @@ interface ISproTypes {
      * be borrowed using the proposal.
      * @param startTimestamp The proposal start timestamp.
      * @param proposer The proposer address.
-     * @param minAmountBorrowed the minimum amount that can be borrowed from the initial proposal.
+     * @param partialPositionBps Minimum percentage that can be borrowed from the initial proposal.
      */
     struct ProposalBase {
         address collateralAddress;
         uint256 availableCreditLimit;
         uint40 startTimestamp;
         address proposer;
-        uint256 minAmountBorrowed;
+        uint256 partialPositionBps;
     }
 }

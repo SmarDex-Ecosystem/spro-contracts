@@ -167,8 +167,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.assume(used <= limit);
 
         proposal.availableCreditLimit = limit;
-        proposal.minAmountBorrowed =
-            Math.mulDiv(limit, deployment.config._partialPositionBps(), deployment.config.BPS_DIVISOR());
         _createERC20Proposal();
 
         bytes32 proposalHash = deployment.config.getProposalHash(proposal);

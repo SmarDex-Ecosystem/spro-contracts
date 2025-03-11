@@ -38,12 +38,12 @@ contract TestForkPermit2 is SproForkBase {
             COLLATERAL_AMOUNT,
             address(credit),
             CREDIT_LIMIT,
-            Math.mulDiv(CREDIT_LIMIT, deployment.config._partialPositionBps(), deployment.config.BPS_DIVISOR()),
             FIXED_INTEREST_AMOUNT,
             uint40(block.timestamp) + 5 days,
             uint40(block.timestamp) + 10 days,
             borrower,
-            0
+            0,
+            PARTIAL_POSITION_BPS
         );
 
         // Mint and approve SDEX
