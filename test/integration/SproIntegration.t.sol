@@ -4,7 +4,6 @@ pragma solidity >=0.8.0;
 import { SDBaseIntegrationTest, Spro } from "test/integration/SDBaseIntegrationTest.t.sol";
 
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
-import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract TestSproIntegration is SDBaseIntegrationTest {
@@ -56,7 +55,7 @@ contract TestSproIntegration is SDBaseIntegrationTest {
 
     function test_RevertWhen_InvalidLoanDuration() external {
         // Set bad timestamp value
-        uint256 minDuration = Constants.MIN_LOAN_DURATION;
+        uint256 minDuration = deployment.config.MIN_LOAN_DURATION();
         proposal.loanExpiration = proposal.startTimestamp + uint32(minDuration - 1);
 
         // Mint initial state & approve collateral
