@@ -10,18 +10,18 @@ import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
-abstract contract SproTest is Test {
-    Spro config;
+contract SproTest is Test {
+    Spro spro;
     address owner = address(this);
     address sdex = makeAddr("sdex");
-    address public permit2 = makeAddr("permit2");
+    address permit2 = makeAddr("permit2");
     address alice = makeAddr("alice");
 
     uint256 constant FEE = 500e18;
     uint16 partialPositionBps = 900;
 
     function setUp() public virtual {
-        config = new Spro(sdex, permit2, FEE, partialPositionBps);
+        spro = new Spro(sdex, permit2, FEE, partialPositionBps);
     }
 }
 
@@ -31,10 +31,10 @@ abstract contract SproTest is Test {
 
 contract TestSproConstructor is SproTest {
     function test_shouldInitializeWithCorrectValues() external view {
-        assertEq(config.owner(), owner);
-        assertEq(config._partialPositionBps(), partialPositionBps);
-        assertEq(config._fee(), FEE);
-        assertEq(sdex, config.SDEX());
+        assertEq(spro.owner(), owner);
+        assertEq(spro._partialPositionBps(), partialPositionBps);
+        assertEq(spro._fee(), FEE);
+        assertEq(sdex, spro.SDEX());
     }
 
     function test_RevertWhen_incorrectPartialPositionBps() external {
@@ -64,13 +64,13 @@ contract TestSproSetFee is SproTest {
     function test_RevertWhen_callerIsNotOwner() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         vm.prank(alice);
-        config.setFee(FEE);
+        spro.setFee(FEE);
     }
 
     function test_RevertWhen_excessiveFee() external {
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.ExcessiveFee.selector, Constants.MAX_SDEX_FEE + 1));
         vm.prank(owner);
-        config.setFee(Constants.MAX_SDEX_FEE + 1);
+        spro.setFee(Constants.MAX_SDEX_FEE + 1);
     }
 
     function test_feeUpdated() external {
@@ -78,8 +78,8 @@ contract TestSproSetFee is SproTest {
         emit ISproEvents.FeeUpdated(FEE + 1);
 
         vm.prank(owner);
-        config.setFee(FEE + 1);
-        assertEq(config._fee(), FEE + 1);
+        spro.setFee(FEE + 1);
+        assertEq(spro._fee(), FEE + 1);
     }
 }
 
@@ -94,7 +94,7 @@ contract TestSproPartialLendingThresholds is SproTest {
         super.setUp();
 
         vm.startPrank(owner);
-        config.setPartialPositionPercentage(PARTIAL_POSITION_BPS);
+        spro.setPartialPositionPercentage(PARTIAL_POSITION_BPS);
         vm.stopPrank();
     }
 
@@ -103,20 +103,20 @@ contract TestSproPartialLendingThresholds is SproTest {
         emit ISproEvents.PartialPositionBpsUpdated(PARTIAL_POSITION_BPS + 1);
 
         vm.prank(owner);
-        config.setPartialPositionPercentage(PARTIAL_POSITION_BPS + 1);
-        assertEq(config._partialPositionBps(), PARTIAL_POSITION_BPS + 1);
+        spro.setPartialPositionPercentage(PARTIAL_POSITION_BPS + 1);
+        assertEq(spro._partialPositionBps(), PARTIAL_POSITION_BPS + 1);
     }
 
     function test_RevertWhen_whenCallerIsNotOwner() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         vm.prank(alice);
-        config.setPartialPositionPercentage(PARTIAL_POSITION_BPS);
+        spro.setPartialPositionPercentage(PARTIAL_POSITION_BPS);
     }
 
     function test_RevertWhen_whenZeroPercentage() external {
         vm.startPrank(owner);
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, 0));
-        config.setPartialPositionPercentage(0);
+        spro.setPartialPositionPercentage(0);
     }
 
     function testFuzz_RevertWhen_excessivePercentage(uint16 percentage) external {
@@ -124,7 +124,7 @@ contract TestSproPartialLendingThresholds is SproTest {
         vm.startPrank(owner);
 
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, percentage));
-        config.setPartialPositionPercentage(percentage);
+        spro.setPartialPositionPercentage(percentage);
     }
 }
 
@@ -138,14 +138,14 @@ contract TestSproSetLoanMetadataUri is SproTest {
     function test_RevertWhen_whenCallerIsNotOwner() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         vm.prank(alice);
-        config.setLoanMetadataUri(tokenUri);
+        spro.setLoanMetadataUri(tokenUri);
     }
 
     function testFuzz_shouldStoreLoanMetadataUri(string memory uri) external {
         vm.prank(owner);
-        config.setLoanMetadataUri(uri);
+        spro.setLoanMetadataUri(uri);
 
-        assertEq(config._loanToken()._metadataUri(), uri);
+        assertEq(spro._loanToken()._metadataUri(), uri);
     }
 }
 
@@ -156,6 +156,18 @@ contract TestSproSetLoanMetadataUri is SproTest {
 contract TestSproTryClaimRepaidLoan is SproTest {
     function test_RevertWhen_tryClaimRepaidLoanUnauthorized() external {
         vm.expectRevert(ISproErrors.UnauthorizedCaller.selector);
-        config.tryClaimRepaidLoan(0, 0, address(0));
+        spro.tryClaimRepaidLoan(0, 0, address(0));
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                   GETTER                                   */
+/* -------------------------------------------------------------------------- */
+
+contract TestSproGetLoan is SproTest {
+    function test_getLoanReturnZeroForNonExistingLoan() external view {
+        (, uint256 repaymentAmount,) = spro.getLoan(0);
+
+        assertEq(repaymentAmount, 0);
     }
 }

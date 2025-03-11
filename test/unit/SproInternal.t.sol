@@ -10,21 +10,12 @@ import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
 contract SproInternalTest is Test {
-    address public sdex = makeAddr("sdex");
-    address public permit2 = makeAddr("permit2");
-    address public config = makeAddr("config");
-
     SproHandler sproHandler;
+    address sdex = makeAddr("sdex");
+    address permit2 = makeAddr("permit2");
 
     function setUp() public {
-        vm.etch(config, bytes("data"));
         sproHandler = new SproHandler(sdex, permit2, 1, 1);
-    }
-
-    function test_loanRepaymentAmount_shouldReturnZeroForNonExistingLoan() external view {
-        (, uint256 repaymentAmount,) = sproHandler.getLoan(0);
-
-        assertEq(repaymentAmount, 0);
     }
 
     function test_isLoanRepayable() external view {

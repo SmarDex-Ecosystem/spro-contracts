@@ -3,7 +3,7 @@ pragma solidity >=0.8.0;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { SDBaseIntegrationTest } from "test/integration/SDBaseIntegrationTest.t.sol";
+import { SDBaseIntegrationTest } from "test/integration/utils/Fixtures.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
@@ -21,7 +21,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Borrower withdraws remaining collateral
         vm.prank(borrower);
-        _cancelProposal(proposal);
+        deployment.config.cancelProposal(proposal);
 
         // ASSERTIONS
         // loan token
@@ -413,7 +413,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.prank(lender);
         deployment.loanToken.transferFrom(lender, address(this), loanId);
 
-        vm.warp(100 days); // loan should be expired
+        skip(100 days); // loan should be expired
 
         // loan token holder claims the expired loan
         deployment.config.claimLoan(loanId);
