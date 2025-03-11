@@ -74,11 +74,11 @@ interface ISproTypes {
      * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
      * be borrowed using the proposal.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
-     * @param startTimestamp The start timestamp of the proposal.
-     * @param loanExpiration The expiration timestamp of the proposal.
      * @param proposer The address of a proposer.
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
      * an identical proposal again.
+     * @param startTimestamp The start timestamp of the proposal.
+     * @param loanExpiration The expiration timestamp of the proposal.
      * @param partialPositionBps Minimum percentage that can be borrowed from the initial proposal.
      */
     struct Proposal {
@@ -87,11 +87,11 @@ interface ISproTypes {
         address creditAddress;
         uint256 availableCreditLimit;
         uint256 fixedInterestAmount;
-        uint40 startTimestamp;
-        uint40 loanExpiration;
         address proposer;
         uint256 nonce;
-        uint256 partialPositionBps;
+        uint40 startTimestamp;
+        uint40 loanExpiration;
+        uint16 partialPositionBps;
     }
 
     /**
@@ -99,15 +99,15 @@ interface ISproTypes {
      * @param collateralAddress The address of the collateral asset.
      * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
      * be borrowed using the proposal.
-     * @param startTimestamp The proposal start timestamp.
      * @param proposer The proposer address.
+     * @param startTimestamp The proposal start timestamp.
      * @param partialPositionBps Minimum percentage that can be borrowed from the initial proposal.
      */
     struct ProposalBase {
         address collateralAddress;
         uint256 availableCreditLimit;
-        uint40 startTimestamp;
         address proposer;
-        uint256 partialPositionBps;
+        uint40 startTimestamp;
+        uint16 partialPositionBps;
     }
 }
