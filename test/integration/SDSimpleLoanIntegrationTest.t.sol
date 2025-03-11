@@ -52,7 +52,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         );
         // sdex fees
         assertEq(
-            deployment.sdex.balanceOf(deployment.config.DEAD_ADDRESS()),
+            deployment.sdex.balanceOf(address(0xdead)),
             deployment.config._fee(),
             "9: DEAD_ADDRESS should contain the sdex unlisted fee"
         );

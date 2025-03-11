@@ -9,7 +9,7 @@ import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract SproStorage is ISproStorage {
     /// @dev The dead address.
-    address public constant DEAD_ADDRESS = address(0xdead);
+    address internal constant DEAD_ADDRESS = address(0xdead);
 
     /// @dev Divisor for basis point (BPS) values.
     uint256 public constant BPS_DIVISOR = 10_000;
