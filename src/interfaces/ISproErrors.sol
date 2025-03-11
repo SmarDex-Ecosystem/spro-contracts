@@ -46,11 +46,6 @@ interface ISproErrors {
     error LoanDefaulted(uint40 loanExpiration);
 
     /**
-     * @notice Thrown when loan doesn't exist.
-     */
-    error NonExistingLoan();
-
-    /**
      * @notice Thrown when caller is not a Loan token holder.
      */
     error CallerNotLoanTokenHolder();
