@@ -192,7 +192,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         (uint256[] memory loanIds,) = _setupMultipleRepay();
         vm.startPrank(borrower);
         uint256 startGas = gasleft();
-        deployment.config.repayMultipleLoans(loanIds, address(credit), "");
+        deployment.config.repayMultipleLoans(loanIds, "");
         emit log_named_uint("Gas used", startGas - gasleft());
     }
 
@@ -200,7 +200,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         (uint256[] memory loanIds, uint256 fixedInterestAmount) = _setupMultipleRepay();
 
         vm.startPrank(borrower);
-        deployment.config.repayMultipleLoans(loanIds, address(credit), "");
+        deployment.config.repayMultipleLoans(loanIds, "");
 
         // Assertions
         assertEq(credit.balanceOf(borrower), 0);
@@ -228,7 +228,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Simulate someone repaying one loan
         deployment.config.repayLoan(loanIds[2], "");
         // Must not revert
-        deployment.config.repayMultipleLoans(loanIds, address(credit), "");
+        deployment.config.repayMultipleLoans(loanIds, "");
 
         // Assertions
         assertEq(credit.balanceOf(borrower), 0);
@@ -253,12 +253,12 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         (uint256[] memory loanIds, uint256 fixedInterestAmount) = _setupMultipleRepay();
 
         address repayer = makeAddr("repayer");
-        uint256 repayAmount = deployment.config.totalLoanRepaymentAmount(loanIds, address(credit));
+        uint256 repayAmount = deployment.config.totalLoanRepaymentAmount(loanIds);
 
         credit.mint(repayer, repayAmount);
         vm.startPrank(repayer);
         credit.approve(address(deployment.config), repayAmount);
-        deployment.config.repayMultipleLoans(loanIds, address(credit), "");
+        deployment.config.repayMultipleLoans(loanIds, "");
         vm.stopPrank();
 
         // Assertions
@@ -293,7 +293,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         deployment.loanToken.transferFrom(bob, lender, 3);
 
         vm.prank(borrower);
-        deployment.config.repayMultipleLoans(loanIds, address(credit), "");
+        deployment.config.repayMultipleLoans(loanIds, "");
 
         uint256[] memory ids = new uint256[](2);
         ids[0] = 2;
@@ -337,7 +337,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         skip(4 days);
 
         // Approve repayment amount
-        uint256 totalAmount = deployment.config.totalLoanRepaymentAmount(loanIds, address(credit));
+        uint256 totalAmount = deployment.config.totalLoanRepaymentAmount(loanIds);
         fixedInterestAmount = Math.mulDiv(
             minCreditAmount, proposal.fixedInterestAmount, proposal.availableCreditLimit, Math.Rounding.Ceil
         );

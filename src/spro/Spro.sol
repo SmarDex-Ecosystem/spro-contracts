@@ -108,18 +108,18 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /// @inheritdoc ISpro
-    function totalLoanRepaymentAmount(uint256[] calldata loanIds, address creditAddress)
-        external
-        view
-        returns (uint256 amount_)
-    {
+    function totalLoanRepaymentAmount(uint256[] calldata loanIds) external view returns (uint256 amount_) {
+        if (loanIds.length == 0) return 0;
+        address firstCreditAddress = _loans[loanIds[0]].credit;
+
         for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
             Loan memory loan = _loans[loanId];
-            _checkLoanCreditAddress(loan.credit, creditAddress);
+            if (loan.credit != firstCreditAddress) {
+                revert DifferentCreditAddress(loan.credit, firstCreditAddress);
+            }
 
             if (loan.status == LoanStatus.NONE) return 0;
-
             amount_ += loan.principalAmount + loan.fixedInterestAmount;
         }
     }
@@ -209,10 +209,10 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /// @inheritdoc ISpro
-    function repayMultipleLoans(uint256[] calldata loanIds, address creditAddress, bytes calldata permit2Data)
-        external
-        nonReentrant
-    {
+    function repayMultipleLoans(uint256[] calldata loanIds, bytes calldata permit2Data) external nonReentrant {
+        if (loanIds.length == 0) return;
+
+        address creditAddress = _loans[loanIds[0]].credit;
         uint256 totalRepaymentAmount;
         LoanWithId[] memory loansToRepay = new LoanWithId[](loanIds.length);
         uint256 numLoansToRepay;
@@ -224,7 +224,9 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
             // Checks: loan can be repaid & credit address is the same for all loanIds
             if (_isLoanRepayable(loan.status, loan.loanExpiration)) {
-                _checkLoanCreditAddress(loan.credit, creditAddress);
+                if (loan.credit != creditAddress) {
+                    revert DifferentCreditAddress(loan.credit, creditAddress);
+                }
                 // Update loan to repaid state and increment the total repayment amount
                 totalRepaymentAmount += _updateRepaidLoan(loanId);
                 loansToRepay[numLoansToRepay] = LoanWithId(loanId, loan);
@@ -317,17 +319,6 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     /* -------------------------------------------------------------------------- */
     /*                                  INTERNAL                                  */
     /* -------------------------------------------------------------------------- */
-
-    /**
-     * @notice Check that the loan credit address matches the expected credit address.
-     * @param loanCreditAddress The loan credit address.
-     * @param expectedCreditAddress The expected credit address.
-     */
-    function _checkLoanCreditAddress(address loanCreditAddress, address expectedCreditAddress) internal pure {
-        if (loanCreditAddress != expectedCreditAddress) {
-            revert DifferentCreditAddress(loanCreditAddress, expectedCreditAddress);
-        }
-    }
 
     /**
      * @notice Check if the loan can be repaid.
