@@ -548,19 +548,20 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
 
         uint256 used = _creditUsed[proposalHash];
-        if (used + creditAmount < proposal.availableCreditLimit) {
+        uint256 total = used + creditAmount;
+        if (total < proposal.availableCreditLimit) {
             // Credit may only be between min and max amounts if it is not exact
             uint256 minAmount =
                 Math.mulDiv(proposal.availableCreditLimit, proposal.partialPositionBps, Constants.BPS_DIVISOR);
             if (creditAmount < minAmount) {
                 revert CreditAmountTooSmall(creditAmount, minAmount);
             }
-            if (proposal.availableCreditLimit - minAmount < used + creditAmount) {
+            if (proposal.availableCreditLimit - minAmount < total) {
                 revert CreditAmountRemainingBelowMinimum(creditAmount, minAmount);
             }
-        } else if (used + creditAmount > proposal.availableCreditLimit) {
+        } else if (total > proposal.availableCreditLimit) {
             // Revert, credit limit is exceeded
-            revert AvailableCreditLimitExceeded(used + creditAmount, proposal.availableCreditLimit);
+            revert AvailableCreditLimitExceeded(proposal.availableCreditLimit - used);
         }
 
         // Apply increase if credit amount checks pass

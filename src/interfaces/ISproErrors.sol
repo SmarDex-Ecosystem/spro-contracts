@@ -107,10 +107,9 @@ interface ISproErrors {
 
     /**
      * @notice Thrown when a proposal would exceed the available credit limit.
-     * @param used The amount of credit used.
-     * @param limit The available credit limit.
+     * @param creditAvailable The available credit amount.
      */
-    error AvailableCreditLimitExceeded(uint256 used, uint256 limit);
+    error AvailableCreditLimitExceeded(uint256 creditAvailable);
 
     /**
      * @notice Thrown when a proposal has an available credit limit of zero.
