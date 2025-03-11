@@ -79,7 +79,7 @@ interface ISproTypes {
      * @param proposer The address of a proposer.
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
      * an identical proposal again.
-     * @param partialPositionBps Minimum percentage that can be borrowed from the initial proposal.
+     * @param partialPositionBps The minimum percentage that can be borrowed from the initial proposal.
      */
     struct Proposal {
         address collateralAddress;
@@ -101,7 +101,7 @@ interface ISproTypes {
      * be borrowed using the proposal.
      * @param startTimestamp The proposal start timestamp.
      * @param proposer The proposer address.
-     * @param partialPositionBps Minimum percentage that can be borrowed from the initial proposal.
+     * @param partialPositionBps The minimum percentage that can be borrowed from the initial proposal.
      */
     struct ProposalBase {
         address collateralAddress;
