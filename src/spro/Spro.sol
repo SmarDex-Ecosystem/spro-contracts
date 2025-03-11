@@ -409,8 +409,8 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             ProposalBase(
                 proposal.collateralAddress,
                 proposal.availableCreditLimit,
-                proposal.proposer,
                 proposal.startTimestamp,
+                proposal.proposer,
                 proposal.partialPositionBps
             )
         );

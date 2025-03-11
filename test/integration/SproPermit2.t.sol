@@ -39,10 +39,10 @@ contract TestForkPermit2 is SproForkBase {
             address(credit),
             CREDIT_LIMIT,
             FIXED_INTEREST_AMOUNT,
-            0,
-            borrower,
             uint40(block.timestamp) + 5 days,
             uint40(block.timestamp) + 10 days,
+            borrower,
+            0,
             PARTIAL_POSITION_BPS
         );
 
