@@ -23,10 +23,10 @@ contract TestSproIntegration is SDBaseIntegrationTest {
         _createERC20Proposal();
 
         assertEq(t20.balanceOf(address(deployment.config)), COLLATERAL_AMOUNT);
-        assertEq(deployment.sdex.balanceOf(address(0xdead)), deployment.config._fee());
+        assertEq(deployment.sdex.balanceOf(deployment.config.DEAD_ADDRESS()), deployment.config._fee());
         assertEq(t20.balanceOf(borrower), 0);
 
-        assertEq(deployment.sdex.balanceOf(address(0xdead)), feeAmount);
+        assertEq(deployment.sdex.balanceOf(deployment.config.DEAD_ADDRESS()), feeAmount);
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - feeAmount);
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config._fee());
     }
@@ -97,7 +97,7 @@ contract TestSproIntegration is SDBaseIntegrationTest {
         vm.stopPrank();
 
         assertEq(deployment.loanToken.ownerOf(id), lender);
-        assertEq(deployment.sdex.balanceOf(address(0xdead)), deployment.config._fee());
+        assertEq(deployment.sdex.balanceOf(deployment.config.DEAD_ADDRESS()), deployment.config._fee());
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config._fee());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 

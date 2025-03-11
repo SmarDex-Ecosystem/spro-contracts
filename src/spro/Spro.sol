@@ -113,7 +113,8 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         view
         returns (uint256 amount_)
     {
-        for (uint256 i; i < loanIds.length; ++i) {
+        uint256 l = loanIds.length;
+        for (uint256 i; i < l; ++i) {
             uint256 loanId = loanIds[i];
             Loan memory loan = _loans[loanId];
             _checkLoanCreditAddress(loan.credit, creditAddress);
@@ -135,12 +136,12 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             PERMIT2.permit(msg.sender, permitBatch, data);
             PERMIT2.transferFrom(msg.sender, address(this), collateralAmount.toUint160(), collateral);
             if (_fee > 0) {
-                PERMIT2.transferFrom(msg.sender, address(0xdead), _fee.toUint160(), address(SDEX));
+                PERMIT2.transferFrom(msg.sender, DEAD_ADDRESS, _fee.toUint160(), address(SDEX));
             }
         } else {
             IERC20Metadata(collateral).safeTransferFrom(msg.sender, address(this), collateralAmount);
             if (_fee > 0) {
-                IERC20Metadata(SDEX).safeTransferFrom(msg.sender, address(0xdead), _fee);
+                IERC20Metadata(SDEX).safeTransferFrom(msg.sender, DEAD_ADDRESS, _fee);
             }
         }
     }
@@ -214,7 +215,8 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         uint256 numLoansToRepay;
 
         // Filter loans that can be repaid
-        for (uint256 i; i < loanIds.length; ++i) {
+        uint256 l = loanIds.length;
+        for (uint256 i; i < l; ++i) {
             uint256 loanId = loanIds[i];
             Loan memory loan = _loans[loanId];
 
@@ -299,10 +301,11 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             revert CallerNotLoanTokenHolder();
         }
 
-        if (loan.status == LoanStatus.PAID_BACK) {
+        LoanStatus status = loan.status;
+        if (status == LoanStatus.PAID_BACK) {
             // Loan has been paid back
             _settleLoanClaim(loanId, msg.sender, false);
-        } else if (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp) {
+        } else if (status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp) {
             // Loan is running but expired
             _settleLoanClaim(loanId, msg.sender, true);
         } else {
@@ -376,7 +379,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             revert InvalidDuration(proposal.loanExpiration - proposal.startTimestamp, MIN_LOAN_DURATION);
         }
 
-        proposal.partialPositionBps = _partialPositionBps;
+        proposal.minAmountBorrowed = Math.mulDiv(proposal.availableCreditLimit, _partialPositionBps, BPS_DIVISOR);
         proposal.proposer = msg.sender;
 
         bytes32 proposalHash = keccak256(abi.encode(proposal));
@@ -430,7 +433,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
                 proposal.availableCreditLimit,
                 proposal.startTimestamp,
                 proposal.proposer,
-                proposal.partialPositionBps
+                proposal.minAmountBorrowed
             )
         );
 
@@ -491,12 +494,12 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         uint256 used = _creditUsed[proposalHash];
         if (used + creditAmount < proposal.availableCreditLimit) {
             // Credit may only be between min and max amounts if it is not exact
-            uint256 minAmount = Math.mulDiv(proposal.availableCreditLimit, proposal.partialPositionBps, BPS_DIVISOR);
-            if (creditAmount < minAmount) {
-                revert CreditAmountTooSmall(creditAmount, minAmount);
+            uint256 minAmountBorrowed = proposal.minAmountBorrowed;
+            if (creditAmount < minAmountBorrowed) {
+                revert CreditAmountTooSmall(creditAmount, minAmountBorrowed);
             }
-            if (proposal.availableCreditLimit - minAmount < used + creditAmount) {
-                revert CreditAmountRemainingBelowMinimum(creditAmount, minAmount);
+            if (proposal.availableCreditLimit - minAmountBorrowed < used + creditAmount) {
+                revert CreditAmountRemainingBelowMinimum(creditAmount, minAmountBorrowed);
             }
         } else if (used + creditAmount > proposal.availableCreditLimit) {
             revert AvailableCreditLimitExceeded(used + creditAmount, proposal.availableCreditLimit);

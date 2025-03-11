@@ -6,6 +6,9 @@ import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.so
 import { SproLoan } from "src/spro/SproLoan.sol";
 
 interface ISproStorage {
+    /// @notice Gets the dead address.
+    function DEAD_ADDRESS() external view returns (address);
+
     /// @notice Gets the divisor for basis point (BPS) values.
     function BPS_DIVISOR() external view returns (uint256);
 

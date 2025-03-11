@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity >=0.8.0;
 
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+
 import { T20 } from "test/helper/T20.sol";
 import { SDDeploymentTest, Spro } from "test/integration/SDDeploymentTest.t.sol";
 
@@ -41,12 +43,12 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
             COLLATERAL_AMOUNT,
             address(credit),
             CREDIT_LIMIT,
+            Math.mulDiv(CREDIT_LIMIT, deployment.config._partialPositionBps(), deployment.config.BPS_DIVISOR()),
             FIXED_INTEREST_AMOUNT,
             uint40(block.timestamp) + 5 days,
             uint40(block.timestamp) + 10 days,
             borrower,
-            0,
-            PARTIAL_POSITION_BPS
+            0
         );
 
         // Mint and approve SDEX

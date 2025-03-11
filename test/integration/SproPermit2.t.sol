@@ -2,6 +2,7 @@
 pragma solidity >=0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 
 import { SproForkBase } from "test/integration/utils/Fixtures.sol";
@@ -37,12 +38,12 @@ contract TestForkPermit2 is SproForkBase {
             COLLATERAL_AMOUNT,
             address(credit),
             CREDIT_LIMIT,
+            Math.mulDiv(CREDIT_LIMIT, deployment.config._partialPositionBps(), deployment.config.BPS_DIVISOR()),
             FIXED_INTEREST_AMOUNT,
             uint40(block.timestamp) + 5 days,
             uint40(block.timestamp) + 10 days,
             borrower,
-            0,
-            PARTIAL_POSITION_BPS
+            0
         );
 
         // Mint and approve SDEX

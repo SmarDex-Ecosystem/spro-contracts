@@ -2,6 +2,7 @@
 pragma solidity >=0.8.0;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { SDBaseIntegrationTest } from "test/integration/SDBaseIntegrationTest.t.sol";
 
@@ -51,9 +52,9 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         );
         // sdex fees
         assertEq(
-            deployment.sdex.balanceOf(address(0xdead)),
+            deployment.sdex.balanceOf(deployment.config.DEAD_ADDRESS()),
             deployment.config._fee(),
-            "9: address(0xdead) should contain the sdex unlisted fee"
+            "9: DEAD_ADDRESS should contain the sdex unlisted fee"
         );
     }
 
@@ -166,6 +167,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.assume(used <= limit);
 
         proposal.availableCreditLimit = limit;
+        proposal.minAmountBorrowed =
+            Math.mulDiv(limit, deployment.config._partialPositionBps(), deployment.config.BPS_DIVISOR());
         _createERC20Proposal();
 
         bytes32 proposalHash = deployment.config.getProposalHash(proposal);
