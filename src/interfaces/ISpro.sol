@@ -40,16 +40,11 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
         returns (uint256 used_, uint256 remaining_);
 
     /**
-     * @notice Retrieves all information about a loan.
-     * @param loanId The id of the loan.
-     * @return loan_ The loan data structure.
-     * @return repaymentAmount_ The repayment amount for the loan.
-     * @return loanOwner_ The current owner of the loan token.
+     * @notice Retrieves the loan data for a given loan id.
+     * @param loanId The ID of the loan.
+     * @return loan_ The loan data.
      */
-    function getLoan(uint256 loanId)
-        external
-        view
-        returns (Loan memory loan_, uint256 repaymentAmount_, address loanOwner_);
+    function getLoan(uint256 loanId) external returns (Loan memory loan_);
 
     /**
      * @notice Gets the proposal hash.

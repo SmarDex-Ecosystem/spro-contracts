@@ -44,6 +44,6 @@ contract SproStorage is ISproStorage {
     /// @inheritdoc ISproStorage
     mapping(bytes32 => uint256) public _creditUsed;
 
-    /// @notice  Mapping of all loan data by loan id.
+    /// @notice Mapping of all loan data by loan id.
     mapping(uint256 => ISproTypes.Loan) internal _loans;
 }
