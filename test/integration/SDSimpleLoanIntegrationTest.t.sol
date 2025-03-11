@@ -10,6 +10,10 @@ import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
+    function setUp() public {
+        _setUp(false);
+    }
+
     function test_shouldCreateERC20Proposal_shouldCreatePartialLoan_shouldWithdrawRemainingCollateral() external {
         // Create the proposal
         vm.prank(borrower);

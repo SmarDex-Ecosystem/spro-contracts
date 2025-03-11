@@ -9,6 +9,10 @@ import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { Spro } from "src/spro/Spro.sol";
 
 contract TestSproIntegration is SDBaseIntegrationTest {
+    function setUp() public {
+        _setUp(false);
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                               CREATE PROPOSAL                              */
     /* -------------------------------------------------------------------------- */

@@ -46,12 +46,15 @@ contract SDBaseIntegrationTest is Test {
         IAllowanceTransfer permit2;
     }
 
-    function setUp() public virtual {
-        string memory url = vm.rpcUrl("mainnet");
-        vm.createSelectFork(url);
-
+    function _setUp(bool fork) public virtual {
+        if (fork) {
+            string memory url = vm.rpcUrl("mainnet");
+            vm.createSelectFork(url);
+            deployment.permit2 = IAllowanceTransfer(PERMIT2);
+        } else {
+            deployment.permit2 = IAllowanceTransfer(makeAddr("IAllowanceTransfer"));
+        }
         deployment.sdex = new T20();
-        deployment.permit2 = IAllowanceTransfer(PERMIT2);
 
         vm.startPrank(ADMIN);
         deployment.config = new Spro(address(deployment.sdex), address(deployment.permit2), FEE, PARTIAL_POSITION_BPS);

@@ -14,8 +14,8 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
     uint256 internal constant SIG_USER1_PK = 1;
     address internal sigUser1 = vm.addr(SIG_USER1_PK);
 
-    function setUp() public override {
-        super.setUp();
+    function setUp() public {
+        _setUp(true);
 
         // Mint and approve SDEX
         deployment.sdex.mint(borrower, INITIAL_SDEX_BALANCE);
