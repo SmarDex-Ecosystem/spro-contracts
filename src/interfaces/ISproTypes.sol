@@ -76,7 +76,7 @@ interface ISproTypes {
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      * @param startTimestamp The start timestamp of the proposal.
      * @param loanExpiration The expiration timestamp of the proposal.
-     * @param proposer The address of a proposer
+     * @param proposer The address of a proposer.
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
      * an identical proposal again.
      * @param partialPositionBps Minimum percentage that can be borrowed from the initial proposal.
