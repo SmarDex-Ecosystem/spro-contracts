@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity ^0.8.26;
+pragma solidity >=0.8.0;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
@@ -111,7 +111,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             abi.encodeWithSelector(
                 ISproErrors.CreditAmountRemainingBelowMinimum.selector,
                 amount,
-                deployment.config._partialPositionBps() * CREDIT_LIMIT / 1e4
+                deployment.config._partialPositionBps() * CREDIT_LIMIT / deployment.config.BPS_DIVISOR()
             )
         );
         deployment.config.createLoan(proposal, amount, "");
@@ -134,7 +134,9 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Create loan, expecting revert
         vm.expectRevert(
             abi.encodeWithSelector(
-                ISproErrors.CreditAmountTooSmall.selector, amount, PARTIAL_POSITION_PERCENTAGE * CREDIT_LIMIT / 1e4
+                ISproErrors.CreditAmountTooSmall.selector,
+                amount,
+                PARTIAL_POSITION_BPS * CREDIT_LIMIT / deployment.config.BPS_DIVISOR()
             )
         );
         deployment.config.createLoan(proposal, amount, "");
@@ -213,8 +215,10 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(0, deployment.loanToken.balanceOf(bob));
         assertEq(0, deployment.loanToken.balanceOf(charlee));
 
-        assertEq(2000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(borrower)); // 20% since 4 loans @ 5% minimum amount
-        assertEq(8000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(address(deployment.config)));
+        assertEq(2000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(borrower)); // 20% since 4
+            // loans @ 5%
+            // minimum amount
+        assertEq(8000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(address(deployment.config)));
     }
 
     function test_MultiplePartialLoans_NotRevertIfOneLess() external {
@@ -239,8 +243,10 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(0, deployment.loanToken.balanceOf(bob));
         assertEq(0, deployment.loanToken.balanceOf(charlee));
 
-        assertEq(2000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(borrower)); // 20% since 4 loans @ 5% minimum amount
-        assertEq(8000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(address(deployment.config)));
+        assertEq(2000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(borrower)); // 20% since 4
+            // loans @ 5%
+            // minimum amount
+        assertEq(8000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(address(deployment.config)));
     }
 
     function test_MultiplePartialLoans_RepayMultiple_RepayerNotOwner() external {
@@ -258,8 +264,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Assertions
         assertEq(
             credit.balanceOf(borrower),
-            4 * (proposal.availableCreditLimit * deployment.config._partialPositionBps()) / 1e4
-                + 4 * fixedInterestAmount
+            4 * (proposal.availableCreditLimit * deployment.config._partialPositionBps())
+                / deployment.config.BPS_DIVISOR() + 4 * fixedInterestAmount
         ); // 4x minted in _setupMultipleRepay & not used
         require(
             credit.balanceOf(lender) == credit.balanceOf(alice) && credit.balanceOf(lender) == credit.balanceOf(bob)
@@ -271,8 +277,10 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(0, deployment.loanToken.balanceOf(alice));
         assertEq(0, deployment.loanToken.balanceOf(bob));
         assertEq(0, deployment.loanToken.balanceOf(charlee));
-        assertEq(2000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(borrower)); // 20% since 4 loans @ 5% minimum amount
-        assertEq(8000 * COLLATERAL_AMOUNT / 1e4, t20.balanceOf(address(deployment.config)));
+        assertEq(2000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(borrower)); // 20% since 4
+            // loans @ 5%
+            // minimum amount
+        assertEq(8000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(address(deployment.config)));
     }
 
     function test_MultiplePartialLoans_RepayMultiple_ClaimMultiple() external {
@@ -307,7 +315,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         lenders[3] = charlee;
 
         // Minimum credit amount
-        uint256 minCreditAmount = (proposal.availableCreditLimit * deployment.config._partialPositionBps()) / 1e4;
+        uint256 minCreditAmount =
+            (proposal.availableCreditLimit * deployment.config._partialPositionBps()) / deployment.config.BPS_DIVISOR();
 
         // Setup loanIds array
         loanIds = new uint256[](4);
@@ -427,7 +436,11 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     }
 
     function testFuzz_loanAccruedInterest(uint256 amount, uint256 future) external {
-        amount = bound(amount, ((500 * CREDIT_LIMIT) / 1e4), ((9500 * CREDIT_LIMIT) / 1e4));
+        amount = bound(
+            amount,
+            ((500 * CREDIT_LIMIT) / deployment.config.BPS_DIVISOR()),
+            ((9500 * CREDIT_LIMIT) / deployment.config.BPS_DIVISOR())
+        );
         future = bound(future, 1 days, proposal.startTimestamp);
 
         // Create the proposal

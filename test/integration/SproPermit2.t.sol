@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity ^0.8.26;
+pragma solidity >=0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
@@ -22,8 +22,7 @@ contract TestForkPermit2 is SproForkBase {
 
     uint256 internal constant SIG_USER1_PK = 1;
     address internal sigUser1 = vm.addr(SIG_USER1_PK);
-    uint256 borrowerPK = uint256(888);
-    address borrower = vm.addr(borrowerPK);
+    address borrower = vm.addr(888);
     Spro.Proposal proposal;
 
     function setUp() public override {
@@ -43,7 +42,7 @@ contract TestForkPermit2 is SproForkBase {
             uint40(block.timestamp) + 10 days,
             borrower,
             0,
-            PARTIAL_POSITION_PERCENTAGE
+            PARTIAL_POSITION_BPS
         );
 
         // Mint and approve SDEX
