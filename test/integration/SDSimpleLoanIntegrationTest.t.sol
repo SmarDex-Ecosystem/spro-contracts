@@ -15,15 +15,12 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     }
 
     function test_shouldCreateERC20Proposal_shouldCreatePartialLoan_shouldWithdrawRemainingCollateral() external {
-        // Create the proposal
-        vm.prank(borrower);
         _createERC20Proposal();
 
-        // Create the loan
         vm.prank(lender);
         uint256 loanId = _createLoan(proposal, "");
 
-        // Borrower withdraws remaining collateral
+        // Borrower: cancels proposal, withdrawing unused collateral
         vm.prank(borrower);
         deployment.config.cancelProposal(proposal);
 
@@ -70,7 +67,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.prank(lender);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        // Lender: creates the loan
         vm.prank(lender);
         uint256 loanId = deployment.config.createLoan(proposal, CREDIT_AMOUNT, "");
 
@@ -83,7 +79,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Borrower approvals for credit token
         (ISproTypes.Loan memory loan,,) = deployment.config.getLoan(loanId);
-        credit.mint(borrower, loan.fixedInterestAmount); // helper step: mint fixed interest amount for the borrower
+        credit.mint(borrower, loan.fixedInterestAmount);
         credit.approve(address(deployment.config), CREDIT_AMOUNT + loan.fixedInterestAmount);
 
         // Borrower: repays loan
@@ -92,7 +88,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Assertions
         assertEq(credit.balanceOf(borrower), 0);
         assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + loan.fixedInterestAmount);
-
         assertEq(t20.balanceOf(borrower), COLLATERAL_AMOUNT);
     }
 
@@ -107,7 +102,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.prank(lender);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        // Lender: creates the loan
         vm.prank(lender);
         uint256 loanId = deployment.config.createLoan(proposal, CREDIT_AMOUNT, "");
 
@@ -168,7 +162,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     function test_RevertWhen_CreateAlreadyMadeProposal() external {
         _createERC20Proposal();
 
-        // Mint initial state & approve collateral
         t20.mint(borrower, proposal.collateralAmount);
         vm.prank(borrower);
         t20.approve(address(deployment.config), proposal.collateralAmount);
@@ -178,7 +171,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         deployment.config.createProposal(proposal, "");
     }
 
-    function test_shouldFail_getProposalCreditStatus_ProposalNotMade() external {
+    function test_RevertWhen_getProposalProposalNotMade() external {
         vm.expectRevert(ISproErrors.ProposalNotMade.selector);
         deployment.config.getProposalCreditStatus(proposal);
     }

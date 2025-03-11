@@ -25,7 +25,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         credit.approve(address(deployment.permit2), type(uint256).max);
     }
 
-    function test_permit2CreateLoan() public {
+    function test_ForkPermit2CreateLoan() public {
         IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(proposal.collateralAmount), 0, 0);
         IAllowanceTransfer.PermitSingle memory permitSign =
@@ -34,12 +34,11 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
 
         _createERC20Proposal();
 
-        // Lender: creates the loan
         vm.prank(sigUser1);
         deployment.config.createLoan(proposal, CREDIT_LIMIT, abi.encode(permitSign, signature));
     }
 
-    function test_RevertWhen_permit2CreateLoan() public {
+    function test_RevertWhen_ForkPermit2CreateLoan() public {
         IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(CREDIT_LIMIT - 1), 0, 0);
         IAllowanceTransfer.PermitSingle memory permitSign =
@@ -49,12 +48,11 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         _createERC20Proposal();
 
         vm.expectRevert(abi.encodeWithSelector(IAllowanceTransfer.InsufficientAllowance.selector, CREDIT_LIMIT - 1));
-        // Lender: creates the loan
         vm.prank(sigUser1);
         deployment.config.createLoan(proposal, CREDIT_LIMIT, abi.encode(permitSign, signature));
     }
 
-    function test_permit2CreateProposal() public {
+    function test_ForkPermit2CreateProposal() public {
         proposal.proposer = sigUser1;
         vm.startPrank(sigUser1);
         IERC20(proposal.collateralAddress).approve(address(deployment.permit2), type(uint256).max);
@@ -77,7 +75,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         vm.stopPrank();
     }
 
-    function test_RevertWhen_permit2CreateProposal() public {
+    function test_RevertWhen_ForkPermit2CreateProposal() public {
         proposal.proposer = sigUser1;
         vm.startPrank(sigUser1);
         IERC20(proposal.collateralAddress).approve(address(deployment.permit2), type(uint256).max);
@@ -94,8 +92,6 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         bytes memory signature =
             getPermitBatchSignature(permitBatch, SIG_USER1_PK, deployment.permit2.DOMAIN_SEPARATOR());
 
-        t20.mint(sigUser1, proposal.collateralAmount);
-
         vm.expectRevert(
             abi.encodeWithSelector(IAllowanceTransfer.InsufficientAllowance.selector, COLLATERAL_AMOUNT - 1)
         );
@@ -103,20 +99,16 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         vm.stopPrank();
     }
 
-    function test_permit2RepayLoan() public {
-        // Borrower: creates proposal
+    function test_ForkPermit2RepayLoan() public {
         _createERC20Proposal();
 
-        // Mint initial state & approve credit
         credit.mint(sigUser1, CREDIT_LIMIT);
         vm.prank(sigUser1);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        // Lender: creates the loan
         vm.prank(sigUser1);
         uint256 loanId = deployment.config.createLoan(proposal, CREDIT_AMOUNT, "");
 
-        // Borrower: cancels proposal, withdrawing unused collateral
         vm.prank(borrower);
         deployment.config.cancelProposal(proposal);
 
@@ -134,20 +126,16 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         deployment.config.repayLoan(loanId, abi.encode(permitSign, signature));
     }
 
-    function test_RevertWhen_Permit2RepayLoan() public {
-        // Borrower: creates proposal
+    function test_RevertWhen_ForkPermit2RepayLoan() public {
         _createERC20Proposal();
 
-        // Mint initial state & approve credit
         credit.mint(sigUser1, CREDIT_LIMIT);
         vm.prank(sigUser1);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        // Lender: creates the loan
         vm.prank(sigUser1);
         uint256 loanId = deployment.config.createLoan(proposal, CREDIT_AMOUNT, "");
 
-        // Borrower: cancels proposal, withdrawing unused collateral
         vm.prank(borrower);
         deployment.config.cancelProposal(proposal);
 
@@ -166,25 +154,20 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         deployment.config.repayLoan(loanId, abi.encode(permitSign, signature));
     }
 
-    function test_permit2RepayMultipleLoans() public {
-        // Borrower: creates proposal
+    function test_ForkPermit2RepayMultipleLoans() public {
         _createERC20Proposal();
 
-        // Mint initial state & approve credit
         credit.mint(sigUser1, CREDIT_LIMIT);
         vm.prank(sigUser1);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        // Lender: creates the loan
         vm.startPrank(sigUser1);
-        // Setup loanIds array
         uint256[] memory loanIds = new uint256[](3);
         loanIds[0] = deployment.config.createLoan(proposal, CREDIT_AMOUNT / 3, "");
         loanIds[1] = deployment.config.createLoan(proposal, CREDIT_AMOUNT / 3, "");
         loanIds[2] = deployment.config.createLoan(proposal, CREDIT_AMOUNT / 3, "");
         vm.stopPrank();
 
-        // Borrower: cancels proposal, withdrawing unused collateral
         vm.prank(borrower);
         deployment.config.cancelProposal(proposal);
 
@@ -210,25 +193,20 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         );
     }
 
-    function test_RevertWhen_WrongSignPermit2RepayMultipleLoans() public {
-        // Borrower: creates proposal
+    function test_RevertWhen_ForkWrongSignPermit2RepayMultipleLoans() public {
         _createERC20Proposal();
 
-        // Mint initial state & approve credit
         credit.mint(sigUser1, CREDIT_LIMIT);
         vm.prank(sigUser1);
         credit.approve(address(deployment.config), CREDIT_LIMIT);
 
-        // Lender: creates the loan
         vm.startPrank(sigUser1);
-        // Setup loanIds array
         uint256[] memory loanIds = new uint256[](3);
         loanIds[0] = deployment.config.createLoan(proposal, CREDIT_AMOUNT / 3, "");
         loanIds[1] = deployment.config.createLoan(proposal, CREDIT_AMOUNT / 3, "");
         loanIds[2] = deployment.config.createLoan(proposal, CREDIT_AMOUNT / 3, "");
         vm.stopPrank();
 
-        // Borrower: cancels proposal, withdrawing unused collateral
         vm.prank(borrower);
         deployment.config.cancelProposal(proposal);
 
