@@ -43,17 +43,4 @@ contract SproSimpleLoanTest is Test {
         canBeRepaid = sproHandler.exposed_isLoanRepayable(ISproTypes.LoanStatus.RUNNING, uint40(block.timestamp + 1));
         assertTrue(canBeRepaid, "Loan should be repayable");
     }
-
-    function test_shouldFail_DifferentCreditAddress(address loanCreditAddress, address expectedCreditAddress)
-        external
-    {
-        vm.assume(loanCreditAddress != expectedCreditAddress);
-
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ISproErrors.DifferentCreditAddress.selector, loanCreditAddress, expectedCreditAddress
-            )
-        );
-        sproHandler.exposed_checkLoanCreditAddress(loanCreditAddress, expectedCreditAddress);
-    }
 }

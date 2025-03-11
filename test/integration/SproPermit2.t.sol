@@ -233,9 +233,7 @@ contract TestForkPermit2 is SproForkBase {
         bytes memory signature = getPermitSignature(permitSign, SIG_USER1_PK, deployment.permit2.DOMAIN_SEPARATOR());
 
         vm.prank(sigUser1);
-        deployment.config.repayMultipleLoans(
-            loanIds, address(proposal.creditAddress), abi.encode(permitSign, signature)
-        );
+        deployment.config.repayMultipleLoans(loanIds, abi.encode(permitSign, signature));
     }
 
     function test_RevertWhen_WrongSignPermit2RepayMultipleLoans() public {
@@ -280,9 +278,7 @@ contract TestForkPermit2 is SproForkBase {
             abi.encodeWithSelector(IAllowanceTransfer.InsufficientAllowance.selector, totalRepaymentAmount - 1)
         );
         vm.prank(sigUser1);
-        deployment.config.repayMultipleLoans(
-            loanIds, address(proposal.creditAddress), abi.encode(permitSign, signature)
-        );
+        deployment.config.repayMultipleLoans(loanIds, abi.encode(permitSign, signature));
     }
 
     // Make the proposal

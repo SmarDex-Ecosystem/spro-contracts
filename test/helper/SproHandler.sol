@@ -15,8 +15,4 @@ contract SproHandler is Spro {
     {
         canBeRepaid_ = _isLoanRepayable(status, loanExpiration);
     }
-
-    function exposed_checkLoanCreditAddress(address loanCreditAddress, address expectedCreditAddress) external pure {
-        _checkLoanCreditAddress(loanCreditAddress, expectedCreditAddress);
-    }
 }

@@ -62,13 +62,9 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @notice Calculates the total repayment amount for multiple loans, with the fixed interest amounts.
      * @dev The credit token must be the same for all loans.
      * @param loanIds Array of loan ids.
-     * @param creditAddress Expected credit address for all loans.
      * @return amount_ The total repayment amount for all loans.
      */
-    function totalLoanRepaymentAmount(uint256[] memory loanIds, address creditAddress)
-        external
-        view
-        returns (uint256 amount_);
+    function totalLoanRepaymentAmount(uint256[] memory loanIds) external view returns (uint256 amount_);
 
     /**
      * @notice Creates a new borrowing proposal.
@@ -113,11 +109,9 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * loan. If the loan token holder is the original lender, the repayment credit will be transferred to them.
      * Otherwise, the repayment credit will be transferred to the protocol, awaiting the new owner to claim it.
      * @param loanIds An array of loan IDs being repaid.
-     * @param creditAddress The expected credit token address for all loan IDs.
      * @param permit2Data The permit2 data, if the user opts to use permit2.
      */
-    function repayMultipleLoans(uint256[] calldata loanIds, address creditAddress, bytes calldata permit2Data)
-        external;
+    function repayMultipleLoans(uint256[] calldata loanIds, bytes calldata permit2Data) external;
 
     /**
      * @notice Attempts to claim a repaid loan.
