@@ -7,7 +7,6 @@ import { SDBaseIntegrationTest } from "test/integration/SDBaseIntegrationTest.t.
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
-import { SproConstantsLibrary as Constants } from "src/libraries/SproConstantsLibrary.sol";
 
 contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
     function test_shouldCreateERC20Proposal_shouldCreatePartialLoan_shouldWithdrawRemainingCollateral() external {
@@ -97,10 +96,10 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Create the proposal
         vm.prank(borrower);
         _createERC20Proposal();
+        uint256 BPS_DIVISOR = deployment.config.BPS_DIVISOR();
 
         // 95.01% of available credit limit
-        uint256 amount =
-            (Constants.BPS_DIVISOR - deployment.config._partialPositionBps() + 1) * CREDIT_LIMIT / Constants.BPS_DIVISOR;
+        uint256 amount = (BPS_DIVISOR - deployment.config._partialPositionBps() + 1) * CREDIT_LIMIT / BPS_DIVISOR;
 
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
@@ -112,7 +111,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             abi.encodeWithSelector(
                 ISproErrors.CreditAmountRemainingBelowMinimum.selector,
                 amount,
-                deployment.config._partialPositionBps() * CREDIT_LIMIT / Constants.BPS_DIVISOR
+                deployment.config._partialPositionBps() * CREDIT_LIMIT / deployment.config.BPS_DIVISOR()
             )
         );
         deployment.config.createLoan(proposal, amount, "");
@@ -137,7 +136,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             abi.encodeWithSelector(
                 ISproErrors.CreditAmountTooSmall.selector,
                 amount,
-                PARTIAL_POSITION_BPS * CREDIT_LIMIT / Constants.BPS_DIVISOR
+                PARTIAL_POSITION_BPS * CREDIT_LIMIT / deployment.config.BPS_DIVISOR()
             )
         );
         deployment.config.createLoan(proposal, amount, "");
@@ -157,8 +156,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         deployment.config.createProposal(proposal, "");
     }
 
-    function test_shouldFail_getProposalCreditStatus_ProposalNotMade() external {
-        vm.expectRevert(ISproErrors.ProposalNotMade.selector);
+    function test_shouldFail_getProposalCreditStatus_ProposalDoesNotExists() external {
+        vm.expectRevert(ISproErrors.ProposalDoesNotExists.selector);
         deployment.config.getProposalCreditStatus(proposal);
     }
 
@@ -216,9 +215,10 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(0, deployment.loanToken.balanceOf(bob));
         assertEq(0, deployment.loanToken.balanceOf(charlee));
 
-        assertEq(2000 * COLLATERAL_AMOUNT / Constants.BPS_DIVISOR, t20.balanceOf(borrower)); // 20% since 4 loans @ 5%
+        assertEq(2000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(borrower)); // 20% since 4
+            // loans @ 5%
             // minimum amount
-        assertEq(8000 * COLLATERAL_AMOUNT / Constants.BPS_DIVISOR, t20.balanceOf(address(deployment.config)));
+        assertEq(8000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(address(deployment.config)));
     }
 
     function test_MultiplePartialLoans_NotRevertIfOneLess() external {
@@ -243,9 +243,10 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(0, deployment.loanToken.balanceOf(bob));
         assertEq(0, deployment.loanToken.balanceOf(charlee));
 
-        assertEq(2000 * COLLATERAL_AMOUNT / Constants.BPS_DIVISOR, t20.balanceOf(borrower)); // 20% since 4 loans @ 5%
+        assertEq(2000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(borrower)); // 20% since 4
+            // loans @ 5%
             // minimum amount
-        assertEq(8000 * COLLATERAL_AMOUNT / Constants.BPS_DIVISOR, t20.balanceOf(address(deployment.config)));
+        assertEq(8000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(address(deployment.config)));
     }
 
     function test_MultiplePartialLoans_RepayMultiple_RepayerNotOwner() external {
@@ -263,8 +264,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         // Assertions
         assertEq(
             credit.balanceOf(borrower),
-            4 * (proposal.availableCreditLimit * deployment.config._partialPositionBps()) / Constants.BPS_DIVISOR
-                + 4 * fixedInterestAmount
+            4 * (proposal.availableCreditLimit * deployment.config._partialPositionBps())
+                / deployment.config.BPS_DIVISOR() + 4 * fixedInterestAmount
         ); // 4x minted in _setupMultipleRepay & not used
         require(
             credit.balanceOf(lender) == credit.balanceOf(alice) && credit.balanceOf(lender) == credit.balanceOf(bob)
@@ -276,9 +277,10 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(0, deployment.loanToken.balanceOf(alice));
         assertEq(0, deployment.loanToken.balanceOf(bob));
         assertEq(0, deployment.loanToken.balanceOf(charlee));
-        assertEq(2000 * COLLATERAL_AMOUNT / Constants.BPS_DIVISOR, t20.balanceOf(borrower)); // 20% since 4 loans @ 5%
+        assertEq(2000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(borrower)); // 20% since 4
+            // loans @ 5%
             // minimum amount
-        assertEq(8000 * COLLATERAL_AMOUNT / Constants.BPS_DIVISOR, t20.balanceOf(address(deployment.config)));
+        assertEq(8000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(address(deployment.config)));
     }
 
     function test_MultiplePartialLoans_RepayMultiple_ClaimMultiple() external {
@@ -314,7 +316,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         // Minimum credit amount
         uint256 minCreditAmount =
-            (proposal.availableCreditLimit * deployment.config._partialPositionBps()) / Constants.BPS_DIVISOR;
+            (proposal.availableCreditLimit * deployment.config._partialPositionBps()) / deployment.config.BPS_DIVISOR();
 
         // Setup loanIds array
         loanIds = new uint256[](4);
@@ -435,7 +437,9 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
     function testFuzz_loanAccruedInterest(uint256 amount, uint256 future) external {
         amount = bound(
-            amount, ((500 * CREDIT_LIMIT) / Constants.BPS_DIVISOR), ((9500 * CREDIT_LIMIT) / Constants.BPS_DIVISOR)
+            amount,
+            ((500 * CREDIT_LIMIT) / deployment.config.BPS_DIVISOR()),
+            ((9500 * CREDIT_LIMIT) / deployment.config.BPS_DIVISOR())
         );
         future = bound(future, 1 days, proposal.startTimestamp);
 
