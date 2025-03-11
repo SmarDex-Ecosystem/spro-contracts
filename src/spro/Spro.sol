@@ -306,11 +306,10 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             revert CallerNotLoanTokenHolder();
         }
 
-        LoanStatus status = loan.status;
-        if (status == LoanStatus.PAID_BACK) {
+        if (loan.status == LoanStatus.PAID_BACK) {
             // Loan has been paid back
             _settleLoanClaim(loanId, msg.sender, false);
-        } else if (status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp) {
+        } else if (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp) {
             // Loan is running but expired
             _settleLoanClaim(loanId, msg.sender, true);
         } else {
