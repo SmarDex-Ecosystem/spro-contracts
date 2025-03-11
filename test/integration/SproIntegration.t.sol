@@ -113,8 +113,8 @@ contract TestSproIntegration is SDBaseIntegrationTest {
         assertEq(credit.balanceOf(borrower), CREDIT_LIMIT);
     }
 
-    function test_RevertWhen_proposalNotMade() external {
-        vm.expectRevert(ISproErrors.ProposalNotMade.selector);
+    function test_RevertWhen_ProposalDoesNotExists() external {
+        vm.expectRevert(ISproErrors.ProposalDoesNotExists.selector);
         deployment.config.createLoan(proposal, CREDIT_LIMIT, "");
     }
 

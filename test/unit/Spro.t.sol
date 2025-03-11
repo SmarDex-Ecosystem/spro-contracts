@@ -40,7 +40,7 @@ contract TestSproConstructor is SproTest {
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, 0));
         new Spro(sdex, permit2, FEE, 0);
 
-        uint256 bpsDivisor = config.BPS_DIVISOR();
+        uint256 bpsDivisor = spro.BPS_DIVISOR();
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, bpsDivisor / 2 + 1));
         new Spro(sdex, permit2, FEE, uint16(bpsDivisor / 2 + 1));
     }
@@ -66,7 +66,7 @@ contract TestSproSetFee is SproTest {
     }
 
     function test_RevertWhen_excessiveFee() external {
-        uint256 maxSdexFee = config.MAX_SDEX_FEE();
+        uint256 maxSdexFee = spro.MAX_SDEX_FEE();
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.ExcessiveFee.selector, maxSdexFee + 1));
         vm.prank(owner);
         spro.setFee(maxSdexFee + 1);
@@ -119,7 +119,7 @@ contract TestSproPartialLendingThresholds is SproTest {
     }
 
     function testFuzz_RevertWhen_excessivePercentage(uint16 percentage) external {
-        vm.assume(percentage > config.BPS_DIVISOR() / 2);
+        vm.assume(percentage > spro.BPS_DIVISOR() / 2);
         vm.startPrank(owner);
 
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, percentage));
