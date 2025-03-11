@@ -1,77 +1,56 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-/**
- * @title ISproLoan
- * @notice A Loan token representing a loan in Spro protocol.
- * @dev Token doesn't hold any loan logic, just an address of a loan contract that minted the Loan token.
- *      Spro Loan token is shared between all loan contracts.
- */
-interface ISproLoan {
-    /* ------------------------------------------------------------ */
-    /*                VARIABLES & CONSTANTS DEFINITIONS             */
-    /* ------------------------------------------------------------ */
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-    /// @notice Get last used Loan id. First Loan id is 1. This value is incremental.
+interface ISproLoan is IERC721 {
+    /**
+     * @notice Get the last used ID.
+     * @dev  The first id is 1, this value is incremental.
+     */
     function _lastLoanId() external view returns (uint256);
 
     /// @notice Get loan metadata URI.
     function _metadataUri() external view returns (string memory);
 
-    /* ------------------------------------------------------------ */
-    /*                          EVENTS                              */
-    /* ------------------------------------------------------------ */
-
     /**
-     * @notice Emitted when a new Loan token is minted.
-     * @param loanId Id of a newly minted Loan token.
-     * @param owner Address of a Loan token receiver.
+     * @notice A new token was minted.
+     * @param loanId The Id of the new token.
+     * @param owner The address of the new token owner.
      */
     event LoanMinted(uint256 indexed loanId, address indexed owner);
 
     /**
-     * @notice Emitted when a Loan token is burned.
-     * @param loanId Id of a burned Loan token.
+     * @notice A token was burned.
+     * @param loanId the Id of the token.
      */
     event LoanBurned(uint256 indexed loanId);
 
     /**
-     * @notice Emitted when new token metadata uri is set.
-     * @param newUri The new uri.
+     * @notice The token metadata uri was updated.
+     * @param newUri The new metadata uri.
      */
     event LoanMetadataUriUpdated(string newUri);
 
-    /* ------------------------------------------------------------ */
-    /*                          FUNCTIONS                            */
-    /* ------------------------------------------------------------ */
-
     /**
-     * @notice Mint a new Loan token.
-     * @dev Only owner can mint a new Loan token.
-     * @param to Address of a Loan token receiver.
-     * @return loanId Id of a newly minted Loan token.
+     * @notice Mints a new token.
+     * @dev Only the owner can mint a new token.
+     * @param to The address the new token owner.
+     * @return loanId The Id of the new token.
      */
     function mint(address to) external returns (uint256 loanId);
 
     /**
-     * @notice Burn a Loan token.
-     * @dev Any address that is associated with given loan id can call this function.
-     *      It is enabled to let deprecated loan contracts repay and claim existing loans.
-     * @param loanId Id of a Loan token to be burned.
+     * @notice Burns a token.
+     * @dev Only the owner can burn a token.
+     * @param loanId The Id of the token to burn.
      */
     function burn(uint256 loanId) external;
 
     /**
-     * @notice Return a Loan token metadata uri base on a loan contract that minted the token.
-     * @param tokenId Id of a Loan token.
-     * @return Metadata uri for given token id (loan id).
-     */
-    function tokenURI(uint256 tokenId) external view returns (string memory);
-
-    /**
-     * @notice Set a new metadata uri for Loan tokens.
-     * @dev Only owner can set a new metadata uri.
-     * @param newMetadataUri New value of token metadata uri.
+     * @notice Sets a new metadata uri.
+     * @dev Only the owner can set a new metadata uri.
+     * @param newMetadataUri The new metadata uri.
      */
     function setLoanMetadataUri(string memory newMetadataUri) external;
 }
