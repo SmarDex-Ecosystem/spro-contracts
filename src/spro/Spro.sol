@@ -146,14 +146,18 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /// @inheritdoc ISpro
-    function cancelProposal(Proposal calldata proposal) external nonReentrant {
-        Proposal memory newProposal = _cancelProposal(proposal);
-
-        if (msg.sender != newProposal.proposer) {
+    function cancelProposal(Proposal memory proposal) external nonReentrant {
+        if (msg.sender != proposal.proposer) {
             revert CallerNotProposer();
         }
 
-        IERC20Metadata(newProposal.collateralAddress).safeTransfer(newProposal.proposer, newProposal.collateralAmount);
+        bytes32 proposalHash = keccak256(abi.encode(proposal));
+        proposal.collateralAmount = _withdrawableCollateral[proposalHash];
+        _withdrawableCollateral[proposalHash] = 0;
+        _proposalsMade[proposalHash] = false;
+
+        IERC20Metadata(proposal.collateralAddress).safeTransfer(proposal.proposer, proposal.collateralAmount);
+        emit ProposalCanceled(proposalHash);
     }
 
     /// @inheritdoc ISpro
@@ -391,23 +395,6 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         _withdrawableCollateral[proposalHash] = collateralAmount_;
 
         emit ProposalCreated(proposalHash, proposal.proposer, proposal);
-    }
-
-    /**
-     * @notice Cancel a proposal.
-     * @param proposal The proposal structure.
-     * @return proposal_ The new proposal structure.
-     */
-    function _cancelProposal(Proposal memory proposal) internal returns (Proposal memory proposal_) {
-        proposal_ = proposal;
-
-        bytes32 proposalHash = keccak256(abi.encode(proposal_));
-        proposal_.collateralAmount = _withdrawableCollateral[proposalHash];
-        delete _withdrawableCollateral[proposalHash];
-
-        _proposalsMade[proposalHash] = false;
-
-        emit ProposalCanceled(proposalHash);
     }
 
     /**
