@@ -19,4 +19,12 @@ contract SproHandler is Spro {
     function exposed_checkLoanCreditAddress(address loanCreditAddress, address expectedCreditAddress) external pure {
         _checkLoanCreditAddress(loanCreditAddress, expectedCreditAddress);
     }
+
+    function exposed_getLoanStatus(uint256 loanId) external view returns (LoanStatus status_) {
+        status_ = _getLoanStatus(loanId);
+    }
+
+    function exposed_set_loans(Loan memory loan_, uint256 loanId) external {
+        _loans[loanId] = loan_;
+    }
 }

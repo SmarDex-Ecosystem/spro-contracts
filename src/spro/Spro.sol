@@ -396,7 +396,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      * @param loanId Id of a loan in question.
      * @return status Loan status.
      */
-    function _getLoanStatus(uint256 loanId) private view returns (LoanStatus) {
+    function _getLoanStatus(uint256 loanId) internal view returns (LoanStatus) {
         Loan memory loan = _loans[loanId];
         return (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp)
             ? LoanStatus.EXPIRED
