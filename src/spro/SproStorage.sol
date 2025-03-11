@@ -8,7 +8,7 @@ import { ISproStorage } from "src/interfaces/ISproStorage.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract SproStorage is ISproStorage {
-    /// @dev Percentage denominator (10_000 = 100%)
+    /// @dev Divisor for basis point (BPS) values.
     uint256 public constant BPS_DIVISOR = 10_000;
 
     /// @dev The maximum SDEX fee.
@@ -32,9 +32,6 @@ contract SproStorage is ISproStorage {
     /// @inheritdoc ISproStorage
     SproLoan public immutable _loanToken;
 
-    /// @notice  Mapping of all Loan data by loan id.
-    mapping(uint256 => ISproTypes.Loan) internal _loans;
-
     /// @inheritdoc ISproStorage
     mapping(bytes32 => uint256) public _withdrawableCollateral;
 
@@ -43,4 +40,7 @@ contract SproStorage is ISproStorage {
 
     /// @inheritdoc ISproStorage
     mapping(bytes32 => uint256) public _creditUsed;
+
+    /// @notice  Mapping of all loan data by loan id.
+    mapping(uint256 => ISproTypes.Loan) internal _loans;
 }
