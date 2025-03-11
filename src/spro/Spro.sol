@@ -385,7 +385,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         collateralAmount_ = proposal.collateralAmount;
         _withdrawableCollateral[proposalHash] = collateralAmount_;
 
-        emit ProposalCreated(proposalHash, proposal.proposer, proposal);
+        emit ProposalCreated(proposal.proposer, proposal);
     }
 
     /**
