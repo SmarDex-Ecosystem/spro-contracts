@@ -110,9 +110,8 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     /// @inheritdoc ISpro
     function totalLoanRepaymentAmount(uint256[] calldata loanIds) external view returns (uint256 amount_) {
         if (loanIds.length == 0) return 0;
-        uint256 l = loanIds.length;
         address firstCreditAddress = _loans[loanIds[0]].credit;
-        for (uint256 i; i < l; ++i) {
+        for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
             Loan memory loan = _loans[loanId];
             if (loan.credit != firstCreditAddress) {
@@ -218,8 +217,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         uint256 numLoansToRepay;
 
         // Filter loans that can be repaid
-        uint256 l = loanIds.length;
-        for (uint256 i; i < l; ++i) {
+        for (uint256 i; i < loanIds.length; ++i) {
             uint256 loanId = loanIds[i];
             Loan memory loan = _loans[loanId];
 
