@@ -28,9 +28,6 @@ interface ISproErrors {
     /// @notice Thrown when a loan is still running.
     error LoanRunning();
 
-    /// @notice Thrown when a loan doesn't exist.
-    error NonExistingLoan();
-
     /// @notice Thrown when caller is not the loan token holder.
     error CallerNotLoanTokenHolder();
 
