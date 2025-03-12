@@ -8,6 +8,9 @@ env:
 jobs:
   lintspec:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     outputs:
       total-diags: ${{ steps.lintspec-action.outputs.total-diags }}
     steps:
