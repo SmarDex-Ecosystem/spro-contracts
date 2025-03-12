@@ -69,7 +69,7 @@ interface ISproTypes {
     /**
      * @notice Structure defining a proposal.
      * @param collateralAddress The collateral asset address.
-     * @param collateralAmountThe The collateral asset amount.
+     * @param collateralAmount The collateral asset amount.
      * @param creditAddress The credit asset address.
      * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
      * be borrowed using the proposal.

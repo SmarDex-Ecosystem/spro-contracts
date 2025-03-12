@@ -1,3 +1,5 @@
 paths = ["src"]
 constructor = true
 enforce_all = true
+enum_params = true
+struct_params = true
