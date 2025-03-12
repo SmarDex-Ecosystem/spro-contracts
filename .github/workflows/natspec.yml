@@ -11,7 +11,7 @@ jobs:
     outputs:
       total-diags: ${{ steps.lintspec-action.outputs.total-diags }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v2
       - name: Check NatSpec
         id: lintspec-action
         uses: beeb/lintspec@main
