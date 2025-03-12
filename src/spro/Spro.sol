@@ -92,14 +92,8 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /// @inheritdoc ISpro
-    function getLoan(uint256 loanId)
-        external
-        view
-        returns (Loan memory loan_, uint256 repaymentAmount_, address loanOwner_)
-    {
+    function getLoan(uint256 loanId) external view returns (Loan memory loan_) {
         loan_ = _loans[loanId];
-        loanOwner_ = loan_.status != LoanStatus.NONE ? _loanToken.ownerOf(loanId) : address(0);
-        repaymentAmount_ = loan_.principalAmount + loan_.fixedInterestAmount;
     }
 
     /// @inheritdoc ISpro

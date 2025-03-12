@@ -7,7 +7,6 @@ import { SproHandler } from "test/helper/SproHandler.sol";
 
 import { Spro } from "src/spro/Spro.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
-import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 
 contract SproSimpleLoanTest is Test {
     address public sdex = makeAddr("sdex");
@@ -21,10 +20,10 @@ contract SproSimpleLoanTest is Test {
         sproHandler = new SproHandler(sdex, permit2, 1, 1);
     }
 
-    function test_loanRepaymentAmount_shouldReturnZeroForNonExistingLoan() external view {
-        (, uint256 repaymentAmount,) = sproHandler.getLoan(0);
+    function test_getLoanReturnZeroForNonExistingLoan() external view {
+        ISproTypes.Loan memory loan = sproHandler.getLoan(0);
 
-        assertEq(repaymentAmount, 0);
+        assertEq(loan.borrower, address(0), "Borrower should be zero address");
     }
 
     function test_isLoanRepayable() external view {
