@@ -8,9 +8,6 @@ env:
 jobs:
   lintspec:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
     outputs:
       total-diags: ${{ steps.lintspec-action.outputs.total-diags }}
     steps:
@@ -20,6 +17,7 @@ jobs:
         uses: beeb/lintspec@main
         with:
           fail-on-problem: "false" # we handle failure manually to be able to trigger the notification
+          working-directory: "./src"
       - name: Fail on findings
         if: ${{ steps.lintspec-action.outputs.total-diags > 0 }}
         run: exit 1
