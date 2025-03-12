@@ -20,7 +20,7 @@ contract SproSimpleLoanTest is Test {
         sproHandler = new SproHandler(sdex, permit2, 1, 1);
     }
 
-    function test_loanRepaymentAmount_shouldReturnZeroForNonExistingLoan() external view {
+    function test_getLoanReturnZeroForNonExistingLoan() external view {
         ISproTypes.Loan memory loan = sproHandler.getLoan(0);
 
         assertEq(loan.borrower, address(0), "Borrower should be zero address");
