@@ -205,9 +205,9 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         if (loan.lender == loanOwner) {
             try this.tryClaimRepaidLoan(loanId, repaymentAmount, loan.credit, loanOwner) { }
             catch {
-                // Note: Safe transfer can fail. In that case leave the loan token in repaid state and wait for the Loan
+                // Safe transfer can fail. In that case leave the loan token in repaid state and wait for the Loan
                 // token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower from
-                // repaying the loan.
+                // repaying the loan
             }
         }
     }
@@ -262,9 +262,9 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
                 try this.tryClaimRepaidLoan(
                     loanId, loan.principalAmount + loan.fixedInterestAmount, loan.credit, loanOwner
                 ) { } catch {
-                    // Note: Safe transfer can fail. In that case leave the loan token in repaid state and wait for the
-                    // Loan token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower
-                    // from repaying the loan.
+                    // Safe transfer can fail. In that case leave the loan token in repaid state and wait for the loan
+                    // token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower from
+                    // repaying the loan
                 }
             }
         }
@@ -278,11 +278,8 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             revert UnauthorizedCaller();
         }
 
-        // Delete loan data & burn loan token before calling safe transfer
+        // Delete loan data & burn loan token
         _deleteLoan(loanId);
-        // TODO: check if a loan can be zero
-        if (creditAmount == 0) return;
-
         IERC20Metadata(creditAddress).safeTransfer(loanOwner, creditAmount);
         emit LoanClaimed(loanId, false);
     }
