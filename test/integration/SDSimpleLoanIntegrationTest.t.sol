@@ -441,6 +441,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
             ((500 * CREDIT_LIMIT) / deployment.config.BPS_DIVISOR()),
             ((9500 * CREDIT_LIMIT) / deployment.config.BPS_DIVISOR())
         );
+        uint256 fixedInterestAmount =
+            Math.mulDiv(amount, proposal.fixedInterestAmount, proposal.availableCreditLimit, Math.Rounding.Ceil);
         future = bound(future, 1 days, proposal.startTimestamp);
 
         // Create the proposal
@@ -459,5 +461,6 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
 
         ISproTypes.Loan memory loanInfo = deployment.config.getLoan(loanId);
         assertEq(loanInfo.principalAmount, amount);
+        assertEq(loanInfo.principalAmount + loanInfo.fixedInterestAmount, amount + fixedInterestAmount);
     }
 }
