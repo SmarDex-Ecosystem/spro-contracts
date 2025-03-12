@@ -7,11 +7,15 @@ interface ISproLoan is IERC721 {
     /**
      * @notice Get the last used ID.
      * @dev  The first id is 1, this value is incremental.
+     * @return _lastLoanId The last used ID.
      */
-    function _lastLoanId() external view returns (uint256);
+    function _lastLoanId() external view returns (uint256 _lastLoanId);
 
-    /// @notice Get loan metadata URI.
-    function _metadataUri() external view returns (string memory);
+    /**
+     * @notice Get loan metadata URI.
+     * @return _metadataUri The metadata URI.
+     */
+    function _metadataUri() external view returns (string memory _metadataUri);
 
     /**
      * @notice A new token was minted.
