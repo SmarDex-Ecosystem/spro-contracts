@@ -191,20 +191,18 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
 
         uint256 repaymentAmount = loan.principalAmount + loan.fixedInterestAmount;
-        loan.status = LoanStatus.PAID_BACK;
-        emit LoanPaidBack(loanId);
-
         if (permit2Data.length > 0) {
             _permit2Workflows(permit2Data, repaymentAmount.toUint160(), loan.credit);
         } else {
             IERC20Metadata(loan.credit).safeTransferFrom(msg.sender, address(this), repaymentAmount);
         }
         IERC20Metadata(loan.collateral).safeTransfer(loan.borrower, loan.collateralAmount);
+        loan.status = LoanStatus.PAID_BACK;
+        emit LoanPaidBack(loanId);
 
         address loanOwner = _loanToken.ownerOf(loanId);
         // If current loan owner is not original lender, the loan cannot be repaid directly
         if (loan.lender == loanOwner) {
-            // Try to repay directly
             try this.tryClaimRepaidLoan(loanId, repaymentAmount, loan.credit, loanOwner) { }
             catch {
                 // Note: Safe transfer can fail. In that case leave the loan token in repaid state and wait for the Loan
