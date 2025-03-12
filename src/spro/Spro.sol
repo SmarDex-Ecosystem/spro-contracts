@@ -50,7 +50,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                                  EXTERNAL                                  */
+    /*                             External Functions                             */
     /* -------------------------------------------------------------------------- */
 
     /// @inheritdoc ISpro
@@ -82,7 +82,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         view
         returns (uint256 used_, uint256 remaining_)
     {
-        bytes32 proposalHash = keccak256(abi.encode(proposal));
+        bytes32 proposalHash = getProposalHash(proposal);
         if (_proposalsMade[proposalHash]) {
             used_ = _creditUsed[proposalHash];
             remaining_ = proposal.availableCreditLimit - used_;
@@ -100,11 +100,6 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         loan_ = _loans[loanId];
         loanOwner_ = loan_.status != LoanStatus.NONE ? _loanToken.ownerOf(loanId) : address(0);
         repaymentAmount_ = loan_.principalAmount + loan_.fixedInterestAmount;
-    }
-
-    /// @inheritdoc ISpro
-    function getProposalHash(Proposal calldata proposal) external pure returns (bytes32 proposalHash_) {
-        return keccak256(abi.encode(proposal));
     }
 
     /// @inheritdoc ISpro
@@ -150,7 +145,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             revert CallerNotProposer();
         }
 
-        bytes32 proposalHash = keccak256(abi.encode(proposal));
+        bytes32 proposalHash = getProposalHash(proposal);
         proposal.collateralAmount = _withdrawableCollateral[proposalHash];
         _withdrawableCollateral[proposalHash] = 0;
         _proposalsMade[proposalHash] = false;
@@ -296,6 +291,15 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                              Public Functions                              */
+    /* -------------------------------------------------------------------------- */
+
+    /// @inheritdoc ISpro
+    function getProposalHash(Proposal memory proposal) public pure returns (bytes32 proposalHash_) {
+        return keccak256(abi.encode(proposal));
+    }
+
     /// @inheritdoc ISpro
     function claimLoan(uint256 loanId) public {
         Loan memory loan = _loans[loanId];
@@ -316,7 +320,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /* -------------------------------------------------------------------------- */
-    /*                                  INTERNAL                                  */
+    /*                             Internal Functions                             */
     /* -------------------------------------------------------------------------- */
 
     /**
@@ -373,7 +377,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         proposal.partialPositionBps = _partialPositionBps;
         proposal.proposer = msg.sender;
 
-        bytes32 proposalHash = keccak256(abi.encode(proposal));
+        bytes32 proposalHash = getProposalHash(proposal);
 
         if (_proposalsMade[proposalHash]) {
             revert ProposalAlreadyExists();
@@ -399,7 +403,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         internal
         returns (bytes32 proposalHash_, Terms memory loanTerms_)
     {
-        proposalHash_ = keccak256(abi.encode(proposal));
+        proposalHash_ = getProposalHash(proposal);
 
         // Try to accept proposal
         _acceptProposal(
