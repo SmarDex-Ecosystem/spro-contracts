@@ -47,7 +47,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
         returns (uint256 used_, uint256 remaining_);
 
     /**
-     * @notice Gets the proposal hash.
+     * @notice Retrieves the proposal hash.
      * @param proposal The proposal structure.
      * @return proposalHash_ The hash of the proposal.
      */
@@ -72,7 +72,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /**
      * @notice Cancels a borrowing proposal.
      * @dev Transfers unused collateral to the proposer.
-     * @param proposal The proposal structure
+     * @param proposal The proposal structure.
      */
     function cancelProposal(Proposal memory proposal) external;
 
