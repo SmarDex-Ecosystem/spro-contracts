@@ -29,6 +29,13 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     function setLoanMetadataUri(string memory newMetadataUri) external;
 
     /**
+     * @notice Retrieves the loan data for a given loan id.
+     * @param loanId The ID of the loan.
+     * @return loan_ The loan data.
+     */
+    function getLoan(uint256 loanId) external returns (Loan memory loan_);
+
+    /**
      * @notice Retrieves the used and remaining credit for a proposal.
      * @param proposal The proposal structure.
      * @return used_ The used credit of the proposal.
@@ -38,13 +45,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
         external
         view
         returns (uint256 used_, uint256 remaining_);
-
-    /**
-     * @notice Retrieves the loan data for a given loan id.
-     * @param loanId The ID of the loan.
-     * @return loan_ The loan data.
-     */
-    function getLoan(uint256 loanId) external returns (Loan memory loan_);
 
     /**
      * @notice Gets the proposal hash.
