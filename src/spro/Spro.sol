@@ -306,10 +306,10 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
         if (loan.status == LoanStatus.PAID_BACK) {
             // Loan has been paid back
-            _settleLoanClaim(loanId, msg.sender, false);
+            _settleLoanClaim(loanId, loan, msg.sender, false);
         } else if (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp) {
             // Loan is running but expired
-            _settleLoanClaim(loanId, msg.sender, true);
+            _settleLoanClaim(loanId, loan, msg.sender, true);
         } else {
             revert LoanRunning();
         }
@@ -513,12 +513,11 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     /**
      * @notice Settle the loan claim.
      * @param loanId The Id of the loan to settle.
+     * @param loan The loan structure.
      * @param loanOwner The owner of the loan token.
      * @param defaulted True if the loan was defaulted.
      */
-    function _settleLoanClaim(uint256 loanId, address loanOwner, bool defaulted) internal {
-        Loan memory loan = _loans[loanId];
-
+    function _settleLoanClaim(uint256 loanId, Loan memory loan, address loanOwner, bool defaulted) internal {
         // Store in memory before deleting the loan
         address asset = defaulted ? loan.collateral : loan.credit;
         uint256 assetAmount = defaulted ? loan.collateralAmount : loan.principalAmount + loan.fixedInterestAmount;
