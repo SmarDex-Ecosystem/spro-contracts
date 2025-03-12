@@ -113,7 +113,6 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @dev This function can only be called by the protocol. If the transfer fails, the loan token will remain in
      * a repaid state, allowing the loan token holder to claim the repayment credit manually.
      * @param loanId The ID of the loan being claimed.
-     * @param creditAmount The amount of credit tokens to be claimed.
      * @param loanOwner The address of the loan token holder.
      */
     function tryClaimRepaidLoan(uint256 loanId, uint256 creditAmount, address creditAddress, address loanOwner)
