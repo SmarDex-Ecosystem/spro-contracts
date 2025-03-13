@@ -189,14 +189,12 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         emit LoanPaidBack(loanId);
 
         address loanOwner = _loanToken.ownerOf(loanId);
-        // If current loan owner is not original lender, the loan cannot be repaid directly
-        if (loan.lender == loanOwner) {
-            try this.tryClaimRepaidLoan(loanId, repaymentAmount, loan.credit, loanOwner) { }
-            catch {
-                // Safe transfer can fail. In that case leave the loan token in repaid state and wait for the Loan
-                // token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower from
-                // repaying the loan
-            }
+
+        try this.tryClaimRepaidLoan(loanId, repaymentAmount, loan.credit, loanOwner) { }
+        catch {
+            // Safe transfer can fail. In that case leave the loan token in repaid state and wait for the Loan
+            // token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower from
+            // repaying the loan
         }
     }
 
@@ -245,15 +243,12 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
             address loanOwner = _loanToken.ownerOf(loanId);
             // If current loan owner is not original lender, the loan cannot be repaid directly
-            if (loan.lender == loanOwner) {
-                // Try to repay directly (for each loanId)
-                try this.tryClaimRepaidLoan(
-                    loanId, loan.principalAmount + loan.fixedInterestAmount, loan.credit, loanOwner
-                ) { } catch {
-                    // Safe transfer can fail. In that case leave the loan token in repaid state and wait for the loan
-                    // token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower from
-                    // repaying the loan
-                }
+
+            try this.tryClaimRepaidLoan(loanId, loan.principalAmount + loan.fixedInterestAmount, loan.credit, loanOwner)
+            { } catch {
+                // Safe transfer can fail. In that case leave the loan token in repaid state and wait for the loan
+                // token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower from
+                // repaying the loan
             }
         }
     }

@@ -292,8 +292,11 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.prank(bob);
         deployment.loanToken.transferFrom(bob, lender, 3);
 
+        // block transfers to enter in the try/catch block
+        credit.blockTransfers(true, lender);
         vm.prank(borrower);
         deployment.config.repayMultipleLoans(loanIds, "");
+        credit.blockTransfers(false, address(0));
 
         uint256[] memory ids = new uint256[](2);
         ids[0] = 2;
@@ -368,7 +371,8 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.prank(lender);
         deployment.loanToken.transferFrom(lender, address(this), loanId);
 
-        // Borrower: repays loan
+        // block transfers to enter in the try/catch block
+        credit.blockTransfers(true, address(this));
         vm.prank(borrower);
         deployment.config.repayLoan(loanId, "");
 
