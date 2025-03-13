@@ -18,14 +18,14 @@ interface ISproTypes {
 
     /**
      * @notice Structure defining a loan terms.
-     * @param lender Address of a lender.
-     * @param borrower Address of a borrower.
+     * @param lender The address of a lender.
+     * @param borrower The address of a borrower.
      * @param startTimestamp The start timestamp of the proposal.
      * @param loanExpiration The expiration timestamp of the proposal.
-     * @param collateral Address of a collateral asset.
-     * @param collateralAmount Amount of a collateral asset.
-     * @param credit Address of a credit asset.
-     * @param creditAmount Amount of a credit asset.
+     * @param collateral The address of a collateral asset.
+     * @param collateralAmount The amount of a collateral asset.
+     * @param credit The address of a credit asset.
+     * @param creditAmount The amount of a credit asset.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      */
     struct Terms {
@@ -43,13 +43,13 @@ interface ISproTypes {
     /**
      * @notice Struct defining a loan.
      * @param status Loan status.
-     * @param lender Address of a lender that funded the loan.
-     * @param borrower Address of a borrower.
+     * @param lender The address of a lender that funded the loan.
+     * @param borrower The address of a borrower.
      * @param startTimestamp The start timestamp of the proposal.
      * @param loanExpiration The expiration timestamp of the proposal.
-     * @param collateral Address of a collateral asset.
-     * @param collateralAmount Amount of a collateral asset.
-     * @param credit Address of an asset used as a loan credit.
+     * @param collateral The address of a collateral asset.
+     * @param collateralAmount The amount of a collateral asset.
+     * @param credit The address of an asset used as a loan credit.
      * @param principalAmount Principal amount in credit asset tokens.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      */

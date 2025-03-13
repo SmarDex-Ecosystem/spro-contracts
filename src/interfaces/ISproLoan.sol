@@ -6,7 +6,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 interface ISproLoan is IERC721 {
     /**
      * @notice Retrieves the last used ID.
-     * @dev The first id is 1, this value is incremental.
+     * @dev The first ID is 1, this value is incremental.
      * @return _lastLoanId The last used ID.
      */
     function _lastLoanId() external view returns (uint256 _lastLoanId);
@@ -39,7 +39,7 @@ interface ISproLoan is IERC721 {
     /**
      * @notice Mints a new token.
      * @dev Only the owner can mint a new token.
-     * @param to The address the new token owner.
+     * @param to The address of the new token owner.
      * @return loanId The Id of the new token.
      */
     function mint(address to) external returns (uint256 loanId);
