@@ -42,7 +42,7 @@ interface ISproTypes {
 
     /**
      * @notice Struct defining a loan.
-     * @param status Loan status.
+     * @param status The loan status.
      * @param lender The address of a lender that funded the loan.
      * @param borrower The address of a borrower.
      * @param startTimestamp The start timestamp of the proposal.

@@ -7,8 +7,8 @@ import { SproLoan } from "src/spro/SproLoan.sol";
 
 interface ISproStorage {
     /**
-     * @notice Retrieves the divisor used for converting basis points (BPS) values into percentages.
-     * @return BPS_DIVISOR The divisor used to calculate percentage values.
+     * @notice Retrieves the divisor used for BPS calculations(BPS).
+     * @return BPS_DIVISOR The divisor used.
      */
     function BPS_DIVISOR() external view returns (uint256 BPS_DIVISOR);
 
@@ -26,13 +26,13 @@ interface ISproStorage {
 
     /**
      * @notice Retrieves the address of the SDEX token contract.
-     * @return SDEX The official address of the SDEX token contract.
+     * @return SDEX The address of the SDEX token contract.
      */
     function SDEX() external view returns (address SDEX);
 
     /**
      * @notice Retrieves the address of the Permit2 contract used for transfer management.
-     * @return PERMIT2 The official address of the Permit2 contract.
+     * @return PERMIT2 The address of the Permit2 contract.
      */
     function PERMIT2() external view returns (IAllowanceTransfer PERMIT2);
 
