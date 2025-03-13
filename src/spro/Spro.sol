@@ -30,7 +30,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
     /**
      * @param sdex The SDEX token address.
-     * @param permit2 The PERMIT2 contract address.
+     * @param permit2 The permit2 contract address.
      * @param fee The fixed SDEX fee value.
      * @param partialPositionBps The minimum usage ratio for partial lending (in basis points).
      */
