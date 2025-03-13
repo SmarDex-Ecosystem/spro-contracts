@@ -113,20 +113,24 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /// @inheritdoc ISpro
-    function createProposal(Proposal calldata proposal, bytes calldata permit2Data) external nonReentrant {
-        (address collateral, uint256 collateralAmount) = _makeProposal(proposal);
+    function createProposal(Proposal memory proposal, bytes calldata permit2Data) external nonReentrant {
+        _makeProposal(proposal);
 
         // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
             (IAllowanceTransfer.PermitBatch memory permitBatch, bytes memory data) =
                 abi.decode(permit2Data, (IAllowanceTransfer.PermitBatch, bytes));
             PERMIT2.permit(msg.sender, permitBatch, data);
-            PERMIT2.transferFrom(msg.sender, address(this), collateralAmount.toUint160(), collateral);
+            PERMIT2.transferFrom(
+                msg.sender, address(this), proposal.collateralAmount.toUint160(), proposal.collateralAddress
+            );
             if (_fee > 0) {
                 PERMIT2.transferFrom(msg.sender, DEAD_ADDRESS, _fee.toUint160(), address(SDEX));
             }
         } else {
-            IERC20Metadata(collateral).safeTransferFrom(msg.sender, address(this), collateralAmount);
+            IERC20Metadata(proposal.collateralAddress).safeTransferFrom(
+                msg.sender, address(this), proposal.collateralAmount
+            );
             if (_fee > 0) {
                 IERC20Metadata(SDEX).safeTransferFrom(msg.sender, DEAD_ADDRESS, _fee);
             }
@@ -189,14 +193,12 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         emit LoanPaidBack(loanId);
 
         address loanOwner = _loanToken.ownerOf(loanId);
-        // If current loan owner is not original lender, the loan cannot be repaid directly
-        if (loan.lender == loanOwner) {
-            try this.tryClaimRepaidLoan(loanId, repaymentAmount, loan.credit, loanOwner) { }
-            catch {
-                // Safe transfer can fail. In that case leave the loan token in repaid state and wait for the Loan
-                // token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower from
-                // repaying the loan
-            }
+
+        try this.tryClaimRepaidLoan(loanId, repaymentAmount, loan.credit, loanOwner) { }
+        catch {
+            // Safe transfer can fail. In that case leave the loan token in repaid state and wait for the Loan
+            // token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower from
+            // repaying the loan
         }
     }
 
@@ -245,15 +247,12 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
             address loanOwner = _loanToken.ownerOf(loanId);
             // If current loan owner is not original lender, the loan cannot be repaid directly
-            if (loan.lender == loanOwner) {
-                // Try to repay directly (for each loanId)
-                try this.tryClaimRepaidLoan(
-                    loanId, loan.principalAmount + loan.fixedInterestAmount, loan.credit, loanOwner
-                ) { } catch {
-                    // Safe transfer can fail. In that case leave the loan token in repaid state and wait for the loan
-                    // token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower from
-                    // repaying the loan
-                }
+
+            try this.tryClaimRepaidLoan(loanId, loan.principalAmount + loan.fixedInterestAmount, loan.credit, loanOwner)
+            { } catch {
+                // Safe transfer can fail. In that case leave the loan token in repaid state and wait for the loan
+                // token owner to claim the repaid credit. Otherwise lender would be able to prevent borrower from
+                // repaying the loan
             }
         }
     }
@@ -329,27 +328,10 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /**
-     * @notice Return a Loan status associated with a loan id.
-     * @param loanId The Id of a loan.
-     * @return status_ The loan status.
-     */
-    function _getLoanStatus(uint256 loanId) internal view returns (LoanStatus status_) {
-        Loan memory loan = _loans[loanId];
-        return (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp)
-            ? LoanStatus.EXPIRED
-            : loan.status;
-    }
-
-    /**
      * @notice Make a proposal.
      * @param proposal The proposal structure.
-     * @return collateral_ The address of the collateral token.
-     * @return collateralAmount_ The amount of collateral.
      */
-    function _makeProposal(Proposal memory proposal)
-        internal
-        returns (address collateral_, uint256 collateralAmount_)
-    {
+    function _makeProposal(Proposal memory proposal) internal {
         if (proposal.startTimestamp >= proposal.loanExpiration) {
             revert InvalidDurationStartTime();
         }
@@ -373,9 +355,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
 
         _proposalsMade[proposalHash] = true;
-        collateral_ = proposal.collateralAddress;
-        collateralAmount_ = proposal.collateralAmount;
-        _withdrawableCollateral[proposalHash] = collateralAmount_;
+        _withdrawableCollateral[proposalHash] = proposal.collateralAmount;
 
         emit ProposalCreated(proposalHash, proposal.proposer, proposal);
     }
