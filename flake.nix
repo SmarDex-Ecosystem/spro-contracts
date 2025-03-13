@@ -26,6 +26,7 @@
             foundry-bin
             just
             lcov
+            lintspec
             nodejs_20
             solc_0_8_26
             (solc.mkDefault pkgs solc_0_8_26)
