@@ -4,10 +4,10 @@ pragma solidity >=0.8.0;
 interface ISproTypes {
     /**
      * @notice Represents the status of a loan.
-     * @param NONE none/dead.
-     * @param RUNNING running/accepted offer/accepted request.
-     * @param PAID_BACK paid back.
-     * @param EXPIRED expired.
+     * @param NONE The loan doesn't exist.
+     * @param RUNNING The loan is running.
+     * @param PAID_BACK The loan was paid back and can be claimed.
+     * @param EXPIRED The loan expired and can be claimed.
      */
     enum LoanStatus {
         NONE,
