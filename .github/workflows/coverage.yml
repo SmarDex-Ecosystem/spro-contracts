@@ -30,7 +30,7 @@ jobs:
         run: npm ci && forge soldeer install
 
       - name: Generate coverage report
-        run: npm run coverage:custom
+        run: npm run coverage
 
       - name: Setup LCOV
         uses: hrishikesh-kadam/setup-lcov@v1
