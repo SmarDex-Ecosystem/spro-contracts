@@ -7,8 +7,8 @@ import { SproLoan } from "src/spro/SproLoan.sol";
 
 interface ISproStorage {
     /**
-     * @notice Retrieves the divisor used for BPS calculations(BPS).
-     * @return BPS_DIVISOR The divisor used.
+     * @notice Retrieves the denominator used for the reward multipliers.
+     * @return BPS_DIVISOR The BPS divisor.
      */
     function BPS_DIVISOR() external view returns (uint256 BPS_DIVISOR);
 
