@@ -134,9 +134,7 @@ contract TestSproIntegration is SDBaseIntegrationTest {
 
     function test_RevertWhen_availableCreditExceeded() external {
         _createERC20Proposal();
-        vm.expectRevert(
-            abi.encodeWithSelector(ISproErrors.AvailableCreditLimitExceeded.selector, CREDIT_LIMIT + 1, CREDIT_LIMIT)
-        );
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.AvailableCreditLimitExceeded.selector, CREDIT_LIMIT));
         deployment.config.createLoan(proposal, CREDIT_LIMIT + 1, "");
     }
 }

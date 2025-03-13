@@ -358,7 +358,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         credit.approve(address(deployment.config), totalAmount);
     }
 
-    function test_shouldFail_claimLoan_CallerNotLoanTokenHolder() external {
+    function test_RevertWhen_claimLoanCallerNotLoanTokenHolder() external {
         _createERC20Proposal();
 
         // Mint initial state & approve credit
@@ -380,17 +380,13 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         vm.prank(lender);
         deployment.loanToken.transferFrom(lender, address(this), loanId);
 
-        // Borrower: repays loan
-        vm.prank(borrower);
-        deployment.config.repayLoan(loanId, "");
-
         // Initial lender repays loan
         vm.startPrank(lender);
         vm.expectRevert(ISproErrors.CallerNotLoanTokenHolder.selector);
         deployment.config.claimLoan(loanId);
     }
 
-    function test_shouldFail_claimLoan_RunningAndExpired() external {
+    function test_RevertWhen_claimLoanRunningAndExpired() external {
         _createERC20Proposal();
 
         // Mint initial state & approve credit
@@ -422,7 +418,7 @@ contract SDSimpleLoanIntegrationTest is SDBaseIntegrationTest {
         assertEq(deployment.loanToken.balanceOf(address(this)), 0); // loanToken balance should be zero now
     }
 
-    function test_shouldFail_claimLoan_LoanRunning() external {
+    function test_RevertWhen_claimLoan_LoanRunning() external {
         _createERC20Proposal();
 
         // Mint initial state & approve credit
