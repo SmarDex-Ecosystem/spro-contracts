@@ -11,13 +11,13 @@ contract SproStorage is ISproStorage {
     /// @dev The address that will receive all fees.
     address internal constant DEAD_ADDRESS = address(0xdead);
 
-    /// @dev The divisor for basis point (BPS) values.
+    /// @inheritdoc ISproStorage
     uint256 public constant BPS_DIVISOR = 10_000;
 
-    /// @dev The maximum SDEX fee.
+    /// @inheritdoc ISproStorage
     uint256 public constant MAX_SDEX_FEE = 1_000_000e18; // 1,000,000 SDEX
 
-    /// @dev The minimum loan duration.
+    /// @inheritdoc ISproStorage
     uint32 public constant MIN_LOAN_DURATION = 10 minutes;
 
     /// @inheritdoc ISproStorage

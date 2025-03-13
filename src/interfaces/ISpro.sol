@@ -30,7 +30,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Retrieves the loan data for a given loan id.
-     * @param loanId The ID of the loan.
+     * @param loanId The loan ID.
      * @return loan_ The loan data.
      */
     function getLoan(uint256 loanId) external returns (Loan memory loan_);
@@ -47,7 +47,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
         returns (uint256 used_, uint256 remaining_);
 
     /**
-     * @notice Gets the proposal hash.
+     * @notice Retrieves the proposal hash.
      * @param proposal The proposal structure.
      * @return proposalHash_ The hash of the proposal.
      */
@@ -72,16 +72,16 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /**
      * @notice Cancels a borrowing proposal.
      * @dev Transfers unused collateral to the proposer.
-     * @param proposal The proposal structure
+     * @param proposal The proposal structure.
      */
     function cancelProposal(Proposal memory proposal) external;
 
     /**
      * @notice Creates a new loan.
      * @param proposal The proposal structure.
-     * @param creditAmount The Amount of credit tokens.
+     * @param creditAmount The amount of credit tokens.
      * @param permit2Data The permit2 data, if the user opts to use permit2.
-     * @return loanId_ The id of the created loan token.
+     * @return loanId_ The ID of the created loan token.
      */
     function createLoan(Proposal memory proposal, uint256 creditAmount, bytes calldata permit2Data)
         external
@@ -92,7 +92,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @dev Any address can repay an active loan. The collateral will be transferred to the borrower associated
      * with the loan. If the loan token holder is the original lender, the repayment credit will be transferred to them.
      * Otherwise, the repayment credit will be transferred to the protocol, awaiting the new owner to claim it.
-     * @param loanId The ID of the loan being repaid.
+     * @param loanId The loan ID being repaid.
      * @param permit2Data The permit2 data, if the user opts to use permit2.
      */
     function repayLoan(uint256 loanId, bytes calldata permit2Data) external;
@@ -112,8 +112,9 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @notice Attempts to claim a repaid loan.
      * @dev This function can only be called by the protocol. If the transfer fails, the loan token will remain in
      * a repaid state, allowing the loan token holder to claim the repayment credit manually.
-     * @param loanId The ID of the loan being claimed.
+     * @param loanId The loan ID being claimed.
      * @param creditAmount The amount of credit tokens to be claimed.
+     * @param creditAddress The address of the credit token send to the lender.
      * @param loanOwner The address of the loan token holder.
      */
     function tryClaimRepaidLoan(uint256 loanId, uint256 creditAmount, address creditAddress, address loanOwner)
@@ -131,7 +132,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @notice Claims a repaid or defaulted loan.
      * @dev Only a loan token holder can claim their repaid or defaulted loan. Claiming transfers the repaid credit
      * or collateral to the loan token holder and burns the loan token.
-     * @param loanId The ID of the loan being claimed.
+     * @param loanId The loan ID being claimed.
      */
     function claimLoan(uint256 loanId) external;
 }

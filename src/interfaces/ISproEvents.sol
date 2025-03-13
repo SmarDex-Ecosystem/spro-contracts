@@ -22,7 +22,7 @@ interface ISproEvents is ISproTypes {
 
     /**
      * @notice A new loan was created.
-     * @param loanId The id of the loan.
+     * @param loanId The loan ID.
      * @param proposalHash The hash of the proposal.
      * @param terms The terms of the loan.
      */
@@ -30,13 +30,13 @@ interface ISproEvents is ISproTypes {
 
     /**
      * @notice A loan was paid back.
-     * @param loanId The id of the loan.
+     * @param loanId The loan ID.
      */
     event LoanPaidBack(uint256 indexed loanId);
 
     /**
      * @notice A repaid or defaulted loan was claimed.
-     * @param loanId The id of the loan.
+     * @param loanId The loan ID.
      * @param defaulted True if the loan was defaulted.
      */
     event LoanClaimed(uint256 indexed loanId, bool indexed defaulted);

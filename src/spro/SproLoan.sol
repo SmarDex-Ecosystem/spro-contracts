@@ -15,8 +15,8 @@ contract SproLoan is ISproLoan, ERC721, Ownable {
     /// @inheritdoc ISproLoan
     string public _metadataUri;
 
-    /// @param creator Address of the creator.
-    constructor(address creator) ERC721("Spro Loan", "LOAN") Ownable(creator) { }
+    /// @param deployer The deployer address.
+    constructor(address deployer) ERC721("Spro Loan", "LOAN") Ownable(deployer) { }
 
     /// @inheritdoc ISproLoan
     function mint(address to) external onlyOwner returns (uint256 loanId_) {

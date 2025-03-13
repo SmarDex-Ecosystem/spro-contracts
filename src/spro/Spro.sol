@@ -497,7 +497,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
     /**
      * @notice Transfer an asset amount to the protocol via permit2.
-     * @param permit2Data The permit data.
+     * @param permit2Data The permit2 data.
      * @param amount The amount to transfer.
      * @param token The asset address.
      */
