@@ -329,18 +329,6 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /**
-     * @notice Return a Loan status associated with a loan id.
-     * @param loanId The Id of a loan.
-     * @return status_ The loan status.
-     */
-    function _getLoanStatus(uint256 loanId) internal view returns (LoanStatus status_) {
-        Loan memory loan = _loans[loanId];
-        return (loan.status == LoanStatus.RUNNING && loan.loanExpiration <= block.timestamp)
-            ? LoanStatus.EXPIRED
-            : loan.status;
-    }
-
-    /**
      * @notice Make a proposal.
      * @param proposal The proposal structure.
      * @return collateral_ The address of the collateral token.
