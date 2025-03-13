@@ -8,6 +8,7 @@ import { PermitSignature } from "permit2/test/utils/PermitSignature.sol";
 import { SDBaseIntegrationTest } from "test/integration/utils/Fixtures.sol";
 import { T20 } from "test/helper/T20.sol";
 
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { Spro } from "src/spro/Spro.sol";
 
 contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {

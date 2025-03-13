@@ -8,6 +8,7 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Spro } from "src/spro/Spro.sol";
 import { ISproEvents } from "src/interfaces/ISproEvents.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract SproTest is Test {
     Spro spro;
@@ -155,7 +156,7 @@ contract TestSproSetLoanMetadataUri is SproTest {
 contract TestSproTryClaimRepaidLoan is SproTest {
     function test_RevertWhen_tryClaimRepaidLoanUnauthorized() external {
         vm.expectRevert(ISproErrors.UnauthorizedCaller.selector);
-        spro.tryClaimRepaidLoan(0, 0, address(0));
+        spro.tryClaimRepaidLoan(0, 0, address(0), address(0));
     }
 }
 
@@ -165,8 +166,8 @@ contract TestSproTryClaimRepaidLoan is SproTest {
 
 contract TestSproGetLoan is SproTest {
     function test_getLoanReturnZeroForNonExistingLoan() external view {
-        (, uint256 repaymentAmount,) = spro.getLoan(0);
+        ISproTypes.Loan memory loan = spro.getLoan(0);
 
-        assertEq(repaymentAmount, 0);
+        assertEq(loan.lender, address(0));
     }
 }
