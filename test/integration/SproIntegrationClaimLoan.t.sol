@@ -1,0 +1,103 @@
+// SPDX-License-Identifier: GPL-3.0-only
+pragma solidity >=0.8.0;
+
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+
+import { SDBaseIntegrationTest } from "test/integration/utils/Fixtures.sol";
+
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+
+contract SproIntegrationClaimLoan is SDBaseIntegrationTest {
+    function setUp() public {
+        _setUp(false);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                  claimLoan                                 */
+    /* -------------------------------------------------------------------------- */
+
+    function test_RevertWhen_claimLoanCallerNotLoanTokenHolder() external {
+        _createERC20Proposal();
+
+        // Mint initial state & approve credit
+        credit.mint(lender, INITIAL_CREDIT_BALANCE);
+        vm.prank(lender);
+        credit.approve(address(deployment.config), CREDIT_LIMIT);
+
+        // Lender: creates the loan
+        vm.prank(lender);
+        uint256 loanId = deployment.config.createLoan(proposal, CREDIT_AMOUNT, "");
+
+        vm.startPrank(borrower);
+        // Borrower approvals for credit token
+        credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
+        credit.approve(address(deployment.config), CREDIT_AMOUNT + FIXED_INTEREST_AMOUNT);
+        vm.stopPrank();
+
+        // Transfer loanToken to this address
+        vm.prank(lender);
+        deployment.loanToken.transferFrom(lender, address(this), loanId);
+
+        // Initial lender repays loan
+        vm.startPrank(lender);
+        vm.expectRevert(ISproErrors.CallerNotLoanTokenHolder.selector);
+        deployment.config.claimLoan(loanId);
+    }
+
+    function test_RevertWhen_claimLoanRunningAndExpired() external {
+        _createERC20Proposal();
+
+        // Mint initial state & approve credit
+        credit.mint(lender, INITIAL_CREDIT_BALANCE);
+        vm.prank(lender);
+        credit.approve(address(deployment.config), CREDIT_LIMIT);
+
+        // Lender: creates the loan
+        vm.prank(lender);
+        uint256 loanId = deployment.config.createLoan(proposal, CREDIT_LIMIT, "");
+
+        // Borrower approvals for credit token
+        vm.startPrank(borrower);
+        credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
+        credit.approve(address(deployment.config), CREDIT_LIMIT + FIXED_INTEREST_AMOUNT);
+        vm.stopPrank();
+
+        // Transfer loanToken to this address
+        vm.prank(lender);
+        deployment.loanToken.transferFrom(lender, address(this), loanId);
+
+        skip(100 days); // loan should be expired
+
+        // loan token holder claims the expired loan
+        deployment.config.claimLoan(loanId);
+
+        assertEq(t20.balanceOf(address(this)), proposal.collateralAmount); // collateral amount transferred to loan
+        // token holder
+        assertEq(deployment.loanToken.balanceOf(address(this)), 0); // loanToken balance should be zero now
+    }
+
+    function test_RevertWhen_claimLoan_LoanRunning() external {
+        _createERC20Proposal();
+
+        // Mint initial state & approve credit
+        credit.mint(lender, INITIAL_CREDIT_BALANCE);
+        vm.prank(lender);
+        credit.approve(address(deployment.config), CREDIT_LIMIT);
+
+        // Lender: creates the loan
+        uint256 creditAmount = CREDIT_AMOUNT;
+        vm.prank(lender);
+        uint256 loanId = deployment.config.createLoan(proposal, creditAmount, "");
+
+        vm.startPrank(borrower);
+        // Borrower approvals for credit token
+        credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
+        credit.approve(address(deployment.config), CREDIT_AMOUNT + FIXED_INTEREST_AMOUNT);
+        vm.stopPrank();
+
+        // Try to repay loan
+        vm.startPrank(lender);
+        vm.expectRevert(ISproErrors.LoanRunning.selector);
+        deployment.config.claimLoan(loanId);
+    }
+}

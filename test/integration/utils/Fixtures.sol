@@ -23,7 +23,7 @@ contract SDBaseIntegrationTest is Test {
     address alice;
     uint256 aliceKey;
     address bob;
-    address charlee;
+    address charlie;
 
     // Constants
     uint256 public constant COLLATERAL_AMOUNT = 10_000e18;
@@ -96,7 +96,7 @@ contract SDBaseIntegrationTest is Test {
         // Setup lender addresses
         (alice, aliceKey) = makeAddrAndKey("alice");
         bob = makeAddr("bob");
-        charlee = makeAddr("charlee");
+        charlie = makeAddr("charlie");
     }
 
     function _createERC20Proposal() internal {

@@ -15,8 +15,4 @@ contract SproHandler is Spro {
     {
         canBeRepaid_ = _isLoanRepayable(status, loanExpiration);
     }
-
-    function exposed_set_loans(Loan memory loan_, uint256 loanId) external {
-        _loans[loanId] = loan_;
-    }
 }
