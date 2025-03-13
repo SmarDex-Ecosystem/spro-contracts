@@ -4,10 +4,10 @@ pragma solidity >=0.8.0;
 interface ISproTypes {
     /**
      * @notice Represents the status of a loan.
-     * @param NONE none/dead.
-     * @param RUNNING running/accepted offer/accepted request.
-     * @param PAID_BACK paid back.
-     * @param EXPIRED expired.
+     * @param NONE The loan doesn't exist.
+     * @param RUNNING The loan is running.
+     * @param PAID_BACK The loan was paid back and can be claimed.
+     * @param EXPIRED The loan expired and can be claimed.
      */
     enum LoanStatus {
         NONE,
@@ -18,14 +18,14 @@ interface ISproTypes {
 
     /**
      * @notice Structure defining a loan terms.
-     * @param lender Address of a lender.
-     * @param borrower Address of a borrower.
+     * @param lender The address of a lender.
+     * @param borrower The address of a borrower.
      * @param startTimestamp The start timestamp of the proposal.
      * @param loanExpiration The expiration timestamp of the proposal.
-     * @param collateral Address of a collateral asset.
-     * @param collateralAmount Amount of a collateral asset.
-     * @param credit Address of a credit asset.
-     * @param creditAmount Amount of a credit asset.
+     * @param collateral The address of a collateral asset.
+     * @param collateralAmount The amount of a collateral asset.
+     * @param credit The address of a credit asset.
+     * @param creditAmount The amount of a credit asset.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      */
     struct Terms {
@@ -42,14 +42,14 @@ interface ISproTypes {
 
     /**
      * @notice Struct defining a loan.
-     * @param status Loan status.
-     * @param lender Address of a lender that funded the loan.
-     * @param borrower Address of a borrower.
+     * @param status The loan status.
+     * @param lender The address of a lender that funded the loan.
+     * @param borrower The address of a borrower.
      * @param startTimestamp The start timestamp of the proposal.
      * @param loanExpiration The expiration timestamp of the proposal.
-     * @param collateral Address of a collateral asset.
-     * @param collateralAmount Amount of a collateral asset.
-     * @param credit Address of an asset used as a loan credit.
+     * @param collateral The address of a collateral asset.
+     * @param collateralAmount The amount of a collateral asset.
+     * @param credit The address of an asset used as a loan credit.
      * @param principalAmount Principal amount in credit asset tokens.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      */
@@ -69,7 +69,7 @@ interface ISproTypes {
     /**
      * @notice Structure defining a proposal.
      * @param collateralAddress The collateral asset address.
-     * @param collateralAmountThe The collateral asset amount.
+     * @param collateralAmount The collateral asset amount.
      * @param creditAddress The credit asset address.
      * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
      * be borrowed using the proposal.
@@ -79,7 +79,7 @@ interface ISproTypes {
      * @param proposer The address of a proposer.
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
      * an identical proposal again.
-     * @param partialPositionBps Minimum percentage that can be borrowed from the initial proposal.
+     * @param partialPositionBps The minimum percentage that can be borrowed from the initial proposal.
      */
     struct Proposal {
         address collateralAddress;

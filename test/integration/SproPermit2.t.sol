@@ -115,7 +115,8 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         // Warp ahead, just before loan default
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
-        (, uint256 repaymentAmount,) = deployment.config.getLoan(loanId);
+        ISproTypes.Loan memory loan = deployment.config.getLoan(loanId);
+        uint256 repaymentAmount = loan.principalAmount + loan.fixedInterestAmount;
         IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(repaymentAmount), 0, 0);
         IAllowanceTransfer.PermitSingle memory permitSign =
@@ -142,7 +143,8 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         // Warp ahead, just before loan default
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
-        (, uint256 repaymentAmount,) = deployment.config.getLoan(loanId);
+        ISproTypes.Loan memory loan = deployment.config.getLoan(loanId);
+        uint256 repaymentAmount = loan.principalAmount + loan.fixedInterestAmount;
         IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(repaymentAmount - 1), 0, 0);
         IAllowanceTransfer.PermitSingle memory permitSign =
@@ -175,12 +177,12 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
         uint256 totalRepaymentAmount;
-        (, uint256 repaymentAmount,) = deployment.config.getLoan(loanIds[0]);
-        totalRepaymentAmount += repaymentAmount;
-        (, repaymentAmount,) = deployment.config.getLoan(loanIds[1]);
-        totalRepaymentAmount += repaymentAmount;
-        (, repaymentAmount,) = deployment.config.getLoan(loanIds[2]);
-        totalRepaymentAmount += repaymentAmount;
+        ISproTypes.Loan memory loan = deployment.config.getLoan(loanIds[0]);
+        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
+        loan = deployment.config.getLoan(loanIds[1]);
+        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
+        loan = deployment.config.getLoan(loanIds[2]);
+        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
         IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(totalRepaymentAmount), 0, 0);
         IAllowanceTransfer.PermitSingle memory permitSign =
@@ -188,9 +190,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         bytes memory signature = getPermitSignature(permitSign, SIG_USER1_PK, deployment.permit2.DOMAIN_SEPARATOR());
 
         vm.prank(sigUser1);
-        deployment.config.repayMultipleLoans(
-            loanIds, address(proposal.creditAddress), abi.encode(permitSign, signature)
-        );
+        deployment.config.repayMultipleLoans(loanIds, abi.encode(permitSign, signature));
     }
 
     function test_RevertWhen_ForkWrongSignPermit2RepayMultipleLoans() public {
@@ -214,12 +214,12 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
         uint256 totalRepaymentAmount;
-        (, uint256 repaymentAmount,) = deployment.config.getLoan(loanIds[0]);
-        totalRepaymentAmount += repaymentAmount;
-        (, repaymentAmount,) = deployment.config.getLoan(loanIds[1]);
-        totalRepaymentAmount += repaymentAmount;
-        (, repaymentAmount,) = deployment.config.getLoan(loanIds[2]);
-        totalRepaymentAmount += repaymentAmount;
+        ISproTypes.Loan memory loan = deployment.config.getLoan(loanIds[0]);
+        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
+        loan = deployment.config.getLoan(loanIds[1]);
+        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
+        loan = deployment.config.getLoan(loanIds[2]);
+        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
         IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(totalRepaymentAmount - 1), 0, 0);
         IAllowanceTransfer.PermitSingle memory permitSign =
@@ -230,8 +230,6 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
             abi.encodeWithSelector(IAllowanceTransfer.InsufficientAllowance.selector, totalRepaymentAmount - 1)
         );
         vm.prank(sigUser1);
-        deployment.config.repayMultipleLoans(
-            loanIds, address(proposal.creditAddress), abi.encode(permitSign, signature)
-        );
+        deployment.config.repayMultipleLoans(loanIds, abi.encode(permitSign, signature));
     }
 }

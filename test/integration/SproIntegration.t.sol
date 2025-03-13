@@ -106,7 +106,7 @@ contract TestSproIntegration is SDBaseIntegrationTest {
         assertEq(deployment.sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - deployment.config._fee());
         assertEq(deployment.sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
-        (Spro.Loan memory loanInfo,,) = deployment.config.getLoan(id);
+        Spro.Loan memory loanInfo = deployment.config.getLoan(id);
         assertTrue(loanInfo.status == ISproTypes.LoanStatus.RUNNING);
 
         assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE - CREDIT_LIMIT);
