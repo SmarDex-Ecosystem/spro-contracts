@@ -79,7 +79,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /**
      * @notice Creates a new loan.
      * @param proposal The proposal structure.
-     * @param creditAmount The The amount of credit tokens.
+     * @param creditAmount The amount of credit tokens.
      * @param permit2Data The permit2 data, if the user opts to use permit2.
      * @return loanId_ The ID of the created loan token.
      */
