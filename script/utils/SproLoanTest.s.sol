@@ -8,7 +8,6 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 import { Spro } from "src/spro/Spro.sol";
 import { SproLoan } from "src/spro/SproLoan.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
-import { ISproLoan } from "src/interfaces/ISproLoan.sol";
 
 contract DeploySproLoanTest is Script {
     address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -19,20 +18,20 @@ contract DeploySproLoanTest is Script {
         vm.startBroadcast(deployerAddress);
 
         SproHandlerTest spro = new SproHandlerTest();
-        ISproLoan sproLoan = ISproLoan(address(spro.loanToken()));
+        SproLoanHandlerTest sproLoan = SproLoanHandlerTest(address(spro.loanToken()));
 
         console.log("Spro address", address(spro));
         console.log("loanToken address", address(sproLoan));
 
-        uint256 loanId = sproLoan.mint(deployerAddress);
+        uint256 loanId = sproLoan.forceMint(msg.sender);
         uint256 collateralDecimals = IERC20Metadata(WETH).decimals();
         uint256 creditDecimals = IERC20Metadata(USDC).decimals();
         spro.setLoan(
             loanId,
             ISproTypes.Loan({
                 status: ISproTypes.LoanStatus.RUNNING,
-                lender: deployerAddress,
-                borrower: deployerAddress,
+                lender: msg.sender,
+                borrower: msg.sender,
                 startTimestamp: uint40(1_742_203_988),
                 loanExpiration: uint40(1_742_203_988 + 100 days),
                 collateral: WETH,
@@ -42,6 +41,8 @@ contract DeploySproLoanTest is Script {
                 fixedInterestAmount: 10 * 10 ** creditDecimals
             })
         );
+        console.log("sproLoan.owner()", sproLoan.owner());
+        require(sproLoan.owner() == address(spro), "SproLoan owner is not Spro");
 
         vm.stopBroadcast();
     }
@@ -51,8 +52,8 @@ contract SproHandlerTest {
     SproLoan public loanToken;
     mapping(uint256 => ISproTypes.Loan) internal _loans;
 
-    function setUp() public virtual {
-        loanToken = new SproLoan(address(this));
+    constructor() {
+        loanToken = new SproLoanHandlerTest();
     }
 
     function setLoan(uint256 loanId, ISproTypes.Loan memory loan_) public {
@@ -61,5 +62,15 @@ contract SproHandlerTest {
 
     function getLoan(uint256 loanId) external view returns (ISproTypes.Loan memory loan_) {
         loan_ = _loans[loanId];
+    }
+}
+
+contract SproLoanHandlerTest is SproLoan {
+    constructor() SproLoan(msg.sender) { }
+
+    function forceMint(address to) external returns (uint256 loanId_) {
+        loanId_ = ++_lastLoanId;
+        _safeMint(to, loanId_);
+        emit LoanMinted(loanId_, to);
     }
 }

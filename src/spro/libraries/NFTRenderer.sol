@@ -12,37 +12,25 @@ library NFTRenderer {
         IERC20Metadata token0 = IERC20Metadata(loan.credit);
         IERC20Metadata token1 = IERC20Metadata(loan.collateral);
 
-        uint40 startTimestamp = loan.startTimestamp;
-        uint40 loanExpiration = loan.loanExpiration;
-        uint256 fee = loan.fixedInterestAmount / 10 ** 18;
-
         string memory symbol0 = token0.symbol();
         string memory symbol1 = token1.symbol();
         uint256 decimals0 = token0.decimals();
         uint256 decimals1 = token1.decimals();
         uint256 principalAmount = loan.principalAmount / 10 ** decimals0;
         uint256 collateralAmount = loan.collateralAmount / 10 ** decimals1;
+        uint256 fee = loan.fixedInterestAmount / 10 ** decimals0;
 
         string memory image = string.concat(
             "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 480'>",
             "<style>.tokens { font: bold 30px sans-serif; }",
             ".fee { font: normal 26px sans-serif; }",
             ".tick { font: normal 18px sans-serif; }</style>",
-            "<script>",
-            "function timestampToDate(timestamp) {",
-            "  const date = new Date(timestamp * 1000);",
-            "  const year = date.getFullYear();",
-            "  const month = String(date.getMonth() + 1).padStart(2, '0');",
-            "  const day = String(date.getDate()).padStart(2, '0');",
-            "  return `${year}-${month}-${day}`;",
-            "}",
-            "</script>",
             renderBackground(loan.lender, principalAmount, collateralAmount),
-            renderTop(symbol0, symbol1, startTimestamp, loanExpiration),
+            renderTop(symbol0, symbol1),
             renderBottom(principalAmount, collateralAmount, fee, symbol0, symbol1),
             "</svg>"
         );
-        string memory description = renderDescription(symbol0, symbol1, uint24(fee), 1250, 48);
+        string memory description = renderDescription(symbol0, symbol1, fee, principalAmount, collateralAmount);
         string memory json = string.concat(
             '{"name":"Spro loan",',
             '"description":"',
@@ -74,32 +62,14 @@ library NFTRenderer {
         );
     }
 
-    function renderTop(string memory symbol0, string memory symbol1, uint40 startTimestamp, uint40 loanExpiration)
-        internal
-        pure
-        returns (string memory top)
-    {
+    function renderTop(string memory symbol0, string memory symbol1) internal pure returns (string memory top) {
         top = string.concat(
             '<rect x="30" y="87" width="240" height="42"/>',
             '<text x="39" y="120" class="tokens" fill="#fff">',
             symbol0,
             "/",
             symbol1,
-            "</text>",
-            '<rect x="30" y="162" width="240" height="24"/>',
-            '<text x="39" y="180" class="tick" fill="#fff">Start: <tspan id="startDate">',
-            "</tspan></text>",
-            '<rect x="30" y="192" width="240" height="24"/>',
-            '<text x="39" y="210" class="tick" fill="#fff">End: <tspan id="endDate">',
-            "</tspan></text>",
-            "<script>",
-            "document.getElementById('startDate').textContent = timestampToDate(",
-            Strings.toString(startTimestamp),
-            ");",
-            "document.getElementById('endDate').textContent = timestampToDate(",
-            Strings.toString(loanExpiration),
-            ");",
-            "</script>"
+            "</text>"
         );
     }
 
@@ -135,7 +105,7 @@ library NFTRenderer {
     function renderDescription(
         string memory symbol0,
         string memory symbol1,
-        uint24 fee,
+        uint256 fee,
         uint256 lowerTick,
         uint256 upperTick
     ) internal pure returns (string memory description) {
