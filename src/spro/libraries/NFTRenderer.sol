@@ -14,12 +14,15 @@ library NFTRenderer {
 
         uint40 startTimestamp = loan.startTimestamp;
         uint40 loanExpiration = loan.loanExpiration;
-        uint256 collateralAmount = loan.collateralAmount;
-        uint256 principalAmount = loan.principalAmount;
         uint256 fee = loan.fixedInterestAmount / 10 ** 18;
 
         string memory symbol0 = token0.symbol();
         string memory symbol1 = token1.symbol();
+        uint256 decimals0 = token0.decimals();
+        uint256 decimals1 = token1.decimals();
+        uint256 principalAmount = loan.principalAmount / 10 ** decimals0;
+        uint256 collateralAmount = loan.collateralAmount / 10 ** decimals1;
+
         string memory image = string.concat(
             "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 480'>",
             "<style>.tokens { font: bold 30px sans-serif; }",

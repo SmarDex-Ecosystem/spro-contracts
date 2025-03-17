@@ -147,9 +147,9 @@ contract TestSproLoanTokenUri is SproLoanTest {
                 startTimestamp: uint40(1_742_203_988),
                 loanExpiration: uint40(1_742_203_988 + 100 days),
                 collateral: address(eth),
-                collateralAmount: 100,
+                collateralAmount: 100 * 10 ** 18,
                 credit: address(usd),
-                principalAmount: 200,
+                principalAmount: 200 * 10 ** 18,
                 fixedInterestAmount: 10 * 10 ** 18
             })
         );
