@@ -4,9 +4,11 @@ pragma solidity ^0.8.26;
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC4906 } from "@openzeppelin/contracts/interfaces/IERC4906.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { ISproLoan } from "src/interfaces/ISproLoan.sol";
+import { ISpro } from "src/interfaces/ISpro.sol";
+import { NFTRenderer } from "src/spro/libraries/NFTRenderer.sol";
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract SproLoan is ISproLoan, ERC721, Ownable {
     /// @inheritdoc ISproLoan
@@ -34,7 +36,10 @@ contract SproLoan is ISproLoan, ERC721, Ownable {
     /// @inheritdoc ERC721
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory uri_) {
         _requireOwned(tokenId);
-        return string.concat(_metadataUri, Strings.toString(tokenId));
+
+        ISproTypes.Loan memory loan_ = ISpro(owner()).getLoan(tokenId);
+
+        return NFTRenderer.render(loan_);
     }
 
     /// @inheritdoc ISproLoan

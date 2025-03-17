@@ -34,7 +34,7 @@ abstract contract SproForkBase is Test, PermitSignature {
         deployment.protocolAdmin = address(this);
 
         // Deploy SDEX token
-        deployment.sdex = new T20();
+        deployment.sdex = new T20("SDEX", "SDEX");
 
         deployment.permit2 = IAllowanceTransfer(PERMIT);
 

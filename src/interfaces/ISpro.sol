@@ -33,7 +33,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param loanId The loan ID.
      * @return loan_ The loan data.
      */
-    function getLoan(uint256 loanId) external returns (Loan memory loan_);
+    function getLoan(uint256 loanId) external view returns (Loan memory loan_);
 
     /**
      * @notice Retrieves the used and remaining credit for a proposal.

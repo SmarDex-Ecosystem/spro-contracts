@@ -29,8 +29,8 @@ contract TestForkPermit2 is SproForkBase {
         super.setUp();
 
         // Deploy tokens
-        t20 = new T20();
-        credit = new T20();
+        t20 = new T20("T20", "T20");
+        credit = new T20("CREDIT", "CREDIT");
 
         proposal = ISproTypes.Proposal(
             address(t20),

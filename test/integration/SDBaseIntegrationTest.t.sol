@@ -32,8 +32,8 @@ abstract contract SDBaseIntegrationTest is SDDeploymentTest {
         super.setUp();
 
         // Deploy tokens
-        t20 = new T20();
-        credit = new T20();
+        t20 = new T20("T20", "T20");
+        credit = new T20("CREDIT", "CREDIT");
 
         // Deploy protocol contracts
         proposal = ISproTypes.Proposal(
