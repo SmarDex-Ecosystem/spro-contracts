@@ -9,38 +9,39 @@ import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 library NFTRenderer {
     function render(ISproTypes.Loan memory loan) public view returns (string memory uri_) {
-        IERC20Metadata token0 = IERC20Metadata(loan.credit);
-        IERC20Metadata token1 = IERC20Metadata(loan.collateral);
+        IERC20Metadata credit = IERC20Metadata(loan.credit);
+        IERC20Metadata collateral = IERC20Metadata(loan.collateral);
 
-        string memory symbol0 = token0.symbol();
-        string memory symbol1 = token1.symbol();
-        uint256 decimals0 = token0.decimals();
-        uint256 decimals1 = token1.decimals();
-        uint256 principalAmount = loan.principalAmount / 10 ** decimals0;
-        uint256 collateralAmount = loan.collateralAmount / 10 ** decimals1;
-        uint256 fee = loan.fixedInterestAmount / 10 ** decimals0;
+        string memory creditSymbol = credit.symbol();
+        string memory collateralSymbol = collateral.symbol();
+        uint256 creditAmount = loan.principalAmount / 10 ** credit.decimals();
+        uint256 collateralAmount = loan.collateralAmount / 10 ** collateral.decimals();
+        uint256 fee = loan.fixedInterestAmount / 10 ** credit.decimals();
 
-        string memory image = string.concat(
+        bytes memory svg = abi.encodePacked(
             "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 480'>",
-            renderBackground(loan.lender, principalAmount, collateralAmount),
-            renderTop(symbol0, symbol1),
-            renderBottom(principalAmount, collateralAmount, fee, symbol0, symbol1),
+            "<style>.title { font: bold 25px sans-serif; }",
+            ".text { font: normal 18px sans-serif; }</style>",
+            renderBackground(loan.lender, creditSymbol, collateralSymbol),
+            renderTop(creditSymbol, collateralSymbol),
+            renderBottom(creditAmount, collateralAmount, fee, creditSymbol, collateralSymbol),
             "</svg>"
         );
-        string memory description = renderDescription(symbol0, symbol1, fee, principalAmount, collateralAmount);
-        string memory imageURI = string(abi.encodePacked("data:image/svg+xml;base64,", Base64.encode(bytes(image))));
-        string memory json =
-            string.concat('{"name":"Spro loan",', '"description":"', description, '",', '"image":"', imageURI, '"}');
+        string memory description =
+            renderDescription(creditSymbol, collateralSymbol, fee, creditAmount, collateralAmount);
+        string memory image = string(abi.encodePacked("data:image/svg+xml;base64,", Base64.encode(svg)));
+        bytes memory json =
+            abi.encodePacked('{"name":"Spro loan",', '"description":"', description, '",', '"image":"', image, '"}');
 
-        return string(abi.encodePacked("data:application/json;base64,", Base64.encode(abi.encodePacked(json))));
+        return string(abi.encodePacked("data:application/json;base64,", Base64.encode(json)));
     }
 
-    function renderBackground(address owner, uint256 lowerTick, uint256 upperTick)
+    function renderBackground(address owner, string memory creditSymbol, string memory collateralSymbol)
         internal
         pure
         returns (string memory background)
     {
-        bytes32 key = keccak256(abi.encodePacked(owner, lowerTick, upperTick));
+        bytes32 key = keccak256(abi.encodePacked(owner, creditSymbol, collateralSymbol));
         uint256 hue = uint256(key) % 360;
 
         background = string.concat(
@@ -53,63 +54,70 @@ library NFTRenderer {
         );
     }
 
-    function renderTop(string memory symbol0, string memory symbol1) internal pure returns (string memory top) {
+    function renderTop(string memory creditSymbol, string memory collateralSymbol)
+        internal
+        pure
+        returns (string memory top)
+    {
         top = string.concat(
             '<rect x="30" y="87" width="240" height="42"/>',
-            '<text x="39" y="120" class="tokens" fill="#fff">',
-            symbol0,
-            "/",
-            symbol1,
+            '<text x="39" y="120" class="title" fill="#fff">',
+            creditSymbol,
+            " - ",
+            collateralSymbol,
             "</text>"
         );
     }
 
     function renderBottom(
-        uint256 lowerTick,
-        uint256 upperTick,
+        uint256 creditAmount,
+        uint256 collateralAmount,
         uint256 fee,
-        string memory symbol0,
-        string memory symbol1
+        string memory creditSymbol,
+        string memory collateralSymbol
     ) internal pure returns (string memory bottom) {
         bottom = string.concat(
             '<rect x="30" y="342" width="240" height="24"/>',
-            '<text x="39" y="360" class="tick" fill="#fff">Credit : ',
-            Strings.toString(lowerTick),
+            '<text x="39" y="360" class="text" fill="#fff">Credit : ',
+            Strings.toString(creditAmount),
             " ",
-            symbol0,
+            creditSymbol,
             "</text>",
             '<rect x="30" y="372" width="240" height="24"/>',
-            '<text x="39" y="360" dy="30" class="tick" fill="#fff">Collateral: ',
-            Strings.toString(upperTick),
-            " ",
-            symbol1,
-            "</text>",
-            '<rect x="30" y="402" width="240" height="24"/>',
-            '<text x="39" y="390" dy="30" class="tick" fill="#fff">Fee: ',
+            '<text x="39" y="360" dy="30" class="text" fill="#fff">Bonus: ',
             Strings.toString(fee),
             " ",
-            symbol0,
+            creditSymbol,
+            "</text>",
+            '<rect x="30" y="402" width="240" height="24"/>',
+            '<text x="39" y="390" dy="30" class="text" fill="#fff">Collateral: ',
+            Strings.toString(collateralAmount),
+            " ",
+            collateralSymbol,
             "</text>"
         );
     }
 
     function renderDescription(
-        string memory symbol0,
-        string memory symbol1,
+        string memory creditSymbol,
+        string memory collateralSymbol,
         uint256 fee,
-        uint256 lowerTick,
-        uint256 upperTick
+        uint256 credit,
+        uint256 collateral
     ) internal pure returns (string memory description) {
         description = string.concat(
-            symbol0,
-            "/",
-            symbol1,
+            "Credit: ",
+            Strings.toString(credit),
             " ",
+            creditSymbol,
+            ", Bonus: ",
             Strings.toString(fee),
-            ", Credit: ",
-            Strings.toString(lowerTick),
+            " ",
+            creditSymbol,
             ", Collateral: ",
-            Strings.toString(upperTick)
+            Strings.toString(collateral),
+            " ",
+            collateralSymbol
         );
     }
 }

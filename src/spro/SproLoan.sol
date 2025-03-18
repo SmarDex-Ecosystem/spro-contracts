@@ -36,9 +36,7 @@ contract SproLoan is ISproLoan, ERC721, Ownable {
     /// @inheritdoc ERC721
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory uri_) {
         _requireOwned(tokenId);
-
         ISproTypes.Loan memory loan_ = ISpro(owner()).getLoan(tokenId);
-
         return NFTRenderer.render(loan_);
     }
 
