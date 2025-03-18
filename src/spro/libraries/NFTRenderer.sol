@@ -22,26 +22,17 @@ library NFTRenderer {
 
         string memory image = string.concat(
             "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 480'>",
-            "<style>.tokens { font: bold 30px sans-serif; }",
-            ".fee { font: normal 26px sans-serif; }",
-            ".tick { font: normal 18px sans-serif; }</style>",
             renderBackground(loan.lender, principalAmount, collateralAmount),
             renderTop(symbol0, symbol1),
             renderBottom(principalAmount, collateralAmount, fee, symbol0, symbol1),
             "</svg>"
         );
         string memory description = renderDescription(symbol0, symbol1, fee, principalAmount, collateralAmount);
-        string memory json = string.concat(
-            '{"name":"Spro loan",',
-            '"description":"',
-            description,
-            '",',
-            '"image":"data:image/svg+xml;base64,',
-            Base64.encode(bytes(image)),
-            '"}'
-        );
+        string memory imageURI = string(abi.encodePacked("data:image/svg+xml;base64,", Base64.encode(bytes(image))));
+        string memory json =
+            string.concat('{"name":"Spro loan",', '"description":"', description, '",', '"image":"', imageURI, '"}');
 
-        return string.concat("data:application/json;base64,", Base64.encode(bytes(json)));
+        return string(abi.encodePacked("data:application/json;base64,", Base64.encode(abi.encodePacked(json))));
     }
 
     function renderBackground(address owner, uint256 lowerTick, uint256 upperTick)
