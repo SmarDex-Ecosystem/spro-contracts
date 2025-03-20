@@ -437,7 +437,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             if (creditAmount < minAmount) {
                 revert CreditAmountTooSmall(creditAmount, minAmount);
             }
-            if (proposal.availableCreditLimit - minAmount < total) {
+            if (proposal.availableCreditLimit - total < minAmount) {
                 revert CreditAmountRemainingBelowMinimum(creditAmount, minAmount);
             }
         } else if (total > proposal.availableCreditLimit) {
