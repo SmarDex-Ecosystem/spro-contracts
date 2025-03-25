@@ -105,4 +105,18 @@ contract SproIntegrationLoan is SDBaseIntegrationTest {
         spro.createLoan(proposal, amount, "");
         vm.stopPrank();
     }
+
+    function testFuzz_loanFixedInterest(uint256 amount) external {
+        amount =
+            bound(amount, ((500 * CREDIT_LIMIT) / spro.BPS_DIVISOR()), ((9500 * CREDIT_LIMIT) / spro.BPS_DIVISOR()));
+        uint256 fixedInterestAmount =
+            Math.mulDiv(amount, proposal.fixedInterestAmount, proposal.availableCreditLimit, Math.Rounding.Ceil);
+
+        _createERC20Proposal();
+        uint256 loanId = _createLoan(proposal, amount, "");
+
+        ISproTypes.Loan memory loanInfo = spro.getLoan(loanId);
+        assertEq(loanInfo.principalAmount, amount);
+        assertEq(loanInfo.principalAmount + loanInfo.fixedInterestAmount, amount + fixedInterestAmount);
+    }
 }

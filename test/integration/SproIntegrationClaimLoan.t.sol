@@ -6,7 +6,6 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { SDBaseIntegrationTest } from "test/integration/utils/Fixtures.sol";
 
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
-import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract SproIntegrationClaimLoan is SDBaseIntegrationTest {
     function setUp() public {

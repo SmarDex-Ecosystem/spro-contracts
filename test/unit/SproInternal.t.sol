@@ -16,19 +16,19 @@ contract SproInternalTest is Test {
     }
 
     function test_isLoanRepayable() external view {
-        bool canBeRepaid = sproHandler.exposed_isLoanRepayable(ISproTypes.LoanStatus.PAID_BACK, 0);
+        bool canBeRepaid = sproHandler.i_isLoanRepayable(ISproTypes.LoanStatus.PAID_BACK, 0);
         assertFalse(canBeRepaid, "Loan shouldn't be repayable");
 
-        canBeRepaid = sproHandler.exposed_isLoanRepayable(ISproTypes.LoanStatus.NONE, 0);
+        canBeRepaid = sproHandler.i_isLoanRepayable(ISproTypes.LoanStatus.NONE, 0);
         assertFalse(canBeRepaid, "Loan shouldn't be repayable");
 
-        canBeRepaid = sproHandler.exposed_isLoanRepayable(ISproTypes.LoanStatus.EXPIRED, 0);
+        canBeRepaid = sproHandler.i_isLoanRepayable(ISproTypes.LoanStatus.EXPIRED, 0);
         assertFalse(canBeRepaid, "Loan shouldn't be repayable");
 
-        canBeRepaid = sproHandler.exposed_isLoanRepayable(ISproTypes.LoanStatus.RUNNING, 0);
+        canBeRepaid = sproHandler.i_isLoanRepayable(ISproTypes.LoanStatus.RUNNING, 0);
         assertFalse(canBeRepaid, "Loan shouldn't be repayable");
 
-        canBeRepaid = sproHandler.exposed_isLoanRepayable(ISproTypes.LoanStatus.RUNNING, uint40(block.timestamp + 1));
+        canBeRepaid = sproHandler.i_isLoanRepayable(ISproTypes.LoanStatus.RUNNING, uint40(block.timestamp + 1));
         assertTrue(canBeRepaid, "Loan should be repayable");
     }
 }
