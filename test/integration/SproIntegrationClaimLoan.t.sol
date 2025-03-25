@@ -6,6 +6,7 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { SDBaseIntegrationTest } from "test/integration/utils/Fixtures.sol";
 
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract SproIntegrationClaimLoan is SDBaseIntegrationTest {
     function setUp() public {
@@ -51,6 +52,7 @@ contract SproIntegrationClaimLoan is SDBaseIntegrationTest {
         loanToken.transferFrom(lender, address(this), loanId);
 
         skip(100 days); // loan should be expired
+        require(spro.getLoan(loanId).loanExpiration <= block.timestamp, "Loan should be expired");
 
         // loan token holder claims the expired loan
         spro.claimLoan(loanId);

@@ -106,7 +106,7 @@ contract SproIntegrationLoan is SDBaseIntegrationTest {
         vm.stopPrank();
     }
 
-    function testFuzz_loanAccruedInterest(uint256 amount, uint256 future) external {
+    function testFuzz_loanFixedInterest(uint256 amount, uint256 future) external {
         amount =
             bound(amount, ((500 * CREDIT_LIMIT) / spro.BPS_DIVISOR()), ((9500 * CREDIT_LIMIT) / spro.BPS_DIVISOR()));
         uint256 fixedInterestAmount =
