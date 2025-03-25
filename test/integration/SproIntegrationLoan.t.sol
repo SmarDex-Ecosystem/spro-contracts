@@ -107,8 +107,12 @@ contract SproIntegrationLoan is SDBaseIntegrationTest {
     }
 
     function testFuzz_loanFixedInterest(uint256 amount) external {
-        amount =
-            bound(amount, ((500 * CREDIT_LIMIT) / spro.BPS_DIVISOR()), ((9500 * CREDIT_LIMIT) / spro.BPS_DIVISOR()));
+        uint256 divisor = spro.BPS_DIVISOR();
+        amount = bound(
+            amount,
+            ((PARTIAL_POSITION_BPS * CREDIT_LIMIT) / divisor),
+            (((divisor - PARTIAL_POSITION_BPS) * CREDIT_LIMIT) / divisor)
+        );
         uint256 fixedInterestAmount =
             Math.mulDiv(amount, proposal.fixedInterestAmount, proposal.availableCreditLimit, Math.Rounding.Ceil);
 
