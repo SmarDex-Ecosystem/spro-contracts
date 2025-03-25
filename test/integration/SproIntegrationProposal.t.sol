@@ -82,7 +82,6 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
 
     function test_shouldCreateERC20Proposal_shouldCreatePartialLoan_shouldWithdrawRemainingCollateral() external {
         _createERC20Proposal();
-
         vm.prank(lender);
         uint256 loanId = _createLoan(proposal, CREDIT_AMOUNT, "");
 
@@ -159,6 +158,12 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
     function test_RevertWhen_getProposalCreditStatus_ProposalDoesNotExists() external {
         vm.expectRevert(ISproErrors.ProposalDoesNotExists.selector);
         spro.getProposalCreditStatus(proposal);
+    }
+
+    function test_RevertWhen_ProposalDoesNotExistsCancelProposal() external {
+        vm.expectRevert(ISproErrors.ProposalDoesNotExists.selector);
+        vm.prank(borrower);
+        spro.cancelProposal(proposal);
     }
 
     function testFuzz_GetProposalCreditStatus(uint256 limit, uint256 used) external {
