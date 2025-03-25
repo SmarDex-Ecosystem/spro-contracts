@@ -41,6 +41,9 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         if (partialPositionBps == 0 || partialPositionBps > BPS_DIVISOR / 2) {
             revert IncorrectPercentageValue(partialPositionBps);
         }
+        if (fee > MAX_SDEX_FEE) {
+            revert ExcessiveFee(fee);
+        }
 
         PERMIT2 = IAllowanceTransfer(permit2);
         SDEX = sdex;
@@ -439,7 +442,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             if (creditAmount < minAmount) {
                 revert CreditAmountTooSmall(creditAmount, minAmount);
             }
-            if (proposal.availableCreditLimit - minAmount < total) {
+            if (proposal.availableCreditLimit - total < minAmount) {
                 revert CreditAmountRemainingBelowMinimum(creditAmount, minAmount);
             }
         } else if (total > proposal.availableCreditLimit) {
