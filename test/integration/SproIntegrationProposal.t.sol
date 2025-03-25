@@ -23,6 +23,7 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
 
         // Create proposal
         _createERC20Proposal();
+
         assertEq(collateral.balanceOf(address(spro)), COLLATERAL_AMOUNT);
         assertEq(sdex.balanceOf(address(0xdead)), spro._fee());
         assertEq(collateral.balanceOf(borrower), 0);
@@ -34,6 +35,7 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
 
     function test_RevertWhen_CallerNotProposer() external {
         _createERC20Proposal();
+
         vm.expectRevert(ISproErrors.CallerNotProposer.selector);
         spro.cancelProposal(proposal);
     }
@@ -157,6 +159,12 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
     function test_RevertWhen_getProposalCreditStatus_ProposalDoesNotExists() external {
         vm.expectRevert(ISproErrors.ProposalDoesNotExists.selector);
         spro.getProposalCreditStatus(proposal);
+    }
+
+    function test_RevertWhen_ProposalDoesNotExistsCancelProposal() external {
+        vm.expectRevert(ISproErrors.ProposalDoesNotExists.selector);
+        vm.prank(borrower);
+        spro.cancelProposal(proposal);
     }
 
     function testFuzz_GetProposalCreditStatus(uint256 limit, uint256 used) external {
