@@ -22,26 +22,26 @@ contract SproIntegrationClaimLoan is SDBaseIntegrationTest {
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
         vm.prank(lender);
-        credit.approve(address(deployment.config), CREDIT_LIMIT);
+        credit.approve(address(spro), CREDIT_LIMIT);
 
         // Lender: creates the loan
         vm.prank(lender);
-        uint256 loanId = deployment.config.createLoan(proposal, CREDIT_AMOUNT, "");
+        uint256 loanId = spro.createLoan(proposal, CREDIT_AMOUNT, "");
 
         vm.startPrank(borrower);
         // Borrower approvals for credit token
         credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
-        credit.approve(address(deployment.config), CREDIT_AMOUNT + FIXED_INTEREST_AMOUNT);
+        credit.approve(address(spro), CREDIT_AMOUNT + FIXED_INTEREST_AMOUNT);
         vm.stopPrank();
 
         // Transfer loanToken to this address
         vm.prank(lender);
-        deployment.loanToken.transferFrom(lender, address(this), loanId);
+        loanToken.transferFrom(lender, address(this), loanId);
 
         // Initial lender repays loan
         vm.startPrank(lender);
         vm.expectRevert(ISproErrors.CallerNotLoanTokenHolder.selector);
-        deployment.config.claimLoan(loanId);
+        spro.claimLoan(loanId);
     }
 
     function test_RevertWhen_claimLoanRunningAndExpired() external {
@@ -50,30 +50,30 @@ contract SproIntegrationClaimLoan is SDBaseIntegrationTest {
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
         vm.prank(lender);
-        credit.approve(address(deployment.config), CREDIT_LIMIT);
+        credit.approve(address(spro), CREDIT_LIMIT);
 
         // Lender: creates the loan
         vm.prank(lender);
-        uint256 loanId = deployment.config.createLoan(proposal, CREDIT_LIMIT, "");
+        uint256 loanId = spro.createLoan(proposal, CREDIT_LIMIT, "");
 
         // Borrower approvals for credit token
         vm.startPrank(borrower);
         credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
-        credit.approve(address(deployment.config), CREDIT_LIMIT + FIXED_INTEREST_AMOUNT);
+        credit.approve(address(spro), CREDIT_LIMIT + FIXED_INTEREST_AMOUNT);
         vm.stopPrank();
 
         // Transfer loanToken to this address
         vm.prank(lender);
-        deployment.loanToken.transferFrom(lender, address(this), loanId);
+        loanToken.transferFrom(lender, address(this), loanId);
 
         skip(100 days); // loan should be expired
 
         // loan token holder claims the expired loan
-        deployment.config.claimLoan(loanId);
+        spro.claimLoan(loanId);
 
         assertEq(t20.balanceOf(address(this)), proposal.collateralAmount); // collateral amount transferred to loan
         // token holder
-        assertEq(deployment.loanToken.balanceOf(address(this)), 0); // loanToken balance should be zero now
+        assertEq(loanToken.balanceOf(address(this)), 0); // loanToken balance should be zero now
     }
 
     function test_RevertWhen_claimLoan_LoanRunning() external {
@@ -82,22 +82,22 @@ contract SproIntegrationClaimLoan is SDBaseIntegrationTest {
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
         vm.prank(lender);
-        credit.approve(address(deployment.config), CREDIT_LIMIT);
+        credit.approve(address(spro), CREDIT_LIMIT);
 
         // Lender: creates the loan
         uint256 creditAmount = CREDIT_AMOUNT;
         vm.prank(lender);
-        uint256 loanId = deployment.config.createLoan(proposal, creditAmount, "");
+        uint256 loanId = spro.createLoan(proposal, creditAmount, "");
 
         vm.startPrank(borrower);
         // Borrower approvals for credit token
         credit.mint(borrower, FIXED_INTEREST_AMOUNT); // helper step: mint fixed interest amount for the borrower
-        credit.approve(address(deployment.config), CREDIT_AMOUNT + FIXED_INTEREST_AMOUNT);
+        credit.approve(address(spro), CREDIT_AMOUNT + FIXED_INTEREST_AMOUNT);
         vm.stopPrank();
 
         // Try to repay loan
         vm.startPrank(lender);
         vm.expectRevert(ISproErrors.LoanRunning.selector);
-        deployment.config.claimLoan(loanId);
+        spro.claimLoan(loanId);
     }
 }
