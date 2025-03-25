@@ -12,7 +12,7 @@ import { Spro } from "src/spro/Spro.sol";
 import { SproLoan } from "src/spro/SproLoan.sol";
 
 contract SDBaseIntegrationTest is Test {
-    T20 t20;
+    T20 collateral;
     T20 credit;
 
     address lender = vm.addr(777);
@@ -37,38 +37,32 @@ contract SDBaseIntegrationTest is Test {
     uint256 public constant FEE = 20e18;
     uint16 public constant PARTIAL_POSITION_BPS = 500;
 
-    Deployment deployment;
-
-    struct Deployment {
-        Spro config;
-        SproLoan loanToken;
-        T20 sdex;
-        IAllowanceTransfer permit2;
-    }
+    Spro spro;
+    SproLoan loanToken;
+    T20 sdex;
+    IAllowanceTransfer permit2;
 
     function _setUp(bool fork) public virtual {
         if (fork) {
             string memory url = vm.rpcUrl("mainnet");
             vm.createSelectFork(url);
-            deployment.permit2 = IAllowanceTransfer(PERMIT2);
+            permit2 = IAllowanceTransfer(PERMIT2);
         } else {
-            deployment.permit2 = IAllowanceTransfer(makeAddr("IAllowanceTransfer"));
+            permit2 = IAllowanceTransfer(makeAddr("IAllowanceTransfer"));
         }
-        deployment.sdex = new T20();
+        sdex = new T20();
 
-        vm.startPrank(ADMIN);
-        deployment.config = new Spro(address(deployment.sdex), address(deployment.permit2), FEE, PARTIAL_POSITION_BPS);
-        vm.stopPrank();
+        vm.prank(ADMIN);
+        spro = new Spro(address(sdex), address(permit2), FEE, PARTIAL_POSITION_BPS);
 
-        deployment.loanToken = deployment.config._loanToken();
+        loanToken = spro._loanToken();
 
         // Deploy tokens
-        t20 = new T20();
+        collateral = new T20();
         credit = new T20();
 
-        // Deploy protocol contracts
         proposal = ISproTypes.Proposal(
-            address(t20),
+            address(collateral),
             COLLATERAL_AMOUNT,
             address(credit),
             CREDIT_LIMIT,
@@ -81,17 +75,12 @@ contract SDBaseIntegrationTest is Test {
         );
 
         // Mint and approve SDEX
-        deployment.sdex.mint(lender, INITIAL_SDEX_BALANCE);
+        sdex.mint(lender, INITIAL_SDEX_BALANCE);
         vm.prank(lender);
-        deployment.sdex.approve(address(deployment.config), type(uint256).max);
-        deployment.sdex.mint(borrower, INITIAL_SDEX_BALANCE);
+        sdex.approve(address(spro), type(uint256).max);
+        sdex.mint(borrower, INITIAL_SDEX_BALANCE);
         vm.prank(borrower);
-        deployment.sdex.approve(address(deployment.config), type(uint256).max);
-
-        // Set thresholds in config
-        vm.startPrank(ADMIN);
-        Spro(deployment.config).setPartialPositionPercentage(PARTIAL_POSITION_BPS);
-        vm.stopPrank();
+        sdex.approve(address(spro), type(uint256).max);
 
         // Setup lender addresses
         (alice, aliceKey) = makeAddrAndKey("alice");
@@ -100,23 +89,22 @@ contract SDBaseIntegrationTest is Test {
     }
 
     function _createERC20Proposal() internal {
-        // Mint initial state & approve collateral
-        t20.mint(borrower, proposal.collateralAmount);
+        collateral.mint(borrower, proposal.collateralAmount);
 
         vm.prank(borrower);
-        t20.approve(address(deployment.config), proposal.collateralAmount);
+        collateral.approve(address(spro), proposal.collateralAmount);
         vm.prank(borrower);
-        deployment.config.createProposal(proposal, "");
+        spro.createProposal(proposal, "");
     }
 
-    function _createLoan(ISproTypes.Proposal memory newProposal, bytes memory revertData)
+    function _createLoan(ISproTypes.Proposal memory newProposal, uint256 amount, bytes memory revertData)
         internal
         returns (uint256 loanId)
     {
         // Mint initial state & approve credit
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
         vm.prank(lender);
-        credit.approve(address(deployment.config), CREDIT_LIMIT);
+        credit.approve(address(spro), CREDIT_LIMIT);
 
         // Create Loan
         if (keccak256(revertData) != keccak256("")) {
@@ -124,6 +112,6 @@ contract SDBaseIntegrationTest is Test {
         }
 
         vm.prank(lender);
-        return deployment.config.createLoan(newProposal, CREDIT_AMOUNT, "");
+        return spro.createLoan(newProposal, amount, "");
     }
 }

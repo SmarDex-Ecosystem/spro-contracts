@@ -18,23 +18,16 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
 
     function test_RevertWhen_notRepayable() external {
         vm.expectRevert(ISproErrors.LoanCannotBeRepaid.selector);
-        deployment.config.repayLoan(0, "");
+        spro.repayLoan(0, "");
 
         _createERC20Proposal();
-
-        // Mint initial state & approve credit
-        credit.mint(lender, INITIAL_CREDIT_BALANCE);
-        vm.prank(lender);
-        credit.approve(address(deployment.config), CREDIT_LIMIT);
-
-        vm.prank(lender);
-        uint256 loanId = deployment.config.createLoan(proposal, CREDIT_AMOUNT, "");
+        uint256 loanId = _createLoan(proposal, CREDIT_AMOUNT, "");
 
         // Warp ahead, just when loan default
         vm.warp(proposal.loanExpiration);
 
         vm.expectRevert(ISproErrors.LoanCannotBeRepaid.selector);
-        deployment.config.repayLoan(loanId, "");
+        spro.repayLoan(loanId, "");
     }
 
     function testGas_MultiplePartialLoans_Original() external {
@@ -42,7 +35,7 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         vm.startPrank(borrower);
         uint256 startGas = gasleft();
         for (uint256 i; i < 4; ++i) {
-            deployment.config.repayLoan(loanIds[i], "");
+            spro.repayLoan(loanIds[i], "");
         }
         emit log_named_uint("repayLoan with for loop", startGas - gasleft());
     }
@@ -55,7 +48,7 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         (uint256[] memory loanIds,) = _setupMultipleRepay();
         vm.startPrank(borrower);
         uint256 startGas = gasleft();
-        deployment.config.repayMultipleLoans(loanIds, "");
+        spro.repayMultipleLoans(loanIds, "");
         emit log_named_uint("Gas used", startGas - gasleft());
     }
 
@@ -63,7 +56,7 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         (uint256[] memory loanIds, uint256 fixedInterestAmount) = _setupMultipleRepay();
 
         vm.startPrank(borrower);
-        deployment.config.repayMultipleLoans(loanIds, "");
+        spro.repayMultipleLoans(loanIds, "");
 
         // Assertions
         assertEq(credit.balanceOf(borrower), 0);
@@ -72,23 +65,22 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
                 && credit.balanceOf(lender) == credit.balanceOf(charlie)
         );
         assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + fixedInterestAmount);
+        assertEq(0, loanToken.balanceOf(lender));
+        assertEq(0, loanToken.balanceOf(alice));
+        assertEq(0, loanToken.balanceOf(bob));
+        assertEq(0, loanToken.balanceOf(charlie));
 
-        assertEq(0, deployment.loanToken.balanceOf(lender));
-        assertEq(0, deployment.loanToken.balanceOf(alice));
-        assertEq(0, deployment.loanToken.balanceOf(bob));
-        assertEq(0, deployment.loanToken.balanceOf(charlie));
-
-        assertEq(2000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(borrower)); // 20% since 4
+        assertEq(2000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), collateral.balanceOf(borrower)); // 20% since 4
             // loans @ 5% minimum amount
-        assertEq(8000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(address(deployment.config)));
+        assertEq(8000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), collateral.balanceOf(address(spro)));
     }
 
     function test_MultiplePartialLoans_NotRevertIfOneLess() external {
         (uint256[] memory loanIds, uint256 fixedInterestAmount) = _setupMultipleRepay();
 
         vm.startPrank(borrower);
-        deployment.config.repayLoan(loanIds[2], "");
-        deployment.config.repayMultipleLoans(loanIds, "");
+        spro.repayLoan(loanIds[2], "");
+        spro.repayMultipleLoans(loanIds, "");
 
         // Assertions
         assertEq(credit.balanceOf(borrower), 0);
@@ -98,47 +90,46 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         );
         assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + fixedInterestAmount);
 
-        assertEq(0, deployment.loanToken.balanceOf(lender));
-        assertEq(0, deployment.loanToken.balanceOf(alice));
-        assertEq(0, deployment.loanToken.balanceOf(bob));
-        assertEq(0, deployment.loanToken.balanceOf(charlie));
+        assertEq(0, loanToken.balanceOf(lender));
+        assertEq(0, loanToken.balanceOf(alice));
+        assertEq(0, loanToken.balanceOf(bob));
+        assertEq(0, loanToken.balanceOf(charlie));
 
-        assertEq(2000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(borrower)); // 20% since 4
+        assertEq(2000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), collateral.balanceOf(borrower)); // 20% since 4
             // loans @ 5% minimum amount
-        assertEq(8000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(address(deployment.config)));
+        assertEq(8000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), collateral.balanceOf(address(spro)));
     }
 
     function test_MultiplePartialLoans_RepayMultiple_RepayerNotOwner() external {
         (uint256[] memory loanIds, uint256 fixedInterestAmount) = _setupMultipleRepay();
 
         address repayer = makeAddr("repayer");
-        uint256 repayAmount = deployment.config.totalLoanRepaymentAmount(loanIds);
+        uint256 repayAmount = spro.totalLoanRepaymentAmount(loanIds);
 
         credit.mint(repayer, repayAmount);
         vm.startPrank(repayer);
-        credit.approve(address(deployment.config), repayAmount);
-        deployment.config.repayMultipleLoans(loanIds, "");
+        credit.approve(address(spro), repayAmount);
+        spro.repayMultipleLoans(loanIds, "");
         vm.stopPrank();
 
         // Assertions
         assertEq(
             credit.balanceOf(borrower),
-            4 * (proposal.availableCreditLimit * deployment.config._partialPositionBps())
-                / deployment.config.BPS_DIVISOR() + 4 * fixedInterestAmount
+            4 * (proposal.availableCreditLimit * spro._partialPositionBps()) / spro.BPS_DIVISOR()
+                + 4 * fixedInterestAmount
         ); // 4x minted in _setupMultipleRepay & not used
         require(
             credit.balanceOf(lender) == credit.balanceOf(alice) && credit.balanceOf(lender) == credit.balanceOf(bob)
                 && credit.balanceOf(lender) == credit.balanceOf(charlie)
         );
         assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + fixedInterestAmount);
-
-        assertEq(0, deployment.loanToken.balanceOf(lender));
-        assertEq(0, deployment.loanToken.balanceOf(alice));
-        assertEq(0, deployment.loanToken.balanceOf(bob));
-        assertEq(0, deployment.loanToken.balanceOf(charlie));
-        assertEq(2000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(borrower)); // 20% since 4
+        assertEq(0, loanToken.balanceOf(lender));
+        assertEq(0, loanToken.balanceOf(alice));
+        assertEq(0, loanToken.balanceOf(bob));
+        assertEq(0, loanToken.balanceOf(charlie));
+        assertEq(2000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), collateral.balanceOf(borrower)); // 20% since 4
             // loans @ 5% minimum amount
-        assertEq(8000 * COLLATERAL_AMOUNT / deployment.config.BPS_DIVISOR(), t20.balanceOf(address(deployment.config)));
+        assertEq(8000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), collateral.balanceOf(address(spro)));
     }
 
     /* -------------------------------------------------------------------------- */
@@ -149,15 +140,15 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         (uint256[] memory loanIds,) = _setupMultipleRepay();
 
         vm.prank(alice);
-        deployment.loanToken.transferFrom(alice, lender, 2);
+        loanToken.transferFrom(alice, lender, 2);
 
         vm.prank(bob);
-        deployment.loanToken.transferFrom(bob, lender, 3);
+        loanToken.transferFrom(bob, lender, 3);
 
         // block transfers to enter in the try/catch block
         credit.blockTransfers(true, lender);
         vm.prank(borrower);
-        deployment.config.repayMultipleLoans(loanIds, "");
+        spro.repayMultipleLoans(loanIds, "");
         credit.blockTransfers(false, address(0));
 
         uint256[] memory ids = new uint256[](2);
@@ -165,7 +156,7 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         ids[1] = 3;
 
         vm.prank(lender);
-        deployment.config.claimMultipleLoans(ids);
+        spro.claimMultipleLoans(ids);
     }
 
     function _setupMultipleRepay() internal returns (uint256[] memory loanIds, uint256 fixedInterestAmount) {
@@ -176,9 +167,7 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         lenders[1] = alice;
         lenders[2] = bob;
         lenders[3] = charlie;
-
-        uint256 minCreditAmount =
-            (proposal.availableCreditLimit * deployment.config._partialPositionBps()) / deployment.config.BPS_DIVISOR();
+        uint256 minCreditAmount = (proposal.availableCreditLimit * spro._partialPositionBps()) / spro.BPS_DIVISOR();
 
         // Setup loanIds array
         loanIds = new uint256[](4);
@@ -188,22 +177,22 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
             // Mint initial state & approve credit
             credit.mint(lenders[i], INITIAL_CREDIT_BALANCE);
             vm.startPrank(lenders[i]);
-            credit.approve(address(deployment.config), minCreditAmount);
+            credit.approve(address(spro), minCreditAmount);
 
             // Create loan
-            loanIds[i] = deployment.config.createLoan(proposal, minCreditAmount, "");
+            loanIds[i] = spro.createLoan(proposal, minCreditAmount, "");
             vm.stopPrank();
         }
 
         skip(4 days);
 
         // Approve repayment amount
-        uint256 totalAmount = deployment.config.totalLoanRepaymentAmount(loanIds);
+        uint256 totalAmount = spro.totalLoanRepaymentAmount(loanIds);
         fixedInterestAmount = Math.mulDiv(
             minCreditAmount, proposal.fixedInterestAmount, proposal.availableCreditLimit, Math.Rounding.Ceil
         );
         credit.mint(borrower, 4 * fixedInterestAmount);
         vm.prank(borrower);
-        credit.approve(address(deployment.config), totalAmount);
+        credit.approve(address(spro), totalAmount);
     }
 }
