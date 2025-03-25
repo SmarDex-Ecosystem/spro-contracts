@@ -52,9 +52,8 @@ contract SDBaseIntegrationTest is Test {
         }
         sdex = new T20();
 
-        vm.startPrank(ADMIN);
+        vm.prank(ADMIN);
         spro = new Spro(address(sdex), address(permit2), FEE, PARTIAL_POSITION_BPS);
-        vm.stopPrank();
 
         loanToken = spro._loanToken();
 
@@ -82,11 +81,6 @@ contract SDBaseIntegrationTest is Test {
         sdex.mint(borrower, INITIAL_SDEX_BALANCE);
         vm.prank(borrower);
         sdex.approve(address(spro), type(uint256).max);
-
-        // Set thresholds in spro
-        vm.startPrank(ADMIN);
-        Spro(spro).setPartialPositionPercentage(PARTIAL_POSITION_BPS);
-        vm.stopPrank();
 
         // Setup lender addresses
         (alice, aliceKey) = makeAddrAndKey("alice");
