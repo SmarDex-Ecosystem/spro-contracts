@@ -55,7 +55,7 @@ contract TestSproConstructor is SproTest {
     }
 
     function test_RevertWhen_incorrectFee() external {
-        uint256 maxSdexFee = config.MAX_SDEX_FEE();
+        uint256 maxSdexFee = spro.MAX_SDEX_FEE();
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.ExcessiveFee.selector, maxSdexFee + 1));
         new Spro(sdex, permit2, maxSdexFee + 1, partialPositionBps);
     }
