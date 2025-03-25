@@ -59,6 +59,13 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         vm.prank(borrower);
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidDurationStartTime.selector));
         spro.createProposal(proposal, "");
+
+        // Revert when startTimestamp is in the past
+        proposal.startTimestamp = uint40(block.timestamp - 1);
+        proposal.loanExpiration = proposal.startTimestamp + spro.MIN_LOAN_DURATION();
+        vm.prank(borrower);
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidDurationStartTime.selector));
+        spro.createProposal(proposal, "");
     }
 
     function test_RevertWhen_InvalidLoanDuration() external {
