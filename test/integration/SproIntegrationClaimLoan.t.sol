@@ -71,7 +71,8 @@ contract SproIntegrationClaimLoan is SDBaseIntegrationTest {
         // loan token holder claims the expired loan
         spro.claimLoan(loanId);
 
-        assertEq(t20.balanceOf(address(this)), proposal.collateralAmount); // collateral amount transferred to loan
+        assertEq(collateral.balanceOf(address(this)), proposal.collateralAmount); // collateral amount transferred to
+            // loan
         // token holder
         assertEq(loanToken.balanceOf(address(this)), 0); // loanToken balance should be zero now
     }

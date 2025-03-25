@@ -12,7 +12,7 @@ import { Spro } from "src/spro/Spro.sol";
 import { SproLoan } from "src/spro/SproLoan.sol";
 
 contract SDBaseIntegrationTest is Test {
-    T20 t20;
+    T20 collateral;
     T20 credit;
 
     address lender = vm.addr(777);
@@ -58,11 +58,11 @@ contract SDBaseIntegrationTest is Test {
         loanToken = spro._loanToken();
 
         // Deploy tokens
-        t20 = new T20();
+        collateral = new T20();
         credit = new T20();
 
         proposal = ISproTypes.Proposal(
-            address(t20),
+            address(collateral),
             COLLATERAL_AMOUNT,
             address(credit),
             CREDIT_LIMIT,
@@ -89,11 +89,10 @@ contract SDBaseIntegrationTest is Test {
     }
 
     function _createERC20Proposal() internal {
-        // Mint initial state & approve collateral
-        t20.mint(borrower, proposal.collateralAmount);
+        collateral.mint(borrower, proposal.collateralAmount);
 
         vm.prank(borrower);
-        t20.approve(address(spro), proposal.collateralAmount);
+        collateral.approve(address(spro), proposal.collateralAmount);
         vm.prank(borrower);
         spro.createProposal(proposal, "");
     }

@@ -6,7 +6,6 @@ import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.so
 import { PermitSignature } from "permit2/test/utils/PermitSignature.sol";
 
 import { SDBaseIntegrationTest } from "test/integration/utils/Fixtures.sol";
-import { T20 } from "test/helper/T20.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { Spro } from "src/spro/Spro.sol";
@@ -67,7 +66,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
             IAllowanceTransfer.PermitBatch(details, address(spro), block.timestamp);
         bytes memory signature = getPermitBatchSignature(permitBatch, SIG_USER1_PK, permit2.DOMAIN_SEPARATOR());
 
-        t20.mint(sigUser1, proposal.collateralAmount);
+        collateral.mint(sigUser1, proposal.collateralAmount);
 
         spro.createProposal(proposal, abi.encode(permitBatch, signature));
         vm.stopPrank();

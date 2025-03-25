@@ -24,9 +24,9 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         // Create proposal
         _createERC20Proposal();
 
-        assertEq(t20.balanceOf(address(spro)), COLLATERAL_AMOUNT);
+        assertEq(collateral.balanceOf(address(spro)), COLLATERAL_AMOUNT);
         assertEq(sdex.balanceOf(address(0xdead)), spro._fee());
-        assertEq(t20.balanceOf(borrower), 0);
+        assertEq(collateral.balanceOf(borrower), 0);
 
         assertEq(sdex.balanceOf(address(0xdead)), feeAmount);
         assertEq(sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - feeAmount);
@@ -52,9 +52,9 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         proposal.loanExpiration = proposal.startTimestamp;
 
         // Mint initial state & approve collateral
-        t20.mint(borrower, proposal.collateralAmount);
+        collateral.mint(borrower, proposal.collateralAmount);
         vm.prank(borrower);
-        t20.approve(address(spro), proposal.collateralAmount);
+        collateral.approve(address(spro), proposal.collateralAmount);
 
         vm.prank(borrower);
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidDurationStartTime.selector));
@@ -67,9 +67,9 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         proposal.loanExpiration = proposal.startTimestamp + uint32(minDuration - 1);
 
         // Mint initial state & approve collateral
-        t20.mint(borrower, proposal.collateralAmount);
+        collateral.mint(borrower, proposal.collateralAmount);
         vm.prank(borrower);
-        t20.approve(address(spro), proposal.collateralAmount);
+        collateral.approve(address(spro), proposal.collateralAmount);
 
         vm.prank(borrower);
         vm.expectRevert(
@@ -104,14 +104,14 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         );
         assertEq(credit.balanceOf(address(spro)), 0, "3: credit token balance of loan contract should be 0");
         // collateral token
-        assertEq(t20.balanceOf(lender), 0, "4: ERC20 collateral token balance of lender should be 0");
+        assertEq(collateral.balanceOf(lender), 0, "4: ERC20 collateral token balance of lender should be 0");
         assertEq(
-            t20.balanceOf(borrower),
+            collateral.balanceOf(borrower),
             COLLATERAL_AMOUNT - (CREDIT_AMOUNT * COLLATERAL_AMOUNT) / CREDIT_LIMIT,
             "5: ERC20 collateral token balance of borrower should be unused collateral"
         );
         assertEq(
-            t20.balanceOf(address(spro)),
+            collateral.balanceOf(address(spro)),
             (CREDIT_AMOUNT * COLLATERAL_AMOUNT) / CREDIT_LIMIT,
             "6: ERC20 collateral token balance of loan contract should be used collateral"
         );
@@ -148,15 +148,15 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         // Assertions
         assertEq(credit.balanceOf(borrower), 0);
         assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + loan.fixedInterestAmount);
-        assertEq(t20.balanceOf(borrower), COLLATERAL_AMOUNT);
+        assertEq(collateral.balanceOf(borrower), COLLATERAL_AMOUNT);
     }
 
     function test_RevertWhen_CreateAlreadyMadeProposal() external {
         _createERC20Proposal();
 
-        t20.mint(borrower, proposal.collateralAmount);
+        collateral.mint(borrower, proposal.collateralAmount);
         vm.prank(borrower);
-        t20.approve(address(spro), proposal.collateralAmount);
+        collateral.approve(address(spro), proposal.collateralAmount);
 
         vm.expectRevert(ISproErrors.ProposalAlreadyExists.selector);
         vm.prank(borrower);

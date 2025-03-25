@@ -78,9 +78,9 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         assertEq(0, loanToken.balanceOf(bob));
         assertEq(0, loanToken.balanceOf(charlie));
 
-        assertEq(2000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), t20.balanceOf(borrower)); // 20% since 4
+        assertEq(2000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), collateral.balanceOf(borrower)); // 20% since 4
             // loans @ 5% minimum amount
-        assertEq(8000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), t20.balanceOf(address(spro)));
+        assertEq(8000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), collateral.balanceOf(address(spro)));
     }
 
     function test_MultiplePartialLoans_NotRevertIfOneLess() external {
@@ -103,9 +103,9 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         assertEq(0, loanToken.balanceOf(bob));
         assertEq(0, loanToken.balanceOf(charlie));
 
-        assertEq(2000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), t20.balanceOf(borrower)); // 20% since 4
+        assertEq(2000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), collateral.balanceOf(borrower)); // 20% since 4
             // loans @ 5% minimum amount
-        assertEq(8000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), t20.balanceOf(address(spro)));
+        assertEq(8000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), collateral.balanceOf(address(spro)));
     }
 
     function test_MultiplePartialLoans_RepayMultiple_RepayerNotOwner() external {
@@ -136,9 +136,9 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         assertEq(0, loanToken.balanceOf(alice));
         assertEq(0, loanToken.balanceOf(bob));
         assertEq(0, loanToken.balanceOf(charlie));
-        assertEq(2000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), t20.balanceOf(borrower)); // 20% since 4
+        assertEq(2000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), collateral.balanceOf(borrower)); // 20% since 4
             // loans @ 5% minimum amount
-        assertEq(8000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), t20.balanceOf(address(spro)));
+        assertEq(8000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), collateral.balanceOf(address(spro)));
     }
 
     /* -------------------------------------------------------------------------- */
