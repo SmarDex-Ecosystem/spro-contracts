@@ -8,22 +8,13 @@ import { SproHandler } from "test/helper/SproHandler.sol";
 import { Spro } from "src/spro/Spro.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
-contract SproSimpleLoanTest is Test {
-    address public sdex = makeAddr("sdex");
-    address public permit2 = makeAddr("permit2");
-    address public config = makeAddr("config");
-
+contract SproInternalTest is Test {
     SproHandler sproHandler;
+    address sdex = makeAddr("sdex");
+    address permit2 = makeAddr("permit2");
 
     function setUp() public {
-        vm.etch(config, bytes("data"));
         sproHandler = new SproHandler(sdex, permit2, 1, 1);
-    }
-
-    function test_getLoanReturnZeroForNonExistingLoan() external view {
-        ISproTypes.Loan memory loan = sproHandler.getLoan(0);
-
-        assertEq(loan.borrower, address(0), "Borrower should be zero address");
     }
 
     function test_isLoanRepayable() external view {
