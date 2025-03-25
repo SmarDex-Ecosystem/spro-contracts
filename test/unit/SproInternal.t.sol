@@ -10,11 +10,9 @@ import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract SproInternalTest is Test {
     SproHandler sproHandler;
-    address sdex = makeAddr("sdex");
-    address permit2 = makeAddr("permit2");
 
     function setUp() public {
-        sproHandler = new SproHandler(sdex, permit2, 1, 1);
+        sproHandler = new SproHandler(address(1), address(1), 1, 1);
     }
 
     function test_isLoanRepayable() external view {

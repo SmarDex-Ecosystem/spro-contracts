@@ -72,8 +72,7 @@ contract SproIntegrationClaimLoan is SDBaseIntegrationTest {
         spro.claimLoan(loanId);
 
         assertEq(collateral.balanceOf(address(this)), proposal.collateralAmount); // collateral amount transferred to
-            // loan
-        // token holder
+            // loan token holder
         assertEq(loanToken.balanceOf(address(this)), 0); // loanToken balance should be zero now
     }
 
