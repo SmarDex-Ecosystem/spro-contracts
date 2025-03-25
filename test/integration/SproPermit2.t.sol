@@ -95,13 +95,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
 
     function test_ForkPermit2RepayLoan() public {
         _createERC20Proposal();
-
-        credit.mint(sigUser1, CREDIT_LIMIT);
-        vm.prank(sigUser1);
-        credit.approve(address(spro), CREDIT_LIMIT);
-
-        vm.prank(sigUser1);
-        uint256 loanId = spro.createLoan(proposal, CREDIT_AMOUNT, "");
+        uint256 loanId = _createLoan(proposal, CREDIT_AMOUNT, "");
 
         vm.prank(borrower);
         spro.cancelProposal(proposal);
@@ -123,13 +117,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
 
     function test_RevertWhen_ForkPermit2RepayLoan() public {
         _createERC20Proposal();
-
-        credit.mint(sigUser1, CREDIT_LIMIT);
-        vm.prank(sigUser1);
-        credit.approve(address(spro), CREDIT_LIMIT);
-
-        vm.prank(sigUser1);
-        uint256 loanId = spro.createLoan(proposal, CREDIT_AMOUNT, "");
+        uint256 loanId = _createLoan(proposal, CREDIT_AMOUNT, "");
 
         vm.prank(borrower);
         spro.cancelProposal(proposal);

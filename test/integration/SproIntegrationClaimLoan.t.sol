@@ -18,15 +18,7 @@ contract SproIntegrationClaimLoan is SDBaseIntegrationTest {
 
     function test_RevertWhen_claimLoanCallerNotLoanTokenHolder() external {
         _createERC20Proposal();
-
-        // Mint initial state & approve credit
-        credit.mint(lender, INITIAL_CREDIT_BALANCE);
-        vm.prank(lender);
-        credit.approve(address(spro), CREDIT_LIMIT);
-
-        // Lender: creates the loan
-        vm.prank(lender);
-        uint256 loanId = spro.createLoan(proposal, CREDIT_AMOUNT, "");
+        uint256 loanId = _createLoan(proposal, CREDIT_AMOUNT, "");
 
         vm.startPrank(borrower);
         // Borrower approvals for credit token
@@ -46,15 +38,7 @@ contract SproIntegrationClaimLoan is SDBaseIntegrationTest {
 
     function test_RevertWhen_claimLoanRunningAndExpired() external {
         _createERC20Proposal();
-
-        // Mint initial state & approve credit
-        credit.mint(lender, INITIAL_CREDIT_BALANCE);
-        vm.prank(lender);
-        credit.approve(address(spro), CREDIT_LIMIT);
-
-        // Lender: creates the loan
-        vm.prank(lender);
-        uint256 loanId = spro.createLoan(proposal, CREDIT_LIMIT, "");
+        uint256 loanId = _createLoan(proposal, CREDIT_LIMIT, "");
 
         // Borrower approvals for credit token
         vm.startPrank(borrower);
@@ -78,16 +62,7 @@ contract SproIntegrationClaimLoan is SDBaseIntegrationTest {
 
     function test_RevertWhen_claimLoan_LoanRunning() external {
         _createERC20Proposal();
-
-        // Mint initial state & approve credit
-        credit.mint(lender, INITIAL_CREDIT_BALANCE);
-        vm.prank(lender);
-        credit.approve(address(spro), CREDIT_LIMIT);
-
-        // Lender: creates the loan
-        uint256 creditAmount = CREDIT_AMOUNT;
-        vm.prank(lender);
-        uint256 loanId = spro.createLoan(proposal, creditAmount, "");
+        uint256 loanId = _createLoan(proposal, CREDIT_AMOUNT, "");
 
         vm.startPrank(borrower);
         // Borrower approvals for credit token

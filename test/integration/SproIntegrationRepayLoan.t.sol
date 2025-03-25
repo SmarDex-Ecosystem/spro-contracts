@@ -21,14 +21,7 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         spro.repayLoan(0, "");
 
         _createERC20Proposal();
-
-        // Mint initial state & approve credit
-        credit.mint(lender, INITIAL_CREDIT_BALANCE);
-        vm.prank(lender);
-        credit.approve(address(spro), CREDIT_LIMIT);
-
-        vm.prank(lender);
-        uint256 loanId = spro.createLoan(proposal, CREDIT_AMOUNT, "");
+        uint256 loanId = _createLoan(proposal, CREDIT_AMOUNT, "");
 
         // Warp ahead, just when loan default
         vm.warp(proposal.loanExpiration);

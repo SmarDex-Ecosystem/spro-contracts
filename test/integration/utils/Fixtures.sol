@@ -97,7 +97,7 @@ contract SDBaseIntegrationTest is Test {
         spro.createProposal(proposal, "");
     }
 
-    function _createLoan(ISproTypes.Proposal memory newProposal, bytes memory revertData)
+    function _createLoan(ISproTypes.Proposal memory newProposal, uint256 amount, bytes memory revertData)
         internal
         returns (uint256 loanId)
     {
@@ -112,6 +112,6 @@ contract SDBaseIntegrationTest is Test {
         }
 
         vm.prank(lender);
-        return spro.createLoan(newProposal, CREDIT_AMOUNT, "");
+        return spro.createLoan(newProposal, amount, "");
     }
 }

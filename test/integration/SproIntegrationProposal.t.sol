@@ -84,7 +84,7 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         _createERC20Proposal();
 
         vm.prank(lender);
-        uint256 loanId = _createLoan(proposal, "");
+        uint256 loanId = _createLoan(proposal, CREDIT_AMOUNT, "");
 
         // Borrower: cancels proposal, withdrawing unused collateral
         vm.prank(borrower);
@@ -121,14 +121,7 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
 
     function test_PartialLoan_ERC20Collateral_CancelProposal_RepayLoan() external {
         _createERC20Proposal();
-
-        // Mint initial state & approve credit
-        credit.mint(lender, INITIAL_CREDIT_BALANCE);
-        vm.prank(lender);
-        credit.approve(address(spro), CREDIT_LIMIT);
-
-        vm.prank(lender);
-        uint256 loanId = spro.createLoan(proposal, CREDIT_AMOUNT, "");
+        uint256 loanId = _createLoan(proposal, CREDIT_AMOUNT, "");
 
         // Borrower: cancels proposal, withdrawing unused collateral
         vm.startPrank(borrower);

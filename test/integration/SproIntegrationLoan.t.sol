@@ -20,20 +20,14 @@ contract SproIntegrationLoan is SDBaseIntegrationTest {
 
     function test_CreateLoan() external {
         _createERC20Proposal();
+        uint256 loanId = _createLoan(proposal, CREDIT_LIMIT, "");
 
-        vm.startPrank(lender);
-        credit.mint(lender, INITIAL_CREDIT_BALANCE);
-        credit.approve(address(spro), CREDIT_LIMIT);
-
-        uint256 id = spro.createLoan(proposal, CREDIT_LIMIT, "");
-        vm.stopPrank();
-
-        assertEq(loanToken.ownerOf(id), lender);
+        assertEq(loanToken.ownerOf(loanId), lender);
         assertEq(sdex.balanceOf(address(0xdead)), spro._fee());
         assertEq(sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - spro._fee());
         assertEq(sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
-        Spro.Loan memory loanInfo = spro.getLoan(id);
+        Spro.Loan memory loanInfo = spro.getLoan(loanId);
         assertTrue(loanInfo.status == ISproTypes.LoanStatus.RUNNING);
 
         assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE - CREDIT_LIMIT);
@@ -120,13 +114,7 @@ contract SproIntegrationLoan is SDBaseIntegrationTest {
         future = bound(future, 1 days, proposal.startTimestamp);
 
         _createERC20Proposal();
-
-        // Mint initial state & approve credit
-        credit.mint(lender, INITIAL_CREDIT_BALANCE);
-        vm.startPrank(lender);
-        credit.approve(address(spro), CREDIT_LIMIT);
-
-        uint256 loanId = spro.createLoan(proposal, amount, "");
+        uint256 loanId = _createLoan(proposal, amount, "");
 
         skip(future);
 
