@@ -62,7 +62,6 @@ contract SDBaseIntegrationTest is Test {
         t20 = new T20();
         credit = new T20();
 
-        // Deploy protocol contracts
         proposal = ISproTypes.Proposal(
             address(t20),
             COLLATERAL_AMOUNT,
