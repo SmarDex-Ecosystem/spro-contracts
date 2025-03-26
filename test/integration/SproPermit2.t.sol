@@ -118,15 +118,15 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
             IAllowanceTransfer.PermitSingle(details, address(spro), block.timestamp);
         bytes memory signature = getPermitSignature(permitSign, SIG_USER1_PK, permit2.DOMAIN_SEPARATOR());
 
-        uint256 balanceBeforeRepayLender = credit.balanceOf(address(lender));
         vm.prank(sigUser1);
         spro.repayLoan(loanId, abi.encode(permitSign, signature));
 
         assertEq(collateral.balanceOf(address(spro)), 0, "spro must transfer collateral");
         assertEq(collateral.balanceOf(address(borrower)), COLLATERAL_AMOUNT, "borrower must receive collateral");
+        assertEq(credit.balanceOf(address(spro)), 0, "spro must transfer credit");
         assertEq(
-            credit.balanceOf(address(lender)) - balanceBeforeRepayLender,
-            repaymentAmount,
+            credit.balanceOf(address(lender)),
+            INITIAL_CREDIT_BALANCE - CREDIT_AMOUNT + repaymentAmount,
             "lender must receive repayment"
         );
     }
