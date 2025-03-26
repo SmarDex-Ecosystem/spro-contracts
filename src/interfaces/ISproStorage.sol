@@ -40,7 +40,7 @@ interface ISproStorage {
      * @notice Retrieves the current proposal nonce.
      * @return proposalNonce The current proposal nonce.
      */
-    function proposalNonce() external view returns (uint256 proposalNonce);
+    function _proposalNonce() external view returns (uint256 proposalNonce);
 
     /**
      * @notice Retrieves the minimum usage ratio for partial lending, expressed in basis points.
