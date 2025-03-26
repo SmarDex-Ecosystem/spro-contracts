@@ -36,6 +36,10 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
 
         vm.prank(sigUser1);
         spro.createLoan(proposal, CREDIT_LIMIT, abi.encode(permitSign, signature));
+
+        assertEq(credit.balanceOf(address(sigUser1)), 0, "sigUser1 must transfer credit");
+        assertEq(credit.balanceOf(address(borrower)), CREDIT_LIMIT, "borrower must receive credit");
+        assertEq(collateral.balanceOf(address(spro)), COLLATERAL_AMOUNT, "spro keeps the collateral");
     }
 
     function test_RevertWhen_ForkPermit2CreateLoan() public {
@@ -70,6 +74,9 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
 
         spro.createProposal(proposal, abi.encode(permitBatch, signature));
         vm.stopPrank();
+
+        assertEq(collateral.balanceOf(address(borrower)), 0, "borrower must transfer collateral");
+        assertEq(collateral.balanceOf(address(spro)), COLLATERAL_AMOUNT, "spro must receive collateral");
     }
 
     function test_RevertWhen_ForkPermit2CreateProposal() public {
@@ -111,8 +118,17 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
             IAllowanceTransfer.PermitSingle(details, address(spro), block.timestamp);
         bytes memory signature = getPermitSignature(permitSign, SIG_USER1_PK, permit2.DOMAIN_SEPARATOR());
 
+        uint256 balanceBeforeRepayLender = credit.balanceOf(address(lender));
         vm.prank(sigUser1);
         spro.repayLoan(loanId, abi.encode(permitSign, signature));
+
+        assertEq(collateral.balanceOf(address(spro)), 0, "spro must transfer collateral");
+        assertEq(collateral.balanceOf(address(borrower)), COLLATERAL_AMOUNT, "borrower must receive collateral");
+        assertEq(
+            credit.balanceOf(address(lender)) - balanceBeforeRepayLender,
+            repaymentAmount,
+            "lender must receive repayment"
+        );
     }
 
     function test_RevertWhen_ForkPermit2RepayLoan() public {
@@ -141,11 +157,10 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
     function test_ForkPermit2RepayMultipleLoans() public {
         _createERC20Proposal();
 
-        credit.mint(sigUser1, CREDIT_LIMIT);
-        vm.prank(sigUser1);
-        credit.approve(address(spro), CREDIT_LIMIT);
+        credit.mint(lender, CREDIT_AMOUNT);
+        vm.startPrank(lender);
+        credit.approve(address(spro), CREDIT_AMOUNT);
 
-        vm.startPrank(sigUser1);
         uint256[] memory loanIds = new uint256[](3);
         loanIds[0] = spro.createLoan(proposal, CREDIT_AMOUNT / 3, "");
         loanIds[1] = spro.createLoan(proposal, CREDIT_AMOUNT / 3, "");
@@ -173,6 +188,11 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
 
         vm.prank(sigUser1);
         spro.repayMultipleLoans(loanIds, abi.encode(permitSign, signature));
+
+        assertEq(collateral.balanceOf(address(spro)), 0, "spro must transfer collateral");
+        assertEq(collateral.balanceOf(address(borrower)), COLLATERAL_AMOUNT, "borrower must receive collateral");
+        assertEq(credit.balanceOf(address(spro)), 0, "spro must transfer credit");
+        assertEq(credit.balanceOf(address(lender)), totalRepaymentAmount, "lender must receive repayment");
     }
 
     function test_RevertWhen_ForkWrongSignPermit2RepayMultipleLoans() public {
