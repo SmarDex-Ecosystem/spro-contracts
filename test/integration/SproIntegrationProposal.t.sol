@@ -171,6 +171,7 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         vm.assume(used <= limit);
 
         proposal.availableCreditLimit = limit;
+        proposal.minAmount = Math.mulDiv(limit, PARTIAL_POSITION_BPS, spro.BPS_DIVISOR());
         _createERC20Proposal();
 
         bytes32 proposalHash = spro.getProposalHash(proposal);
