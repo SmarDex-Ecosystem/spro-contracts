@@ -75,7 +75,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         spro.createProposal(proposal, abi.encode(permitBatch, signature));
         vm.stopPrank();
 
-        assertEq(collateral.balanceOf(address(borrower)), 0, "borrower must transfer collateral");
+        assertEq(collateral.balanceOf(address(sigUser1)), 0, "borrower must transfer collateral");
         assertEq(collateral.balanceOf(address(spro)), COLLATERAL_AMOUNT, "spro must receive collateral");
     }
 
@@ -173,13 +173,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         // Warp ahead, just before loan default
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
-        uint256 totalRepaymentAmount;
-        ISproTypes.Loan memory loan = spro.getLoan(loanIds[0]);
-        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
-        loan = spro.getLoan(loanIds[1]);
-        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
-        loan = spro.getLoan(loanIds[2]);
-        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
+        uint256 totalRepaymentAmount = spro.totalLoanRepaymentAmount(loanIds);
         IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(totalRepaymentAmount), 0, 0);
         IAllowanceTransfer.PermitSingle memory permitSign =
@@ -215,13 +209,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         // Warp ahead, just before loan default
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
-        uint256 totalRepaymentAmount;
-        ISproTypes.Loan memory loan = spro.getLoan(loanIds[0]);
-        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
-        loan = spro.getLoan(loanIds[1]);
-        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
-        loan = spro.getLoan(loanIds[2]);
-        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
+        uint256 totalRepaymentAmount = spro.totalLoanRepaymentAmount(loanIds);
         IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(totalRepaymentAmount - 1), 0, 0);
         IAllowanceTransfer.PermitSingle memory permitSign =
