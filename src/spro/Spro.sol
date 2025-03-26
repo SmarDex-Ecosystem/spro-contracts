@@ -355,6 +355,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
         proposal.partialPositionBps = _partialPositionBps;
         proposal.proposer = msg.sender;
+        proposal.nonce = nonce++;
 
         bytes32 proposalHash = getProposalHash(proposal);
 
