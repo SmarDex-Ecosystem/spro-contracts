@@ -46,7 +46,7 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         spro.createProposal(proposal, "");
     }
 
-    function test_RevertWhen_InvalidDurationStartTime() external {
+    function test_RevertWhen_InvalidStartTime() external {
         // Set bad timestamp value
         proposal.startTimestamp = uint40(block.timestamp);
         proposal.loanExpiration = proposal.startTimestamp;
@@ -57,7 +57,14 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         collateral.approve(address(spro), proposal.collateralAmount);
 
         vm.prank(borrower);
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidDurationStartTime.selector));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidStartTime.selector));
+        spro.createProposal(proposal, "");
+
+        // Revert when startTimestamp is in the past
+        proposal.startTimestamp = uint40(block.timestamp - 1);
+        proposal.loanExpiration = proposal.startTimestamp + spro.MIN_LOAN_DURATION();
+        vm.prank(borrower);
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidStartTime.selector));
         spro.createProposal(proposal, "");
     }
 

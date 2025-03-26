@@ -340,15 +340,12 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      * @param proposal The proposal structure.
      */
     function _makeProposal(Proposal memory proposal) internal {
-        if (proposal.startTimestamp >= proposal.loanExpiration) {
-            revert InvalidDurationStartTime();
+        if (proposal.startTimestamp >= proposal.loanExpiration || proposal.startTimestamp < block.timestamp) {
+            revert InvalidStartTime();
         }
-
         if (proposal.availableCreditLimit == 0) {
             revert AvailableCreditLimitZero();
         }
-
-        // Check minimum loan duration
         if (proposal.loanExpiration - proposal.startTimestamp < MIN_LOAN_DURATION) {
             revert InvalidDuration(proposal.loanExpiration - proposal.startTimestamp, MIN_LOAN_DURATION);
         }

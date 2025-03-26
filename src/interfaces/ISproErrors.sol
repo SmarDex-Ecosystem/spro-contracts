@@ -87,8 +87,11 @@ interface ISproErrors {
     /// @notice Thrown when the proposal does not exist.
     error ProposalDoesNotExists();
 
-    /// @notice Thrown when the proposal expiration is earlier or equal to the current timestamp.
-    error InvalidDurationStartTime();
+    /**
+     * @notice Thrown when the proposal start time is invalid.
+     * @dev Either the start time is in the past or the start time is after the expiration time.
+     */
+    error InvalidStartTime();
 
     /**
      * @notice Thrown when owner tries to set a fee that is higher than the maximum allowed.
