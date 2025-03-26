@@ -37,6 +37,12 @@ interface ISproStorage {
     function PERMIT2() external view returns (IAllowanceTransfer PERMIT2);
 
     /**
+     * @notice Retrieves the current proposal nonce.
+     * @return proposalNonce The current proposal nonce.
+     */
+    function proposalNonce() external view returns (uint256 proposalNonce);
+
+    /**
      * @notice Retrieves the minimum usage ratio for partial lending, expressed in basis points.
      * @return _partialPositionBps The minimum usage ratio for partial lending.
      */

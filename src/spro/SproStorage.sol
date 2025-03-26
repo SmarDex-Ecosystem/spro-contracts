@@ -26,7 +26,8 @@ contract SproStorage is ISproStorage {
     /// @inheritdoc ISproStorage
     IAllowanceTransfer public immutable PERMIT2;
 
-    uint256 public nonce;
+    /// @inheritdoc ISproStorage
+    uint256 public proposalNonce;
 
     /// @inheritdoc ISproStorage
     uint16 public _partialPositionBps;

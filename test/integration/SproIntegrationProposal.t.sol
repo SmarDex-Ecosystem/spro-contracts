@@ -145,13 +145,13 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
 
     function test_nonceIncrement() external {
         for (uint256 i = 0; i < 20; i++) {
-            uint256 nonce = spro.nonce();
+            uint256 nonce = spro.proposalNonce();
             proposal.nonce = nonce;
             bytes32 proposalHash = spro.getProposalHash(proposal);
 
             assertFalse(spro._proposalsMade(proposalHash), "Proposal should not exist");
             _createERC20Proposal();
-            assertEq(spro.nonce(), nonce + 1, "Nonce should increment by 1");
+            assertEq(spro.proposalNonce(), nonce + 1, "Nonce should increment by 1");
             assertTrue(spro._proposalsMade(proposalHash), "Proposal should exist");
         }
     }
