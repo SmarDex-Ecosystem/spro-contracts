@@ -152,11 +152,11 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         if (!_proposalsMade[proposalHash]) {
             revert ProposalDoesNotExists();
         }
-        proposal.collateralAmount = _withdrawableCollateral[proposalHash];
-        _withdrawableCollateral[proposalHash] = 0;
-        _proposalsMade[proposalHash] = false;
 
-        IERC20Metadata(proposal.collateralAddress).safeTransfer(proposal.proposer, proposal.collateralAmount);
+        _proposalsMade[proposalHash] = false;
+        IERC20Metadata(proposal.collateralAddress).safeTransfer(
+            proposal.proposer, _withdrawableCollateral[proposalHash]
+        );
         emit ProposalCanceled(proposalHash);
     }
 
