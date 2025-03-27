@@ -27,3 +27,17 @@ contract T20 is ERC20("ERC20", "ERC20") {
         _burn(owner, amount);
     }
 }
+
+contract T20TransferFee is ERC20("ERC20", "ERC20") {
+    function transfer(address recipient, uint256 amount) public override returns (bool) {
+        return super.transfer(recipient, amount - 1);
+    }
+
+    function transferFrom(address from, address to, uint256 value) public override returns (bool) {
+        return super.transferFrom(from, to, value - 1);
+    }
+
+    function mint(address owner, uint256 amount) external {
+        _mint(owner, amount);
+    }
+}

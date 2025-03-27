@@ -180,6 +180,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
         emit LoanCreated(loanId_, proposalHash, loanTerms);
 
+        uint256 balanceBefore = IERC20Metadata(loanTerms.credit).balanceOf(loanTerms.borrower);
         if (permit2Data.length > 0) {
             _permit2Workflows(
                 permit2Data, loanTerms.lender, loanTerms.borrower, loanTerms.creditAmount.toUint160(), loanTerms.credit
@@ -188,6 +189,9 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             IERC20Metadata(loanTerms.credit).safeTransferFrom(
                 loanTerms.lender, loanTerms.borrower, loanTerms.creditAmount
             );
+        }
+        if (IERC20Metadata(loanTerms.credit).balanceOf(loanTerms.borrower) - balanceBefore != loanTerms.creditAmount) {
+            revert TransferMismatch();
         }
     }
 

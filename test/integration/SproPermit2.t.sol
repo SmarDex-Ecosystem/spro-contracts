@@ -6,8 +6,10 @@ import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.so
 import { PermitSignature } from "permit2/test/utils/PermitSignature.sol";
 
 import { SDBaseIntegrationTest } from "test/integration/utils/Fixtures.sol";
+import { T20TransferFee } from "test/helper/T20.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
+import { ISproErrors } from "src/interfaces/ISproErrors.sol";
 import { Spro } from "src/spro/Spro.sol";
 
 contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
@@ -221,5 +223,28 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         );
         vm.prank(sigUser1);
         spro.repayMultipleLoans(loanIds, abi.encode(permitSign, signature), address(0));
+    }
+
+    function test_RevertWhen_ForkTransferMismatchCreateProposal() external {
+        proposal.collateralAddress = address(collateralTransferFee);
+        proposal.proposer = sigUser1;
+
+        vm.startPrank(sigUser1);
+        IERC20(proposal.collateralAddress).approve(address(permit2), type(uint256).max);
+        sdex.approve(address(permit2), type(uint256).max);
+        IAllowanceTransfer.PermitDetails[] memory details = new IAllowanceTransfer.PermitDetails[](2);
+        details[0] = IAllowanceTransfer.PermitDetails(
+            address(proposal.collateralAddress), uint160(COLLATERAL_AMOUNT), uint48(block.timestamp), 0
+        );
+        details[1] = IAllowanceTransfer.PermitDetails(address(sdex), uint160(spro._fee()), uint48(block.timestamp), 0);
+        IAllowanceTransfer.PermitBatch memory permitBatch =
+            IAllowanceTransfer.PermitBatch(details, address(spro), block.timestamp);
+        bytes memory signature = getPermitBatchSignature(permitBatch, SIG_USER1_PK, permit2.DOMAIN_SEPARATOR());
+
+        T20TransferFee(proposal.collateralAddress).mint(sigUser1, proposal.collateralAmount);
+
+        vm.expectRevert(ISproErrors.TransferMismatch.selector);
+        spro.createProposal(proposal, abi.encode(permitBatch, signature));
+        vm.stopPrank();
     }
 }
