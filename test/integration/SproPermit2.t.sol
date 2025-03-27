@@ -225,7 +225,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         spro.repayMultipleLoans(loanIds, abi.encode(permitSign, signature), address(0));
     }
 
-    function test_RevertWhen_ForkTransferMismatchCreateProposal() external {
+    function test_RevertWhen_ForkPermit2TransferMismatchCreateProposal() external {
         proposal.collateralAddress = address(collateralTransferFee);
         proposal.proposer = sigUser1;
 
@@ -248,7 +248,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         vm.stopPrank();
     }
 
-    function test_RevertWhen_ForkTransferMismatchCreateLoan() public {
+    function test_RevertWhen_ForkPermit2TransferMismatchCreateLoan() public {
         proposal.creditAddress = address(creditTransferFee);
 
         IAllowanceTransfer.PermitDetails memory details =
