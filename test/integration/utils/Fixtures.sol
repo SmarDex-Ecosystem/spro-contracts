@@ -94,7 +94,16 @@ contract SDBaseIntegrationTest is Test {
         vm.prank(borrower);
         collateral.approve(address(spro), proposal.collateralAmount);
         vm.prank(borrower);
-        spro.createProposal(proposal, "");
+        spro.createProposal(
+            proposal.collateralAddress,
+            proposal.collateralAmount,
+            proposal.creditAddress,
+            proposal.availableCreditLimit,
+            proposal.fixedInterestAmount,
+            proposal.startTimestamp,
+            proposal.loanExpiration,
+            ""
+        );
     }
 
     function _createLoan(ISproTypes.Proposal memory newProposal, uint256 amount, bytes memory revertData)

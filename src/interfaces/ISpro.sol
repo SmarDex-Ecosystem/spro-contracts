@@ -67,7 +67,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param proposal The proposal structure.
      * @param permit2Data The permit2 data, if the user opts to use permit2.
      */
-    function createProposal(Proposal memory proposal, bytes calldata permit2Data) external;
+    // function createProposal(Proposal memory proposal, bytes calldata permit2Data) external;
 
     /**
      * @notice Cancels a borrowing proposal.
