@@ -117,7 +117,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
     }
 
-    // / @inheritdoc ISpro
+    /// @inheritdoc ISpro
     function createProposal(
         address collateralAddress,
         uint256 collateralAmount,
@@ -128,15 +128,36 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         uint40 loanExpiration,
         bytes calldata permit2Data
     ) external nonReentrant {
-        _makeProposal(
-            collateralAddress,
-            collateralAmount,
-            creditAddress,
-            availableCreditLimit,
-            fixedInterestAmount,
-            startTimestamp,
-            loanExpiration
-        );
+        if (startTimestamp >= loanExpiration || startTimestamp < block.timestamp) {
+            revert InvalidStartTime();
+        }
+        if (availableCreditLimit == 0) {
+            revert AvailableCreditLimitZero();
+        }
+        if (loanExpiration - startTimestamp < MIN_LOAN_DURATION) {
+            revert InvalidDuration(loanExpiration - startTimestamp, MIN_LOAN_DURATION);
+        }
+
+        {
+            Proposal memory proposal = Proposal({
+                collateralAddress: collateralAddress,
+                collateralAmount: collateralAmount,
+                creditAddress: creditAddress,
+                availableCreditLimit: availableCreditLimit,
+                fixedInterestAmount: fixedInterestAmount,
+                startTimestamp: startTimestamp,
+                loanExpiration: loanExpiration,
+                proposer: msg.sender,
+                nonce: _proposalNonce++,
+                partialPositionBps: _partialPositionBps
+            });
+
+            bytes32 proposalHash = getProposalHash(proposal);
+            _proposalsMade[proposalHash] = true;
+            _withdrawableCollateral[proposalHash] = collateralAmount;
+
+            emit ProposalCreated(proposalHash, msg.sender, proposal);
+        }
 
         // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
@@ -373,45 +394,6 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             return canBeRepaid_;
         }
         return true;
-    }
-
-    function _makeProposal(
-        address collateralAddress,
-        uint256 collateralAmount,
-        address creditAddress,
-        uint256 availableCreditLimit,
-        uint256 fixedInterestAmount,
-        uint40 startTimestamp,
-        uint40 loanExpiration
-    ) internal {
-        if (startTimestamp >= loanExpiration || startTimestamp < block.timestamp) {
-            revert InvalidStartTime();
-        }
-        if (availableCreditLimit == 0) {
-            revert AvailableCreditLimitZero();
-        }
-        if (loanExpiration - startTimestamp < MIN_LOAN_DURATION) {
-            revert InvalidDuration(loanExpiration - startTimestamp, MIN_LOAN_DURATION);
-        }
-
-        Proposal memory proposal = Proposal({
-            collateralAddress: collateralAddress,
-            collateralAmount: collateralAmount,
-            creditAddress: creditAddress,
-            availableCreditLimit: availableCreditLimit,
-            fixedInterestAmount: fixedInterestAmount,
-            startTimestamp: startTimestamp,
-            loanExpiration: loanExpiration,
-            proposer: msg.sender,
-            nonce: _proposalNonce++,
-            partialPositionBps: _partialPositionBps
-        });
-
-        bytes32 proposalHash = getProposalHash(proposal);
-        _proposalsMade[proposalHash] = true;
-        _withdrawableCollateral[proposalHash] = collateralAmount;
-
-        emit ProposalCreated(proposalHash, msg.sender, proposal);
     }
 
     /**
