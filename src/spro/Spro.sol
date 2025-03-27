@@ -343,12 +343,9 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         if (proposal.startTimestamp >= proposal.loanExpiration) {
             revert InvalidDurationStartTime();
         }
-
         if (proposal.availableCreditLimit == 0) {
             revert AvailableCreditLimitZero();
         }
-
-        // Check minimum loan duration
         if (proposal.loanExpiration - proposal.startTimestamp < MIN_LOAN_DURATION) {
             revert InvalidDuration(proposal.loanExpiration - proposal.startTimestamp, MIN_LOAN_DURATION);
         }
@@ -358,11 +355,6 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         proposal.nonce = _proposalNonce++;
 
         bytes32 proposalHash = getProposalHash(proposal);
-
-        if (_proposalsMade[proposalHash]) {
-            revert ProposalAlreadyExists();
-        }
-
         _proposalsMade[proposalHash] = true;
         _withdrawableCollateral[proposalHash] = proposal.collateralAmount;
 
@@ -433,7 +425,6 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         if (proposal.proposer == acceptor) {
             revert AcceptorIsProposer(acceptor);
         }
-        // Check proposal is not expired
         if (block.timestamp >= proposal.startTimestamp) {
             revert Expired(block.timestamp, proposal.startTimestamp);
         }
