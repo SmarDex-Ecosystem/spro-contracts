@@ -6,7 +6,6 @@ import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.so
 import { PermitSignature } from "permit2/test/utils/PermitSignature.sol";
 
 import { SDBaseIntegrationTest } from "test/integration/utils/Fixtures.sol";
-import { T20 } from "test/helper/T20.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
@@ -240,9 +239,9 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
             IAllowanceTransfer.PermitBatch(details, address(spro), block.timestamp);
         bytes memory signature = getPermitBatchSignature(permitBatch, SIG_USER1_PK, permit2.DOMAIN_SEPARATOR());
 
-        T20(proposal.collateralAddress).mint(sigUser1, proposal.collateralAmount);
+        collateral.mint(sigUser1, proposal.collateralAmount);
 
-        T20(proposal.collateralAddress).setFee(true);
+        collateral.setFee(true);
 
         vm.expectRevert(ISproErrors.TransferMismatch.selector);
         spro.createProposal(proposal, abi.encode(permitBatch, signature));
@@ -257,11 +256,11 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         bytes memory signature = getPermitSignature(permitSign, SIG_USER1_PK, permit2.DOMAIN_SEPARATOR());
 
         _createERC20Proposal();
-        T20(proposal.creditAddress).mint(sigUser1, CREDIT_LIMIT);
+        credit.mint(sigUser1, CREDIT_LIMIT);
         vm.prank(sigUser1);
         IERC20(proposal.creditAddress).approve(address(permit2), type(uint256).max);
 
-        T20(proposal.creditAddress).setFee(true);
+        credit.setFee(true);
 
         vm.expectRevert(ISproErrors.TransferMismatch.selector);
         vm.prank(sigUser1);
