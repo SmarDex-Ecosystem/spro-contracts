@@ -2,9 +2,7 @@
 pragma solidity >=0.8.0;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { T20 } from "test/helper/T20.sol";
 import { SDBaseIntegrationTest } from "test/integration/utils/Fixtures.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
@@ -194,11 +192,11 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
     }
 
     function test_RevertWhen_proposalTransferMismatch() external {
-        T20(proposal.collateralAddress).mint(borrower, proposal.collateralAmount);
+        collateral.mint(borrower, proposal.collateralAmount);
         vm.prank(borrower);
-        IERC20(proposal.collateralAddress).approve(address(spro), proposal.collateralAmount);
+        collateral.approve(address(spro), proposal.collateralAmount);
 
-        T20(proposal.collateralAddress).setFee(true);
+        collateral.setFee(true);
 
         vm.expectRevert(ISproErrors.TransferMismatch.selector);
         vm.prank(borrower);

@@ -2,7 +2,6 @@
 pragma solidity >=0.8.0;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { SDBaseIntegrationTest } from "test/integration/utils/Fixtures.sol";
 
@@ -130,7 +129,7 @@ contract SproIntegrationLoan is SDBaseIntegrationTest {
 
         credit.mint(lender, INITIAL_CREDIT_BALANCE);
         vm.prank(lender);
-        IERC20(proposal.creditAddress).approve(address(spro), CREDIT_LIMIT);
+        credit.approve(address(spro), CREDIT_LIMIT);
 
         credit.setFee(true);
 
