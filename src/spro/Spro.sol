@@ -121,8 +121,8 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     function createProposal(Proposal memory proposal, bytes calldata permit2Data) external nonReentrant {
         _makeProposal(proposal);
 
-        // Execute permit2Data for the caller
         uint256 balanceBefore = IERC20Metadata(proposal.collateralAddress).balanceOf(address(this));
+        // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
             (IAllowanceTransfer.PermitBatch memory permitBatch, bytes memory data) =
                 abi.decode(permit2Data, (IAllowanceTransfer.PermitBatch, bytes));

@@ -195,6 +195,7 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
 
     function test_RevertWhen_proposalTransferMismatch() external {
         proposal.collateralAddress = address(collateralTransferFee);
+
         T20TransferFee(proposal.collateralAddress).mint(borrower, proposal.collateralAmount);
         vm.prank(borrower);
         IERC20(proposal.collateralAddress).approve(address(spro), proposal.collateralAmount);

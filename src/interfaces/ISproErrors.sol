@@ -99,6 +99,6 @@ interface ISproErrors {
      */
     error ExcessiveFee(uint256 fee);
 
-    /// @notice Thrown when token transfer not corresponding to the expected amount.
+    /// @notice Thrown when a token transfer does not match the expected amount.
     error TransferMismatch();
 }

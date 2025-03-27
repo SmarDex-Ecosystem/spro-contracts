@@ -128,7 +128,6 @@ contract SproIntegrationLoan is SDBaseIntegrationTest {
 
     function test_RevertWhen_loanTransferMismatch() external {
         proposal.creditAddress = address(creditTransferFee);
-
         _createERC20Proposal();
 
         T20TransferFee(proposal.creditAddress).mint(lender, INITIAL_CREDIT_BALANCE);
