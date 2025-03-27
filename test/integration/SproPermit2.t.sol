@@ -29,7 +29,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
 
     function test_ForkPermit2CreateLoan() public {
         IAllowanceTransfer.PermitDetails memory details =
-            IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(proposal.collateralAmount), 0, 0);
+            IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(CREDIT_LIMIT), 0, 0);
         IAllowanceTransfer.PermitSingle memory permitSign =
             IAllowanceTransfer.PermitSingle(details, address(spro), block.timestamp);
         bytes memory signature = getPermitSignature(permitSign, SIG_USER1_PK, permit2.DOMAIN_SEPARATOR());
@@ -246,5 +246,24 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         vm.expectRevert(ISproErrors.TransferMismatch.selector);
         spro.createProposal(proposal, abi.encode(permitBatch, signature));
         vm.stopPrank();
+    }
+
+    function test_RevertWhen_ForkTransferMismatchCreateLoan() public {
+        proposal.creditAddress = address(creditTransferFee);
+
+        IAllowanceTransfer.PermitDetails memory details =
+            IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(CREDIT_LIMIT), 0, 0);
+        IAllowanceTransfer.PermitSingle memory permitSign =
+            IAllowanceTransfer.PermitSingle(details, address(spro), block.timestamp);
+        bytes memory signature = getPermitSignature(permitSign, SIG_USER1_PK, permit2.DOMAIN_SEPARATOR());
+
+        _createERC20Proposal();
+        T20TransferFee(proposal.creditAddress).mint(sigUser1, CREDIT_LIMIT);
+        vm.prank(sigUser1);
+        IERC20(proposal.creditAddress).approve(address(permit2), type(uint256).max);
+
+        vm.expectRevert(ISproErrors.TransferMismatch.selector);
+        vm.prank(sigUser1);
+        spro.createLoan(proposal, CREDIT_LIMIT, abi.encode(permitSign, signature));
     }
 }
