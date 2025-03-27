@@ -63,7 +63,8 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Creates a new borrowing proposal.
-     * @dev The collateral and SDEX tokens must be approved for the protocol contract.
+     * @dev The collateral and SDEX tokens must be approved for the protocol contract. Only basic ERC20 tokens are
+     * supported. This contract is not suitable for other token types, including rebasing or fee-on-transfer tokens.
      * @param proposal The proposal structure.
      * @param permit2Data The permit2 data, if the user opts to use permit2.
      */
@@ -78,6 +79,8 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Creates a new loan.
+     * @dev Only basic ERC20 tokens are supported. This contract is not suitable for other token types, including
+     * rebasing or fee-on-transfer tokens.
      * @param proposal The proposal structure.
      * @param creditAmount The amount of credit tokens.
      * @param permit2Data The permit2 data, if the user opts to use permit2.
