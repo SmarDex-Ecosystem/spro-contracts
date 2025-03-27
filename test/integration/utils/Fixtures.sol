@@ -5,7 +5,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 
-import { T20, T20TransferFee } from "test/helper/T20.sol";
+import { T20 } from "test/helper/T20.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { Spro } from "src/spro/Spro.sol";
@@ -14,8 +14,6 @@ import { SproLoan } from "src/spro/SproLoan.sol";
 contract SDBaseIntegrationTest is Test {
     T20 collateral;
     T20 credit;
-    T20TransferFee collateralTransferFee;
-    T20TransferFee creditTransferFee;
 
     address lender = vm.addr(777);
     address borrower = vm.addr(888);
@@ -62,8 +60,6 @@ contract SDBaseIntegrationTest is Test {
         // Deploy tokens
         collateral = new T20();
         credit = new T20();
-        collateralTransferFee = new T20TransferFee();
-        creditTransferFee = new T20TransferFee();
 
         proposal = ISproTypes.Proposal(
             address(collateral),

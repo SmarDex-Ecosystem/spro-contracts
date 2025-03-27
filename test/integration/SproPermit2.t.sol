@@ -6,7 +6,7 @@ import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.so
 import { PermitSignature } from "permit2/test/utils/PermitSignature.sol";
 
 import { SDBaseIntegrationTest } from "test/integration/utils/Fixtures.sol";
-import { T20TransferFee } from "test/helper/T20.sol";
+import { T20 } from "test/helper/T20.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproErrors } from "src/interfaces/ISproErrors.sol";
@@ -226,7 +226,6 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
     }
 
     function test_RevertWhen_ForkPermit2TransferMismatchCreateProposal() external {
-        proposal.collateralAddress = address(collateralTransferFee);
         proposal.proposer = sigUser1;
 
         vm.startPrank(sigUser1);
@@ -241,7 +240,9 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
             IAllowanceTransfer.PermitBatch(details, address(spro), block.timestamp);
         bytes memory signature = getPermitBatchSignature(permitBatch, SIG_USER1_PK, permit2.DOMAIN_SEPARATOR());
 
-        T20TransferFee(proposal.collateralAddress).mint(sigUser1, proposal.collateralAmount);
+        T20(proposal.collateralAddress).mint(sigUser1, proposal.collateralAmount);
+
+        T20(proposal.collateralAddress).setFee(true);
 
         vm.expectRevert(ISproErrors.TransferMismatch.selector);
         spro.createProposal(proposal, abi.encode(permitBatch, signature));
@@ -249,8 +250,6 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
     }
 
     function test_RevertWhen_ForkPermit2TransferMismatchCreateLoan() public {
-        proposal.creditAddress = address(creditTransferFee);
-
         IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(CREDIT_LIMIT), 0, 0);
         IAllowanceTransfer.PermitSingle memory permitSign =
@@ -258,9 +257,11 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         bytes memory signature = getPermitSignature(permitSign, SIG_USER1_PK, permit2.DOMAIN_SEPARATOR());
 
         _createERC20Proposal();
-        T20TransferFee(proposal.creditAddress).mint(sigUser1, CREDIT_LIMIT);
+        T20(proposal.creditAddress).mint(sigUser1, CREDIT_LIMIT);
         vm.prank(sigUser1);
         IERC20(proposal.creditAddress).approve(address(permit2), type(uint256).max);
+
+        T20(proposal.creditAddress).setFee(true);
 
         vm.expectRevert(ISproErrors.TransferMismatch.selector);
         vm.prank(sigUser1);
