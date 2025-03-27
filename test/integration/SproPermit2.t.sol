@@ -119,7 +119,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         bytes memory signature = getPermitSignature(permitSign, SIG_USER1_PK, permit2.DOMAIN_SEPARATOR());
 
         vm.prank(sigUser1);
-        spro.repayLoan(loanId, abi.encode(permitSign, signature));
+        spro.repayLoan(loanId, abi.encode(permitSign, signature), address(0));
 
         assertEq(collateral.balanceOf(address(spro)), 0, "spro must transfer collateral");
         assertEq(collateral.balanceOf(address(borrower)), COLLATERAL_AMOUNT, "borrower must receive collateral");
@@ -151,7 +151,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
 
         vm.expectRevert(abi.encodeWithSelector(IAllowanceTransfer.InsufficientAllowance.selector, repaymentAmount - 1));
         vm.prank(sigUser1);
-        spro.repayLoan(loanId, abi.encode(permitSign, signature));
+        spro.repayLoan(loanId, abi.encode(permitSign, signature), address(0));
     }
 
     function test_ForkPermit2RepayMultipleLoans() public {
@@ -181,7 +181,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         bytes memory signature = getPermitSignature(permitSign, SIG_USER1_PK, permit2.DOMAIN_SEPARATOR());
 
         vm.prank(sigUser1);
-        spro.repayMultipleLoans(loanIds, abi.encode(permitSign, signature));
+        spro.repayMultipleLoans(loanIds, abi.encode(permitSign, signature), address(0));
 
         assertEq(collateral.balanceOf(address(spro)), 0, "spro must transfer collateral");
         assertEq(collateral.balanceOf(address(borrower)), COLLATERAL_AMOUNT, "borrower must receive collateral");
@@ -220,6 +220,6 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
             abi.encodeWithSelector(IAllowanceTransfer.InsufficientAllowance.selector, totalRepaymentAmount - 1)
         );
         vm.prank(sigUser1);
-        spro.repayMultipleLoans(loanIds, abi.encode(permitSign, signature));
+        spro.repayMultipleLoans(loanIds, abi.encode(permitSign, signature), address(0));
     }
 }

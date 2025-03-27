@@ -185,7 +185,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /// @inheritdoc ISpro
-    function repayLoan(uint256 loanId, bytes calldata permit2Data) external nonReentrant {
+    function repayLoan(uint256 loanId, bytes calldata permit2Data, address collateralRecipient) external nonReentrant {
         Loan storage loan = _loans[loanId];
 
         if (!_isLoanRepayable(loan.status, loan.loanExpiration)) {
@@ -198,7 +198,12 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         } else {
             IERC20Metadata(loan.credit).safeTransferFrom(msg.sender, address(this), repaymentAmount);
         }
-        IERC20Metadata(loan.collateral).safeTransfer(loan.borrower, loan.collateralAmount);
+        if (collateralRecipient == address(0)) {
+            collateralRecipient = loan.borrower;
+        } else if (msg.sender != loan.borrower) {
+            revert CallerNotBorrower();
+        }
+        IERC20Metadata(loan.collateral).safeTransfer(collateralRecipient, loan.collateralAmount);
         loan.status = LoanStatus.PAID_BACK;
         emit LoanPaidBack(loanId);
 
@@ -213,7 +218,10 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /// @inheritdoc ISpro
-    function repayMultipleLoans(uint256[] calldata loanIds, bytes calldata permit2Data) external nonReentrant {
+    function repayMultipleLoans(uint256[] calldata loanIds, bytes calldata permit2Data, address collateralRecipient)
+        external
+        nonReentrant
+    {
         if (loanIds.length == 0) return;
 
         address creditAddress = _loans[loanIds[0]].credit;
@@ -253,7 +261,14 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             Loan memory loan = loanData.loan;
             uint256 loanId = loanData.loanId;
 
-            IERC20Metadata(loan.collateral).safeTransfer(loan.borrower, loan.collateralAmount);
+            if (collateralRecipient != address(0)) {
+                if (msg.sender != loan.borrower) {
+                    revert CallerNotBorrower();
+                }
+                IERC20Metadata(loan.collateral).safeTransfer(collateralRecipient, loan.collateralAmount);
+            } else {
+                IERC20Metadata(loan.collateral).safeTransfer(loan.borrower, loan.collateralAmount);
+            }
 
             address loanOwner = _loanToken.ownerOf(loanId);
             // If current loan owner is not original lender, the loan cannot be repaid directly

@@ -89,24 +89,32 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Repays an active loan.
-     * @dev Any address can repay an active loan. The collateral will be transferred to the borrower associated
-     * with the loan. If the loan token holder is the original lender, the repayment credit will be transferred to them.
-     * Otherwise, the repayment credit will be transferred to the protocol, awaiting the new owner to claim it.
-     * @param loanId The loan ID being repaid.
+     * @dev Any address can repay an active loan if the `collateralRecipient` address is set to `address(0)`. The
+     * collateral will be transferred to the borrower associated with the loan. If the caller is the borrower and
+     * provides a `collateralRecipient` address, the collateral will be transferred to the specified address instead of
+     * the borrower’s address. The protocol will attempt to send the credit to the lender. If the transfer fails, the
+     * credit will be sent to the protocol, and the lender will be able to claim it later.
+     * @param loanId The ID of the loan being repaid.
      * @param permit2Data The permit2 data, if the user opts to use permit2.
+     * @param collateralRecipient The address that will receive the collateral. If address(0) is provided, the
+     * borrower's address will be used.
      */
-    function repayLoan(uint256 loanId, bytes calldata permit2Data) external;
+    function repayLoan(uint256 loanId, bytes calldata permit2Data, address collateralRecipient) external;
 
     /**
      * @notice Repays multiple active loans.
-     * @dev The credit token must be the same for all loan IDs.
-     * Any address can repay an active loan. The collateral will be transferred to the borrower associated with the
-     * loan. If the loan token holder is the original lender, the repayment credit will be transferred to them.
-     * Otherwise, the repayment credit will be transferred to the protocol, awaiting the new owner to claim it.
+     * @dev Any address can repay an active loan if the `collateralRecipient` address is set to `address(0)`. The
+     * collateral will be transferred to the borrower associated with the loan. If the caller is the borrower and
+     * provides a `collateralRecipient` address, the collateral will be transferred to the specified address instead of
+     * the borrower’s address. The protocol will attempt to send the credit to the lender. If the transfer fails, the
+     * credit will be sent to the protocol, and the lender will be able to claim it later.
      * @param loanIds An array of loan IDs being repaid.
      * @param permit2Data The permit2 data, if the user opts to use permit2.
+     * @param collateralRecipient The address that will receive the collateral. If address(0) is provided, the
+     * borrower's address will be used.
      */
-    function repayMultipleLoans(uint256[] calldata loanIds, bytes calldata permit2Data) external;
+    function repayMultipleLoans(uint256[] calldata loanIds, bytes calldata permit2Data, address collateralRecipient)
+        external;
 
     /**
      * @notice Attempts to claim a repaid loan.

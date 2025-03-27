@@ -44,6 +44,9 @@ interface ISproErrors {
     /// @notice Thrown when caller is not the proposer.
     error CallerNotProposer();
 
+    /// @notice Thrown when caller is not the borrower.
+    error CallerNotBorrower();
+
     /**
      * @notice Thrown when the loan credit address is different than the expected credit address.
      * @param loanCreditAddress The address of the loan credit.
