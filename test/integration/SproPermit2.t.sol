@@ -36,6 +36,10 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
 
         vm.prank(sigUser1);
         spro.createLoan(proposal, CREDIT_LIMIT, abi.encode(permitSign, signature));
+
+        assertEq(credit.balanceOf(address(sigUser1)), 0, "sigUser1 must transfer credit");
+        assertEq(credit.balanceOf(address(borrower)), CREDIT_LIMIT, "borrower must receive credit");
+        assertEq(collateral.balanceOf(address(spro)), COLLATERAL_AMOUNT, "spro keeps the collateral");
     }
 
     function test_RevertWhen_ForkPermit2CreateLoan() public {
@@ -70,6 +74,9 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
 
         spro.createProposal(proposal, abi.encode(permitBatch, signature));
         vm.stopPrank();
+
+        assertEq(collateral.balanceOf(address(sigUser1)), 0, "borrower must transfer collateral");
+        assertEq(collateral.balanceOf(address(spro)), COLLATERAL_AMOUNT, "spro must receive collateral");
     }
 
     function test_RevertWhen_ForkPermit2CreateProposal() public {
@@ -113,6 +120,15 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
 
         vm.prank(sigUser1);
         spro.repayLoan(loanId, abi.encode(permitSign, signature));
+
+        assertEq(collateral.balanceOf(address(spro)), 0, "spro must transfer collateral");
+        assertEq(collateral.balanceOf(address(borrower)), COLLATERAL_AMOUNT, "borrower must receive collateral");
+        assertEq(credit.balanceOf(address(spro)), 0, "spro must transfer credit");
+        assertEq(
+            credit.balanceOf(address(lender)),
+            INITIAL_CREDIT_BALANCE - CREDIT_AMOUNT + repaymentAmount,
+            "lender must receive repayment"
+        );
     }
 
     function test_RevertWhen_ForkPermit2RepayLoan() public {
@@ -141,11 +157,10 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
     function test_ForkPermit2RepayMultipleLoans() public {
         _createERC20Proposal();
 
-        credit.mint(sigUser1, CREDIT_LIMIT);
-        vm.prank(sigUser1);
-        credit.approve(address(spro), CREDIT_LIMIT);
+        credit.mint(lender, CREDIT_AMOUNT);
+        vm.startPrank(lender);
+        credit.approve(address(spro), CREDIT_AMOUNT);
 
-        vm.startPrank(sigUser1);
         uint256[] memory loanIds = new uint256[](3);
         loanIds[0] = spro.createLoan(proposal, CREDIT_AMOUNT / 3, "");
         loanIds[1] = spro.createLoan(proposal, CREDIT_AMOUNT / 3, "");
@@ -158,13 +173,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         // Warp ahead, just before loan default
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
-        uint256 totalRepaymentAmount;
-        ISproTypes.Loan memory loan = spro.getLoan(loanIds[0]);
-        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
-        loan = spro.getLoan(loanIds[1]);
-        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
-        loan = spro.getLoan(loanIds[2]);
-        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
+        uint256 totalRepaymentAmount = spro.totalLoanRepaymentAmount(loanIds);
         IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(totalRepaymentAmount), 0, 0);
         IAllowanceTransfer.PermitSingle memory permitSign =
@@ -173,6 +182,11 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
 
         vm.prank(sigUser1);
         spro.repayMultipleLoans(loanIds, abi.encode(permitSign, signature));
+
+        assertEq(collateral.balanceOf(address(spro)), 0, "spro must transfer collateral");
+        assertEq(collateral.balanceOf(address(borrower)), COLLATERAL_AMOUNT, "borrower must receive collateral");
+        assertEq(credit.balanceOf(address(spro)), 0, "spro must transfer credit");
+        assertEq(credit.balanceOf(address(lender)), totalRepaymentAmount, "lender must receive repayment");
     }
 
     function test_RevertWhen_ForkWrongSignPermit2RepayMultipleLoans() public {
@@ -195,13 +209,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         // Warp ahead, just before loan default
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
-        uint256 totalRepaymentAmount;
-        ISproTypes.Loan memory loan = spro.getLoan(loanIds[0]);
-        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
-        loan = spro.getLoan(loanIds[1]);
-        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
-        loan = spro.getLoan(loanIds[2]);
-        totalRepaymentAmount += loan.principalAmount + loan.fixedInterestAmount;
+        uint256 totalRepaymentAmount = spro.totalLoanRepaymentAmount(loanIds);
         IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(totalRepaymentAmount - 1), 0, 0);
         IAllowanceTransfer.PermitSingle memory permitSign =

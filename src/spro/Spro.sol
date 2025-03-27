@@ -174,7 +174,9 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         emit LoanCreated(loanId_, proposalHash, loanTerms);
 
         if (permit2Data.length > 0) {
-            _permit2Workflows(permit2Data, loanTerms.creditAmount.toUint160(), loanTerms.credit);
+            _permit2Workflows(
+                permit2Data, loanTerms.lender, loanTerms.borrower, loanTerms.creditAmount.toUint160(), loanTerms.credit
+            );
         } else {
             IERC20Metadata(loanTerms.credit).safeTransferFrom(
                 loanTerms.lender, loanTerms.borrower, loanTerms.creditAmount
@@ -192,7 +194,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
         uint256 repaymentAmount = loan.principalAmount + loan.fixedInterestAmount;
         if (permit2Data.length > 0) {
-            _permit2Workflows(permit2Data, repaymentAmount.toUint160(), loan.credit);
+            _permit2Workflows(permit2Data, msg.sender, address(this), repaymentAmount.toUint160(), loan.credit);
         } else {
             IERC20Metadata(loan.credit).safeTransferFrom(msg.sender, address(this), repaymentAmount);
         }
@@ -241,7 +243,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
         // Transfer the repaid credit to the protocol
         if (permit2Data.length > 0) {
-            _permit2Workflows(permit2Data, totalRepaymentAmount.toUint160(), creditAddress);
+            _permit2Workflows(permit2Data, msg.sender, address(this), totalRepaymentAmount.toUint160(), creditAddress);
         } else {
             IERC20Metadata(creditAddress).safeTransferFrom(msg.sender, address(this), totalRepaymentAmount);
         }
@@ -503,13 +505,17 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     /**
      * @notice Transfer an asset amount to the protocol via permit2.
      * @param permit2Data The permit2 data.
+     * @param from The address that will transfer the asset.
+     * @param to The address that will receive the asset.
      * @param amount The amount to transfer.
      * @param token The asset address.
      */
-    function _permit2Workflows(bytes memory permit2Data, uint160 amount, address token) internal {
+    function _permit2Workflows(bytes memory permit2Data, address from, address to, uint160 amount, address token)
+        internal
+    {
         (IAllowanceTransfer.PermitSingle memory permitSign, bytes memory data) =
             abi.decode(permit2Data, (IAllowanceTransfer.PermitSingle, bytes));
-        PERMIT2.permit(msg.sender, permitSign, data);
-        PERMIT2.transferFrom(msg.sender, address(this), amount, token);
+        PERMIT2.permit(from, permitSign, data);
+        PERMIT2.transferFrom(from, to, amount, token);
     }
 }
