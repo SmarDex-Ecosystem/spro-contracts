@@ -297,11 +297,16 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /// @inheritdoc ISpro
-    function claimMultipleLoans(uint256[] calldata loanIds) external {
+    function claimMultipleLoans(uint256[] calldata loanIds) external nonReentrant {
         uint256 l = loanIds.length;
         for (uint256 i; i < l; ++i) {
-            claimLoan(loanIds[i]);
+            _claimLoan(loanIds[i]);
         }
+    }
+
+    /// @inheritdoc ISpro
+    function claimLoan(uint256 loanId) external nonReentrant {
+        _claimLoan(loanId);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -313,8 +318,17 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         return keccak256(abi.encode(proposal));
     }
 
-    /// @inheritdoc ISpro
-    function claimLoan(uint256 loanId) public {
+    /* -------------------------------------------------------------------------- */
+    /*                             Internal Functions                             */
+    /* -------------------------------------------------------------------------- */
+
+    /**
+     * @notice Claims a repaid or defaulted loan.
+     * @dev Only a loan token holder can claim their repaid or defaulted loan. Claiming transfers the repaid credit
+     * or collateral to the loan token holder and burns the loan token.
+     * @param loanId The loan ID being claimed.
+     */
+    function _claimLoan(uint256 loanId) internal {
         Loan memory loan = _loans[loanId];
 
         if (_loanToken.ownerOf(loanId) != msg.sender) {
@@ -331,10 +345,6 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             revert LoanRunning();
         }
     }
-
-    /* -------------------------------------------------------------------------- */
-    /*                             Internal Functions                             */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Check if the loan can be repaid.
