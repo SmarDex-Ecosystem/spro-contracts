@@ -198,14 +198,12 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         } else {
             IERC20Metadata(loan.credit).safeTransferFrom(msg.sender, address(this), repaymentAmount);
         }
-        if (collateralRecipient != address(0)) {
-            if (msg.sender != loan.borrower) {
-                revert CallerNotBorrower();
-            }
-            IERC20Metadata(loan.collateral).safeTransfer(collateralRecipient, loan.collateralAmount);
-        } else {
-            IERC20Metadata(loan.collateral).safeTransfer(loan.borrower, loan.collateralAmount);
+        if (collateralRecipient == address(0)) {
+            collateralRecipient = loan.borrower;
+        } else if (msg.sender != loan.borrower) {
+            revert CallerNotBorrower();
         }
+        IERC20Metadata(loan.collateral).safeTransfer(collateralRecipient, loan.collateralAmount);
         loan.status = LoanStatus.PAID_BACK;
         emit LoanPaidBack(loanId);
 
