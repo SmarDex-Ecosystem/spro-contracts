@@ -119,7 +119,6 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
                 && credit.balanceOf(lender) == credit.balanceOf(charlie)
         );
         assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + fixedInterestAmount);
-
         assertEq(0, loanToken.balanceOf(lender));
         assertEq(0, loanToken.balanceOf(alice));
         assertEq(0, loanToken.balanceOf(bob));
@@ -178,7 +177,6 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
                 && credit.balanceOf(lender) == credit.balanceOf(charlie)
         );
         assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE + fixedInterestAmount);
-
         assertEq(0, loanToken.balanceOf(lender));
         assertEq(0, loanToken.balanceOf(alice));
         assertEq(0, loanToken.balanceOf(bob));
@@ -223,7 +221,6 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         lenders[1] = alice;
         lenders[2] = bob;
         lenders[3] = charlie;
-
         uint256 minCreditAmount = (proposal.availableCreditLimit * spro._partialPositionBps()) / spro.BPS_DIVISOR();
 
         // Setup loanIds array
