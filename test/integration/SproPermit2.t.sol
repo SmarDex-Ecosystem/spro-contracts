@@ -222,4 +222,51 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         vm.prank(sigUser1);
         spro.repayMultipleLoans(loanIds, abi.encode(permitSign, signature), address(0));
     }
+
+    function test_ForkPermit2GriefingCreateProposal() public {
+        proposal.proposer = sigUser1;
+        vm.startPrank(sigUser1);
+        IERC20(proposal.collateralAddress).approve(address(permit2), type(uint256).max);
+        sdex.approve(address(permit2), type(uint256).max);
+        IAllowanceTransfer.PermitDetails[] memory details = new IAllowanceTransfer.PermitDetails[](2);
+        details[0] = IAllowanceTransfer.PermitDetails(
+            address(proposal.collateralAddress), uint160(COLLATERAL_AMOUNT), uint48(block.timestamp), 0
+        );
+        details[1] = IAllowanceTransfer.PermitDetails(address(sdex), uint160(spro._fee()), uint48(block.timestamp), 0);
+        IAllowanceTransfer.PermitBatch memory permitBatch =
+            IAllowanceTransfer.PermitBatch(details, address(spro), block.timestamp);
+        bytes memory signature = getPermitBatchSignature(permitBatch, SIG_USER1_PK, permit2.DOMAIN_SEPARATOR());
+        vm.stopPrank();
+
+        collateral.mint(sigUser1, proposal.collateralAmount);
+
+        // griefing
+        IAllowanceTransfer(spro.PERMIT2()).permit(sigUser1, permitBatch, signature);
+
+        vm.prank(sigUser1);
+        spro.createProposal(proposal, abi.encode(permitBatch, signature));
+
+        assertEq(collateral.balanceOf(address(sigUser1)), 0, "borrower must transfer collateral");
+        assertEq(collateral.balanceOf(address(spro)), COLLATERAL_AMOUNT, "spro must receive collateral");
+    }
+
+    function test_ForkPermit2GriefingCreateLoan() public {
+        IAllowanceTransfer.PermitDetails memory details =
+            IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(CREDIT_LIMIT), 0, 0);
+        IAllowanceTransfer.PermitSingle memory permitSign =
+            IAllowanceTransfer.PermitSingle(details, address(spro), block.timestamp);
+        bytes memory signature = getPermitSignature(permitSign, SIG_USER1_PK, permit2.DOMAIN_SEPARATOR());
+
+        _createERC20Proposal();
+
+        // griefing
+        IAllowanceTransfer(spro.PERMIT2()).permit(sigUser1, permitSign, signature);
+
+        vm.prank(sigUser1);
+        spro.createLoan(proposal, CREDIT_LIMIT, abi.encode(permitSign, signature));
+
+        assertEq(credit.balanceOf(address(sigUser1)), 0, "sigUser1 must transfer credit");
+        assertEq(credit.balanceOf(address(borrower)), CREDIT_LIMIT, "borrower must receive credit");
+        assertEq(collateral.balanceOf(address(spro)), COLLATERAL_AMOUNT, "spro keeps the collateral");
+    }
 }
