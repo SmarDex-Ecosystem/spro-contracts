@@ -122,6 +122,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         _makeProposal(proposal);
 
         // Execute permit2Data for the caller
+        uint256 balanceBefore = IERC20Metadata(proposal.collateralAddress).balanceOf(address(this));
         if (permit2Data.length > 0) {
             (IAllowanceTransfer.PermitBatch memory permitBatch, bytes memory data) =
                 abi.decode(permit2Data, (IAllowanceTransfer.PermitBatch, bytes));
@@ -139,6 +140,12 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             if (_fee > 0) {
                 IERC20Metadata(SDEX).safeTransferFrom(msg.sender, DEAD_ADDRESS, _fee);
             }
+        }
+        if (
+            IERC20Metadata(proposal.collateralAddress).balanceOf(address(this)) - balanceBefore
+                != proposal.collateralAmount
+        ) {
+            revert TransferMismatch();
         }
     }
 
