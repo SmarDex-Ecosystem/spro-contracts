@@ -79,7 +79,8 @@ interface ISproTypes {
      * @param proposer The address of a proposer.
      * @param nonce Additional value to enable identical proposals in time. Without it, it would be impossible to make
      * an identical proposal again.
-     * @param minAmount The minimum amount of credit token that can be borrowed from the proposal.
+     * @param minAmount The minimum amount of credit tokens that can be borrowed from the proposal, or the remaining
+     * amount the lender must leave in the proposal.
      */
     struct Proposal {
         address collateralAddress;
@@ -101,7 +102,8 @@ interface ISproTypes {
      * be borrowed using the proposal.
      * @param startTimestamp The proposal start timestamp.
      * @param proposer The proposer address.
-     * @param minAmount The minimum amount of credit token that can be borrowed from the proposal.
+     * @param minAmount The minimum amount of credit tokens that can be borrowed from the proposal, or the remaining
+     * amount the lender must leave in the proposal.
      */
     struct ProposalBase {
         address collateralAddress;
