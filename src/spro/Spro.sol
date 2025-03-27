@@ -109,7 +109,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             if (loan.credit != firstCreditAddress) {
                 revert DifferentCreditAddress(loan.credit, firstCreditAddress);
             }
-            if (loan.status == LoanStatus.NONE) {
+            if (!_isLoanRepayable(loan.status, loan.loanExpiration)) {
                 continue;
             }
 
