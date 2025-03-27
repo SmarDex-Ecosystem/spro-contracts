@@ -95,9 +95,9 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * the borrower’s address. The protocol will attempt to send the credit to the lender. If the transfer fails, the
      * credit will be sent to the protocol, and the lender will be able to claim it later.
      * @param loanId The ID of the loan being repaid.
-     * @param permit2Data The permit2 data, if the user opts to use permit2 for authorization.
-     * @param collateralRecipient The address to receive the collateral. Defaults to `address(0)`, or can be set by the
-     * borrower.
+     * @param permit2Data The permit2 data, if the user opts to use permit2.
+     * @param collateralRecipient The address that will receive the collateral. If address(0) is provided, the
+     * borrower's address will be used.
      */
     function repayLoan(uint256 loanId, bytes calldata permit2Data, address collateralRecipient) external;
 
@@ -110,8 +110,8 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * credit will be sent to the protocol, and the lender will be able to claim it later.
      * @param loanIds An array of loan IDs being repaid.
      * @param permit2Data The permit2 data, if the user opts to use permit2.
-     * @param collateralRecipient The optional address that will receive the collateral. The address(0) by default or
-     * can be set if the caller is the borrower.
+     * @param collateralRecipient The address that will receive the collateral. If address(0) is provided, the
+     * borrower's address will be used.
      */
     function repayMultipleLoans(uint256[] calldata loanIds, bytes calldata permit2Data, address collateralRecipient)
         external;
