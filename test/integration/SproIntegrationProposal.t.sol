@@ -46,7 +46,7 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         spro.createProposal(proposal, "");
     }
 
-    function test_RevertWhen_InvalidDurationStartTime() external {
+    function test_RevertWhen_InvalidStartTime() external {
         // Set bad timestamp value
         proposal.startTimestamp = uint40(block.timestamp);
         proposal.loanExpiration = proposal.startTimestamp;
@@ -57,7 +57,14 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         collateral.approve(address(spro), proposal.collateralAmount);
 
         vm.prank(borrower);
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidDurationStartTime.selector));
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidStartTime.selector));
+        spro.createProposal(proposal, "");
+
+        // Revert when startTimestamp is in the past
+        proposal.startTimestamp = uint40(block.timestamp - 1);
+        proposal.loanExpiration = proposal.startTimestamp + spro.MIN_LOAN_DURATION();
+        vm.prank(borrower);
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidStartTime.selector));
         spro.createProposal(proposal, "");
     }
 
@@ -135,7 +142,7 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         credit.approve(address(spro), CREDIT_AMOUNT + loan.fixedInterestAmount);
 
         // Borrower: repays loan
-        spro.repayLoan(loanId, "");
+        spro.repayLoan(loanId, "", address(0));
 
         // Assertions
         assertEq(credit.balanceOf(borrower), 0);
@@ -143,16 +150,17 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         assertEq(collateral.balanceOf(borrower), COLLATERAL_AMOUNT);
     }
 
-    function test_RevertWhen_CreateAlreadyMadeProposal() external {
-        _createERC20Proposal();
+    function test_nonceIncrement() external {
+        for (uint256 i = 0; i < 20; i++) {
+            uint256 nonce = spro._proposalNonce();
+            proposal.nonce = nonce;
+            bytes32 proposalHash = spro.getProposalHash(proposal);
 
-        collateral.mint(borrower, proposal.collateralAmount);
-        vm.prank(borrower);
-        collateral.approve(address(spro), proposal.collateralAmount);
-
-        vm.expectRevert(ISproErrors.ProposalAlreadyExists.selector);
-        vm.prank(borrower);
-        spro.createProposal(proposal, "");
+            assertFalse(spro._proposalsMade(proposalHash), "Proposal should not exist");
+            _createERC20Proposal();
+            assertEq(spro._proposalNonce(), nonce + 1, "Nonce should increment by 1");
+            assertTrue(spro._proposalsMade(proposalHash), "Proposal should exist");
+        }
     }
 
     function test_RevertWhen_getProposalCreditStatus_ProposalDoesNotExists() external {
