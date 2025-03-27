@@ -152,11 +152,11 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         if (!_proposalsMade[proposalHash]) {
             revert ProposalDoesNotExists();
         }
-        proposal.collateralAmount = _withdrawableCollateral[proposalHash];
-        _withdrawableCollateral[proposalHash] = 0;
-        _proposalsMade[proposalHash] = false;
 
-        IERC20Metadata(proposal.collateralAddress).safeTransfer(proposal.proposer, proposal.collateralAmount);
+        _proposalsMade[proposalHash] = false;
+        IERC20Metadata(proposal.collateralAddress).safeTransfer(
+            proposal.proposer, _withdrawableCollateral[proposalHash]
+        );
         emit ProposalCanceled(proposalHash);
     }
 
@@ -369,13 +369,9 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
         proposal.partialPositionBps = _partialPositionBps;
         proposal.proposer = msg.sender;
+        proposal.nonce = _proposalNonce++;
 
         bytes32 proposalHash = getProposalHash(proposal);
-
-        if (_proposalsMade[proposalHash]) {
-            revert ProposalAlreadyExists();
-        }
-
         _proposalsMade[proposalHash] = true;
         _withdrawableCollateral[proposalHash] = proposal.collateralAmount;
 
@@ -446,7 +442,6 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         if (proposal.proposer == acceptor) {
             revert AcceptorIsProposer(acceptor);
         }
-        // Check proposal is not expired
         if (block.timestamp >= proposal.startTimestamp) {
             revert Expired(block.timestamp, proposal.startTimestamp);
         }

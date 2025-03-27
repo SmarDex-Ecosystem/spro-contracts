@@ -84,9 +84,6 @@ interface ISproErrors {
     /// @notice Thrown when a proposal has an available credit of zero.
     error AvailableCreditLimitZero();
 
-    /// @notice Thrown when the proposal already exists.
-    error ProposalAlreadyExists();
-
     /// @notice Thrown when the proposal does not exist.
     error ProposalDoesNotExists();
 
