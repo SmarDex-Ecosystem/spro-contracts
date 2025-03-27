@@ -4,6 +4,7 @@ pragma solidity >=0.8.0;
 import { Test } from "forge-std/Test.sol";
 
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { T20 } from "test/helper/T20.sol";
 
@@ -71,7 +72,7 @@ contract SDBaseIntegrationTest is Test {
             uint40(block.timestamp) + 10 days,
             borrower,
             0,
-            PARTIAL_POSITION_BPS
+            Math.mulDiv(CREDIT_LIMIT, PARTIAL_POSITION_BPS, spro.BPS_DIVISOR())
         );
 
         // Mint and approve SDEX

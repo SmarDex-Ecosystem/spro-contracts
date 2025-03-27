@@ -149,7 +149,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
                 loanExpiration: loanExpiration,
                 proposer: msg.sender,
                 nonce: _proposalNonce++,
-                partialPositionBps: _partialPositionBps
+                minAmount: Math.mulDiv(availableCreditLimit, _partialPositionBps, BPS_DIVISOR)
             });
 
             bytes32 proposalHash = getProposalHash(proposal);
@@ -420,7 +420,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
                 proposal.availableCreditLimit,
                 proposal.startTimestamp,
                 proposal.proposer,
-                proposal.partialPositionBps
+                proposal.minAmount
             )
         );
 
@@ -468,12 +468,11 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         uint256 total = used + creditAmount;
         if (total < proposal.availableCreditLimit) {
             // Credit may only be between min and max amounts if it is not exact
-            uint256 minAmount = Math.mulDiv(proposal.availableCreditLimit, proposal.partialPositionBps, BPS_DIVISOR);
-            if (creditAmount < minAmount) {
-                revert CreditAmountTooSmall(creditAmount, minAmount);
+            if (creditAmount < proposal.minAmount) {
+                revert CreditAmountTooSmall(creditAmount, proposal.minAmount);
             }
-            if (proposal.availableCreditLimit - total < minAmount) {
-                revert CreditAmountRemainingBelowMinimum(creditAmount, minAmount);
+            if (proposal.availableCreditLimit - total < proposal.minAmount) {
+                revert CreditAmountRemainingBelowMinimum(creditAmount, proposal.minAmount);
             }
         } else if (total > proposal.availableCreditLimit) {
             revert AvailableCreditLimitExceeded(proposal.availableCreditLimit - used);
