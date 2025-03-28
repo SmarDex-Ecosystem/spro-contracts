@@ -118,24 +118,58 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /// @inheritdoc ISpro
-    function createProposal(Proposal memory proposal, bytes calldata permit2Data) external nonReentrant {
-        _makeProposal(proposal);
+    function createProposal(
+        address collateralAddress,
+        uint256 collateralAmount,
+        address creditAddress,
+        uint256 availableCreditLimit,
+        uint256 fixedInterestAmount,
+        uint40 startTimestamp,
+        uint40 loanExpiration,
+        bytes calldata permit2Data
+    ) external nonReentrant {
+        if (startTimestamp >= loanExpiration || startTimestamp < block.timestamp) {
+            revert InvalidStartTime();
+        }
+        if (availableCreditLimit == 0) {
+            revert AvailableCreditLimitZero();
+        }
+        if (loanExpiration - startTimestamp < MIN_LOAN_DURATION) {
+            revert InvalidDuration(loanExpiration - startTimestamp, MIN_LOAN_DURATION);
+        }
+
+        {
+            Proposal memory proposal = Proposal({
+                collateralAddress: collateralAddress,
+                collateralAmount: collateralAmount,
+                creditAddress: creditAddress,
+                availableCreditLimit: availableCreditLimit,
+                fixedInterestAmount: fixedInterestAmount,
+                startTimestamp: startTimestamp,
+                loanExpiration: loanExpiration,
+                proposer: msg.sender,
+                nonce: _proposalNonce++,
+                minAmount: Math.mulDiv(availableCreditLimit, _partialPositionBps, BPS_DIVISOR)
+            });
+
+            bytes32 proposalHash = getProposalHash(proposal);
+            _proposalsMade[proposalHash] = true;
+            _withdrawableCollateral[proposalHash] = collateralAmount;
+
+            emit ProposalCreated(proposalHash, msg.sender, proposal);
+        }
 
         // Execute permit2Data for the caller
         if (permit2Data.length > 0) {
             (IAllowanceTransfer.PermitBatch memory permitBatch, bytes memory data) =
                 abi.decode(permit2Data, (IAllowanceTransfer.PermitBatch, bytes));
             PERMIT2.permit(msg.sender, permitBatch, data);
-            PERMIT2.transferFrom(
-                msg.sender, address(this), proposal.collateralAmount.toUint160(), proposal.collateralAddress
-            );
+            PERMIT2.transferFrom(msg.sender, address(this), collateralAmount.toUint160(), collateralAddress);
             if (_fee > 0) {
                 PERMIT2.transferFrom(msg.sender, DEAD_ADDRESS, _fee.toUint160(), address(SDEX));
             }
         } else {
-            IERC20Metadata(proposal.collateralAddress).safeTransferFrom(
-                msg.sender, address(this), proposal.collateralAmount
-            );
+            IERC20Metadata(collateralAddress).safeTransferFrom(msg.sender, address(this), collateralAmount);
             if (_fee > 0) {
                 IERC20Metadata(SDEX).safeTransferFrom(msg.sender, DEAD_ADDRESS, _fee);
             }
@@ -360,32 +394,6 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             return canBeRepaid_;
         }
         return true;
-    }
-
-    /**
-     * @notice Make a proposal.
-     * @param proposal The proposal structure.
-     */
-    function _makeProposal(Proposal memory proposal) internal {
-        if (proposal.startTimestamp >= proposal.loanExpiration || proposal.startTimestamp < block.timestamp) {
-            revert InvalidStartTime();
-        }
-        if (proposal.availableCreditLimit == 0) {
-            revert AvailableCreditLimitZero();
-        }
-        if (proposal.loanExpiration - proposal.startTimestamp < MIN_LOAN_DURATION) {
-            revert InvalidDuration(proposal.loanExpiration - proposal.startTimestamp, MIN_LOAN_DURATION);
-        }
-
-        proposal.minAmount = Math.mulDiv(proposal.availableCreditLimit, _partialPositionBps, BPS_DIVISOR);
-        proposal.proposer = msg.sender;
-        proposal.nonce = _proposalNonce++;
-
-        bytes32 proposalHash = getProposalHash(proposal);
-        _proposalsMade[proposalHash] = true;
-        _withdrawableCollateral[proposalHash] = proposal.collateralAmount;
-
-        emit ProposalCreated(proposalHash, proposal.proposer, proposal);
     }
 
     /**
