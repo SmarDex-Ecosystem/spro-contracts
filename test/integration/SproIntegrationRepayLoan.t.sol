@@ -213,6 +213,31 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         spro.claimMultipleLoans(ids);
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                          totalLoanRepaymentAmount                          */
+    /* -------------------------------------------------------------------------- */
+
+    function test_totalLoanRepaymentAmount() external {
+        (uint256[] memory loanIds, uint256 fixedInterestAmount) = _setupMultipleRepay();
+        uint256 totalAmount = spro.totalLoanRepaymentAmount(loanIds);
+        assertEq(
+            totalAmount,
+            ((proposal.availableCreditLimit * spro._partialPositionBps()) / spro.BPS_DIVISOR()) * 4
+                + fixedInterestAmount * 4,
+            "totalLoanRepaymentAmount should be 4x the amount plus interest"
+        );
+
+        // skip to a state where the loan is not repayable
+        skip(proposal.loanExpiration - block.timestamp + 1);
+        totalAmount = spro.totalLoanRepaymentAmount(loanIds);
+        assertEq(totalAmount, 0, "totalLoanRepaymentAmount should be 0");
+
+        // set an non-existing loanId to test the revert
+        loanIds[0] = 5;
+        vm.expectRevert(abi.encodeWithSelector(ISproErrors.DifferentCreditAddress.selector, credit, address(0)));
+        spro.totalLoanRepaymentAmount(loanIds);
+    }
+
     function _setupMultipleRepay() internal returns (uint256[] memory loanIds, uint256 fixedInterestAmount) {
         _createERC20Proposal();
 

@@ -55,7 +55,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Calculates the total repayment amount for multiple loans, with the fixed interest amounts.
-     * @dev The credit token must be the same for all loans.
+     * @dev The credit token must be the same for all loans. The function filters by repayable loans.
      * @param loanIds Array of loan ids.
      * @return amount_ The total repayment amount for all loans.
      */
