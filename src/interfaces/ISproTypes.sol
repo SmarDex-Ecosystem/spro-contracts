@@ -94,22 +94,4 @@ interface ISproTypes {
         uint256 nonce;
         uint256 minAmount;
     }
-
-    /**
-     * @notice The base structure for a proposal.
-     * @param collateralAddress The address of the collateral asset.
-     * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
-     * be borrowed using the proposal.
-     * @param startTimestamp The proposal start timestamp.
-     * @param proposer The proposer address.
-     * @param minAmount The minimum amount of credit tokens that can be borrowed from the proposal, or the remaining
-     * amount the lender must leave in the proposal.
-     */
-    struct ProposalBase {
-        address collateralAddress;
-        uint256 availableCreditLimit;
-        uint40 startTimestamp;
-        address proposer;
-        uint256 minAmount;
-    }
 }
