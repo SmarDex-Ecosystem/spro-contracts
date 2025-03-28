@@ -68,11 +68,11 @@ interface ISproTypes {
 
     /**
      * @notice Structure defining a proposal.
-     * @param collateralAddress The collateral asset address. Only basic ERC20 tokens are supported. This contract is
-     * not suitable for other token types, including rebasing or fee-on-transfer tokens.
+     * @param collateralAddress The collateral asset address. This contract is not suitable for rebasing or
+     * fee-on-transfer tokens.
      * @param collateralAmount The collateral asset amount.
-     * @param creditAddress The credit asset address. Only basic ERC20 tokens are supported. This contract is not
-     * suitable for other token types, including rebasing or fee-on-transfer tokens.
+     * @param creditAddress The credit asset address. This contract is not suitable for rebasing or fee-on-transfer
+     * tokens.
      * @param availableCreditLimit Available credit limit for the proposal. It is the maximum amount of tokens which can
      * be borrowed using the proposal.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
