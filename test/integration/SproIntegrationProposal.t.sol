@@ -227,4 +227,25 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
 
         assertEq(r, limit - u);
     }
+
+    function test_RevertWhen_proposalTransferMismatch() external {
+        collateral.mint(borrower, proposal.collateralAmount);
+        vm.prank(borrower);
+        collateral.approve(address(spro), proposal.collateralAmount);
+
+        collateral.setFee(true);
+
+        vm.expectRevert(ISproErrors.TransferMismatch.selector);
+        vm.prank(borrower);
+        spro.createProposal(
+            proposal.collateralAddress,
+            proposal.collateralAmount,
+            proposal.creditAddress,
+            proposal.availableCreditLimit,
+            proposal.fixedInterestAmount,
+            proposal.startTimestamp,
+            proposal.loanExpiration,
+            ""
+        );
+    }
 }

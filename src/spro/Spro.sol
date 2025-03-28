@@ -159,20 +159,19 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             emit ProposalCreated(proposalHash, msg.sender, proposal);
         }
 
-        // Execute permit2Data for the caller
+        uint256 balanceBefore = IERC20Metadata(collateralAddress).balanceOf(address(this));
         if (permit2Data.length > 0) {
-            (IAllowanceTransfer.PermitBatch memory permitBatch, bytes memory data) =
-                abi.decode(permit2Data, (IAllowanceTransfer.PermitBatch, bytes));
-            try PERMIT2.permit(msg.sender, permitBatch, data) { } catch { }
-            PERMIT2.transferFrom(msg.sender, address(this), collateralAmount.toUint160(), collateralAddress);
-            if (_fee > 0) {
-                PERMIT2.transferFrom(msg.sender, DEAD_ADDRESS, _fee.toUint160(), address(SDEX));
-            }
+            _permit2WorkflowsBatch(
+                permit2Data, msg.sender, address(this), collateralAmount.toUint160(), collateralAddress
+            );
         } else {
             IERC20Metadata(collateralAddress).safeTransferFrom(msg.sender, address(this), collateralAmount);
             if (_fee > 0) {
                 IERC20Metadata(SDEX).safeTransferFrom(msg.sender, DEAD_ADDRESS, _fee);
             }
+        }
+        if (IERC20Metadata(collateralAddress).balanceOf(address(this)) - balanceBefore != collateralAmount) {
+            revert TransferMismatch();
         }
     }
 
@@ -207,6 +206,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
         emit LoanCreated(loanId_, proposalHash, loanTerms);
 
+        uint256 balanceBefore = IERC20Metadata(loanTerms.credit).balanceOf(loanTerms.borrower);
         if (permit2Data.length > 0) {
             _permit2Workflows(
                 permit2Data, loanTerms.lender, loanTerms.borrower, loanTerms.creditAmount.toUint160(), loanTerms.credit
@@ -215,6 +215,9 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             IERC20Metadata(loanTerms.credit).safeTransferFrom(
                 loanTerms.lender, loanTerms.borrower, loanTerms.creditAmount
             );
+        }
+        if (IERC20Metadata(loanTerms.credit).balanceOf(loanTerms.borrower) - balanceBefore != loanTerms.creditAmount) {
+            revert TransferMismatch();
         }
     }
 
@@ -530,7 +533,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /**
-     * @notice Transfer an asset amount to the protocol via permit2.
+     * @notice Handle approval and transfers using Permit2.
      * @param permit2Data The permit2 data.
      * @param from The address that will transfer the asset.
      * @param to The address that will receive the asset.
@@ -544,5 +547,26 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             abi.decode(permit2Data, (IAllowanceTransfer.PermitSingle, bytes));
         try PERMIT2.permit(from, permitSign, data) { } catch { }
         PERMIT2.transferFrom(from, to, amount, token);
+    }
+
+    /**
+     * @notice Handle batch approvals and transfers via permit2
+     * @dev If SDEX fees are set, they will be burned via transfer to the dead address
+     * @param permit2Data The permit2 data.
+     * @param from The address that will transfer the asset.
+     * @param to The address that will receive the asset.
+     * @param amount The amount to transfer.
+     * @param token The asset address.
+     */
+    function _permit2WorkflowsBatch(bytes memory permit2Data, address from, address to, uint160 amount, address token)
+        internal
+    {
+        (IAllowanceTransfer.PermitBatch memory permitBatch, bytes memory data) =
+            abi.decode(permit2Data, (IAllowanceTransfer.PermitBatch, bytes));
+        try PERMIT2.permit(from, permitBatch, data) { } catch { }
+        PERMIT2.transferFrom(from, to, amount, token);
+        if (_fee > 0) {
+            PERMIT2.transferFrom(from, DEAD_ADDRESS, _fee.toUint160(), address(SDEX));
+        }
     }
 }
