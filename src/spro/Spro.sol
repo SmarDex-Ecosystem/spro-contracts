@@ -413,19 +413,31 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     {
         proposalHash_ = getProposalHash(proposal);
 
-        // Try to accept proposal
-        _acceptProposal(
-            acceptor,
-            creditAmount,
-            proposalHash_,
-            ProposalBase(
-                proposal.collateralAddress,
-                proposal.availableCreditLimit,
-                proposal.startTimestamp,
-                proposal.proposer,
-                proposal.minAmount
-            )
-        );
+        if (!_proposalsMade[proposalHash_]) {
+            revert ProposalDoesNotExists();
+        }
+        if (proposal.proposer == acceptor) {
+            revert AcceptorIsProposer(acceptor);
+        }
+        if (block.timestamp >= proposal.startTimestamp) {
+            revert Expired(block.timestamp, proposal.startTimestamp);
+        }
+
+        uint256 used = _creditUsed[proposalHash_];
+        uint256 total = used + creditAmount;
+        if (total < proposal.availableCreditLimit) {
+            // Credit may only be between min and max amounts if it is not exact
+            if (creditAmount < proposal.minAmount) {
+                revert CreditAmountTooSmall(creditAmount, proposal.minAmount);
+            }
+            if (proposal.availableCreditLimit - total < proposal.minAmount) {
+                revert CreditAmountRemainingBelowMinimum(creditAmount, proposal.minAmount);
+            }
+        } else if (total > proposal.availableCreditLimit) {
+            revert AvailableCreditLimitExceeded(proposal.availableCreditLimit - used);
+        }
+
+        _creditUsed[proposalHash_] += creditAmount;
 
         // Create loan terms object
         uint256 collateralUsed_ = (creditAmount * proposal.collateralAmount) / proposal.availableCreditLimit;
@@ -445,43 +457,6 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         );
 
         _withdrawableCollateral[proposalHash_] -= collateralUsed_;
-    }
-
-    /**
-     * @notice Accept a proposal and update credit used.
-     * @param acceptor The address of the proposal acceptor.
-     * @param creditAmount The amount of credit to lend.
-     * @param proposalHash The hash of the proposal.
-     * @param proposal The proposal structure.
-     */
-    function _acceptProposal(address acceptor, uint256 creditAmount, bytes32 proposalHash, ProposalBase memory proposal)
-        internal
-    {
-        if (!_proposalsMade[proposalHash]) {
-            revert ProposalDoesNotExists();
-        }
-        if (proposal.proposer == acceptor) {
-            revert AcceptorIsProposer(acceptor);
-        }
-        if (block.timestamp >= proposal.startTimestamp) {
-            revert Expired(block.timestamp, proposal.startTimestamp);
-        }
-
-        uint256 used = _creditUsed[proposalHash];
-        uint256 total = used + creditAmount;
-        if (total < proposal.availableCreditLimit) {
-            // Credit may only be between min and max amounts if it is not exact
-            if (creditAmount < proposal.minAmount) {
-                revert CreditAmountTooSmall(creditAmount, proposal.minAmount);
-            }
-            if (proposal.availableCreditLimit - total < proposal.minAmount) {
-                revert CreditAmountRemainingBelowMinimum(creditAmount, proposal.minAmount);
-            }
-        } else if (total > proposal.availableCreditLimit) {
-            revert AvailableCreditLimitExceeded(proposal.availableCreditLimit - used);
-        }
-
-        _creditUsed[proposalHash] += creditAmount;
     }
 
     /**
