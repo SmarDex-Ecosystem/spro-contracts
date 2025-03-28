@@ -262,7 +262,16 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         collateral.setFee(true);
 
         vm.expectRevert(ISproErrors.TransferMismatch.selector);
-        spro.createProposal(proposal, abi.encode(permitBatch, signature));
+        spro.createProposal(
+            proposal.collateralAddress,
+            proposal.collateralAmount,
+            proposal.creditAddress,
+            proposal.availableCreditLimit,
+            proposal.fixedInterestAmount,
+            proposal.startTimestamp,
+            proposal.loanExpiration,
+            abi.encode(permitBatch, signature)
+        );
         vm.stopPrank();
     }
 

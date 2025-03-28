@@ -159,26 +159,18 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             emit ProposalCreated(proposalHash, msg.sender, proposal);
         }
 
-        uint256 balanceBefore = IERC20Metadata(proposal.collateralAddress).balanceOf(address(this));
-        // Execute permit2Data for the caller
+        uint256 balanceBefore = IERC20Metadata(collateralAddress).balanceOf(address(this));
         if (permit2Data.length > 0) {
-            (IAllowanceTransfer.PermitBatch memory permitBatch, bytes memory data) =
-                abi.decode(permit2Data, (IAllowanceTransfer.PermitBatch, bytes));
-            PERMIT2.permit(msg.sender, permitBatch, data);
-            PERMIT2.transferFrom(msg.sender, address(this), collateralAmount.toUint160(), collateralAddress);
-            if (_fee > 0) {
-                PERMIT2.transferFrom(msg.sender, DEAD_ADDRESS, _fee.toUint160(), address(SDEX));
-            }
+            _permit2WorkflowsBatch(
+                permit2Data, msg.sender, address(this), collateralAmount.toUint160(), collateralAddress
+            );
         } else {
             IERC20Metadata(collateralAddress).safeTransferFrom(msg.sender, address(this), collateralAmount);
             if (_fee > 0) {
                 IERC20Metadata(SDEX).safeTransferFrom(msg.sender, DEAD_ADDRESS, _fee);
             }
         }
-        if (
-            IERC20Metadata(proposal.collateralAddress).balanceOf(address(this)) - balanceBefore
-                != proposal.collateralAmount
-        ) {
+        if (IERC20Metadata(collateralAddress).balanceOf(address(this)) - balanceBefore != collateralAmount) {
             revert TransferMismatch();
         }
     }
@@ -541,7 +533,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /**
-     * @notice Transfer an asset amount to the protocol via permit2.
+     * @notice Transfer an asset amount via permit2.
      * @param permit2Data The permit2 data.
      * @param from The address that will transfer the asset.
      * @param to The address that will receive the asset.
@@ -555,5 +547,26 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             abi.decode(permit2Data, (IAllowanceTransfer.PermitSingle, bytes));
         PERMIT2.permit(from, permitSign, data);
         PERMIT2.transferFrom(from, to, amount, token);
+    }
+
+    /**
+     * @notice Transfer assets amount via permit2.
+     * @dev If fee is set, it will be transferred to the DEAD_ADDRESS.
+     * @param permit2Data The permit2 data.
+     * @param from The address that will transfer the asset.
+     * @param to The address that will receive the asset.
+     * @param amount The amount to transfer.
+     * @param token The asset address.
+     */
+    function _permit2WorkflowsBatch(bytes memory permit2Data, address from, address to, uint160 amount, address token)
+        internal
+    {
+        (IAllowanceTransfer.PermitBatch memory permitBatch, bytes memory data) =
+            abi.decode(permit2Data, (IAllowanceTransfer.PermitBatch, bytes));
+        PERMIT2.permit(from, permitBatch, data);
+        PERMIT2.transferFrom(from, to, amount, token);
+        if (_fee > 0) {
+            PERMIT2.transferFrom(from, DEAD_ADDRESS, _fee.toUint160(), address(SDEX));
+        }
     }
 }

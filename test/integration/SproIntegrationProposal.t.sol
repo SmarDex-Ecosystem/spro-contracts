@@ -237,6 +237,15 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
 
         vm.expectRevert(ISproErrors.TransferMismatch.selector);
         vm.prank(borrower);
-        spro.createProposal(proposal, "");
+        spro.createProposal(
+            proposal.collateralAddress,
+            proposal.collateralAmount,
+            proposal.creditAddress,
+            proposal.availableCreditLimit,
+            proposal.fixedInterestAmount,
+            proposal.startTimestamp,
+            proposal.loanExpiration,
+            ""
+        );
     }
 }
