@@ -533,7 +533,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /**
-     * @notice Transfer an asset amount via permit2.
+     * @notice Handle approval and transfers using Permit2.
      * @param permit2Data The permit2 data.
      * @param from The address that will transfer the asset.
      * @param to The address that will receive the asset.
@@ -550,8 +550,8 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /**
-     * @notice Transfer assets amount via permit2.
-     * @dev If fee is set, it will be transferred to the DEAD_ADDRESS.
+     * @notice Handle batch approvals and transfers via permit2
+     * @dev If SDEX fees are set, they will be burned via transfer to the dead address
      * @param permit2Data The permit2 data.
      * @param from The address that will transfer the asset.
      * @param to The address that will receive the asset.
