@@ -545,7 +545,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     {
         (IAllowanceTransfer.PermitSingle memory permitSign, bytes memory data) =
             abi.decode(permit2Data, (IAllowanceTransfer.PermitSingle, bytes));
-        PERMIT2.permit(from, permitSign, data);
+        try PERMIT2.permit(from, permitSign, data) { } catch { }
         PERMIT2.transferFrom(from, to, amount, token);
     }
 
@@ -563,7 +563,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     {
         (IAllowanceTransfer.PermitBatch memory permitBatch, bytes memory data) =
             abi.decode(permit2Data, (IAllowanceTransfer.PermitBatch, bytes));
-        PERMIT2.permit(from, permitBatch, data);
+        try PERMIT2.permit(from, permitBatch, data) { } catch { }
         PERMIT2.transferFrom(from, to, amount, token);
         if (_fee > 0) {
             PERMIT2.transferFrom(from, DEAD_ADDRESS, _fee.toUint160(), address(SDEX));
