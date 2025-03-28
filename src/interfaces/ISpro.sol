@@ -64,10 +64,25 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     /**
      * @notice Creates a new borrowing proposal.
      * @dev The collateral and SDEX tokens must be approved for the protocol contract.
-     * @param proposal The proposal structure.
+     * @param collateralAddress The address of the collateral asset.
+     * @param collateralAmount The amount of the collateral asset.
+     * @param creditAddress The address of the credit asset.
+     * @param availableCreditLimit The available credit limit for the proposal.
+     * @param fixedInterestAmount The fixed interest amount in credit asset tokens.
+     * @param startTimestamp The start timestamp of the proposal.
+     * @param loanExpiration The expiration timestamp of the proposal.
      * @param permit2Data The permit2 data, if the user opts to use permit2.
      */
-    function createProposal(Proposal memory proposal, bytes calldata permit2Data) external;
+    function createProposal(
+        address collateralAddress,
+        uint256 collateralAmount,
+        address creditAddress,
+        uint256 availableCreditLimit,
+        uint256 fixedInterestAmount,
+        uint40 startTimestamp,
+        uint40 loanExpiration,
+        bytes calldata permit2Data
+    ) external;
 
     /**
      * @notice Cancels a borrowing proposal.

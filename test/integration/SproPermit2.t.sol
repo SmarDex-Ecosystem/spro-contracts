@@ -72,7 +72,16 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
 
         collateral.mint(sigUser1, proposal.collateralAmount);
 
-        spro.createProposal(proposal, abi.encode(permitBatch, signature));
+        spro.createProposal(
+            proposal.collateralAddress,
+            proposal.collateralAmount,
+            proposal.creditAddress,
+            proposal.availableCreditLimit,
+            proposal.fixedInterestAmount,
+            proposal.startTimestamp,
+            proposal.loanExpiration,
+            abi.encode(permitBatch, signature)
+        );
         vm.stopPrank();
 
         assertEq(collateral.balanceOf(address(sigUser1)), 0, "borrower must transfer collateral");
@@ -96,7 +105,16 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         vm.expectRevert(
             abi.encodeWithSelector(IAllowanceTransfer.InsufficientAllowance.selector, COLLATERAL_AMOUNT - 1)
         );
-        spro.createProposal(proposal, abi.encode(permitBatch, signature));
+        spro.createProposal(
+            proposal.collateralAddress,
+            proposal.collateralAmount,
+            proposal.creditAddress,
+            proposal.availableCreditLimit,
+            proposal.fixedInterestAmount,
+            proposal.startTimestamp,
+            proposal.loanExpiration,
+            abi.encode(permitBatch, signature)
+        );
         vm.stopPrank();
     }
 
