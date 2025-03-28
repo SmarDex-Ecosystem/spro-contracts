@@ -43,7 +43,16 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         proposal.availableCreditLimit = 0;
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.AvailableCreditLimitZero.selector));
         vm.prank(borrower);
-        spro.createProposal(proposal, "");
+        spro.createProposal(
+            proposal.collateralAddress,
+            proposal.collateralAmount,
+            proposal.creditAddress,
+            proposal.availableCreditLimit,
+            proposal.fixedInterestAmount,
+            proposal.startTimestamp,
+            proposal.loanExpiration,
+            ""
+        );
     }
 
     function test_RevertWhen_InvalidStartTime() external {
@@ -58,14 +67,32 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
 
         vm.prank(borrower);
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidStartTime.selector));
-        spro.createProposal(proposal, "");
+        spro.createProposal(
+            proposal.collateralAddress,
+            proposal.collateralAmount,
+            proposal.creditAddress,
+            proposal.availableCreditLimit,
+            proposal.fixedInterestAmount,
+            proposal.startTimestamp,
+            proposal.loanExpiration,
+            ""
+        );
 
         // Revert when startTimestamp is in the past
         proposal.startTimestamp = uint40(block.timestamp - 1);
         proposal.loanExpiration = proposal.startTimestamp + spro.MIN_LOAN_DURATION();
         vm.prank(borrower);
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidStartTime.selector));
-        spro.createProposal(proposal, "");
+        spro.createProposal(
+            proposal.collateralAddress,
+            proposal.collateralAmount,
+            proposal.creditAddress,
+            proposal.availableCreditLimit,
+            proposal.fixedInterestAmount,
+            proposal.startTimestamp,
+            proposal.loanExpiration,
+            ""
+        );
     }
 
     function test_RevertWhen_InvalidLoanDuration() external {
@@ -84,7 +111,16 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
                 ISproErrors.InvalidDuration.selector, proposal.loanExpiration - proposal.startTimestamp, minDuration
             )
         );
-        spro.createProposal(proposal, "");
+        spro.createProposal(
+            proposal.collateralAddress,
+            proposal.collateralAmount,
+            proposal.creditAddress,
+            proposal.availableCreditLimit,
+            proposal.fixedInterestAmount,
+            proposal.startTimestamp,
+            proposal.loanExpiration,
+            ""
+        );
     }
 
     function test_shouldCreateERC20Proposal_shouldCreatePartialLoan_shouldWithdrawRemainingCollateral() external {
