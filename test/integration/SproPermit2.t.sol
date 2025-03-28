@@ -262,7 +262,16 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         IAllowanceTransfer(spro.PERMIT2()).permit(sigUser1, permitBatch, signature);
 
         vm.prank(sigUser1);
-        spro.createProposal(proposal, abi.encode(permitBatch, signature));
+        spro.createProposal(
+            proposal.collateralAddress,
+            proposal.collateralAmount,
+            proposal.creditAddress,
+            proposal.availableCreditLimit,
+            proposal.fixedInterestAmount,
+            proposal.startTimestamp,
+            proposal.loanExpiration,
+            abi.encode(permitBatch, signature)
+        );
 
         assertEq(collateral.balanceOf(address(sigUser1)), 0, "borrower must transfer collateral");
         assertEq(collateral.balanceOf(address(spro)), COLLATERAL_AMOUNT, "spro must receive collateral");
