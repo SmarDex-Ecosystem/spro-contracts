@@ -123,4 +123,18 @@ contract SproIntegrationLoan is SDBaseIntegrationTest {
         assertEq(loanInfo.principalAmount, amount);
         assertEq(loanInfo.principalAmount + loanInfo.fixedInterestAmount, amount + fixedInterestAmount);
     }
+
+    function test_RevertWhen_loanTransferMismatch() external {
+        _createERC20Proposal();
+
+        credit.mint(lender, INITIAL_CREDIT_BALANCE);
+        vm.prank(lender);
+        credit.approve(address(spro), CREDIT_LIMIT);
+
+        credit.setFee(true);
+
+        vm.expectRevert(ISproErrors.TransferMismatch.selector);
+        vm.prank(lender);
+        spro.createLoan(proposal, CREDIT_LIMIT, "");
+    }
 }
