@@ -90,6 +90,20 @@ contract TestSproSetFee is SproTest {
 }
 
 /* -------------------------------------------------------------------------- */
+/*                                SET RECIPIENT                               */
+/* -------------------------------------------------------------------------- */
+
+contract TestSproSetRecipient is SproTest {
+    function test_setRecipientEmitEvent() external {
+        vm.expectEmit(true, true, true, true);
+        emit ISproEvents.RecipientUpdated(address(this), 0, address(1));
+
+        spro.setRecipient(0, address(1));
+        assertEq(spro._collateralRecipient(keccak256(abi.encode(0, address(this)))), address(1));
+    }
+}
+
+/* -------------------------------------------------------------------------- */
 /*                         PARTIAL LENDING THRESHOLDS                         */
 /* -------------------------------------------------------------------------- */
 

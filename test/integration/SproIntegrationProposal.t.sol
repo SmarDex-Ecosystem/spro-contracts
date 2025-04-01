@@ -178,7 +178,7 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         credit.approve(address(spro), CREDIT_AMOUNT + loan.fixedInterestAmount);
 
         // Borrower: repays loan
-        spro.repayLoan(loanId, "", address(0));
+        spro.repayLoan(loanId, "");
 
         // Assertions
         assertEq(credit.balanceOf(borrower), 0);

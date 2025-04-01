@@ -80,6 +80,12 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /// @inheritdoc ISpro
+    function setRecipient(uint256 proposalNonce, address newRecipient) external {
+        _collateralRecipient[keccak256(abi.encode(proposalNonce, msg.sender))] = newRecipient;
+        emit RecipientUpdated(msg.sender, proposalNonce, newRecipient);
+    }
+
+    /// @inheritdoc ISpro
     function getProposalCreditStatus(Proposal calldata proposal)
         external
         view
@@ -139,6 +145,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
 
         {
+            uint256 proposalNonce = _proposalNonce++;
             Proposal memory proposal = Proposal({
                 collateralAddress: collateralAddress,
                 collateralAmount: collateralAmount,
@@ -148,13 +155,14 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
                 startTimestamp: startTimestamp,
                 loanExpiration: loanExpiration,
                 proposer: msg.sender,
-                nonce: _proposalNonce++,
+                nonce: proposalNonce,
                 minAmount: Math.mulDiv(availableCreditLimit, _partialPositionBps, BPS_DIVISOR)
             });
 
             bytes32 proposalHash = getProposalHash(proposal);
             _proposalsMade[proposalHash] = true;
             _withdrawableCollateral[proposalHash] = collateralAmount;
+            _collateralRecipient[keccak256(abi.encode(proposalNonce, msg.sender))] = msg.sender;
 
             emit ProposalCreated(proposalHash, msg.sender, proposal);
         }
@@ -222,7 +230,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /// @inheritdoc ISpro
-    function repayLoan(uint256 loanId, bytes calldata permit2Data, address collateralRecipient) external nonReentrant {
+    function repayLoan(uint256 loanId, bytes calldata permit2Data) external nonReentrant {
         Loan storage loan = _loans[loanId];
 
         if (!_isLoanRepayable(loan.status, loan.loanExpiration)) {
@@ -235,11 +243,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         } else {
             IERC20Metadata(loan.credit).safeTransferFrom(msg.sender, address(this), repaymentAmount);
         }
-        if (collateralRecipient == address(0)) {
-            collateralRecipient = loan.borrower;
-        } else if (msg.sender != loan.borrower) {
-            revert CallerNotBorrower();
-        }
+        address collateralRecipient = _collateralRecipient[keccak256(abi.encode(loan.proposalNonce, loan.borrower))];
         IERC20Metadata(loan.collateral).safeTransfer(collateralRecipient, loan.collateralAmount);
         loan.status = LoanStatus.PAID_BACK;
         emit LoanPaidBack(loanId);
@@ -255,10 +259,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /// @inheritdoc ISpro
-    function repayMultipleLoans(uint256[] calldata loanIds, bytes calldata permit2Data, address collateralRecipient)
-        external
-        nonReentrant
-    {
+    function repayMultipleLoans(uint256[] calldata loanIds, bytes calldata permit2Data) external nonReentrant {
         if (loanIds.length == 0) return;
 
         address creditAddress = _loans[loanIds[0]].credit;
@@ -298,14 +299,8 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             Loan memory loan = loanData.loan;
             uint256 loanId = loanData.loanId;
 
-            if (collateralRecipient != address(0)) {
-                if (msg.sender != loan.borrower) {
-                    revert CallerNotBorrower();
-                }
-                IERC20Metadata(loan.collateral).safeTransfer(collateralRecipient, loan.collateralAmount);
-            } else {
-                IERC20Metadata(loan.collateral).safeTransfer(loan.borrower, loan.collateralAmount);
-            }
+            address collateralRecipient = _collateralRecipient[keccak256(abi.encode(loan.proposalNonce, loan.borrower))];
+            IERC20Metadata(loan.collateral).safeTransfer(collateralRecipient, loan.collateralAmount);
 
             address loanOwner = _loanToken.ownerOf(loanId);
             // If current loan owner is not original lender, the loan cannot be repaid directly
@@ -453,7 +448,8 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             collateralUsed_,
             proposal.creditAddress,
             creditAmount,
-            fixedInterestAmount
+            fixedInterestAmount,
+            proposal.nonce
         );
 
         _withdrawableCollateral[proposalHash_] -= collateralUsed_;
@@ -478,6 +474,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         loan.credit = loanTerms.credit;
         loan.principalAmount = loanTerms.creditAmount;
         loan.fixedInterestAmount = loanTerms.fixedInterestAmount;
+        loan.proposalNonce = loanTerms.proposalNonce;
     }
 
     /**

@@ -27,6 +27,7 @@ interface ISproTypes {
      * @param credit The address of a credit asset.
      * @param creditAmount The amount of a credit asset.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
+     * @param proposalNonce Nonce of the initial proposal that created the loan.
      */
     struct Terms {
         address lender;
@@ -38,6 +39,7 @@ interface ISproTypes {
         address credit;
         uint256 creditAmount;
         uint256 fixedInterestAmount;
+        uint256 proposalNonce;
     }
 
     /**
@@ -52,6 +54,7 @@ interface ISproTypes {
      * @param credit The address of an asset used as a loan credit.
      * @param principalAmount Principal amount in credit asset tokens.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
+     * @param proposalNonce Nonce of the initial proposal that created the loan.
      */
     struct Loan {
         LoanStatus status;
@@ -64,6 +67,7 @@ interface ISproTypes {
         address credit;
         uint256 principalAmount;
         uint256 fixedInterestAmount;
+        uint256 proposalNonce;
     }
 
     /**

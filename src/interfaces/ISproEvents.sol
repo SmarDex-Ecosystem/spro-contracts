@@ -54,4 +54,12 @@ interface ISproEvents is ISproTypes {
      * @param proposalHash The hash of the proposal.
      */
     event ProposalCanceled(bytes32 indexed proposalHash);
+
+    /**
+     * @notice A new collateral recipient was set.
+     * @param borrower The address of the borrower.
+     * @param proposalNonce The nonce of the proposal.
+     * @param recipient The address of the recipient.
+     */
+    event RecipientUpdated(address borrower, uint256 proposalNonce, address recipient);
 }

@@ -19,7 +19,7 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
 
     function test_RevertWhen_notRepayable() external {
         vm.expectRevert(ISproErrors.LoanCannotBeRepaid.selector);
-        spro.repayLoan(0, "", address(0));
+        spro.repayLoan(0, "");
 
         _createERC20Proposal();
         uint256 loanId = _createLoan(proposal, CREDIT_AMOUNT, "");
@@ -28,7 +28,7 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         vm.warp(proposal.loanExpiration);
 
         vm.expectRevert(ISproErrors.LoanCannotBeRepaid.selector);
-        spro.repayLoan(loanId, "", address(0));
+        spro.repayLoan(loanId, "");
     }
 
     function testGas_MultiplePartialLoans_Original() external {
@@ -36,21 +36,9 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         vm.startPrank(borrower);
         uint256 startGas = gasleft();
         for (uint256 i; i < 4; ++i) {
-            spro.repayLoan(loanIds[i], "", address(0));
+            spro.repayLoan(loanIds[i], "");
         }
         emit log_named_uint("repayLoan with for loop", startGas - gasleft());
-    }
-
-    function test_RevertWhen_notBorrowerRepayWithRecipient() public {
-        _createERC20Proposal();
-        uint256 loanId = _createLoan(proposal, CREDIT_AMOUNT, "");
-
-        ISproTypes.Loan memory loan = spro.getLoan(loanId);
-        credit.mint(address(this), CREDIT_AMOUNT + loan.fixedInterestAmount);
-        credit.approve(address(spro), CREDIT_AMOUNT + loan.fixedInterestAmount);
-
-        vm.expectRevert(ISproErrors.CallerNotBorrower.selector);
-        spro.repayLoan(loanId, "", address(1));
     }
 
     function test_borrowerRepayToAnotherAddress() public {
@@ -58,11 +46,12 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         uint256 loanId = _createLoan(proposal, CREDIT_AMOUNT, "");
 
         vm.startPrank(borrower);
+        spro.setRecipient(proposal.nonce, address(1));
         ISproTypes.Loan memory loan = spro.getLoan(loanId);
         credit.mint(borrower, loan.fixedInterestAmount);
         credit.approve(address(spro), CREDIT_AMOUNT + loan.fixedInterestAmount);
 
-        spro.repayLoan(loanId, "", address(1));
+        spro.repayLoan(loanId, "");
         vm.stopPrank();
 
         assertEq(collateral.balanceOf(borrower), 0, "borrower shouldn't receive collateral");
@@ -73,24 +62,13 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
     /*                             repayMultipleLoans                             */
     /* -------------------------------------------------------------------------- */
 
-    function test_RevertWhen_notBorrowerRepayMultipleWithRecipient() public {
-        (uint256[] memory loanIds,) = _setupMultipleRepay();
-
-        for (uint256 i; i < loanIds.length; ++i) {
-            ISproTypes.Loan memory loan = spro.getLoan(loanIds[i]);
-            credit.mint(address(this), CREDIT_AMOUNT + loan.fixedInterestAmount);
-            credit.approve(address(spro), CREDIT_AMOUNT + loan.fixedInterestAmount);
-        }
-
-        vm.expectRevert(ISproErrors.CallerNotBorrower.selector);
-        spro.repayMultipleLoans(loanIds, "", address(1));
-    }
-
     function test_borrowerRepayMultipleToAnotherAddress() public {
         (uint256[] memory loanIds,) = _setupMultipleRepay();
 
         vm.prank(borrower);
-        spro.repayMultipleLoans(loanIds, "", address(1));
+        spro.setRecipient(proposal.nonce, address(1));
+        vm.prank(borrower);
+        spro.repayMultipleLoans(loanIds, "");
 
         assertEq(collateral.balanceOf(borrower), 0, "borrower shouldn't receive collateral");
         assertEq(2000 * COLLATERAL_AMOUNT / spro.BPS_DIVISOR(), collateral.balanceOf(address(1))); // 20% since 4 loans
@@ -102,7 +80,7 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         (uint256[] memory loanIds,) = _setupMultipleRepay();
         vm.startPrank(borrower);
         uint256 startGas = gasleft();
-        spro.repayMultipleLoans(loanIds, "", address(0));
+        spro.repayMultipleLoans(loanIds, "");
         emit log_named_uint("Gas used", startGas - gasleft());
     }
 
@@ -110,7 +88,7 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         (uint256[] memory loanIds, uint256 fixedInterestAmount) = _setupMultipleRepay();
 
         vm.startPrank(borrower);
-        spro.repayMultipleLoans(loanIds, "", address(0));
+        spro.repayMultipleLoans(loanIds, "");
 
         // Assertions
         assertEq(credit.balanceOf(borrower), 0);
@@ -133,8 +111,8 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         (uint256[] memory loanIds, uint256 fixedInterestAmount) = _setupMultipleRepay();
 
         vm.startPrank(borrower);
-        spro.repayLoan(loanIds[2], "", address(0));
-        spro.repayMultipleLoans(loanIds, "", address(0));
+        spro.repayLoan(loanIds[2], "");
+        spro.repayMultipleLoans(loanIds, "");
 
         // Assertions
         assertEq(credit.balanceOf(borrower), 0);
@@ -163,7 +141,7 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         credit.mint(repayer, repayAmount);
         vm.startPrank(repayer);
         credit.approve(address(spro), repayAmount);
-        spro.repayMultipleLoans(loanIds, "", address(0));
+        spro.repayMultipleLoans(loanIds, "");
         vm.stopPrank();
 
         // Assertions
@@ -202,7 +180,7 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         // block transfers to enter in the try/catch block
         credit.blockTransfers(true, lender);
         vm.prank(borrower);
-        spro.repayMultipleLoans(loanIds, "", address(0));
+        spro.repayMultipleLoans(loanIds, "");
         credit.blockTransfers(false, address(0));
 
         uint256[] memory ids = new uint256[](2);

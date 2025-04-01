@@ -80,4 +80,11 @@ interface ISproStorage {
      * @return _creditUsed The amount of credit already used for the given proposal hash.
      */
     function _creditUsed(bytes32 proposalHash) external view returns (uint256 _creditUsed);
+
+    /**
+     * @notice Retrieves the address of the collateral recipient associated with the given nonce-borrower hash.
+     * @param nonceBorrowerHash The hash combining the nonce and the borrower's address.
+     * @return _collateralRecipient The address of the collateral recipient.
+     */
+    function _collateralRecipient(bytes32 nonceBorrowerHash) external view returns (address _collateralRecipient);
 }

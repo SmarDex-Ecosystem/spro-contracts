@@ -29,6 +29,13 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     function setLoanMetadataUri(string memory newMetadataUri) external;
 
     /**
+     * @notice Sets the collateral recipient address for a proposal.
+     * @param proposalNonce The proposal nonce.
+     * @param newRecipient The new recipient address.
+     */
+    function setRecipient(uint256 proposalNonce, address newRecipient) external;
+
+    /**
      * @notice Retrieves the loan data for a given loan id.
      * @param loanId The loan ID.
      * @return loan_ The loan data.
@@ -113,10 +120,8 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * credit will be sent to the protocol, and the lender will be able to claim it later.
      * @param loanId The ID of the loan being repaid.
      * @param permit2Data The permit2 data, if the user opts to use permit2.
-     * @param collateralRecipient The address that will receive the collateral. If address(0) is provided, the
-     * borrower's address will be used.
      */
-    function repayLoan(uint256 loanId, bytes calldata permit2Data, address collateralRecipient) external;
+    function repayLoan(uint256 loanId, bytes calldata permit2Data) external;
 
     /**
      * @notice Repays multiple active loans.
@@ -127,11 +132,8 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * credit will be sent to the protocol, and the lender will be able to claim it later.
      * @param loanIds An array of loan IDs being repaid.
      * @param permit2Data The permit2 data, if the user opts to use permit2.
-     * @param collateralRecipient The address that will receive the collateral. If address(0) is provided, the
-     * borrower's address will be used.
      */
-    function repayMultipleLoans(uint256[] calldata loanIds, bytes calldata permit2Data, address collateralRecipient)
-        external;
+    function repayMultipleLoans(uint256[] calldata loanIds, bytes calldata permit2Data) external;
 
     /**
      * @notice Attempts to claim a repaid loan.
