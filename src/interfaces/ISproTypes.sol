@@ -28,7 +28,7 @@ interface ISproTypes {
      * @param creditAmount The amount of a credit asset.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      */
-    struct Terms {
+    struct LoanTerms {
         address lender;
         address borrower;
         uint40 startTimestamp;

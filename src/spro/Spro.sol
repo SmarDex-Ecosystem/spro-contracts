@@ -138,6 +138,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             revert InvalidDuration(loanExpiration - startTimestamp, MIN_LOAN_DURATION);
         }
 
+        uint256 fee = _fee;
         {
             Proposal memory proposal = Proposal({
                 collateralAddress: collateralAddress,
@@ -156,7 +157,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             _proposalsMade[proposalHash] = true;
             _withdrawableCollateral[proposalHash] = collateralAmount;
 
-            emit ProposalCreated(proposalHash, msg.sender, proposal);
+            emit ProposalCreated(proposalHash, proposal, fee);
         }
 
         uint256 balanceBefore = IERC20Metadata(collateralAddress).balanceOf(address(this));
@@ -166,8 +167,8 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
             );
         } else {
             IERC20Metadata(collateralAddress).safeTransferFrom(msg.sender, address(this), collateralAmount);
-            if (_fee > 0) {
-                IERC20Metadata(SDEX).safeTransferFrom(msg.sender, DEAD_ADDRESS, _fee);
+            if (fee > 0) {
+                IERC20Metadata(SDEX).safeTransferFrom(msg.sender, DEAD_ADDRESS, fee);
             }
         }
         if (IERC20Metadata(collateralAddress).balanceOf(address(this)) - balanceBefore != collateralAmount) {
@@ -200,7 +201,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         returns (uint256 loanId_)
     {
         // Accept proposal and get loan terms
-        (bytes32 proposalHash, Terms memory loanTerms) = _acceptProposal(msg.sender, creditAmount, proposal);
+        (bytes32 proposalHash, LoanTerms memory loanTerms) = _acceptProposal(msg.sender, creditAmount, proposal);
 
         loanId_ = _createLoan(loanTerms);
 
@@ -409,7 +410,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      */
     function _acceptProposal(address acceptor, uint256 creditAmount, Proposal memory proposal)
         internal
-        returns (bytes32 proposalHash_, Terms memory loanTerms_)
+        returns (bytes32 proposalHash_, LoanTerms memory loanTerms_)
     {
         proposalHash_ = getProposalHash(proposal);
 
@@ -444,7 +445,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         uint256 fixedInterestAmount =
             Math.mulDiv(creditAmount, proposal.fixedInterestAmount, proposal.availableCreditLimit, Math.Rounding.Ceil);
 
-        loanTerms_ = Terms(
+        loanTerms_ = LoanTerms(
             acceptor,
             proposal.proposer,
             proposal.startTimestamp,
@@ -464,7 +465,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      * @param loanTerms The terms of the loan.
      * @return loanId_ The Id of the new loan.
      */
-    function _createLoan(Terms memory loanTerms) internal returns (uint256 loanId_) {
+    function _createLoan(LoanTerms memory loanTerms) internal returns (uint256 loanId_) {
         loanId_ = _loanToken.mint(loanTerms.lender);
 
         Loan storage loan = _loans[loanId_];
