@@ -1,5 +1,69 @@
 # Changelog
 
+## [0.1.4](https://github.com/SmarDex-Ecosystem/SPRO_contracts/compare/v0.1.3...v0.1.4) (2025-03-28)
+
+
+### Features
+
+* **_makeProposal:** reverts when the start timestamp is in the past ([#77](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/77)) ([dd45d4a](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/dd45d4a81abeec68b70b5845114f19d0b491add4))
+* add check on erc20 transfer ([#82](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/82)) ([a0ff54c](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/a0ff54cc4b779c22de622b7ee83fa1d4e5a9cfcd))
+* add reentrancy protection ([#80](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/80)) ([f87b985](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/f87b98511f1627086043af1d906b9ca39a8b7e29))
+* adding fee check in constructor ([#72](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/72)) ([74beb00](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/74beb0085903b3a3987584f6d91eff105b6ac7d1))
+* adding recipient in repay function ([#76](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/76)) ([0cb109d](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/0cb109df776050d60fb0229c8969d1447f547801))
+* **createProposal:** add a nonce for proposals ([#79](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/79)) ([5078edd](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/5078edd0643836195599f92d08a2e4e5a9e9272f))
+* improving clarity ([#70](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/70)) ([d6e3532](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/d6e35320654e1907f0fb1e38bcaf0d0c55382491))
+* improving totalLoanRepaymentAmount ([#85](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/85)) ([3edde85](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/3edde85056b793901e7d3aa12c8ec9872ae1a307))
+* pre calculation of minAmount ([#81](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/81)) ([9bd3ebd](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/9bd3ebd3a2cc3baf6e19dd94bd08b310b9c83f8a))
+* prevent permit2 griefing ([#83](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/83)) ([70f52b1](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/70f52b1a31bbf16a2bad6f2819e0afaf216a1c66))
+* revert if try to cancel a non existent proposal ([#75](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/75)) ([5891377](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/5891377292b5f3e8af82cfca206587ab5413477d))
+* **SproLoan:** remove safemint ([#74](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/74)) ([21f7f88](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/21f7f88a297d4c9f55c67e04586b582c38da2ddc))
+
+
+### Bug Fixes
+
+* permit2 transfer ([#78](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/78)) ([aab3ffa](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/aab3ffa99d38c4de07b3cfe63a3dd39cdd295012))
+* **totalLoanRepaymentAmount:** continue instead of returning when loan status is none ([#73](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/73)) ([965bfdd](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/965bfdd7f63475b4a79babb9b6a50e0e05dc4e12))
+
+
+### Performance Improvements
+
+* **_acceptProposal:** merge both functions ([#86](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/86)) ([38615ea](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/38615ea6d61774bca4583cde706768778ed2d355))
+
+## [0.1.3](https://github.com/SmarDex-Ecosystem/SPRO_contracts/compare/v0.1.2...v0.1.3) (2025-03-13)
+
+
+### Features
+
+* add an equal on a check ([#27](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/27)) ([b9f5ef4](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/b9f5ef4c92a8e10670a84765b29d16c23da4ac31))
+* adding nonReentrant guard ([#26](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/26)) ([8c3f12f](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/8c3f12f949be56886103f06df6b468891591507f))
+* improve and add event ([#42](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/42)) ([2e55d36](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/2e55d36461ef0bb64837c73e80a3bc057873da2e))
+* incorporate partialPositionBps in proposal struct during proposal creation ([#24](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/24)) ([a8465d1](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/a8465d1b095a6355e1140a1a674d5f34f863c2c2))
+* remove _getLoanStatus function ([#65](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/65)) ([b04675f](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/b04675f0b740f41768f9f8331f855bc6bdf82290))
+* remove metadataUri mapping and improve logic ([#43](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/43)) ([492b820](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/492b820270ecefb1fa7d4e836e28dcda259a445c))
+* remove permit ([#36](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/36)) ([f1f7492](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/f1f74929f58c99a6b2ac2c5e2d9e63e7afdf1df8))
+* remove pool adapter functionality ([#35](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/35)) ([15d9342](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/15d93427702be4a072510be6b8a74f13bd5f2004))
+* remove unnecessary returns variables ([#67](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/67)) ([c422df5](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/c422df548a8896943a4038ddc0f49553fdc1dfab))
+* removing unnecessary code ([#51](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/51)) ([450138e](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/450138ea7720d7581fdada8189f5b99c47688623))
+* simplify _checkLoanCanBeRepaid ([#25](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/25)) ([cf3942c](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/cf3942c0becf476ad834a745b329cd3c43220247))
+* simplify getter ([#60](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/60)) ([0c22287](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/0c22287ff46a12d83bba3c0403c428349c45a262))
+* **SproLoan:** use _safeMint() ([#68](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/68)) ([bac190d](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/bac190d1d325a7b05758b456e00d156dde47c091))
+* use DEAD_ADDRESS ([#57](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/57)) ([38c22f1](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/38c22f14c8941fab2cd4f079bdd3236cdcd1928d))
+* use permissive solidity version for interfaces ([#41](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/41)) ([26a07e9](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/26a07e92c048340ef47c0027b9a70588ebf22b90))
+* use revert instead of require ([#34](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/34)) ([9944aea](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/9944aea79856eb87c52e8c5e07a325f101c450ed))
+
+
+### Bug Fixes
+
+* ci with lintspec and natspec fix ([#64](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/64)) ([d12461d](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/d12461d05571ec52ea9e3fcea9cb3d96e6f288f2))
+* maximum credit ([#40](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/40)) ([19649d7](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/19649d7735870ea06493d05230aab50330ca5c2b))
+* repayMultipleLoans against griefing ([#38](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/38)) ([538a13a](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/538a13a47ee0998a98b6177ca5b66130da59a72f))
+
+
+### Performance Improvements
+
+* reduce gas cost in claimLoan ([#62](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/62)) ([caa77c6](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/caa77c6f07edcee1af6d240912f2755d264348ca))
+* remove unused variable ([#33](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/33)) ([cb69faf](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/cb69fafae125205ba15921a788c3bec9c03f4417))
+
 ## [0.1.2](https://github.com/SmarDex-Ecosystem/SPRO_contracts/compare/v0.1.1...v0.1.2) (2025-02-25)
 
 

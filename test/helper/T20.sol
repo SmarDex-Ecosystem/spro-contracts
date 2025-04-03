@@ -6,6 +6,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract T20 is ERC20 {
     bool blockTransfer;
     address blockedAddress;
+    bool fee;
 
     constructor(string memory name, string memory symbol) ERC20(name, symbol) { }
 
@@ -14,11 +15,25 @@ contract T20 is ERC20 {
         blockedAddress = blockAddr;
     }
 
+    function setFee(bool fee_) external {
+        fee = fee_;
+    }
+
     function transfer(address recipient, uint256 amount) public override returns (bool) {
         if (blockTransfer && recipient == blockedAddress) {
             revert("T20: transfer blocked");
         }
+        if (fee) {
+            amount -= 1;
+        }
         return super.transfer(recipient, amount);
+    }
+
+    function transferFrom(address from, address to, uint256 value) public override returns (bool) {
+        if (fee) {
+            value -= 1;
+        }
+        return super.transferFrom(from, to, value);
     }
 
     function mint(address owner, uint256 amount) external {

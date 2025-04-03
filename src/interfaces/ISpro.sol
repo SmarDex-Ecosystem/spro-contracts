@@ -55,7 +55,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Calculates the total repayment amount for multiple loans, with the fixed interest amounts.
-     * @dev The credit token must be the same for all loans.
+     * @dev The credit token must be the same for all loans. The function filters by repayable loans.
      * @param loanIds Array of loan ids.
      * @return amount_ The total repayment amount for all loans.
      */
@@ -63,11 +63,27 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Creates a new borrowing proposal.
-     * @dev The collateral and SDEX tokens must be approved for the protocol contract.
-     * @param proposal The proposal structure.
+     * @dev The collateral and SDEX tokens must be approved for the protocol contract. This contract is not suitable for
+     * rebasing or fee-on-transfer tokens.
+     * @param collateralAddress The address of the collateral asset.
+     * @param collateralAmount The amount of the collateral asset.
+     * @param creditAddress The address of the credit asset.
+     * @param availableCreditLimit The available credit limit for the proposal.
+     * @param fixedInterestAmount The fixed interest amount in credit asset tokens.
+     * @param startTimestamp The start timestamp of the proposal.
+     * @param loanExpiration The expiration timestamp of the proposal.
      * @param permit2Data The permit2 data, if the user opts to use permit2.
      */
-    function createProposal(Proposal memory proposal, bytes calldata permit2Data) external;
+    function createProposal(
+        address collateralAddress,
+        uint256 collateralAmount,
+        address creditAddress,
+        uint256 availableCreditLimit,
+        uint256 fixedInterestAmount,
+        uint40 startTimestamp,
+        uint40 loanExpiration,
+        bytes calldata permit2Data
+    ) external;
 
     /**
      * @notice Cancels a borrowing proposal.
@@ -78,6 +94,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Creates a new loan.
+     * @dev This contract is not suitable for rebasing or fee-on-transfer tokens.
      * @param proposal The proposal structure.
      * @param creditAmount The amount of credit tokens.
      * @param permit2Data The permit2 data, if the user opts to use permit2.
@@ -89,24 +106,32 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
 
     /**
      * @notice Repays an active loan.
-     * @dev Any address can repay an active loan. The collateral will be transferred to the borrower associated
-     * with the loan. If the loan token holder is the original lender, the repayment credit will be transferred to them.
-     * Otherwise, the repayment credit will be transferred to the protocol, awaiting the new owner to claim it.
-     * @param loanId The loan ID being repaid.
+     * @dev Any address can repay an active loan if the `collateralRecipient` address is set to `address(0)`. The
+     * collateral will be transferred to the borrower associated with the loan. If the caller is the borrower and
+     * provides a `collateralRecipient` address, the collateral will be transferred to the specified address instead of
+     * the borrower’s address. The protocol will attempt to send the credit to the lender. If the transfer fails, the
+     * credit will be sent to the protocol, and the lender will be able to claim it later.
+     * @param loanId The ID of the loan being repaid.
      * @param permit2Data The permit2 data, if the user opts to use permit2.
+     * @param collateralRecipient The address that will receive the collateral. If address(0) is provided, the
+     * borrower's address will be used.
      */
-    function repayLoan(uint256 loanId, bytes calldata permit2Data) external;
+    function repayLoan(uint256 loanId, bytes calldata permit2Data, address collateralRecipient) external;
 
     /**
      * @notice Repays multiple active loans.
-     * @dev The credit token must be the same for all loan IDs.
-     * Any address can repay an active loan. The collateral will be transferred to the borrower associated with the
-     * loan. If the loan token holder is the original lender, the repayment credit will be transferred to them.
-     * Otherwise, the repayment credit will be transferred to the protocol, awaiting the new owner to claim it.
+     * @dev Any address can repay an active loan if the `collateralRecipient` address is set to `address(0)`. The
+     * collateral will be transferred to the borrower associated with the loan. If the caller is the borrower and
+     * provides a `collateralRecipient` address, the collateral will be transferred to the specified address instead of
+     * the borrower’s address. The protocol will attempt to send the credit to the lender. If the transfer fails, the
+     * credit will be sent to the protocol, and the lender will be able to claim it later.
      * @param loanIds An array of loan IDs being repaid.
      * @param permit2Data The permit2 data, if the user opts to use permit2.
+     * @param collateralRecipient The address that will receive the collateral. If address(0) is provided, the
+     * borrower's address will be used.
      */
-    function repayMultipleLoans(uint256[] calldata loanIds, bytes calldata permit2Data) external;
+    function repayMultipleLoans(uint256[] calldata loanIds, bytes calldata permit2Data, address collateralRecipient)
+        external;
 
     /**
      * @notice Attempts to claim a repaid loan.

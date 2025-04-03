@@ -1,7 +1,7 @@
 {
   "name": "@smardex/spro",
   "description": "Spro",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "repository": "github:Blockchain-RA2-Tech/foundry-template",
   "author": {
     "name": "RA2 Tech SA",
@@ -28,7 +28,11 @@
     "snapshot:check": "FOUNDRY_PROFILE=ci forge build && FOUNDRY_PROFILE=ci forge snapshot --no-match-test \"(FFI|Fork|Fuzz)\" --no-match-contract Fork --check --offline",
     "test": "forge test"
   },
-  "files": ["dist", "broadcast", "docs"],
+  "files": [
+    "dist",
+    "broadcast",
+    "docs"
+  ],
   "devDependencies": {
     "@biomejs/biome": "^1.9.2",
     "@defi-wonderland/natspec-smells": "^1.1.5",

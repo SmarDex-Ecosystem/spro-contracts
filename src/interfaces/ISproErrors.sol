@@ -44,6 +44,9 @@ interface ISproErrors {
     /// @notice Thrown when caller is not the proposer.
     error CallerNotProposer();
 
+    /// @notice Thrown when caller is not the borrower.
+    error CallerNotBorrower();
+
     /**
      * @notice Thrown when the loan credit address is different than the expected credit address.
      * @param loanCreditAddress The address of the loan credit.
@@ -81,18 +84,21 @@ interface ISproErrors {
     /// @notice Thrown when a proposal has an available credit of zero.
     error AvailableCreditLimitZero();
 
-    /// @notice Thrown when the proposal already exists.
-    error ProposalAlreadyExists();
-
     /// @notice Thrown when the proposal does not exist.
     error ProposalDoesNotExists();
 
-    /// @notice Thrown when the proposal expiration is earlier or equal to the current timestamp.
-    error InvalidDurationStartTime();
+    /**
+     * @notice Thrown when the proposal start time is invalid.
+     * @dev Either the start time is in the past or the start time is after the expiration time.
+     */
+    error InvalidStartTime();
 
     /**
      * @notice Thrown when owner tries to set a fee that is higher than the maximum allowed.
      * @param fee The fee value.
      */
     error ExcessiveFee(uint256 fee);
+
+    /// @notice Thrown when a token transfer does not match the expected amount.
+    error TransferMismatch();
 }
