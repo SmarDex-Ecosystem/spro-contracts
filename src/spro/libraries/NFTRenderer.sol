@@ -23,10 +23,25 @@ library NFTRenderer {
             renderInfobox(creditSymbol, collateralSymbol, interest, creditAmount, collateralAmount)
         );
         string memory description =
-            renderDescription(loanId, creditSymbol, collateralSymbol, interest, creditAmount, collateralAmount);
+            "This NFT represents a unique borrowing proposal created using the Spro Protocol, which is a key component of the SmarDex.io ecosystem. It enables decentralized lending and borrowing between users";
         string memory image = string(abi.encodePacked("data:image/svg+xml;base64,", Base64.encode(svg)));
-        bytes memory json =
-            abi.encodePacked('{"name":"Spro loan",', '"description":"', description, '",', '"image":"', image, '"}');
+        bytes memory json = abi.encodePacked(
+            '{"name":"Spro loan","description":"',
+            description,
+            '","image":"',
+            image,
+            '","attributes":[{"display_type":"number","trait_type":"Credit Amount","value":',
+            Strings.toString(creditAmount),
+            '},{"trait_type":"Credit Asset","value":"',
+            creditSymbol,
+            '"},{"display_type":"number","trait_type":"Collateral Amount","value":',
+            Strings.toString(collateralAmount),
+            '},{"trait_type":"Collateral Asset","value":"',
+            collateralSymbol,
+            '"},{"display_type":"number","trait_type":"Interest Amount","value":',
+            Strings.toString(interest),
+            "}]}"
+        );
 
         return string(abi.encodePacked("data:application/json;base64,", Base64.encode(json)));
     }
@@ -65,32 +80,6 @@ library NFTRenderer {
             " </tspan><tspan class='ticker'>",
             collateralSymbol,
             "</tspan></text></svg>"
-        );
-    }
-
-    function renderDescription(
-        uint256 loandId,
-        string memory creditSymbol,
-        string memory collateralSymbol,
-        uint256 interest,
-        uint256 credit,
-        uint256 collateral
-    ) internal pure returns (string memory description) {
-        description = string.concat(
-            "Loan ID: ",
-            Strings.toString(loandId),
-            ", Credit: ",
-            Strings.toString(credit),
-            " ",
-            creditSymbol,
-            ", Interest: ",
-            Strings.toString(interest),
-            " ",
-            creditSymbol,
-            ", Collateral: ",
-            Strings.toString(collateral),
-            " ",
-            collateralSymbol
         );
     }
 }
