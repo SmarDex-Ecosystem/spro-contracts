@@ -43,8 +43,8 @@ contract DeploySproLoanTest is Script {
         console.log("loanToken address", address(sproLoan));
         console.log("tokenOwner", sproLoan.ownerOf(loanId));
 
-        //  verify rendering with this command: cast call --rpc-url {URL} {address} "tokenURI(uint256)(string)" 1 | sed
-        // 's/^"//; s/"$//' | sed 's|^data:application/json;base64,||' | base64 -d | jq -r '.image' | sed
+        // verify rendering with this command: cast call --rpc-url {URL} {tokenOwner} "tokenURI(uint256)(string)" 1 |
+        // sed 's/^"//; s/"$//' | sed 's|^data:application/json;base64,||' | base64 -d | jq -r '.image' | sed
         // 's|^data:image/svg+xml;base64,||' | base64 -d
 
         vm.stopBroadcast();
