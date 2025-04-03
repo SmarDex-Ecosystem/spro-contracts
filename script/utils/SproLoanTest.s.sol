@@ -20,9 +20,6 @@ contract DeploySproLoanTest is Script {
         SproHandlerTest spro = new SproHandlerTest();
         SproLoanHandlerTest sproLoan = SproLoanHandlerTest(address(spro.loanToken()));
 
-        console.log("Spro address", address(spro));
-        console.log("loanToken address", address(sproLoan));
-
         uint256 loanId = sproLoan.forceMint(msg.sender);
         uint256 collateralDecimals = IERC20Metadata(WETH).decimals();
         uint256 creditDecimals = IERC20Metadata(USDC).decimals();
@@ -41,8 +38,14 @@ contract DeploySproLoanTest is Script {
                 fixedInterestAmount: 10 * 10 ** creditDecimals
             })
         );
-        console.log("sproLoan.owner()", sproLoan.owner());
-        require(sproLoan.owner() == address(spro), "SproLoan owner is not Spro");
+
+        console.log("Spro address", address(spro));
+        console.log("loanToken address", address(sproLoan));
+        console.log("tokenOwner", sproLoan.ownerOf(loanId));
+
+        //  verify rendering with this command: cast call --rpc-url {URL} {address} "tokenURI(uint256)(string)" 1 | sed
+        // 's/^"//; s/"$//' | sed 's|^data:application/json;base64,||' | base64 -d | jq -r '.image' | sed
+        // 's|^data:image/svg+xml;base64,||' | base64 -d
 
         vm.stopBroadcast();
     }
