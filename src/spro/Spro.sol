@@ -201,7 +201,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         returns (uint256 loanId_)
     {
         // Accept proposal and get loan terms
-        (bytes32 proposalHash, LoanTerms memory loanTerms) = _acceptProposal(msg.sender, creditAmount, proposal);
+        (bytes32 proposalHash, Terms memory loanTerms) = _acceptProposal(msg.sender, creditAmount, proposal);
 
         loanId_ = _createLoan(loanTerms);
 
@@ -418,7 +418,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      */
     function _acceptProposal(address acceptor, uint256 creditAmount, Proposal memory proposal)
         internal
-        returns (bytes32 proposalHash_, LoanTerms memory loanTerms_)
+        returns (bytes32 proposalHash_, Terms memory loanTerms_)
     {
         proposalHash_ = getProposalHash(proposal);
 
@@ -453,7 +453,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         uint256 fixedInterestAmount =
             Math.mulDiv(creditAmount, proposal.fixedInterestAmount, proposal.availableCreditLimit, Math.Rounding.Ceil);
 
-        loanTerms_ = LoanTerms(
+        loanTerms_ = Terms(
             acceptor,
             proposal.proposer,
             proposal.startTimestamp,
@@ -473,7 +473,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      * @param loanTerms The terms of the loan.
      * @return loanId_ The Id of the new loan.
      */
-    function _createLoan(LoanTerms memory loanTerms) internal returns (uint256 loanId_) {
+    function _createLoan(Terms memory loanTerms) internal returns (uint256 loanId_) {
         loanId_ = _loanToken.mint(loanTerms.lender);
 
         Loan storage loan = _loans[loanId_];

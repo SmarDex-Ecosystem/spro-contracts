@@ -26,7 +26,7 @@ interface ISproEvents is ISproTypes {
      * @param proposalHash The hash of the proposal.
      * @param loanTerms The terms of the loan.
      */
-    event LoanCreated(uint256 indexed loanId, bytes32 indexed proposalHash, LoanTerms loanTerms);
+    event LoanCreated(uint256 loanId, bytes32 indexed proposalHash, Terms loanTerms);
 
     /**
      * @notice A loan was paid back.
