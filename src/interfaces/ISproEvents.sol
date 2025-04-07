@@ -47,7 +47,7 @@ interface ISproEvents is ISproTypes {
      * @param proposal The proposal structure.
      * @param sdexBurned The SDEX fee amount burned.
      */
-    event ProposalCreated(bytes32 indexed proposalHash, Proposal proposal, uint256 sdexBurned);
+    event ProposalCreated(bytes32 proposalHash, Proposal proposal, uint256 sdexBurned);
 
     /**
      * @notice A proposal was canceled.
