@@ -17,6 +17,9 @@
 - Not possible to accept a loan after the start date:	startTimestamp > block.timestamp
 - The proposal amount is lent at 100% or is at least >= the minimum
 
+## Loans
+- The amount of collateral in the proposal should be >= of the required amount from loans
+
 ## Cancel proposal
 - The borrower can withdraw the unused part of his collateral at anytime: Borrower balance(collateral) + _withdrawableCollateral[proposalHash]
 - After cancellation, the lender cannot use this proposal to create a loan: ProposalDoesNotExists();
@@ -39,11 +42,40 @@
     Balance(collateral) = previous
 - The borrower can't repay before the start date but anytime after
 
-## Loans
-- The amount of collateral in the proposal should be >= of the required amount from loans
-
 ## Proposal
 - _proposalNonce == number of proposal
 
 ## Global
 - The balance of the Spro is equal to the available credit limit from the open proposal, plus the loan amount and interest if the loan status is 'PAID_BACK'.
+
+## Suite invariants table
+
+| Invariant ID | Invariant Description                                                                            | Tech Checks                                                                                                                                                      | Passed | Run Count |
+| ------------ | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | --------- |
+| PRO-01       | The borrower balance (collateral) should be updated when creating a proposal.                     | Balance(collateral) = previous - collateralAmount                                                                                                               | ✅     | 10m       |
+| PRO-02       | The borrower balance (sdex) should be updated when creating a proposal.                          | Balance(sdex) = previous - fee                                                                                                                                  | ✅     | 10m       |
+| PRO-03       | The borrower balance (credit) not changed.                                                         | Balance(credit) = previous                                                                                                                                      | ✅     | 10m       |
+| PRO-04       | The spro balance (collateral) should be updated when creating a proposal.                         | Balance(collateral) = previous + collateralAmount                                                                                                               | ✅     | 10m       |
+| PRO-05       | The spro balance (credit) not changed.                                                          | Balance(credit) = previous                                                                                                                                      | ✅     | 10m       |
+| PRO-06       | The proposal nonce should equal the number of proposals.                                          | _proposalNonce == number of proposal                                                                                                                            | ✅     | 10m       |
+| LOAN-01      | The lender balance (credit) should be updated when creating a loan.                              | Balance(credit) = previous - loanTerms.creditAmount                                                                                                            | ✅     | 10m       |
+| LOAN-02      | The lender balance (collateral) not changed.                                                         | Balance(collateral) = previous                                                                                                                                  | ✅     | 10m       |
+| LOAN-03      | The borrower balance (credit) should be updated when creating a loan.                               | Balance(credit) = previous + loanTerms.creditAmount                                                                                                            | ✅     | 10m       |
+| LOAN-04      | The borrower balance (collateral) not changed.                                                         | Balance(collateral) = previous                                                                                                                                  | ✅     | 10m       |
+| LOAN-05      | A loan cannot be accepted after its start date.                                                  | startTimestamp > block.timestamp                                                                                                                                | ✅     | 10m       |
+| LOAN-06      | The loan amount must be lent at 100% or be greater than or equal to the minimum required.         | Proposal amount is lent at 100% or is at least >= the minimum                                                                                                 | ✅     | 10m       |
+| LOAN-07      | The collateral in a proposal should be greater than or equal to the loan’s required collateral.    | Collateral in proposal >= required collateral                                                                                                                   | ✅     | 10m       |
+| CAN-01       | The borrower can withdraw the unused part of the collateral anytime after proposal cancellation. | Borrower balance(collateral) + _withdrawableCollateral[proposalHash]                                                                                           | ✅     | 10m       |
+| CAN-02       | After cancellation, the lender cannot use the proposal to create a loan.                         | ProposalDoesNotExists()                                                                                                                                         | ✅     | 10m       |
+| CLAIM-01     | The lender cannot claim collateral before the loan's end time.                                  | revert LoanRunning()                                                                                                                                             | ✅     | 10m       |
+| CLAIM-02     | The lender's balance should increase by the principalAmount + fixedInterestAmount after repayment. | Balance(credit) = previous + loan.principalAmount + loan.fixedInterestAmount                                                                                   | ✅     | 10m       |
+| CLAIM-03     | The spro balance should decrease by the amount repaid by the borrower after loan expiration.      | Balance(credit) = previous - loan.principalAmount - loan.fixedInterestAmount                                                                                   | ✅     | 10m       |
+| REPAY-01     | The borrower balance (credit) should decrease after repayment.                                  | Balance(credit) = previous - loan.principalAmount - loan.fixedInterestAmount                                                                                   | ✅     | 10m       |
+| REPAY-02     | The lender balance (credit) should increase after the borrower repays the loan.                  | Balance(credit) = previous + loan.principalAmount + loan.fixedInterestAmount                                                                                   | ✅     | 10m       |
+| REPAY-03     | The spro balance should be updated if the repayment transfer fails.                              | Balance(credit) = previous + loan.principalAmount + loan.fixedInterestAmount                                                                                   | ✅     | 10m       |
+| REPAY-04     | The borrower can't repay before the loan's start date but can repay anytime after.               | Borrower can't repay before startTimestamp                                                                                                                      | ✅     | 10m       |
+| REPAY-05     | The borrower balance (collateral) should remain the same after repayment.                        | Balance(collateral) = previous                                                                                                                                  | ✅     | 10m       |
+| REPAY-06     | The lender balance (collateral) should remain the same after repayment.                          | Balance(collateral) = previous                                                                                                                                  | ✅     | 10m       |
+| GLOB-01      | The spro balance should reflect the available credit limit from open proposals and loans.        | Balance(spro) = available credit limit from open proposals + loan amount + interest if loan status is 'PAID_BACK'                                              | ✅     | 10m       |
+
+
