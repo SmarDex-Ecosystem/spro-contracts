@@ -70,6 +70,7 @@
 
 | Invariant ID | Invariant Description                                                                            | Tech Checks                                                                                                                                                      |
 | ------------ | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GLOB-01      | The protocol balance should reflect the available credit limit from open proposals and loans.        | borrowToken.balanceOf(protocol) = available credit limit from open proposals + (loan amount + interest) if loan status is 'PAID_BACK' and nft not burned                                              |
 | PROP-01      | Borrower's collateralToken balance decreased by collateralAmount.                                               | collateralToken.balanceOf(borrower) = previous - collateralAmount                                                                                                               |
 | PROP-02      | Borrower must pay the SDEX fee.                                                                       | sdex.balanceOf(borrower) = previous - fee                                                                                                                                  |
 | PROP-03      | Borrower's borrowToken balance unchanged.                                                               | borrowToken.balanceOf(borrower) = previous                                                                                                                                      |
@@ -107,6 +108,5 @@
 | REPAY-07     | Protocol's collateralToken balance decreased by collateralAmount.         | collateralToken.balanceOf(protocol) = previous - collateralAmount                                                                                   |
 | REPAY-09     | Protocol's borrowToken balance increased if the transfer fails.                              | borrowToken.balanceOf(protocol) = previous + loan.principalAmount + loan.fixedInterestAmount                                                                                   |
 | REPAY-10     | The borrower can't repay before the loan's start date but can repay anytime after.               | Borrower can't repay before startTimestamp                                            |
-| GLOB-01      | The spro balance should reflect the available credit limit from open proposals and loans.        | Balance(spro) = available credit limit from open proposals + loan amount + interest if loan status is 'PAID_BACK'                                              |
 
 
