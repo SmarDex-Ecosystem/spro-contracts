@@ -18,7 +18,8 @@
 	Balance(credit) = previous + loanTerms.creditAmount
     Balance(collateral) = previous
 - Not possible to accept a loan after the start date:	startTimestamp > block.timestamp
-- The proposal amount is lent at 100% or is at least >= the minimum
+- The proposal amount is at least >= the minimum
+- The rest in the proposal must be greater than the proposal minAmount
 
 ## Loans
 - The amount of collateral in the proposal should be >= of the required amount from loans
@@ -81,10 +82,11 @@
 | LOAN-03      | Borrower's borrowToken balance increased by creditAmount.                                       | borrowToken.balanceOf(borrower) = previous + loanTerms.creditAmount                                                                                                            |
 | LOAN-04      | Borrower's collateralToken balance unchanged.                                                         | collateralToken.balanceOf(borrower) = previous                                                                                                                                  |
 | LOAN-05      | A loan cannot be accepted after its start date.                                                  | startTimestamp > block.timestamp                                                                                                                                |
-| LOAN-06      | The loan amount must be lent at 100% or be greater than or equal to the minimum required.         | Proposal amount is lent at 100% or is at least >= the minimum                                                                                                 |
-| LOAN-07      | The collateral in a proposal should be greater than or equal to the loan’s required collateral.    | Collateral in proposal >= required collateral                                                                                                                   |
-| CAN-01       | The borrower can withdraw the unused part of the collateral anytime after proposal creation. | collateralToken.balanceOf(borrower) + _withdrawableCollateral[proposalHash]                                                                                           |
-| CAN-02       | After cancellation, the lender cannot use the proposal to create a loan.                         | ProposalDoesNotExists()                                                                                                                                         |
+| LOAN-06      | The loan amount must be greater than or equal to the proposal minAmount.         | Proposal amount is at least >= the minimum                                                                                                 |
+| LOAN-07      | The rest in the proposal must be greater than the proposal minAmount                      | proposal.availableCreditLimit - _creditUsed[proposalHash_] > proposal.minAmount                                                                                                 |
+| LOAN-08      | The collateral in a proposal should be greater than or equal to the loan’s required collateral.    | Collateral in proposal >= required collateral                                                                                                                   |
+| CANCEL-01       | The borrower can withdraw the unused part of the collateral anytime after proposal creation. | collateralToken.balanceOf(borrower) + _withdrawableCollateral[proposalHash]                                                                                           |
+| CANCEL-02       | After cancellation, the lender cannot use the proposal to create a loan.                         | ProposalDoesNotExists()                                                                                                                                         |
 | CLAIM-01     | The lender cannot claim collateralToken before the loan's end time.                                  | revert LoanRunning()                                                                                                                                             |
 | CLAIM-02     | The lender cannot claim borrowToken if borrower already sent tokens.                                  | revert CallerNotLoanTokenHolder()                                                                                                                                             |
 | CLAIM-03     | Lender's borrowToken balance increased by the principalAmount and fixedInterestAmount if lend repaid. | borrowToken.balanceOf(lender) = previous + loan.principalAmount + loan.fixedInterestAmount                                                                                   |
