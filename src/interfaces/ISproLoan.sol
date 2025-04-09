@@ -25,12 +25,6 @@ interface ISproLoan is IERC721 {
     event LoanBurned(uint256 indexed loanId);
 
     /**
-     * @notice The token metadata uri was updated.
-     * @param newUri The new metadata uri.
-     */
-    event LoanMetadataUriUpdated(string newUri);
-
-    /**
      * @notice Mints a new token.
      * @dev Only the owner can mint a new token.
      * @param to The address of the new token owner.
