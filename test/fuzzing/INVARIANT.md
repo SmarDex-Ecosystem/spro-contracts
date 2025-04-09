@@ -94,7 +94,8 @@
 
 
 
-
+| Invariant ID | Invariant Description                                                                            | Tech Checks                                                                                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | CLAIM-03   | Lender's borrowToken balance increased by the principalAmount and fixedInterestAmount if lend was repaid and borrowToken was not sent. | borrowToken.balanceOf(lender) = previous + loan.principalAmount + loan.fixedInterestAmount                                                                                   |
 | CLAIM-04   | Lender's collateralToken balance unchanged if lend was repaid and borrowToken was not sent. | collateralToken.balanceOf(lender) = previous     |
 | CLAIM-05   | protocol's borrowToken balance decreased by the principalAmount and fixedInterestAmount if lend was repaid and borrowToken was not sent.   | borrowToken.balanceOf(protocol) = previous - loan.principalAmount - loan.fixedInterestAmount                          |
