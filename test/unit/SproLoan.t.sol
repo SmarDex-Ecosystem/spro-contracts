@@ -177,15 +177,14 @@ contract TestSproLoanTokenUri is SproLoanTest {
         string memory base64EncodedString = string(base64EncodedBytes);
 
         bytes memory tokenUriJson = Base64.decode(base64EncodedString);
-        string[3] memory keys;
-        keys[0] = ".description";
-        keys[1] = ".image";
-        keys[2] = ".attributes";
-
-        for (uint256 i = 0; i < keys.length; i++) {
-            string memory keyName = keys[i];
-            bool keyExists = vm.keyExistsJson(string(tokenUriJson), keyName);
-            assertTrue(keyExists, string.concat("JSON key '", keyName, "' not found in token URI metadata"));
-        }
+        string memory keyName = ".description";
+        bool keyExists = vm.keyExistsJson(string(tokenUriJson), keyName);
+        assertTrue(keyExists, string.concat("JSON key '", keyName, "' not found in token URI metadata"));
+        keyName = ".image";
+        keyExists = vm.keyExistsJson(string(tokenUriJson), keyName);
+        assertTrue(keyExists, string.concat("JSON key '", keyName, "' not found in token URI metadata"));
+        keyName = ".attributes";
+        keyExists = vm.keyExistsJson(string(tokenUriJson), keyName);
+        assertTrue(keyExists, string.concat("JSON key '", keyName, "' not found in token URI metadata"));
     }
 }
