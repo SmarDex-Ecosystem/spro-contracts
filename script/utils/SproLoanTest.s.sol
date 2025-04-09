@@ -59,8 +59,8 @@ contract SproHandlerTest {
         loanToken = new SproLoanHandlerTest();
     }
 
-    function setLoan(uint256 loanId, ISproTypes.Loan memory loan_) public {
-        _loans[loanId] = loan_;
+    function setLoan(uint256 loanId, ISproTypes.Loan memory loan) public {
+        _loans[loanId] = loan;
     }
 
     function getLoan(uint256 loanId) external view returns (ISproTypes.Loan memory loan_) {

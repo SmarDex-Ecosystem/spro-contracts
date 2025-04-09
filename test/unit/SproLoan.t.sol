@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity >=0.8.0;
 
-import { Test, console2 } from "forge-std/Test.sol";
+import { Test, console } from "forge-std/Test.sol";
 
 import { IERC721Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
@@ -22,8 +22,8 @@ contract SproLoanTest is Test {
         loanToken = new SproLoan(address(this));
     }
 
-    function setLoan(uint256 loanId, ISproTypes.Loan memory loan_) public {
-        _loans[loanId] = loan_;
+    function setLoan(uint256 loanId, ISproTypes.Loan memory loan) public {
+        _loans[loanId] = loan;
     }
 
     function getLoan(uint256 loanId) external view returns (ISproTypes.Loan memory loan_) {
@@ -154,7 +154,7 @@ contract TestSproLoanTokenUri is SproLoanTest {
             })
         );
         string memory _tokenUri = loanToken.tokenURI(loanId);
-        console2.log("_tokenUri", _tokenUri);
+        console.log("_tokenUri", _tokenUri);
     }
 
     function test_loanMetadataUri() external view {
