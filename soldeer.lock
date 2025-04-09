@@ -27,6 +27,13 @@ checksum = "7a88a52b70872f3e428e595a03aed77c3323b118338d7256ce57dfc99eeab9e9"
 integrity = "40bc5e663f19cf42c5ab0ddfc049ca44d58a9f1236cef417c370af79fa8ac3a7"
 
 [[dependencies]]
+name = "solady"
+version = "0.1.14"
+url = "https://soldeer-revisions.s3.amazonaws.com/solady/0_1_14_03-04-2025_08:02:53_solady.zip"
+checksum = "82089b7c005404399d73f538545a795c5e24ec38009793ccd008000f1d66eb8b"
+integrity = "e40e7781170e43fed51b973bc3c25287a0852d0ed6053a461ac391c7601ae6dd"
+
+[[dependencies]]
 name = "solmate"
 version = "6.7.0"
 url = "https://soldeer-revisions.s3.amazonaws.com/solmate/6_7_0_22-01-2024_13:21:00_solmate.zip"

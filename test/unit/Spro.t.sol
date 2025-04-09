@@ -135,27 +135,6 @@ contract TestSproPartialLendingThresholds is SproTest {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                            SET LOAN METADATA URI                           */
-/* -------------------------------------------------------------------------- */
-
-contract TestSproSetLoanMetadataUri is SproTest {
-    string tokenUri = "test.token.uri";
-
-    function test_RevertWhen_whenCallerIsNotOwner() external {
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
-        vm.prank(alice);
-        spro.setLoanMetadataUri(tokenUri);
-    }
-
-    function testFuzz_shouldStoreLoanMetadataUri(string memory uri) external {
-        vm.prank(owner);
-        spro.setLoanMetadataUri(uri);
-
-        assertEq(spro._loanToken()._metadataUri(), uri);
-    }
-}
-
-/* -------------------------------------------------------------------------- */
 /*                             tryClaimRepaidLoan                             */
 /* -------------------------------------------------------------------------- */
 
