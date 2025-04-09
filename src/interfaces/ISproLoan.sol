@@ -12,12 +12,6 @@ interface ISproLoan is IERC721 {
     function _lastLoanId() external view returns (uint256 _lastLoanId);
 
     /**
-     * @notice Retrieves the metadata URI.
-     * @return _metadataUri The url that returns the token information.
-     */
-    function _metadataUri() external view returns (string memory _metadataUri);
-
-    /**
      * @notice A new token was minted.
      * @param loanId The Id of the new token.
      * @param owner The address of the new token owner.
@@ -29,12 +23,6 @@ interface ISproLoan is IERC721 {
      * @param loanId the Id of the token.
      */
     event LoanBurned(uint256 indexed loanId);
-
-    /**
-     * @notice The token metadata uri was updated.
-     * @param newUri The new metadata uri.
-     */
-    event LoanMetadataUriUpdated(string newUri);
 
     /**
      * @notice Mints a new token.
@@ -50,11 +38,4 @@ interface ISproLoan is IERC721 {
      * @param loanId The Id of the token to burn.
      */
     function burn(uint256 loanId) external;
-
-    /**
-     * @notice Sets a new metadata uri.
-     * @dev Only the owner can set a new metadata uri.
-     * @param newMetadataUri The new metadata uri.
-     */
-    function setLoanMetadataUri(string memory newMetadataUri) external;
 }
