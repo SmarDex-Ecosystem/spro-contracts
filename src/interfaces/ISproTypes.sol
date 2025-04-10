@@ -22,9 +22,9 @@ interface ISproTypes {
      * @param borrower The address of a borrower.
      * @param startTimestamp The start timestamp of the proposal.
      * @param loanExpiration The expiration timestamp of the proposal.
-     * @param collateral The address of a collateral asset.
+     * @param collateralAddress The address of a collateral asset.
      * @param collateralAmount The amount of a collateral asset.
-     * @param credit The address of a credit asset.
+     * @param creditAddress The address of a credit asset.
      * @param creditAmount The amount of a credit asset.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      */
@@ -33,9 +33,9 @@ interface ISproTypes {
         address borrower;
         uint40 startTimestamp;
         uint40 loanExpiration;
-        address collateral;
+        address collateralAddress;
         uint256 collateralAmount;
-        address credit;
+        address creditAddress;
         uint256 creditAmount;
         uint256 fixedInterestAmount;
     }
@@ -47,9 +47,9 @@ interface ISproTypes {
      * @param borrower The address of a borrower.
      * @param startTimestamp The start timestamp of the proposal.
      * @param loanExpiration The expiration timestamp of the proposal.
-     * @param collateral The address of a collateral asset.
+     * @param collateralAddress The address of a collateral asset.
      * @param collateralAmount The amount of a collateral asset.
-     * @param credit The address of an asset used as a loan credit.
+     * @param creditAddress The address of an asset used as a loan credit.
      * @param principalAmount Principal amount in credit asset tokens.
      * @param fixedInterestAmount Fixed interest amount in credit asset tokens.
      */
@@ -59,9 +59,9 @@ interface ISproTypes {
         address borrower;
         uint40 startTimestamp;
         uint40 loanExpiration;
-        address collateral;
+        address collateralAddress;
         uint256 collateralAmount;
-        address credit;
+        address creditAddress;
         uint256 principalAmount;
         uint256 fixedInterestAmount;
     }

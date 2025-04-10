@@ -24,34 +24,34 @@ interface ISproEvents is ISproTypes {
      * @notice A new loan was created.
      * @param loanId The loan ID.
      * @param proposalHash The hash of the proposal.
-     * @param terms The terms of the loan.
+     * @param loanTerms The terms of the loan.
      */
-    event LoanCreated(uint256 indexed loanId, bytes32 indexed proposalHash, Terms terms);
+    event LoanCreated(uint256 loanId, bytes32 indexed proposalHash, Terms loanTerms);
 
     /**
      * @notice A loan was paid back.
      * @param loanId The loan ID.
      */
-    event LoanPaidBack(uint256 indexed loanId);
+    event LoanPaidBack(uint256 loanId);
 
     /**
      * @notice A repaid or defaulted loan was claimed.
      * @param loanId The loan ID.
      * @param defaulted True if the loan was defaulted.
      */
-    event LoanClaimed(uint256 indexed loanId, bool indexed defaulted);
+    event LoanClaimed(uint256 loanId, bool defaulted);
 
     /**
      * @notice A proposal was created.
      * @param proposalHash The hash of the proposal.
-     * @param proposer The address of the proposer.
      * @param proposal The proposal structure.
+     * @param sdexBurned The SDEX fee amount burned.
      */
-    event ProposalCreated(bytes32 indexed proposalHash, address indexed proposer, Proposal proposal);
+    event ProposalCreated(bytes32 proposalHash, Proposal proposal, uint256 sdexBurned);
 
     /**
      * @notice A proposal was canceled.
      * @param proposalHash The hash of the proposal.
      */
-    event ProposalCanceled(bytes32 indexed proposalHash);
+    event ProposalCanceled(bytes32 proposalHash);
 }
