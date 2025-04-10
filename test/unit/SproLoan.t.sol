@@ -5,18 +5,30 @@ import { Test } from "forge-std/Test.sol";
 
 import { IERC721Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
-import { IERC4906 } from "@openzeppelin/contracts/interfaces/IERC4906.sol";
+import { IERC721 } from "@openzeppelin/contracts/interfaces/IERC721.sol";
+import { Base64 } from "solady/src/utils/Base64.sol";
+
+import { T20 } from "test/helper/T20.sol";
 
 import { SproLoan } from "src/spro/SproLoan.sol";
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproLoan } from "src/interfaces/ISproLoan.sol";
 
 contract SproLoanTest is Test {
     SproLoan loanToken;
     address alice = address(0xa11ce);
+    mapping(uint256 => ISproTypes.Loan) internal _loans;
 
     function setUp() public virtual {
         loanToken = new SproLoan(address(this));
+    }
+
+    function setLoan(uint256 loanId, ISproTypes.Loan memory loan) public {
+        _loans[loanId] = loan;
+    }
+
+    function getLoan(uint256 loanId) external view returns (ISproTypes.Loan memory loan_) {
+        loan_ = _loans[loanId];
     }
 }
 
@@ -65,8 +77,8 @@ contract TestSproLoanMint is SproLoanTest {
     }
 
     function test_loanMintedEmitEvent() external {
-        vm.expectEmit(true, true, true, false);
-        emit ISproLoan.LoanMinted(1, alice);
+        vm.expectEmit();
+        emit IERC721.Transfer(address(0), alice, 1);
 
         loanToken.mint(alice);
     }
@@ -99,8 +111,8 @@ contract TestSproLoanBurn is SproLoanTest {
     }
 
     function test_loanBurnedEmitEvent() external {
-        vm.expectEmit(true, false, false, false);
-        emit ISproLoan.LoanBurned(loanId);
+        vm.expectEmit();
+        emit IERC721.Transfer(alice, address(0), loanId);
 
         loanToken.burn(loanId);
     }
@@ -111,33 +123,69 @@ contract TestSproLoanBurn is SproLoanTest {
 /* -------------------------------------------------------------------------- */
 
 contract TestSproLoanTokenUri is SproLoanTest {
-    string tokenUri;
     uint256 loanId;
+    T20 eth;
+    T20 usd;
 
     function setUp() public override {
         super.setUp();
 
-        tokenUri = "test.uri.xyz/";
         loanId = loanToken.mint(alice);
+        eth = new T20("ETH", "ETH");
+        usd = new T20("USD", "USD");
     }
 
     function test_tokenUriReturnCorrectValue() external {
-        loanToken.setLoanMetadataUri(tokenUri);
-        string memory _tokenUri = loanToken.tokenURI(loanId);
-        assertEq(string.concat(tokenUri, Strings.toString(loanId)), _tokenUri);
-        assertEq("test.uri.xyz/1", _tokenUri);
-    }
+        setLoan(
+            loanId,
+            ISproTypes.Loan({
+                status: ISproTypes.LoanStatus.RUNNING,
+                lender: alice,
+                borrower: alice,
+                startTimestamp: uint40(1_742_203_988),
+                loanExpiration: uint40(1_742_203_988 + 100 days),
+                collateral: address(eth),
+                collateralAmount: 100 * 10 ** 18,
+                credit: address(usd),
+                principalAmount: 200 * 10 ** 18,
+                fixedInterestAmount: 10 * 10 ** 18
+            })
+        );
+        string memory tokenUri = loanToken.tokenURI(loanId);
+        string memory prefix = "data:application/json;base64,";
+        bytes memory tokenUriBytes = bytes(tokenUri);
+        bytes memory prefixBytes = bytes(prefix);
 
-    function test_loanMetadataUri() external view {
-        string memory uri = loanToken._metadataUri();
-        assertEq(uri, "");
-    }
+        // 1. Check if the tokenUri starts with the expected prefix
+        bool startsWithPrefix = false;
+        if (tokenUriBytes.length >= prefixBytes.length) {
+            bool isMatch = true;
+            for (uint256 i = 0; i < prefixBytes.length; i++) {
+                if (tokenUriBytes[i] != prefixBytes[i]) {
+                    isMatch = false;
+                    break;
+                }
+            }
+            startsWithPrefix = isMatch;
+        }
+        assertTrue(startsWithPrefix, "Token URI does not start with the expected data URI prefix.");
 
-    function test_loanMetadataUriUpdatedEmitEvent() external {
-        vm.expectEmit(true, true, true, true);
-        emit ISproLoan.LoanMetadataUriUpdated(tokenUri);
-        emit IERC4906.BatchMetadataUpdate(0, type(uint256).max);
+        // 2. Extract the Base64 encoded part (slice the prefix off)
+        bytes memory base64EncodedBytes = new bytes(tokenUriBytes.length - prefixBytes.length);
+        for (uint256 i = 0; i < base64EncodedBytes.length; i++) {
+            base64EncodedBytes[i] = tokenUriBytes[i + prefixBytes.length];
+        }
+        string memory base64EncodedString = string(base64EncodedBytes);
 
-        loanToken.setLoanMetadataUri(tokenUri);
+        bytes memory tokenUriJson = Base64.decode(base64EncodedString);
+        string memory keyName = ".description";
+        bool keyExists = vm.keyExistsJson(string(tokenUriJson), keyName);
+        assertTrue(keyExists, string.concat("JSON key '", keyName, "' not found in token URI metadata"));
+        keyName = ".image";
+        keyExists = vm.keyExistsJson(string(tokenUriJson), keyName);
+        assertTrue(keyExists, string.concat("JSON key '", keyName, "' not found in token URI metadata"));
+        keyName = ".attributes";
+        keyExists = vm.keyExistsJson(string(tokenUriJson), keyName);
+        assertTrue(keyExists, string.concat("JSON key '", keyName, "' not found in token URI metadata"));
     }
 }

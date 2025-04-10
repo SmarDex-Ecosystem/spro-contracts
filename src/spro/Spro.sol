@@ -75,11 +75,6 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     }
 
     /// @inheritdoc ISpro
-    function setLoanMetadataUri(string memory newMetadataUri) external onlyOwner {
-        _loanToken.setLoanMetadataUri(newMetadataUri);
-    }
-
-    /// @inheritdoc ISpro
     function getProposalCreditStatus(Proposal calldata proposal)
         external
         view

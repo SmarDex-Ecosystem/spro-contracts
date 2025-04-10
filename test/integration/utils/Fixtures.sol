@@ -51,7 +51,7 @@ contract SDBaseIntegrationTest is Test {
         } else {
             permit2 = IAllowanceTransfer(makeAddr("IAllowanceTransfer"));
         }
-        sdex = new T20();
+        sdex = new T20("SDEX", "SDEX");
 
         vm.prank(ADMIN);
         spro = new Spro(address(sdex), address(permit2), FEE, PARTIAL_POSITION_BPS);
@@ -59,8 +59,8 @@ contract SDBaseIntegrationTest is Test {
         loanToken = spro._loanToken();
 
         // Deploy tokens
-        collateral = new T20();
-        credit = new T20();
+        collateral = new T20("collateral", "collateral");
+        credit = new T20("credit", "credit");
 
         proposal = ISproTypes.Proposal(
             address(collateral),

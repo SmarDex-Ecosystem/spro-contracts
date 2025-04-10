@@ -23,17 +23,11 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
     function setPartialPositionPercentage(uint16 newPartialPositionBps) external;
 
     /**
-     * @notice Sets the metadata uri for the loan tokens.
-     * @param newMetadataUri The new metadata uri.
-     */
-    function setLoanMetadataUri(string memory newMetadataUri) external;
-
-    /**
      * @notice Retrieves the loan data for a given loan id.
      * @param loanId The loan ID.
      * @return loan_ The loan data.
      */
-    function getLoan(uint256 loanId) external returns (Loan memory loan_);
+    function getLoan(uint256 loanId) external view returns (Loan memory loan_);
 
     /**
      * @notice Retrieves the used and remaining credit for a proposal.
