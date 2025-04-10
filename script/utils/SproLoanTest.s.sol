@@ -39,9 +39,9 @@ contract DeploySproLoanTest is Script {
                 borrower: msg.sender,
                 startTimestamp: uint40(1_742_203_988),
                 loanExpiration: uint40(1_742_203_988 + 100 days),
-                collateral: WETH,
+                collateralAddress: WETH,
                 collateralAmount: 100 * 10 ** collateralDecimals,
-                credit: USDC,
+                creditAddress: USDC,
                 principalAmount: 200 * 10 ** creditDecimals,
                 fixedInterestAmount: 10 * 10 ** creditDecimals
             })

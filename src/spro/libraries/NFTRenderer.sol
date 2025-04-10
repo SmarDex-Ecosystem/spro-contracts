@@ -14,8 +14,8 @@ library NFTRenderer {
      * @return uri_ The JSON metadata URI for the loan NFT.
      */
     function render(ISproTypes.Loan memory loan) internal view returns (string memory uri_) {
-        IERC20Metadata credit = IERC20Metadata(loan.credit);
-        IERC20Metadata collateral = IERC20Metadata(loan.collateral);
+        IERC20Metadata credit = IERC20Metadata(loan.creditAddress);
+        IERC20Metadata collateral = IERC20Metadata(loan.collateralAddress);
 
         string memory creditTicker = credit.symbol();
         string memory collateralTicker = collateral.symbol();
