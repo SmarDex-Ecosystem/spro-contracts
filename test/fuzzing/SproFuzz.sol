@@ -16,11 +16,11 @@ contract SproFuzzTest {
     uint16 public constant PARTIAL_POSITION_BPS = 500;
 
     constructor() payable {
-        sdex = new T20();
+        sdex = new T20("SDEX", "SDEX");
         spro = new Spro(address(sdex), PERMIT2, FEE, PARTIAL_POSITION_BPS);
         for (uint256 i = 0; i < 10; i++) {
-            collateralAddresses.push(address(new T20()));
-            creditAddresses.push(address(new T20()));
+            collateralAddresses.push(address(new T20("COLLAT", "COLLAT")));
+            creditAddresses.push(address(new T20("CREDIT", "CREDIT")));
         }
     }
 
