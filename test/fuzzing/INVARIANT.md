@@ -96,13 +96,13 @@
 | REPAY-03     |                                | Borrower's collateral token balance increased by the collateral amount.                     | collateralToken.balanceOf(borrower) = previous + collateralAmount  |
 | REPAY-04     |                                | Borrower's borrow token balance decreased by lended amount and interests.         | borrowToken.balanceOf(borrower) = previous - loan.principalAmount - loan.fixedInterestAmount|
 | REPAY-05     | Transfer success               | Lender's borrow token balance increased by interests since before start of loan.         | borrowToken.balanceOf(lender) = previousLoanCreation + loan.fixedInterestAmount  |
-| ENDLOAN-01   | Lend repaid         | Lender's collateral token balance unchanged                       | collateralToken.balanceOf(lender) = previous              |
-|              | Call repayLoan      |                                                                   |                                                           |
-| ENDLOAN-02   | Loan expired        | Lender's borrow token balance unchanged.                          | borrowToken.balanceOf(lender) = previous                  |
-|              | The transfer failed |                                                                   |                                                           |
-| ENDLOAN-03   | Loan expired        | Protocol's borrow token unchanged if loan expired(claimLoan).     | borrowToken.balanceOf(protocol) = previous                |
-|              | Transfer success    |                                                                   |                                                           |
-| ENDLOAN-04   | Lend repaid         | Lender's borrow token balance increased by the lended amount and interests.    | borrowToken.balanceOf(lender) = previous + loan.principalAmount + loan.fixedInterestAmount  |
-|              | Transfer success    |                                                                   |                                                           |
-| ENDLOAN-05   | Loan expired        | Protocol's collateral token balance decreased by the collateralAmount.                    | collateralToken.balanceOf(protocol) = previous - collateralAmount  |
-|              | Call repayLoan      |                                                                                           |                                                           |
+| ENDLOAN-01   | Lend repaid upon calling claimLoan         | Lender's collateral token balance unchanged                       | collateralToken.balanceOf(lender) = previous              |
+|              | Call repayLoan                 |                                                                   |                                                           |
+| ENDLOAN-02   | Loan expired upon calling claimLoan        | Lender's borrow token balance unchanged.                          | borrowToken.balanceOf(lender) = previous                  |
+|              | The transfer failed upon calling repayLoan |                                                                   |                                                           |
+| ENDLOAN-03   | Loan expired upon calling claimLoan        | Protocol's borrow token unchanged if loan expired(claimLoan).     | borrowToken.balanceOf(protocol) = previous                |
+|              | Transfer success upon calling repayLoan    |                                                                   |                                                           |
+| ENDLOAN-04   | Lend repaid upon calling claimLoan         | Lender's borrow token balance increased by the lended amount and interests.    | borrowToken.balanceOf(lender) = previous + loan.principalAmount + loan.fixedInterestAmount  |
+|              | Transfer success upon calling repayLoan    |                                                                   |                                                           |
+| ENDLOAN-05   | Loan expired upon calling claimLoan        | Protocol's collateral token balance decreased by the collateralAmount.                    | collateralToken.balanceOf(protocol) = previous - collateralAmount  |
+|              | Call repayLoan                 |                                                                                           |                                                           |
