@@ -32,10 +32,10 @@
 - Lenders can't claim collateral before end time : revert LoanRunning()
 - The lender cannot claim borrowToken if borrower already sent tokens: revert CallerNotLoanTokenHolder()
 - The lender balance is updated if loan repaid:
-	Balance(credit) = previous + principalAmount + fixedInterestAmount
+	Balance(credit) = previous + loan.principalAmount + loan.fixedInterestAmount
 	Balance(collateral) = previous
 - The spro balance is updated if loan repaid:
-	Balance(credit) = previous - principalAmount - fixedInterestAmount
+	Balance(credit) = previous - loan.principalAmount - loan.fixedInterestAmount
     Balance(collateral) = previous
 - The lender balance is updated if loan expired:
     Balance(credit) = previous
@@ -52,6 +52,7 @@
 - The lender balance is updated if transfer success:
 	Balance(credit) = previous + loan.principalAmount + loan.fixedInterestAmount
 	Balance(credit) = before the lent + loan.fixedInterestAmount
+    Balance(collateral) = previous
 - The lender balance is updated if transfer failed:
 	Balance(credit) = previous
 - The lender balance is updated:
@@ -106,15 +107,15 @@ If claimLoan or repayLoan is called, the loan status will change. Invariants are
 |               | Protocol's borrowToken balance unchanged if transfer success(repayLoan).              |                                                           |
 | ENDLOAN-05    | Lender's borrowToken balance increased by the principalAmount and fixedInterestAmount if lend repaid(claimLoan).         | borrowToken.balanceOf(lender) = previous + loan.principalAmount + loan.fixedInterestAmount  |
 |               | Lender's borrowToken balance increased by loan.principalAmount + loan.fixedInterestAmount if transfer success(repayLoan).|                         |
-| ENDLOAN-06    | Protocol's borrowToken balance increased if the transfer fails(repayLoan).                                        | borrowToken.balanceOf(protocol) = previous + loan.principalAmount + loan.fixedInterestAmount  |
-| ENDLOAN-07    | Lender's collateralToken balance increased by the collateralAmount if loan expired(claimLoan).                    | collateralToken.balanceOf(lender) = previous + collateralAmount  |
+| ENDLOAN-06    | Protocol's borrowToken balance increased if the transfer fails(repayLoan).             | borrowToken.balanceOf(protocol) = previous + loan.principalAmount + loan.fixedInterestAmount  |
+| ENDLOAN-07    | Lender's collateralToken balance increased by the collateralAmount if loan expired(claimLoan).                    | collateralToken.balanceOf(lender) = previous + collateralAmount    |
 | ENDLOAN-08    | Borrower's collateralToken balance increased by the collateralAmount(repayLoan).                                  | collateralToken.balanceOf(borrower) = previous + collateralAmount  |
 | ENDLOAN-09    | Protocol's collateralToken balance decreased by the collateralAmount if loan expired(claimLoan).                  | collateralToken.balanceOf(protocol) = previous - collateralAmount  |
 |               | Protocol's collateralToken balance decreased by collateralAmount if transfer success(repayLoan).                  |                                                           |
 |               | Protocol's collateralToken balance decreased by collateralAmount if transfer failed(repayLoan).                   |                                                           |
 | ENDLOAN-10    | Borrower's borrowToken balance decreased by loan.principalAmount and loan.fixedInterestAmount(repayLoan).         | borrowToken.balanceOf(borrower) = previous - loan.principalAmount - loan.fixedInterestAmount|
 | ENDLOAN-11    | Lender's borrowToken balance increased by loan.fixedInterestAmount since before start of loan if transfer success(repayLoan).                | borrowToken.balanceOf(lender) = previousLoanCreation + loan.fixedInterestAmount  |
-| ENDLOAN-12    | Protocol's borrowToken balance increased if the transfer fails(repayLoan).             | borrowToken.balanceOf(protocol) = previous + loan.principalAmount + loan.fixedInterestAmount  |
+| ENDLOAN-12    | Protocol's borrowToken balance decreased by loan.principalAmount and loan.fixedInterestAmount if lend repaid(claimLoan).             | borrowToken.balanceOf(protocol) = previous - loan.principalAmount - loan.fixedInterestAmount  |
 
 Condition for ENDLOAN-01 to ENDLOAN-12:
 
@@ -138,4 +139,4 @@ Condition for ENDLOAN-01 to ENDLOAN-12:
 |               | isLoanRepayable             | PAID_BACK                   |
 | ENDLOAN-10    | isLoanRepayable             | burned                      |
 | ENDLOAN-11    | isLoanRepayable             | burned                      |
-| ENDLOAN-12    | isLoanRepayable             | PAID_BACK                   |
+| ENDLOAN-12    | PAID_BACK                   | burned                      |
