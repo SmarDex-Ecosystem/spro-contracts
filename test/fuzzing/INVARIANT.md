@@ -71,7 +71,7 @@
 
 | Invariant ID | Condition | Invariant Description                                                   | Tech Checks                                                           |
 | ------------ | ----------| ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| GLOB-01      |           | The protocol balance should reflect the available credit limit from open proposals and loans.        | borrowToken.balanceOf(protocol) = available credit limit from open proposals + (loan amount + interest) if loan status is 'PAID_BACK' and nft not burned      |
+| GLOB-01      |           | The protocol balance should reflect the available credit limit from open proposals and loans.        | token.balanceOf(protocol) = available credit limit from open proposals + (loan amount + interest) if loan status is 'PAID_BACK' and nft not burned      |
 | PROP-01      |     | Borrower's collateral token balance decreased by collateral amount.       | collateralToken.balanceOf(borrower) = previous - collateralAmount     |
 | PROP-02      |     | Borrower must pay the SDEX fee.                                           | sdex.balanceOf(borrower) = previous - fee                             |
 | PROP-03      |     | Borrower's borrow token balance unchanged.                                | borrowToken.balanceOf(borrower) = previous                            |
