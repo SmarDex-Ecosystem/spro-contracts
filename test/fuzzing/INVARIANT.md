@@ -92,11 +92,7 @@
 | CLAIM-01     | The lender cannot claim collateralToken before the loan's end time.     | call reverts with LoanRunning()                                       |
 | CLAIM-02     | The lender cannot claim borrowToken if borrower already sent tokens.    | call reverts with CallerNotLoanTokenHolder()                          |
 | REPAY-01     | The borrower can't repay before the loan's start date but can repay anytime after.                  | Borrower can't repay before startTimestamp|
-
-If claimLoan or repayLoan is called, the loan status will change. Invariants are checks depending on the loan status before and after the call.
-
-| Invariant ID  | Description                                            | Tech Checks                                               |
-| ------------  | -----------------------------------------------------  | --------------------------------------------------------- |
+| | If claimLoan or repayLoan is called, the loan status will change. Invariants are checks depending on the loan status before and after the call.| |
 | ENDLOAN-01    | Lender's collateralToken balance unchanged if lend repaid(claimLoan).                 | collateralToken.balanceOf(lender) = previous              |
 |               | Lender's collateralToken balance unchanged if transfer success(repayLoan).            |                                                           |
 |               | Lender's collateralToken balance unchanged if transfer failed (repayLoan).            |                                                           |
@@ -116,27 +112,3 @@ If claimLoan or repayLoan is called, the loan status will change. Invariants are
 |               | Protocol's collateralToken balance decreased by collateralAmount if transfer failed(repayLoan).                   |                                                           |
 | ENDLOAN-11    | Borrower's borrowToken balance decreased by loan.principalAmount and loan.fixedInterestAmount(repayLoan).         | borrowToken.balanceOf(borrower) = previous - loan.principalAmount - loan.fixedInterestAmount|
 | ENDLOAN-12    | Lender's borrowToken balance increased by loan.fixedInterestAmount since before start of loan if transfer success(repayLoan).                | borrowToken.balanceOf(lender) = previousLoanCreation + loan.fixedInterestAmount  |
-
-Condition for ENDLOAN-01 to ENDLOAN-12:
-
-| Invariant ID  | Loan Status before the call | Loan Status after the call  |
-| ------------  | --------------------------- | --------------------------- |
-| ENDLOAN-01    | PAID_BACK                   | burned                      |
-|               | isLoanRepayable             | burned                      |
-|               | isLoanRepayable             | PAID_BACK                   |
-| ENDLOAN-02    | PAID_BACK                   | burned                      |
-| ENDLOAN-03    | !isLoanRepayable            | burned                      |
-|               | isLoanRepayable             | PAID_BACK                   |
-| ENDLOAN-04    | !isLoanRepayable            | burned                      |
-|               | isLoanRepayable             | burned                      |
-| ENDLOAN-05    | PAID_BACK                   | burned                      |
-|               | isLoanRepayable             | burned                      |
-| ENDLOAN-06    | isLoanRepayable             | PAID_BACK                   |
-| ENDLOAN-07    | PAID_BACK                   | burned                      |
-| ENDLOAN-08    | !isLoanRepayable            | burned                      |
-| ENDLOAN-09    | isLoanRepayable             | burned                      |
-| ENDLOAN-10    | !isLoanRepayable            | burned                      |
-|               | isLoanRepayable             | burned                      |
-|               | isLoanRepayable             | PAID_BACK                   |
-| ENDLOAN-11    | isLoanRepayable             | burned                      |
-| ENDLOAN-12    | isLoanRepayable             | burned                      |
