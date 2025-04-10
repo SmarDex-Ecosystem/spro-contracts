@@ -77,7 +77,7 @@ contract TestSproLoanMint is SproLoanTest {
     }
 
     function test_loanMintedEmitEvent() external {
-        vm.expectEmit(true, true, true, false);
+        vm.expectEmit();
         emit IERC721.Transfer(address(0), alice, 1);
 
         loanToken.mint(alice);
@@ -111,7 +111,7 @@ contract TestSproLoanBurn is SproLoanTest {
     }
 
     function test_loanBurnedEmitEvent() external {
-        vm.expectEmit(true, false, false, false);
+        vm.expectEmit();
         emit IERC721.Transfer(alice, address(0), loanId);
 
         loanToken.burn(loanId);
