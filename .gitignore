@@ -19,6 +19,7 @@ broadcast/*.sol/31337/**/*.json
 
 # Cache
 cache/
+**/.DS_Store
 
 # Dependencies
 node_modules/
@@ -36,6 +37,7 @@ docs/
 
 # IDE
 .idea/
+.vscode/
 
 # Natspec smells report
 natspec-smells.txt
