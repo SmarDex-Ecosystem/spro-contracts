@@ -88,21 +88,21 @@
 | LOAN-07      |     | The rest in the proposal must be greater than the proposal minimum amount.                               | proposal.availableCreditLimit - _creditUsed[proposalHash_] > proposal.minAmount   |
 | LOAN-08      |     | The collateral in a proposal should be greater than or equal to the loan’s required collateral.     | Collateral in proposal >= required collateral                                     |
 | CANCEL-01    |     | The borrower can withdraw the unused part of the collateral anytime after proposal creation.        | collateralToken.balanceOf(borrower) + _withdrawableCollateral[proposalHash]       |
-| CLAIM-01     | lend repaid                    | Protocol's collateral token balance unchanged.                 | collateralToken.balanceOf(protocol) = previous            |
-| CLAIM-02     | lend repaid                    | Protocol's borrow token balance decreased by lended amount and interests.                            | borrowToken.balanceOf(protocol) = previous - loan.principalAmount - loan.fixedInterestAmount|
-| CLAIM-03     | loan expired                   | Lender's collateral token balance increased by the collateral amount.                       | collateralToken.balanceOf(lender) = previous + collateralAmount    |
+| CLAIM-01     | Lend repaid                    | Protocol's collateral token balance unchanged.                 | collateralToken.balanceOf(protocol) = previous            |
+| CLAIM-02     | Lend repaid                    | Protocol's borrow token balance decreased by lended amount and interests.                            | borrowToken.balanceOf(protocol) = previous - loan.principalAmount - loan.fixedInterestAmount|
+| CLAIM-03     | Loan expired                   | Lender's collateral token balance increased by the collateral amount.                       | collateralToken.balanceOf(lender) = previous + collateralAmount    |
 | REPAY-01     |                                | The borrower can't repay before the loan's start date but can repay anytime after.        | Borrower can't repay before startTimestamp|
-| REPAY-02     | the transfer fails             | Protocol's borrow token balance increased.                     | borrowToken.balanceOf(protocol) = previous + loan.principalAmount + loan.fixedInterestAmount  |
+| REPAY-02     | The transfer fails             | Protocol's borrow token balance increased.                     | borrowToken.balanceOf(protocol) = previous + loan.principalAmount + loan.fixedInterestAmount  |
 | REPAY-03     |                                | Borrower's collateral token balance increased by the collateral amount.                     | collateralToken.balanceOf(borrower) = previous + collateralAmount  |
 | REPAY-04     |                                | Borrower's borrow token balance decreased by lended amount and interests.         | borrowToken.balanceOf(borrower) = previous - loan.principalAmount - loan.fixedInterestAmount|
-| REPAY-05     | transfer success               | Lender's borrow token balance increased by interests since before start of loan.         | borrowToken.balanceOf(lender) = previousLoanCreation + loan.fixedInterestAmount  |
-| ENDLOAN-01   | lend repaid(claimLoan)         | Lender's collateral token balance unchanged                       | collateralToken.balanceOf(lender) = previous              |
-|              | call repayLoan                 |                                                                   |                                                           |
-| ENDLOAN-02   | loan expired(claimLoan)        | Lender's borrow token balance unchanged.                          | borrowToken.balanceOf(lender) = previous                  |
-|              | the transfer failed(repayLoan) |                                                                   |                                                           |
-| ENDLOAN-03   | loan expired(claimLoan)        | Protocol's borrow token unchanged if loan expired(claimLoan).     | borrowToken.balanceOf(protocol) = previous                |
-|              | transfer success(repayLoan)    |                                                                   |                                                           |
-| ENDLOAN-04   | lend repaid(claimLoan)         | Lender's borrow token balance increased by the lended amount and interests.    | borrowToken.balanceOf(lender) = previous + loan.principalAmount + loan.fixedInterestAmount  |
-|              | transfer success(repayLoan)    |                                                                   |                                                           |
-| ENDLOAN-05   | loan expired(claimLoan)        | Protocol's collateral token balance decreased by the collateralAmount.                    | collateralToken.balanceOf(protocol) = previous - collateralAmount  |
-|              | call repayLoan                 |                                                                                           |                                                           |
+| REPAY-05     | Transfer success               | Lender's borrow token balance increased by interests since before start of loan.         | borrowToken.balanceOf(lender) = previousLoanCreation + loan.fixedInterestAmount  |
+| ENDLOAN-01   | Lend repaid(claimLoan)         | Lender's collateral token balance unchanged                       | collateralToken.balanceOf(lender) = previous              |
+|              | Call repayLoan                 |                                                                   |                                                           |
+| ENDLOAN-02   | Loan expired(claimLoan)        | Lender's borrow token balance unchanged.                          | borrowToken.balanceOf(lender) = previous                  |
+|              | The transfer failed(repayLoan) |                                                                   |                                                           |
+| ENDLOAN-03   | Loan expired(claimLoan)        | Protocol's borrow token unchanged if loan expired(claimLoan).     | borrowToken.balanceOf(protocol) = previous                |
+|              | Transfer success(repayLoan)    |                                                                   |                                                           |
+| ENDLOAN-04   | Lend repaid(claimLoan)         | Lender's borrow token balance increased by the lended amount and interests.    | borrowToken.balanceOf(lender) = previous + loan.principalAmount + loan.fixedInterestAmount  |
+|              | Transfer success(repayLoan)    |                                                                   |                                                           |
+| ENDLOAN-05   | Loan expired(claimLoan)        | Protocol's collateral token balance decreased by the collateralAmount.                    | collateralToken.balanceOf(protocol) = previous - collateralAmount  |
+|              | Call repayLoan                 |                                                                                           |                                                           |
