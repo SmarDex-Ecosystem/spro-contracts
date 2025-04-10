@@ -92,7 +92,6 @@
 | CLAIM-01     | The lender cannot claim collateralToken before the loan's end time.     | call reverts with LoanRunning()                                       |
 | CLAIM-02     | The lender cannot claim borrowToken if borrower already sent tokens.    | call reverts with CallerNotLoanTokenHolder()                          |
 | REPAY-01     | The borrower can't repay before the loan's start date but can repay anytime after.                  | Borrower can't repay before startTimestamp|
-| ENDLOAN-01 to ENDLOAN-12| If claimLoan or repayLoan is called, the loan status will change. Invariants are checks depending on the loan status before and after the call.| |
 | ENDLOAN-01    | Lender's collateralToken balance unchanged if lend repaid(claimLoan).                 | collateralToken.balanceOf(lender) = previous              |
 |               | Lender's collateralToken balance unchanged if transfer success(repayLoan).            |                                                           |
 |               | Lender's collateralToken balance unchanged if transfer failed (repayLoan).            |                                                           |
