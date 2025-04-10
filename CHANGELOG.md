@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.2.0](https://github.com/SmarDex-Ecosystem/SPRO_contracts/compare/v0.1.4...v0.2.0) (2025-04-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* event updated
+* events
+
+### Features
+
+* improving events ([#88](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/88)) ([02c8aab](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/02c8aab3ed3891623ac2500b95ebb6b1eba3a36c))
+* nft svg rendering ([#89](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/89)) ([668f0d0](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/668f0d0151fa0d6cad0fbd18b293483606f13ba5))
+
+
+### Bug Fixes
+
+* build and tests ([#93](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/93)) ([644d1ec](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/644d1ec91cbf2c9330331713d18af7b5767171b3))
+
+
+### Performance Improvements
+
+* remove unused events ([#92](https://github.com/SmarDex-Ecosystem/SPRO_contracts/issues/92)) ([bee7cbb](https://github.com/SmarDex-Ecosystem/SPRO_contracts/commit/bee7cbbed62b75341fc3f53a6b1b70aac194154b))
+
 ## [0.1.4](https://github.com/SmarDex-Ecosystem/SPRO_contracts/compare/v0.1.3...v0.1.4) (2025-03-28)
 
 
