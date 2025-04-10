@@ -12,19 +12,6 @@ interface ISproLoan is IERC721 {
     function _lastLoanId() external view returns (uint256 _lastLoanId);
 
     /**
-     * @notice A new token was minted.
-     * @param loanId The Id of the new token.
-     * @param owner The address of the new token owner.
-     */
-    event LoanMinted(uint256 indexed loanId, address indexed owner);
-
-    /**
-     * @notice A token was burned.
-     * @param loanId the Id of the token.
-     */
-    event LoanBurned(uint256 indexed loanId);
-
-    /**
      * @notice Mints a new token.
      * @dev Only the owner can mint a new token.
      * @param to The address of the new token owner.

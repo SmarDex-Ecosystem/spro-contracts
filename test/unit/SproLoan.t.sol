@@ -5,6 +5,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { IERC721Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC721 } from "@openzeppelin/contracts/interfaces/IERC721.sol";
 import { Base64 } from "solady/src/utils/Base64.sol";
 
 import { T20 } from "test/helper/T20.sol";
@@ -76,8 +77,8 @@ contract TestSproLoanMint is SproLoanTest {
     }
 
     function test_loanMintedEmitEvent() external {
-        vm.expectEmit(true, true, true, false);
-        emit ISproLoan.LoanMinted(1, alice);
+        vm.expectEmit();
+        emit IERC721.Transfer(address(0), alice, 1);
 
         loanToken.mint(alice);
     }
@@ -110,8 +111,8 @@ contract TestSproLoanBurn is SproLoanTest {
     }
 
     function test_loanBurnedEmitEvent() external {
-        vm.expectEmit(true, false, false, false);
-        emit ISproLoan.LoanBurned(loanId);
+        vm.expectEmit();
+        emit IERC721.Transfer(alice, address(0), loanId);
 
         loanToken.burn(loanId);
     }
