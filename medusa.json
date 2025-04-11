@@ -10,7 +10,7 @@
     "coverageEnabled": true,
     "coverageFormats": ["html", "lcov"],
     "revertReporterEnabled": false,
-    "targetContracts": ["SproFuzzTest"],
+    "targetContracts": ["SproFuzz"],
     "predeployedContracts": {},
     "targetContractsBalances": ["0xffffffffffffffffffffffffffffffff"],
     "constructorArgs": {},
