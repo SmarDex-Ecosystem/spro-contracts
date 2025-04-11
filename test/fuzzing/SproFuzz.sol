@@ -9,9 +9,15 @@ contract SproFuzz is FuzzSetup {
     }
 
     function assertPartialPositionBps(uint16 bps) public {
-        require(bps > 0 && bps <= spro.BPS_DIVISOR() / 2, "Invalid BPS");
-        spro.setPartialPositionPercentage(bps);
-        require(spro._partialPositionBps() == bps, "Invalid BPS");
-        assert(spro._partialPositionBps() == bps);
+        uint256 bpsBefore = spro._partialPositionBps();
+        try spro.setPartialPositionPercentage(bps) {
+            assert(spro._partialPositionBps() == bps);
+        } catch {
+            if (bps == 0 || uint256(bps) > spro.BPS_DIVISOR() / 2) {
+                assert(spro._partialPositionBps() == bpsBefore);
+            } else {
+                assert(true == false);
+            }
+        }
     }
 }
