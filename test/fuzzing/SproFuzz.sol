@@ -14,24 +14,11 @@ contract SproFuzz is FuzzSetup, Properties {
         setup(address(this));
     }
 
-    function assertPartialPositionBps(uint16 bps) public {
-        uint256 bpsBefore = spro._partialPositionBps();
-        try spro.setPartialPositionPercentage(bps) {
-            assert(spro._partialPositionBps() == bps);
-        } catch {
-            if (bps == 0 || uint256(bps) > spro.BPS_DIVISOR() / 2) {
-                assert(spro._partialPositionBps() == bpsBefore);
-            } else {
-                assert(true == false);
-            }
-        }
-    }
-
-    function fuzz_createProposal(uint8 seed) public {
+    function fuzz_createProposal(uint8 seed, uint40 startTimestamp, uint40 loanExpiration) public {
         address borrower = getRandomUser(seed);
-        uint256 collateralAmount = bound(seed, 1, token1.balanceOf(borrower));
+        uint256 collateralAmount = bound(seed, 0, token1.balanceOf(borrower));
         uint256 availableCreditLimit = bound(seed, 1, token2.balanceOf(borrower));
-        uint256 fixedInterestAmount = bound(seed, 1, availableCreditLimit);
+        uint256 fixedInterestAmount = bound(seed, 0, availableCreditLimit);
 
         ISproTypes.Proposal memory proposal = ISproTypes.Proposal({
             collateralAddress: address(token1),
@@ -39,8 +26,8 @@ contract SproFuzz is FuzzSetup, Properties {
             creditAddress: address(token2),
             availableCreditLimit: availableCreditLimit,
             fixedInterestAmount: fixedInterestAmount,
-            startTimestamp: uint40(block.timestamp),
-            loanExpiration: uint40(block.timestamp + 1 days),
+            startTimestamp: startTimestamp,
+            loanExpiration: loanExpiration,
             proposer: borrower,
             nonce: spro._proposalNonce(),
             minAmount: Math.mulDiv(availableCreditLimit, spro._partialPositionBps(), spro.BPS_DIVISOR())
@@ -71,6 +58,8 @@ contract SproFuzz is FuzzSetup, Properties {
             invariant_PROP_05(address(spro), proposal, creditBalanceProtocol);
             invariant_PROP_06(spro._proposalNonce(), Proposals.length);
             invariant_PROP_07(address(sdex), spro._fee(), sdexBalanceProtocol);
-        } catch { }
+        } catch (bytes memory error) {
+            invariant_ERR(error);
+        }
     }
 }
