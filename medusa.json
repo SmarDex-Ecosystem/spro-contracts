@@ -35,13 +35,7 @@
       "cheatCodes": {
         "cheatCodesEnabled": true
       },
-      "skipAccountChecks": true,
-      "forkConfig": {
-        "forkModeEnabled": false,
-        "rpcUrl": "",
-        "rpcBlock": 1,
-        "poolSize": 20
-      }
+      "skipAccountChecks": true
     }
   },
   "compilation": {
