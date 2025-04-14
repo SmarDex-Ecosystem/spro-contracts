@@ -5,7 +5,7 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { T20 } from "test/helper/T20.sol";
 import { FuzzSetup } from "./FuzzSetup.sol";
-import "./properties/Properties.sol";
+import { Properties } from "./properties/Properties.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
