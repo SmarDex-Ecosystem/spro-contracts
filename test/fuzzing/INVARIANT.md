@@ -75,7 +75,7 @@
 | PROP-01      |     | Borrower's collateral token balance decreased by collateral amount.       | collateralToken.balanceOf(borrower) = previous - collateralAmount     |
 | PROP-02      |     | Borrower must pay the SDEX fee.                                           | sdex.balanceOf(borrower) = previous - fee                             |
 | PROP-03      |     | Borrower's borrow token balance unchanged.                                | borrowToken.balanceOf(borrower) = previous                            |
-| PROP-04      |     | Protocol's collateral token balance increased by collateral amount.       | collateralToken.balanceOf(spro) = previous + collateralAmount         |
+| PROP-04      |     | Protocol's collateral token balance increased by collateral amount.       | collateralToken.balanceOf(protocol) = previous + collateralAmount     |
 | PROP-05      |     | Protocol's borrow token balance unchanged.                                | borrowToken.balanceOf(protocol) = previous                            |
 | PROP-06      |     | The proposal nonce should be equal to the total number of proposals.      | _proposalNonce == number of proposal                                  |
 | PROP-07      |     | Dead address's sdex balance increased by fee.                             | sdex.balanceOf(deadAddress) == previous + fee                         |
