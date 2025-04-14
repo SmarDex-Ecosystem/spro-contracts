@@ -23,5 +23,4 @@ contract FuzzStorageVariables is Test {
     // Spro storage variables
     ISproTypes.Proposal[] internal Proposals;
     ISproTypes.Loan[] internal Loans;
-    uint256 internal proposalNonce;
 }
