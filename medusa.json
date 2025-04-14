@@ -1,0 +1,55 @@
+{
+  "fuzzing": {
+    "testLimit": 100000,
+    "shrinkLimit": 5000,
+    "callSequenceLength": 100,
+    "revertReporterEnabled": false,
+    "targetContracts": ["SproFuzz"],
+    "targetContractsBalances": ["0xffffffffffffffffffffffffffffffff"],
+    "deployerAddress": "0x30000",
+    "senderAddresses": ["0x10000", "0x20000", "0x30000"],
+    "testing": {
+      "stopOnFailedTest": true,
+      "stopOnFailedContractMatching": false,
+      "stopOnNoTests": true,
+      "testAllContracts": false,
+      "testViewMethods": false,
+      "verbosity": 1,
+      "assertionTesting": {
+        "enabled": true,
+        "panicCodeConfig": {
+          "failOnCompilerInsertedPanic": true,
+          "failOnAssertion": true,
+          "failOnArithmeticUnderflow": true,
+          "failOnDivideByZero": true,
+          "failOnEnumTypeConversionOutOfBounds": true,
+          "failOnIncorrectStorageAccess": true,
+          "failOnPopEmptyArray": true,
+          "failOnOutOfBoundsArrayAccess": true,
+          "failOnAllocateTooMuchMemory": true,
+          "failOnCallUninitializedVariable": true
+        }
+      }
+    },
+    "chainConfig": {
+      "cheatCodes": {
+        "cheatCodesEnabled": true
+      },
+      "skipAccountChecks": true
+    }
+  },
+  "compilation": {
+    "platform": "crytic-compile",
+    "platformConfig": {
+      "target": "./test/fuzzing/SproFuzz.sol",
+      "solcVersion": "",
+      "exportDirectory": "",
+      "args": []
+    }
+  },
+  "slither": {
+    "useSlither": true,
+    "cachePath": "slither_results.json",
+    "args": []
+  }
+}

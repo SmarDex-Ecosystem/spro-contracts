@@ -43,4 +43,9 @@ contract T20 is ERC20 {
     function burn(address owner, uint256 amount) external {
         _burn(owner, amount);
     }
+
+    function mintAndApprove(address to, uint256 amount, address spender, uint256 value) external {
+        _mint(to, amount);
+        _approve(to, spender, value);
+    }
 }
