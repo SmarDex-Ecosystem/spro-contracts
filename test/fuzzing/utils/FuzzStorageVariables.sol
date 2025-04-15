@@ -21,11 +21,11 @@ contract FuzzStorageVariables is Test {
     uint16 public constant PARTIAL_POSITION_BPS = 500;
 
     // Spro storage variables
-    ISproTypes.Proposal[] internal Proposals;
-    ISproTypes.Loan[] internal Loans;
+    ISproTypes.Proposal[] internal proposals;
+    ISproTypes.Loan[] internal loans;
 
     function getRandomProposal(uint256 input) internal view returns (ISproTypes.Proposal memory) {
-        uint256 randomIndex = input % Proposals.length;
-        return Proposals[randomIndex];
+        uint256 randomIndex = input % proposals.length;
+        return proposals[randomIndex];
     }
 }

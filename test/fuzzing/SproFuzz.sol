@@ -50,7 +50,7 @@ contract SproFuzz is FuzzSetup, Properties {
             proposal.loanExpiration,
             ""
         ) {
-            Proposals.push(proposal);
+            proposals.push(proposal);
             numberOfProposals++;
             invariant_PROP_01(proposal, collateralBalanceBorrower);
             invariant_PROP_02(address(sdex), proposal, sdexBalanceBorrower, spro._fee());
@@ -65,7 +65,7 @@ contract SproFuzz is FuzzSetup, Properties {
     }
 
     function fuzz_cancelProposal(uint256 seed) public {
-        if (Proposals.length == 0) {
+        if (proposals.length == 0) {
             return;
         }
         ISproTypes.Proposal memory proposal = getRandomProposal(seed);
@@ -74,10 +74,10 @@ contract SproFuzz is FuzzSetup, Properties {
 
         vm.prank(proposal.proposer);
         try spro.cancelProposal(proposal) {
-            for (uint256 i = 0; i < Proposals.length; i++) {
-                if (keccak256(abi.encode(proposal)) == keccak256(abi.encode(Proposals[i]))) {
-                    Proposals[i] = Proposals[Proposals.length - 1];
-                    Proposals.pop();
+            for (uint256 i = 0; i < proposals.length; i++) {
+                if (keccak256(abi.encode(proposal)) == keccak256(abi.encode(proposals[i]))) {
+                    proposals[i] = proposals[proposals.length - 1];
+                    proposals.pop();
                     break;
                 }
             }
