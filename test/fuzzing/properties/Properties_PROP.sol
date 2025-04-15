@@ -40,8 +40,8 @@ contract Properties_PROP is Test {
         assert(_proposalNonce == numberOfProposal);
     }
 
-    function invariant_PROP_07(address sdex, uint256 _fee, uint256 previous) internal view {
+    function invariant_PROP_07(address sdex, uint256 fee, uint256 previous) internal view {
         uint256 sdexBalanceDeadAddress = T20(sdex).balanceOf(address(0xdead));
-        assert(sdexBalanceDeadAddress == previous + _fee);
+        assert(sdexBalanceDeadAddress == previous + fee);
     }
 }

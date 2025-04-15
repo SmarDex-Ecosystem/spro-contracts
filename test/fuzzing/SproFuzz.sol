@@ -29,7 +29,7 @@ contract SproFuzz is FuzzSetup, Properties {
             startTimestamp: startTimestamp,
             loanExpiration: loanExpiration,
             proposer: borrower,
-            nonce: spro._proposalNonce(),
+            nonce: spro._proposalNonce() + 1,
             minAmount: Math.mulDiv(availableCreditLimit, spro._partialPositionBps(), spro.BPS_DIVISOR())
         });
         uint256 collateralBalanceBorrower = T20(proposal.collateralAddress).balanceOf(proposal.proposer);
