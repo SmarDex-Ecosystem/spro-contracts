@@ -23,4 +23,9 @@ contract FuzzStorageVariables is Test {
     // Spro storage variables
     ISproTypes.Proposal[] internal Proposals;
     ISproTypes.Loan[] internal Loans;
+
+    function getRandomProposal(uint256 input) internal view returns (ISproTypes.Proposal memory) {
+        uint256 randomIndex = input % Proposals.length;
+        return Proposals[randomIndex];
+    }
 }

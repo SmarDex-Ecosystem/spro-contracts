@@ -88,6 +88,7 @@
 | LOAN-07      |     | The rest in the proposal must be greater than the proposal minimum amount.                               | proposal.availableCreditLimit - _creditUsed[proposalHash_] > proposal.minAmount   |
 | LOAN-08      |     | The collateral in a proposal should be greater than or equal to the loan’s required collateral.     | Collateral in proposal >= required collateral                                     |
 | CANCEL-01    |     | The borrower can withdraw the unused part of the collateral anytime after proposal creation.        | collateralToken.balanceOf(borrower) + _withdrawableCollateral[proposalHash]       |
+| CANCEL-02    |     | The protocol sent the withdrawn collateral by the borrower.               | collateralToken.balanceOf(protocol) - _withdrawableCollateral[proposalHash]       |
 | CLAIM-01     | Lend repaid                    | Protocol's collateral token balance unchanged.                 | collateralToken.balanceOf(protocol) = previous            |
 | CLAIM-02     | Lend repaid                    | Protocol's borrow token balance decreased by lended amount and interests.                            | borrowToken.balanceOf(protocol) = previous - loan.principalAmount - loan.fixedInterestAmount|
 | CLAIM-03     | Loan expired                   | Lender's collateral token balance increased by the collateral amount.                       | collateralToken.balanceOf(lender) = previous + collateralAmount    |

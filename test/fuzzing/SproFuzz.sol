@@ -29,7 +29,7 @@ contract SproFuzz is FuzzSetup, Properties {
             startTimestamp: startTimestamp,
             loanExpiration: loanExpiration,
             proposer: borrower,
-            nonce: spro._proposalNonce() + 1,
+            nonce: spro._proposalNonce(),
             minAmount: Math.mulDiv(availableCreditLimit, spro._partialPositionBps(), spro.BPS_DIVISOR())
         });
         uint256 collateralBalanceBorrower = T20(proposal.collateralAddress).balanceOf(proposal.proposer);
@@ -39,7 +39,7 @@ contract SproFuzz is FuzzSetup, Properties {
         uint256 creditBalanceProtocol = T20(proposal.creditAddress).balanceOf(address(spro));
         uint256 sdexBalanceProtocol = T20(sdex).balanceOf(address(0xdead));
 
-        vm.prank(borrower);
+        vm.prank(proposal.proposer);
         try spro.createProposal(
             proposal.collateralAddress,
             proposal.collateralAmount,
@@ -51,13 +51,38 @@ contract SproFuzz is FuzzSetup, Properties {
             ""
         ) {
             Proposals.push(proposal);
+            numberOfProposals++;
             invariant_PROP_01(proposal, collateralBalanceBorrower);
             invariant_PROP_02(address(sdex), proposal, sdexBalanceBorrower, spro._fee());
             invariant_PROP_03(proposal, creditBalanceBorrower);
             invariant_PROP_04(address(spro), proposal, collateralBalanceProtocol);
             invariant_PROP_05(address(spro), proposal, creditBalanceProtocol);
-            invariant_PROP_06(spro._proposalNonce(), Proposals.length);
+            invariant_PROP_06(spro._proposalNonce(), numberOfProposals);
             invariant_PROP_07(address(sdex), spro._fee(), sdexBalanceProtocol);
+        } catch (bytes memory error) {
+            invariant_ERR(error);
+        }
+    }
+
+    function fuzz_cancelProposal(uint256 seed) public {
+        if (Proposals.length == 0) {
+            return;
+        }
+        ISproTypes.Proposal memory proposal = getRandomProposal(seed);
+        uint256 collateralBalanceBorrower = T20(proposal.collateralAddress).balanceOf(proposal.proposer);
+        uint256 collateralBalanceProtocol = T20(proposal.collateralAddress).balanceOf(address(spro));
+
+        vm.prank(proposal.proposer);
+        try spro.cancelProposal(proposal) {
+            for (uint256 i = 0; i < Proposals.length; i++) {
+                if (keccak256(abi.encode(proposal)) == keccak256(abi.encode(Proposals[i]))) {
+                    Proposals[i] = Proposals[Proposals.length - 1];
+                    Proposals.pop();
+                    break;
+                }
+            }
+            invariant_CANCEL_01(address(spro), proposal, collateralBalanceBorrower);
+            invariant_CANCEL_02(address(spro), proposal, collateralBalanceProtocol);
         } catch (bytes memory error) {
             invariant_ERR(error);
         }
