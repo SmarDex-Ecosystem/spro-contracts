@@ -21,6 +21,6 @@ contract FuzzStorageVariables is Test {
     uint16 public constant PARTIAL_POSITION_BPS = 500;
 
     // Spro storage variables
-    ISproTypes.Proposal[] internal Proposals;
-    ISproTypes.Loan[] internal Loans;
+    ISproTypes.Proposal[] internal proposals;
+    ISproTypes.Loan[] internal loans;
 }

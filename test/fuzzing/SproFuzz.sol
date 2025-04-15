@@ -29,7 +29,7 @@ contract SproFuzz is FuzzSetup, Properties {
             startTimestamp: startTimestamp,
             loanExpiration: loanExpiration,
             proposer: borrower,
-            nonce: spro._proposalNonce() + 1,
+            nonce: spro._proposalNonce(),
             minAmount: Math.mulDiv(availableCreditLimit, spro._partialPositionBps(), spro.BPS_DIVISOR())
         });
         uint256 collateralBalanceBorrower = T20(proposal.collateralAddress).balanceOf(proposal.proposer);
@@ -50,13 +50,14 @@ contract SproFuzz is FuzzSetup, Properties {
             proposal.loanExpiration,
             ""
         ) {
-            Proposals.push(proposal);
+            proposals.push(proposal);
+            numberOfProposals++;
             invariant_PROP_01(proposal, collateralBalanceBorrower);
             invariant_PROP_02(address(sdex), proposal, sdexBalanceBorrower, spro._fee());
             invariant_PROP_03(proposal, creditBalanceBorrower);
             invariant_PROP_04(address(spro), proposal, collateralBalanceProtocol);
             invariant_PROP_05(address(spro), proposal, creditBalanceProtocol);
-            invariant_PROP_06(spro._proposalNonce(), Proposals.length);
+            invariant_PROP_06(spro._proposalNonce(), proposals.length);
             invariant_PROP_07(address(sdex), spro._fee(), sdexBalanceProtocol);
         } catch (bytes memory error) {
             invariant_ERR(error);
