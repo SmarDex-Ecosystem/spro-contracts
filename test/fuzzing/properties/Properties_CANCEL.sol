@@ -1,25 +1,28 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0;
 
-import { Test } from "forge-std/Test.sol";
+import { FuzzStorageVariables } from "../utils/FuzzStorageVariables.sol";
 
-import { T20 } from "test/helper/T20.sol";
-
-import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { Spro } from "src/spro/Spro.sol";
+import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
-contract Properties_CANCEL is Test {
-    function invariant_CANCEL_01(address spro, ISproTypes.Proposal memory proposal, uint256 previous) internal view {
+contract Properties_CANCEL is FuzzStorageVariables {
+    function invariant_CANCEL_01(ISproTypes.Proposal memory proposal, address borrower) internal view {
         bytes32 proposalHash = keccak256(abi.encode(proposal));
-        uint256 withdrawableCollateralAmount = Spro(spro)._withdrawableCollateral(proposalHash);
-        uint256 collateralBalanceBorrower = T20(proposal.collateralAddress).balanceOf(proposal.proposer);
-        assert(collateralBalanceBorrower == previous + withdrawableCollateralAmount);
+        uint256 withdrawableCollateralAmount = spro._withdrawableCollateral(proposalHash);
+
+        assert(
+            state[1].actorStates[borrower].collateralBalance
+                == state[0].actorStates[borrower].collateralBalance + withdrawableCollateralAmount
+        );
     }
 
-    function invariant_CANCEL_02(address spro, ISproTypes.Proposal memory proposal, uint256 previous) internal view {
+    function invariant_CANCEL_02(ISproTypes.Proposal memory proposal) internal view {
         bytes32 proposalHash = keccak256(abi.encode(proposal));
-        uint256 withdrawableCollateralAmount = Spro(spro)._withdrawableCollateral(proposalHash);
-        uint256 collateralBalanceProtocol = T20(proposal.collateralAddress).balanceOf(spro);
-        assert(collateralBalanceProtocol == previous - withdrawableCollateralAmount);
+        uint256 withdrawableCollateralAmount = spro._withdrawableCollateral(proposalHash);
+        assert(
+            state[1].actorStates[address(spro)].collateralBalance
+                == state[0].actorStates[address(spro)].collateralBalance - withdrawableCollateralAmount
+        );
     }
 }
