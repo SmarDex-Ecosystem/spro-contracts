@@ -10,15 +10,21 @@ contract FuzzActors {
 
     address[] internal USERS = [USER1, USER2, USER3];
 
-    function getRandomUsers(uint8 input) internal view returns (address, address) {
-        uint16 safeInput = uint16(input);
-        uint256 randomIndex1 = safeInput % USERS.length;
-        uint256 randomIndex2 = (safeInput + 1) % USERS.length;
-
-        while (randomIndex1 == randomIndex2) {
-            randomIndex2 = (randomIndex2 + 1) % USERS.length;
+    function getRandomUsers(uint256 input) internal view returns (address[] memory actors) {
+        uint256 randomIndex1 = input % USERS.length;
+        uint256 randomIndex2;
+        if (input == 0) {
+            randomIndex2 = (input + 1) % USERS.length;
+        } else {
+            randomIndex2 = (input - 1) % USERS.length;
         }
 
-        return (USERS[randomIndex1], USERS[randomIndex2]);
+        while (randomIndex1 == randomIndex2) {
+            randomIndex2 = (randomIndex2 - 1) % USERS.length;
+        }
+
+        actors = new address[](2);
+        actors[0] = USERS[randomIndex1];
+        actors[1] = USERS[randomIndex2];
     }
 }

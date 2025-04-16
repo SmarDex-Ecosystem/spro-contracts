@@ -6,19 +6,22 @@ import { Properties } from "./properties/Properties.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract PostconditionsSpro is Properties {
-    function _createProposalPostconditions(bool success, bytes memory returnData, ISproTypes.Proposal memory proposal)
-        internal
-    {
+    function _createProposalPostconditions(
+        bool success,
+        bytes memory returnData,
+        ISproTypes.Proposal memory proposal,
+        address[] memory actors
+    ) internal {
         if (success) {
+            _after(actors);
             proposals.push(proposal);
             numberOfProposals++;
-            _setStates(1, state[0].borrower, state[0].lender);
-            invariant_PROP_01(proposal);
-            invariant_PROP_02();
-            invariant_PROP_03();
+            invariant_PROP_01(proposal, actors[0]);
+            invariant_PROP_02(actors[0]);
+            invariant_PROP_03(actors[0]);
             invariant_PROP_04(proposal);
             invariant_PROP_05();
-            invariant_PROP_06(numberOfProposals);
+            invariant_PROP_06();
             invariant_PROP_07();
         } else {
             invariant_ERR(returnData);

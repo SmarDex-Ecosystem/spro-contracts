@@ -12,6 +12,7 @@ import { ISpro } from "src/interfaces/ISpro.sol";
  */
 contract FunctionCalls is FuzzStorageVariables, FuzzActors {
     function _createProposal(
+        address caller,
         address collateralAddress,
         uint256 collateralAmount,
         address creditAddress,
@@ -20,6 +21,7 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
         uint40 startTimestamp,
         uint40 loanExpiration
     ) internal returns (bool success, bytes memory returnData) {
+        vm.prank(caller);
         (success, returnData) = address(spro).call(
             abi.encodeWithSelector(
                 ISpro.createProposal.selector,

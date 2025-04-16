@@ -10,7 +10,7 @@ import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { Spro } from "src/spro/Spro.sol";
 
 contract PreconditionsSpro is Test, Properties {
-    function _createProposalPreconditions(uint8 seed, address borrower, uint40 startTimestamp, uint40 loanExpiration)
+    function _createProposalPreconditions(uint256 seed, address borrower, uint40 startTimestamp, uint40 loanExpiration)
         internal
         view
         returns (ISproTypes.Proposal memory proposal)

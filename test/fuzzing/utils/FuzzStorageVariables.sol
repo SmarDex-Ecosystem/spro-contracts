@@ -38,18 +38,31 @@ contract FuzzStorageVariables is Test {
         uint256 sdexBalance;
     }
 
-    function _setStates(uint8 index, address borrower, address lender) internal {
-        state[index].borrower = borrower;
-        state[index].lender = lender;
-        state[index].actorStates[borrower].collateralBalance = T20(token1).balanceOf(borrower);
-        state[index].actorStates[borrower].creditBalance = T20(token2).balanceOf(borrower);
-        state[index].actorStates[borrower].sdexBalance = T20(sdex).balanceOf(borrower);
-        state[index].actorStates[lender].collateralBalance = T20(token1).balanceOf(lender);
-        state[index].actorStates[lender].creditBalance = T20(token2).balanceOf(lender);
-        state[index].actorStates[lender].sdexBalance = T20(sdex).balanceOf(lender);
-        state[index].actorStates[address(spro)].collateralBalance = T20(token1).balanceOf(address(spro));
-        state[index].actorStates[address(spro)].creditBalance = T20(token2).balanceOf(address(spro));
-        state[index].actorStates[address(spro)].sdexBalance = T20(sdex).balanceOf(address(spro));
-        state[index].actorStates[address(0xdead)].sdexBalance = T20(sdex).balanceOf(address(0xdead));
+    function _setStates(uint8 index, address[] memory actors) internal {
+        for (uint256 i = 0; i < actors.length; i++) {
+            _setActorState(index, actors[i]);
+        }
+        _setActorState(index, address(spro));
+        _setActorState(index, address(0xdead));
+    }
+
+    function _setActorState(uint8 index, address actor) internal {
+        state[index].actorStates[actor].collateralBalance = T20(token1).balanceOf(actor);
+        state[index].actorStates[actor].creditBalance = T20(token2).balanceOf(actor);
+        state[index].actorStates[actor].sdexBalance = T20(sdex).balanceOf(actor);
+    }
+
+    function _before(address[] memory actors) internal {
+        fullReset();
+        _setStates(0, actors);
+    }
+
+    function _after(address[] memory actors) internal {
+        _setStates(1, actors);
+    }
+
+    function fullReset() internal {
+        delete state[0];
+        delete state[1];
     }
 }

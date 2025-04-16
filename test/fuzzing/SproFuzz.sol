@@ -12,15 +12,15 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         setup(address(this));
     }
 
-    function fuzz_createProposal(uint8 seed, uint40 startTimestamp, uint40 loanExpiration) public {
-        (address borrower, address lender) = getRandomUsers(seed);
-        _setStates(0, borrower, lender);
+    function fuzz_createProposal(uint256 seed, uint40 startTimestamp, uint40 loanExpiration) public {
+        address[] memory actors = getRandomUsers(seed);
+        _before(actors);
 
         ISproTypes.Proposal memory proposal =
-            _createProposalPreconditions(seed, borrower, startTimestamp, loanExpiration);
+            _createProposalPreconditions(seed, actors[0], startTimestamp, loanExpiration);
 
-        vm.prank(borrower);
         (bool success, bytes memory returnData) = _createProposal(
+            actors[0],
             proposal.collateralAddress,
             proposal.collateralAmount,
             proposal.creditAddress,
@@ -30,6 +30,6 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
             proposal.loanExpiration
         );
 
-        _createProposalPostconditions(success, returnData, proposal);
+        _createProposalPostconditions(success, returnData, proposal, actors);
     }
 }
