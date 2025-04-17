@@ -13,7 +13,7 @@
     "name": "DefaultHarness",
     "mode": "simple",
     "targets": [],
-    "outputDir": "./test/fuzzing/reproducers",
+    "outputDir": "./test/fuzzing",
     "compilationPath": ".",
     "actors": [
       {
