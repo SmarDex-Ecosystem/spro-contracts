@@ -27,4 +27,13 @@ contract FuzzActors {
         actors[0] = USERS[randomIndex1];
         actors[1] = USERS[randomIndex2];
     }
+
+    function getAnotherUser(address user) internal view returns (address) {
+        for (uint256 i = 0; i < USERS.length; i++) {
+            if (USERS[i] != user) {
+                return USERS[i];
+            }
+        }
+        revert("No other user found");
+    }
 }

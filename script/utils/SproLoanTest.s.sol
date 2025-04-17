@@ -15,7 +15,7 @@ import { ISproTypes } from "src/interfaces/ISproTypes.sol";
  * @dev This script deploys the SproLoan contract and mints a loan token for the deployer. Once deployed, you can either
  * add the NFT to your wallet or view the rendered SVG using this command: cast call --rpc-url {URL} {tokenOwner}
  * "tokenURI(uint256)(string)" 1 | sed 's/^"//; s/"$//' | sed 's|^data:application/json;base64,||' | base64 -d | jq -r
- * '.image' | sed // 's|^data:image/svg+xml;base64,||' | base64 -d.
+ * '.image' | sed 's|^data:image/svg+xml;base64,||' | base64 -d.
  */
 contract DeploySproLoanTest is Script {
     address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;

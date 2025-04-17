@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { Properties } from "./properties/Properties.sol";
 
@@ -30,5 +31,18 @@ contract PreconditionsSpro is Test, Properties {
             nonce: spro._proposalNonce(),
             minAmount: Math.mulDiv(availableCreditLimit, spro._partialPositionBps(), spro.BPS_DIVISOR())
         });
+    }
+
+    function _createLoanPreconditions(uint256 seed, ISproTypes.Proposal memory proposal, address lender)
+        internal
+        view
+        returns (uint256 creditAmount)
+    {
+        proposal = getRandomProposal(seed);
+        uint256 maxCreditAmount = FixedPointMathLib.min(
+            proposal.availableCreditLimit - spro._creditUsed(keccak256(abi.encode(proposal))) - proposal.minAmount - 1,
+            token2.balanceOf(lender)
+        );
+        creditAmount = bound(seed, proposal.minAmount + 1, maxCreditAmount);
     }
 }
