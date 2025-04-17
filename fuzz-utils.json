@@ -1,0 +1,33 @@
+{
+  "generate": {
+    "targetContract": "SproFuzz",
+    "compilationPath": ".",
+    "corpusDir": "test/fuzzing/medusa-corpus",
+    "fuzzer": "medusa",
+    "testsDir": "./test/",
+    "inheritancePath": "",
+    "namedInputs": false,
+    "allSequences": false
+  },
+  "template": {
+    "name": "DefaultHarness",
+    "mode": "simple",
+    "targets": [],
+    "outputDir": "./test/fuzzing/reproducers",
+    "compilationPath": ".",
+    "actors": [
+      {
+        "name": "Default",
+        "targets": [],
+        "number": 3,
+        "filters": {
+          "strict": false,
+          "onlyModifiers": [],
+          "onlyPayable": false,
+          "onlyExternalCalls": []
+        }
+      }
+    ],
+    "attacks": []
+  }
+}

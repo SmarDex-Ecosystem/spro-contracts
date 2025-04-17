@@ -3,6 +3,7 @@
     "testLimit": 100000,
     "shrinkLimit": 5000,
     "callSequenceLength": 100,
+    "corpusDirectory": "test/fuzzing/medusa-corpus",
     "revertReporterEnabled": false,
     "targetContracts": ["SproFuzz"],
     "targetContractsBalances": ["0xffffffffffffffffffffffffffffffff"],
