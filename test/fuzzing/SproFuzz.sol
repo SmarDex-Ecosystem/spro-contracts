@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import { FuzzSetup } from "./FuzzSetup.sol";
-import { PostconditionsSpro } from "./PostconditionsSpro.sol";
-import { PreconditionsSpro } from "./PreconditionsSpro.sol";
+import { PostconditionsSpro } from "./conditions/PostconditionsSpro.sol";
+import { PreconditionsSpro } from "./conditions/PreconditionsSpro.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
@@ -12,14 +12,20 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         setup(address(this));
     }
 
-    function fuzz_createProposal(uint256 seed, uint40 startTimestamp, uint40 loanExpiration) public {
-        address[] memory actors = getRandomUsers(seed);
+    function fuzz_createProposal(
+        uint256 seed1,
+        uint256 seed2,
+        uint256 seed3,
+        uint40 startTimestamp,
+        uint40 loanExpiration
+    ) public {
+        address[] memory actors = getRandomUsers(seed1, 1);
         _before(actors);
 
         ISproTypes.Proposal memory proposal =
-            _createProposalPreconditions(seed, actors[0], startTimestamp, loanExpiration);
+            _createProposalPreconditions(seed1, seed2, seed3, actors[0], startTimestamp, loanExpiration);
 
-        (bool success, bytes memory returnData) = _createProposal(
+        (bool success, bytes memory returnData) = _createProposalCall(
             actors[0],
             proposal.collateralAddress,
             proposal.collateralAmount,
