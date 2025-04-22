@@ -17,7 +17,7 @@ contract FuzzActors is Test {
 
         address[] memory shuffleUsers = USERS;
         for (uint256 i = USERS.length - 1; i > 0; i--) {
-            uint256 j = bound(input, 0, i - 1);
+            uint256 j = uint256(keccak256(abi.encodePacked(input, i))) % (i + 1);
             (shuffleUsers[i], shuffleUsers[j]) = (shuffleUsers[j], shuffleUsers[i]);
         }
 
