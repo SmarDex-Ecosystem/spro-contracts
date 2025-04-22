@@ -43,8 +43,9 @@ contract PostconditionsSpro is Properties {
                     break;
                 }
             }
-            invariant_CANCEL_01(proposal, actors[0]);
-            invariant_CANCEL_02(proposal);
+            bytes32 proposalHash = keccak256(abi.encode(proposal));
+            invariant_CANCEL_01(proposalHash, actors[0]);
+            invariant_CANCEL_02(proposalHash);
         } else {
             invariant_ERR(returnData);
         }
