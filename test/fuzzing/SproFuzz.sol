@@ -48,7 +48,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         actors[0] = proposal.proposer;
         _before(actors);
 
-        (bool success, bytes memory returnData) = _cancelProposal(actors[0], proposal);
+        (bool success, bytes memory returnData) = _cancelProposalCall(actors[0], proposal);
 
         _cancelProposalPostconditions(success, returnData, proposal, actors);
     }

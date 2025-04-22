@@ -38,7 +38,7 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
         );
     }
 
-    function _cancelProposal(address caller, ISproTypes.Proposal memory proposal)
+    function _cancelProposalCall(address caller, ISproTypes.Proposal memory proposal)
         internal
         returns (bool success, bytes memory returnData)
     {
