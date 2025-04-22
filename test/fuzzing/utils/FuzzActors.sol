@@ -12,11 +12,18 @@ contract FuzzActors is Test {
 
     address[] internal USERS = [USER1, USER2, USER3];
 
-    function getRandomUsers(uint256 input) internal view returns (address[] memory actors) {
-        actors = USERS;
+    function getRandomUsers(uint256 input, uint256 length) internal view returns (address[] memory actors) {
+        require(length <= USERS.length, "Requested length exceeds USERS length");
+
+        address[] memory shuffleUsers = USERS;
         for (uint256 i = USERS.length - 1; i > 0; i--) {
             uint256 j = bound(input, 0, i - 1);
-            (actors[i], actors[j]) = (actors[j], actors[i]);
+            (shuffleUsers[i], shuffleUsers[j]) = (shuffleUsers[j], shuffleUsers[i]);
+        }
+
+        actors = new address[](length);
+        for (uint256 i = 0; i < length; i++) {
+            actors[i] = shuffleUsers[i];
         }
 
         return actors;
