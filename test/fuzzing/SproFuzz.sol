@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import { FuzzSetup } from "./FuzzSetup.sol";
-import { PostconditionsSpro } from "./PostconditionsSpro.sol";
-import { PreconditionsSpro } from "./PreconditionsSpro.sol";
+import { PostconditionsSpro } from "./conditions/PostconditionsSpro.sol";
+import { PreconditionsSpro } from "./conditions/PreconditionsSpro.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
@@ -19,7 +19,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         ISproTypes.Proposal memory proposal =
             _createProposalPreconditions(seed, actors[0], startTimestamp, loanExpiration);
 
-        (bool success, bytes memory returnData) = _createProposal(
+        (bool success, bytes memory returnData) = _createProposalCall(
             actors[0],
             proposal.collateralAddress,
             proposal.collateralAmount,
