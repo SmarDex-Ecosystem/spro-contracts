@@ -3,11 +3,10 @@ pragma solidity >=0.8.0;
 
 import { Spro } from "src/spro/Spro.sol";
 
-import { FuzzActors } from "./utils/FuzzActors.sol";
-import { FuzzStorageVariables } from "./utils/FuzzStorageVariables.sol";
+import { FunctionCalls } from "./utils/FunctionCalls.sol";
 import { T20 } from "test/helper/T20.sol";
 
-contract FuzzSetup is FuzzStorageVariables, FuzzActors {
+contract FuzzSetup is FunctionCalls {
     function setup(address deployerContract) internal {
         DEPLOYER = deployerContract;
         sdex = new T20("SDEX", "SDEX");

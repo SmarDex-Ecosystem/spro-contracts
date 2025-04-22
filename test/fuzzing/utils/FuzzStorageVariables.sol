@@ -21,6 +21,48 @@ contract FuzzStorageVariables is Test {
     uint16 public constant PARTIAL_POSITION_BPS = 500;
 
     // Spro storage variables
-    ISproTypes.Proposal[] internal Proposals;
-    ISproTypes.Loan[] internal Loans;
+    ISproTypes.Proposal[] internal proposals;
+    ISproTypes.Loan[] internal loans;
+
+    mapping(uint8 => State) state;
+
+    struct State {
+        mapping(address => ActorStates) actorStates;
+        address borrower;
+        address lender;
+    }
+
+    struct ActorStates {
+        uint256 collateralBalance;
+        uint256 creditBalance;
+        uint256 sdexBalance;
+    }
+
+    function _setStates(uint8 index, address[] memory actors) internal {
+        for (uint256 i = 0; i < actors.length; i++) {
+            _setActorState(index, actors[i]);
+        }
+        _setActorState(index, address(spro));
+        _setActorState(index, address(0xdead));
+    }
+
+    function _setActorState(uint8 index, address actor) internal {
+        state[index].actorStates[actor].collateralBalance = T20(token1).balanceOf(actor);
+        state[index].actorStates[actor].creditBalance = T20(token2).balanceOf(actor);
+        state[index].actorStates[actor].sdexBalance = T20(sdex).balanceOf(actor);
+    }
+
+    function _before(address[] memory actors) internal {
+        fullReset();
+        _setStates(0, actors);
+    }
+
+    function _after(address[] memory actors) internal {
+        _setStates(1, actors);
+    }
+
+    function fullReset() internal {
+        delete state[0];
+        delete state[1];
+    }
 }

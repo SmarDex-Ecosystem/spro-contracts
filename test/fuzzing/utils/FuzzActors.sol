@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-contract FuzzActors {
+import { Test } from "forge-std/Test.sol";
+
+contract FuzzActors is Test {
     address internal DEPLOYER;
 
     address internal constant USER1 = address(0x10000);
@@ -10,8 +12,20 @@ contract FuzzActors {
 
     address[] internal USERS = [USER1, USER2, USER3];
 
-    function getRandomUser(uint8 input) internal view returns (address) {
-        uint256 randomIndex = input % USERS.length;
-        return USERS[randomIndex];
+    function getRandomUsers(uint256 input, uint256 length) internal view returns (address[] memory actors) {
+        require(length <= USERS.length, "Requested length exceeds USERS length");
+
+        address[] memory shuffleUsers = USERS;
+        for (uint256 i = USERS.length - 1; i > 0; i--) {
+            uint256 j = uint256(keccak256(abi.encodePacked(input, i))) % (i + 1);
+            (shuffleUsers[i], shuffleUsers[j]) = (shuffleUsers[j], shuffleUsers[i]);
+        }
+
+        actors = new address[](length);
+        for (uint256 i = 0; i < length; i++) {
+            actors[i] = shuffleUsers[i];
+        }
+
+        return actors;
     }
 }
