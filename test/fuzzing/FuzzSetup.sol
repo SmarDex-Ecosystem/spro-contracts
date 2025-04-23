@@ -21,7 +21,7 @@ contract FuzzSetup is FunctionCalls {
             address user = USERS[i];
             token1.mintAndApprove(user, 10_000 ether, address(spro), type(uint256).max);
             token2.mintAndApprove(user, 10_000 ether, address(spro), type(uint256).max);
-            sdex.mintAndApprove(user, 10_000 ether, address(spro), type(uint256).max);
+            sdex.mintAndApprove(user, 0, address(spro), type(uint256).max);
             vm.deal(user, 30_000 ether);
         }
     }
