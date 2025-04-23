@@ -34,11 +34,8 @@ contract Properties_LOAN is FuzzStorageVariables {
     }
 
     function invariant_LOAN_07(ISproTypes.Proposal memory proposal) internal view {
-        uint256 _withdrawableCollateral = spro._withdrawableCollateral(keccak256(abi.encode(proposal)));
-        assert(
-            _withdrawableCollateral == 0
-                || proposal.availableCreditLimit - spro._creditUsed(keccak256(abi.encode(proposal))) >= proposal.minAmount
-        );
+        uint256 remaining = proposal.availableCreditLimit - spro._creditUsed(keccak256(abi.encode(proposal)));
+        assert(remaining == 0 || remaining >= proposal.minAmount);
     }
 
     function invariant_LOAN_08(ISproTypes.Proposal memory proposal, bytes memory returnData) internal view {

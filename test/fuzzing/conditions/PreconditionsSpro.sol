@@ -42,13 +42,15 @@ contract PreconditionsSpro is Test, Properties {
         returns (uint256 creditAmount)
     {
         proposal = getRandomProposal(seed);
-        if (seed == proposal.availableCreditLimit - spro._creditUsed(keccak256(abi.encode(proposal)))) {
+        uint256 remaining = proposal.availableCreditLimit - spro._creditUsed(keccak256(abi.encode(proposal)));
+        if (remaining == 0) {
+            return 0;
+        }
+        uint256 balanceLender = token2.balanceOf(lender);
+        if (seed == remaining && seed < balanceLender) {
             creditAmount = seed;
         } else {
-            uint256 maxCreditAmount = FixedPointMathLib.min(
-                proposal.availableCreditLimit - spro._creditUsed(keccak256(abi.encode(proposal))) - proposal.minAmount,
-                token2.balanceOf(lender)
-            );
+            uint256 maxCreditAmount = FixedPointMathLib.min(remaining - proposal.minAmount, balanceLender);
             creditAmount = bound(seed, proposal.minAmount, maxCreditAmount);
         }
     }

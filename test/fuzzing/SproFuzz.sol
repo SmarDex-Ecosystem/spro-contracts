@@ -62,8 +62,11 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         address[] memory actors = new address[](2);
         actors[0] = proposal.proposer;
         actors[1] = getAnotherUser(actors[0]);
-        _before(actors);
         uint256 creditAmount = _createLoanPreconditions(seed, proposal, actors[1]);
+        if (creditAmount == 0) {
+            return;
+        }
+        _before(actors);
 
         (bool success, bytes memory returnData) = _createLoanCall(actors[1], proposal, creditAmount);
 

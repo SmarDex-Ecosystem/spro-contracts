@@ -85,7 +85,7 @@
 | LOAN-04      |     | Borrower's collateral token balance unchanged.                            | collateralToken.balanceOf(borrower) = previous                        |
 | LOAN-05      |     | A loan cannot be accepted after its start date.                           | startTimestamp > block.timestamp                                      |
 | LOAN-06      |     | The loan amount must be greater than or equal to the proposal minimum amount.                       | loan amount is at least >= proposal.minAmount                                     |
-| LOAN-07      |     | The rest in the proposal must be greater than or equal to the proposal minimum amount or equal to 0.            | proposal.availableCreditLimit - _creditUsed[proposalHash_] >= proposal.minAmount   or _creditUsed[proposalHash_] == proposal.availableCreditLimit |
+| LOAN-07      |     | The rest in the proposal must be greater than or equal to the proposal minimum amount or equal to 0.            | proposal.availableCreditLimit - _creditUsed[proposalHash_] >= proposal.minAmount   or proposal.availableCreditLimit - _creditUsed[proposalHash_] == 0 |
 | LOAN-08      |     | The collateral in a proposal should be greater than or equal to the loan’s required collateral.     | Collateral in proposal >= required collateral                                     |
 | CANCEL-01    |     | The borrower can withdraw the unused part of the collateral anytime after proposal creation.        | collateralToken.balanceOf(borrower) + _withdrawableCollateral[proposalHash]       |
 | CANCEL-02    |     | The protocol sent the withdrawn collateral by the borrower.               | collateralToken.balanceOf(protocol) - _withdrawableCollateral[proposalHash]       |
