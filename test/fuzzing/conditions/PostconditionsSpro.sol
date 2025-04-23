@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.26;
 
-import { Properties } from "./properties/Properties.sol";
+import { Properties } from "../properties/Properties.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
@@ -43,8 +43,9 @@ contract PostconditionsSpro is Properties {
                     break;
                 }
             }
-            invariant_CANCEL_01(proposal, actors[0]);
-            invariant_CANCEL_02(proposal);
+            bytes32 proposalHash = keccak256(abi.encode(proposal));
+            invariant_CANCEL_01(proposalHash, actors[0]);
+            invariant_CANCEL_02(proposalHash);
         } else {
             invariant_ERR(returnData);
         }

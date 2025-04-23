@@ -5,20 +5,23 @@ import { Test } from "forge-std/Test.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
-import { Properties } from "./properties/Properties.sol";
+import { Properties } from "../properties/Properties.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { Spro } from "src/spro/Spro.sol";
 
 contract PreconditionsSpro is Test, Properties {
-    function _createProposalPreconditions(uint256 seed, address borrower, uint40 startTimestamp, uint40 loanExpiration)
-        internal
-        view
-        returns (ISproTypes.Proposal memory proposal)
-    {
-        uint256 collateralAmount = bound(seed, 0, token1.balanceOf(borrower));
-        uint256 availableCreditLimit = bound(seed, 1, token2.balanceOf(borrower));
-        uint256 fixedInterestAmount = bound(seed, 0, availableCreditLimit);
+    function _createProposalPreconditions(
+        uint256 seed1,
+        uint256 seed2,
+        uint256 seed3,
+        address borrower,
+        uint40 startTimestamp,
+        uint40 loanExpiration
+    ) internal view returns (ISproTypes.Proposal memory proposal) {
+        uint256 collateralAmount = bound(seed1, 0, token1.balanceOf(borrower));
+        uint256 availableCreditLimit = bound(seed2, 1, token2.balanceOf(borrower));
+        uint256 fixedInterestAmount = bound(seed3, 0, availableCreditLimit);
         proposal = ISproTypes.Proposal({
             collateralAddress: address(token1),
             collateralAmount: collateralAmount,
