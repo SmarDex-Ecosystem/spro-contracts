@@ -83,6 +83,13 @@ The environment provides the following tools:
 
 To run tests, use `forge test -vvv` or `npm run test`.
 
+#### Medusa & fuzz-utils
+
+Medusa is a testing framework for Foundry that enables writing tests in a more expressive way. You can run it using the command: `medusa fuzz`. If a Medusa test fails, you can reproduce the failure using `fuzz-utils`, a companion library designed for this purpose. It generates reproducible test cases based on your Medusa configuration. To generate reproducible test cases:
+- If you have nix: `uvx fuzz-utils generate --config fuzz-utils.json ./test/fuzzing/SproFuzz.sol`
+- Without Nix (you'll need to install the utilities yourself before run this command): `fuzz-utils generate --config fuzz-utils.json ./test/fuzzing/SproFuzzMedusa.sol`
+Once generated, you can run the test cases with: `forge test -vvvv --mc SproFuzz_Medusa_Test`.
+
 ### Snapshots
 
 The CI checks that there was no unintended regression in gas usage. To do so, it relies on the `.gas-snapshot` file

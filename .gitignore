@@ -42,3 +42,6 @@ natspec-smells.txt
 
 # Config file for trufflehog
 .trufflehog.yml
+
+# medusa
+medusa-corpus
