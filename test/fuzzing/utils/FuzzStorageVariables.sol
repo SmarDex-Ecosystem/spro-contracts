@@ -38,6 +38,11 @@ contract FuzzStorageVariables is Test {
         uint256 sdexBalance;
     }
 
+    function getRandomProposal(uint256 input) internal view returns (ISproTypes.Proposal memory) {
+        uint256 randomIndex = input % proposals.length;
+        return proposals[randomIndex];
+    }
+
     function _setStates(uint8 index, address[] memory actors) internal {
         for (uint256 i = 0; i < actors.length; i++) {
             _setActorState(index, actors[i]);

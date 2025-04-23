@@ -27,4 +27,27 @@ contract PostconditionsSpro is Properties {
             invariant_ERR(returnData);
         }
     }
+
+    function _cancelProposalPostconditions(
+        bool success,
+        bytes memory returnData,
+        ISproTypes.Proposal memory proposal,
+        address[] memory actors
+    ) internal {
+        if (success) {
+            _after(actors);
+            for (uint256 i = 0; i < proposals.length; i++) {
+                if (keccak256(abi.encode(proposal)) == keccak256(abi.encode(proposals[i]))) {
+                    proposals[i] = proposals[proposals.length - 1];
+                    proposals.pop();
+                    break;
+                }
+            }
+            bytes32 proposalHash = keccak256(abi.encode(proposal));
+            invariant_CANCEL_01(proposalHash, actors[0]);
+            invariant_CANCEL_02(proposalHash);
+        } else {
+            invariant_ERR(returnData);
+        }
+    }
 }
