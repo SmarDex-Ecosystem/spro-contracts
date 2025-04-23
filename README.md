@@ -75,6 +75,8 @@ The environment provides the following tools:
 - lcov
 - Node 20 + Typescript
 - Rust toolchain
+- medusa
+- fuzz-utils
 - `test_utils` dependencies
 
 ## Usage
