@@ -41,7 +41,6 @@ contract PreconditionsSpro is Test, Properties {
         view
         returns (uint256 creditAmount)
     {
-        proposal = getRandomProposal(seed);
         uint256 remaining = proposal.availableCreditLimit - spro._creditUsed(keccak256(abi.encode(proposal)));
         if (remaining == 0) {
             return 0;
