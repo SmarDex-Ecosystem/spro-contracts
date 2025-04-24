@@ -38,4 +38,13 @@ contract Properties_ENDLOAN is FuzzStorageVariables {
             );
         }
     }
+
+    function invariant_ENDLOAN_05(Spro.LoanWithId memory loanWithId, LoanStatus statusBefore) internal view {
+        if (statusBefore == LoanStatus.REPAYABLE) {
+            assert(
+                state[1].actorStates[address(spro)].collateralBalance
+                    == state[0].actorStates[address(spro)].collateralBalance - loanWithId.loan.collateralAmount
+            );
+        }
+    }
 }
