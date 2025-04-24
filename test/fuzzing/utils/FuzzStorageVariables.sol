@@ -62,11 +62,11 @@ contract FuzzStorageVariables is Test {
         if (spro._loanToken().ownerOf(loanId) == address(0)) {
             return LoanStatus.BURNED;
         }
-        Spro.LoanStatus loanStatus = spro.getLoan(loanId).status;
-        if (loanStatus == ISproTypes.LoanStatus.PAID_BACK) {
+        ISproTypes.Loan memory loan = spro.getLoan(loanId);
+        if (loan.status == ISproTypes.LoanStatus.PAID_BACK) {
             return LoanStatus.PAID_BACK;
         }
-        if (spro.i_isLoanRepayable(loanStatus, uint40(block.timestamp))) {
+        if (spro.i_isLoanRepayable(loan.status, loan.loanExpiration)) {
             return LoanStatus.REPAYABLE;
         } else {
             return LoanStatus.NOT_REPAYABLE;

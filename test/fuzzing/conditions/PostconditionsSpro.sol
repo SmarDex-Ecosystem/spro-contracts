@@ -99,6 +99,8 @@ contract PostconditionsSpro is Properties {
             invariant_REPAY_02(loanWithId, statusBefore, statusAfter);
             invariant_REPAY_03(loanWithId, actors[1]);
             invariant_REPAY_04(loanWithId, actors[1]);
+            invariant_ENDLOAN_01(actors[0]);
+            invariant_ENDLOAN_02(actors[0], statusBefore, statusAfter);
         } else {
             invariant_ERR(returnData);
         }

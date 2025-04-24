@@ -6,5 +6,13 @@ import "./Properties_CANCEL.sol";
 import "./Properties_ERR.sol";
 import "./Properties_LOAN.sol";
 import "./Properties_REPAY.sol";
+import "./Properties_ENDLOAN.sol";
 
-contract Properties is Properties_PROP, Properties_CANCEL, Properties_LOAN, Properties_REPAY, Properties_ERR { }
+contract Properties is
+    Properties_PROP,
+    Properties_CANCEL,
+    Properties_LOAN,
+    Properties_REPAY,
+    Properties_ENDLOAN,
+    Properties_ERR
+{ }
