@@ -71,11 +71,14 @@ The environment provides the following tools:
 
 - load `.env` file as environment variables
 - foundry
+- slither
+- Node 20 / Typescript
+- just
 - solc v0.8.26
+- TruffleHog
 - lcov
-- Node 20 + Typescript
-- Rust toolchain
-- `test_utils` dependencies
+- uv
+- medusa
 
 ## Usage
 
