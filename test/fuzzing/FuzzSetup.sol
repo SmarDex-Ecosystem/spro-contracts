@@ -12,7 +12,7 @@ contract FuzzSetup is FunctionCalls {
         sdex = new T20("SDEX", "SDEX");
         token1 = new T20("token1", "token1");
         token2 = new T20("token2", "token2");
-        spro = new Spro(address(sdex), PERMIT2, FEE, PARTIAL_POSITION_BPS);
+        spro = new SproHandler(address(sdex), PERMIT2, FEE, PARTIAL_POSITION_BPS);
         mintTokens();
     }
 
@@ -24,5 +24,15 @@ contract FuzzSetup is FunctionCalls {
             sdex.mintAndApprove(user, 10_000 ether, address(spro), type(uint256).max);
             vm.deal(user, 30_000 ether);
         }
+    }
+}
+
+contract SproHandler is Spro {
+    constructor(address _sdex, address _permit2, uint256 _fee, uint16 _partialPositionBps)
+        Spro(_sdex, _permit2, _fee, _partialPositionBps)
+    { }
+
+    function i_isLoanRepayable(LoanStatus status, uint40 loanExpiration) external view returns (bool canBeRepaid_) {
+        canBeRepaid_ = _isLoanRepayable(status, loanExpiration);
     }
 }

@@ -6,6 +6,7 @@ import { PostconditionsSpro } from "./conditions/PostconditionsSpro.sol";
 import { PreconditionsSpro } from "./conditions/PreconditionsSpro.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
+import { Spro } from "src/spro/Spro.sol";
 
 contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
     constructor() payable {
@@ -71,5 +72,22 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         (bool success, bytes memory returnData) = _createLoanCall(actors[1], proposal, creditAmount);
 
         _createLoanPostconditions(success, returnData, creditAmount, proposal, actors);
+    }
+
+    function fuzz_repayLoan(uint256 seed) public {
+        if (loans.length == 0) {
+            return;
+        }
+
+        Spro.LoanWithId memory loanWithId = getRandomLoan(seed);
+        address[] memory actors = new address[](2);
+        actors[0] = loanWithId.loan.lender;
+        actors[1] = loanWithId.loan.borrower;
+        token2.mint(actors[1], loanWithId.loan.fixedInterestAmount);
+        _before(actors);
+
+        (bool success, bytes memory returnData) = _repayLoanCall(actors[1], loanWithId);
+
+        _repayLoanPostconditions(success, returnData, loanWithId, actors);
     }
 }

@@ -14,6 +14,7 @@ contract FuzzStorageVariables is Test {
     T20 token2;
     Spro spro;
     uint256 numberOfProposals;
+    uint256 numberOfLoans;
 
     // Spro initialization
     address payable constant PERMIT2 = payable(address(0x000000000022D473030F116dDEE9F6B43aC78BA3));
@@ -22,7 +23,7 @@ contract FuzzStorageVariables is Test {
 
     // Spro storage variables
     ISproTypes.Proposal[] internal proposals;
-    ISproTypes.Loan[] internal loans;
+    Spro.LoanWithId[] internal loans;
 
     mapping(uint8 => State) state;
 
@@ -41,6 +42,11 @@ contract FuzzStorageVariables is Test {
     function getRandomProposal(uint256 input) internal view returns (ISproTypes.Proposal memory) {
         uint256 randomIndex = input % proposals.length;
         return proposals[randomIndex];
+    }
+
+    function getRandomLoan(uint256 input) internal view returns (Spro.LoanWithId memory) {
+        uint256 randomIndex = input % loans.length;
+        return loans[randomIndex];
     }
 
     function _setStates(uint8 index, address[] memory actors) internal {

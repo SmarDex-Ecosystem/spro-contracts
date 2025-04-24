@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import { Properties } from "../properties/Properties.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
+import { Spro } from "src/spro/Spro.sol";
 
 contract PostconditionsSpro is Properties {
     function _createProposalPostconditions(
@@ -60,6 +61,10 @@ contract PostconditionsSpro is Properties {
     ) internal {
         if (success) {
             _after(actors);
+            uint256 loanId = abi.decode(returnData, (uint256));
+            ISproTypes.Loan memory loan = spro.getLoan(loanId);
+            loans.push(Spro.LoanWithId(loanId, loan));
+            numberOfLoans++;
             invariant_LOAN_01(creditAmount, actors[1]);
             invariant_LOAN_02(actors[1]);
             invariant_LOAN_03(creditAmount, actors[0]);
@@ -67,7 +72,28 @@ contract PostconditionsSpro is Properties {
             invariant_LOAN_05(proposal);
             invariant_LOAN_06(creditAmount, proposal);
             invariant_LOAN_07(proposal);
-            invariant_LOAN_08(proposal, returnData);
+            invariant_LOAN_08(proposal, loan);
+        } else {
+            invariant_ERR(returnData);
+        }
+    }
+
+    function _repayLoanPostconditions(
+        bool success,
+        bytes memory returnData,
+        Spro.LoanWithId memory loan,
+        address[] memory actors
+    ) internal {
+        if (success) {
+            _after(actors);
+            for (uint256 i = 0; i < loans.length; i++) {
+                if (loans[i].loanId == loan.loanId) {
+                    loans[i] = loans[loans.length - 1];
+                    loans.pop();
+                    break;
+                }
+            }
+            invariant_REPAY_01(loan);
         } else {
             invariant_ERR(returnData);
         }
