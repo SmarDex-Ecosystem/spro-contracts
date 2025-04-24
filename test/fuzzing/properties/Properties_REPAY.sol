@@ -26,4 +26,19 @@ contract Properties_REPAY is FuzzStorageVariables {
             );
         }
     }
+
+    function invariant_REPAY_03(Spro.LoanWithId memory loanWithId, address borrower) internal view {
+        assert(
+            state[1].actorStates[borrower].collateralBalance
+                == state[0].actorStates[borrower].collateralBalance + loanWithId.loan.collateralAmount
+        );
+    }
+
+    function invariant_REPAY_04(Spro.LoanWithId memory loanWithId, address borrower) internal view {
+        assert(
+            state[1].actorStates[borrower].creditBalance
+                == state[0].actorStates[borrower].creditBalance - loanWithId.loan.principalAmount
+                    - loanWithId.loan.fixedInterestAmount
+        );
+    }
 }

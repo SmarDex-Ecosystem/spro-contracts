@@ -97,8 +97,11 @@ contract PostconditionsSpro is Properties {
             LoanStatus statusAfter = getStatus(loanWithId.loanId);
             invariant_REPAY_01(loanWithId);
             invariant_REPAY_02(loanWithId, statusBefore, statusAfter);
+            invariant_REPAY_03(loanWithId, actors[1]);
+            invariant_REPAY_04(loanWithId, actors[1]);
         } else {
             invariant_ERR(returnData);
         }
+        token2.blockTransfers(false, address(0));
     }
 }
