@@ -56,12 +56,12 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
             address(spro).call(abi.encodeWithSelector(ISpro.createLoan.selector, proposal, creditAmount, ""));
     }
 
-    function _repayLoanCall(address caller, Spro.LoanWithId memory loan)
+    function _repayLoanCall(address caller, Spro.LoanWithId memory LoanWithId)
         internal
         returns (bool success, bytes memory returnData)
     {
         vm.prank(caller);
         (success, returnData) =
-            address(spro).call(abi.encodeWithSelector(Spro.repayLoan.selector, loan, "", address(0)));
+            address(spro).call(abi.encodeWithSelector(Spro.repayLoan.selector, LoanWithId.loanId, "", address(0)));
     }
 }

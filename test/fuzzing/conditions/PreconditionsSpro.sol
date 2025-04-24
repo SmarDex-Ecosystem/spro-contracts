@@ -53,4 +53,13 @@ contract PreconditionsSpro is Test, Properties {
             creditAmount = bound(seed, proposal.minAmount, maxCreditAmount);
         }
     }
+
+    function _repayLoanPreconditions(Spro.LoanWithId memory loanWithId, address borrower)
+        internal
+        returns (LoanStatus statusBefore)
+    {
+        token2.mint(borrower, loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount);
+        vm.warp(loanWithId.loan.startTimestamp);
+        statusBefore = getStatus(loanWithId.loanId);
+    }
 }

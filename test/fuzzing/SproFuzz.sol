@@ -74,7 +74,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         _createLoanPostconditions(success, returnData, creditAmount, proposal, actors);
     }
 
-    function fuzz_repayLoan(uint256 seed) public {
+    function fuzz_repayLoan(uint256 seed, bool blocked) public {
         if (loans.length == 0) {
             return;
         }
@@ -83,11 +83,14 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         address[] memory actors = new address[](2);
         actors[0] = loanWithId.loan.lender;
         actors[1] = loanWithId.loan.borrower;
-        token2.mint(actors[1], loanWithId.loan.fixedInterestAmount);
+        if (blocked) {
+            token2.blockTransfers(true, actors[0]);
+        }
+        LoanStatus statusBefore = _repayLoanPreconditions(loanWithId, actors[1]);
         _before(actors);
 
         (bool success, bytes memory returnData) = _repayLoanCall(actors[1], loanWithId);
 
-        _repayLoanPostconditions(success, returnData, loanWithId, actors);
+        _repayLoanPostconditions(success, returnData, loanWithId, statusBefore, actors);
     }
 }

@@ -81,19 +81,22 @@ contract PostconditionsSpro is Properties {
     function _repayLoanPostconditions(
         bool success,
         bytes memory returnData,
-        Spro.LoanWithId memory loan,
+        Spro.LoanWithId memory loanWithId,
+        LoanStatus statusBefore,
         address[] memory actors
     ) internal {
         if (success) {
             _after(actors);
             for (uint256 i = 0; i < loans.length; i++) {
-                if (loans[i].loanId == loan.loanId) {
+                if (loans[i].loanId == loanWithId.loanId) {
                     loans[i] = loans[loans.length - 1];
                     loans.pop();
                     break;
                 }
             }
-            invariant_REPAY_01(loan);
+            LoanStatus statusAfter = getStatus(loanWithId.loanId);
+            invariant_REPAY_01(loanWithId);
+            invariant_REPAY_02(loanWithId, statusBefore, statusAfter);
         } else {
             invariant_ERR(returnData);
         }

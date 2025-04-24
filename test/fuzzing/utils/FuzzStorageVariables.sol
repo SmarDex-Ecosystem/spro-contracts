@@ -4,15 +4,17 @@ pragma solidity 0.8.26;
 import { Test } from "forge-std/Test.sol";
 
 import { Spro } from "src/spro/Spro.sol";
+import { SproLoan } from "src/spro/SproLoan.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 import { T20 } from "test/helper/T20.sol";
+import { SproHandler } from "../FuzzSetup.sol";
 
 contract FuzzStorageVariables is Test {
     T20 sdex;
     T20 token1;
     T20 token2;
-    Spro spro;
+    SproHandler spro;
     uint256 numberOfProposals;
     uint256 numberOfLoans;
 
@@ -39,6 +41,13 @@ contract FuzzStorageVariables is Test {
         uint256 sdexBalance;
     }
 
+    enum LoanStatus {
+        PAID_BACK,
+        REPAYABLE,
+        NOT_REPAYABLE,
+        BURNED
+    }
+
     function getRandomProposal(uint256 input) internal view returns (ISproTypes.Proposal memory) {
         uint256 randomIndex = input % proposals.length;
         return proposals[randomIndex];
@@ -47,6 +56,21 @@ contract FuzzStorageVariables is Test {
     function getRandomLoan(uint256 input) internal view returns (Spro.LoanWithId memory) {
         uint256 randomIndex = input % loans.length;
         return loans[randomIndex];
+    }
+
+    function getStatus(uint256 loanId) internal view returns (LoanStatus status) {
+        if (spro._loanToken().ownerOf(loanId) == address(0)) {
+            return LoanStatus.BURNED;
+        }
+        Spro.LoanStatus loanStatus = spro.getLoan(loanId).status;
+        if (loanStatus == ISproTypes.LoanStatus.PAID_BACK) {
+            return LoanStatus.PAID_BACK;
+        }
+        if (spro.i_isLoanRepayable(loanStatus, uint40(block.timestamp))) {
+            return LoanStatus.REPAYABLE;
+        } else {
+            return LoanStatus.NOT_REPAYABLE;
+        }
     }
 
     function _setStates(uint8 index, address[] memory actors) internal {
