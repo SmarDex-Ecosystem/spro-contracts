@@ -15,4 +15,27 @@ contract Properties_ENDLOAN is FuzzStorageVariables {
             assert(state[1].actorStates[lender].creditBalance == state[0].actorStates[lender].creditBalance);
         }
     }
+
+    function invariant_ENDLOAN_03(LoanStatus statusBefore, LoanStatus statusAfter) internal view {
+        if (statusBefore == LoanStatus.REPAYABLE && statusAfter == LoanStatus.NONE) {
+            assert(
+                state[1].actorStates[address(spro)].creditBalance == state[0].actorStates[address(spro)].creditBalance
+            );
+        }
+    }
+
+    function invariant_ENDLOAN_04(
+        Spro.LoanWithId memory loanWithId,
+        address lender,
+        LoanStatus statusBefore,
+        LoanStatus statusAfter
+    ) internal view {
+        if (statusBefore == LoanStatus.REPAYABLE && statusAfter == LoanStatus.NONE) {
+            assert(
+                state[1].actorStates[lender].creditBalance
+                    == state[0].actorStates[lender].creditBalance + loanWithId.loan.principalAmount
+                        + loanWithId.loan.fixedInterestAmount
+            );
+        }
+    }
 }

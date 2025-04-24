@@ -42,10 +42,10 @@ contract FuzzStorageVariables is Test {
     }
 
     enum LoanStatus {
+        NONE,
         PAID_BACK,
         REPAYABLE,
-        NOT_REPAYABLE,
-        BURNED
+        NOT_REPAYABLE
     }
 
     function getRandomProposal(uint256 input) internal view returns (ISproTypes.Proposal memory) {
@@ -59,10 +59,10 @@ contract FuzzStorageVariables is Test {
     }
 
     function getStatus(uint256 loanId) internal view returns (LoanStatus status) {
-        if (spro._loanToken().ownerOf(loanId) == address(0)) {
-            return LoanStatus.BURNED;
-        }
         ISproTypes.Loan memory loan = spro.getLoan(loanId);
+        if (loan.status == ISproTypes.LoanStatus.NONE) {
+            return LoanStatus.NONE;
+        }
         if (loan.status == ISproTypes.LoanStatus.PAID_BACK) {
             return LoanStatus.PAID_BACK;
         }
