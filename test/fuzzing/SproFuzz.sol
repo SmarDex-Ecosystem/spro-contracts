@@ -89,7 +89,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         LoanStatus statusBefore = _repayLoanPreconditions(loanWithId, actors[1]);
         _before(actors);
 
-        (bool success, bytes memory returnData) = _repayLoanCall(actors[1], loanWithId);
+        (bool success, bytes memory returnData) = _repayLoanCall(actors[1], loanWithId.loanId);
 
         _repayLoanPostconditions(success, returnData, loanWithId, statusBefore, actors);
     }
