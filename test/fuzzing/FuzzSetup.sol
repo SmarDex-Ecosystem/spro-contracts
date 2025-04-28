@@ -13,6 +13,8 @@ contract FuzzSetup is FunctionCalls {
         token1 = new T20("token1", "token1");
         token2 = new T20("token2", "token2");
         spro = new Spro(address(sdex), PERMIT2, FEE, PARTIAL_POSITION_BPS);
+        MAX_SDEX_FEE = spro.MAX_SDEX_FEE();
+        BPS_DIVISOR = spro.BPS_DIVISOR();
         mintTokens();
     }
 
@@ -21,7 +23,7 @@ contract FuzzSetup is FunctionCalls {
             address user = USERS[i];
             token1.mintAndApprove(user, 10_000 ether, address(spro), type(uint256).max);
             token2.mintAndApprove(user, 10_000 ether, address(spro), type(uint256).max);
-            sdex.mintAndApprove(user, 10_000 ether, address(spro), type(uint256).max);
+            sdex.mintAndApprove(user, 0, address(spro), type(uint256).max);
             vm.deal(user, 30_000 ether);
         }
     }
