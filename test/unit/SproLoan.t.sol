@@ -12,7 +12,6 @@ import { T20 } from "test/helper/T20.sol";
 
 import { SproLoan } from "src/spro/SproLoan.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
-import { ISproLoan } from "src/interfaces/ISproLoan.sol";
 
 contract SproLoanTest is Test {
     SproLoan loanToken;
