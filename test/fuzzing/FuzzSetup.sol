@@ -13,6 +13,8 @@ contract FuzzSetup is FunctionCalls {
         token1 = new T20("token1", "token1");
         token2 = new T20("token2", "token2");
         spro = new Spro(address(sdex), PERMIT2, FEE, PARTIAL_POSITION_BPS);
+        MAX_SDEX_FEE = spro.MAX_SDEX_FEE();
+        BPS_DIVISOR = spro.BPS_DIVISOR();
         mintTokens();
     }
 

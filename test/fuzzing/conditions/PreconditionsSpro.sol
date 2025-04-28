@@ -11,7 +11,7 @@ import { Spro } from "src/spro/Spro.sol";
 
 contract PreconditionsSpro is Test, Properties {
     function _setFeePreconditions(uint256 seed) internal view returns (uint256 fee) {
-        fee = bound(seed, 0, spro.MAX_SDEX_FEE());
+        fee = bound(seed, 0, MAX_SDEX_FEE);
     }
 
     function _setPartialPositionPercentagePreconditions(uint256 seed)
@@ -19,7 +19,7 @@ contract PreconditionsSpro is Test, Properties {
         view
         returns (uint16 partialPositionBps)
     {
-        partialPositionBps = uint16(bound(seed, 1, spro.BPS_DIVISOR() / 2));
+        partialPositionBps = uint16(bound(seed, 1, BPS_DIVISOR / 2));
     }
 
     function _createProposalPreconditions(
@@ -43,7 +43,7 @@ contract PreconditionsSpro is Test, Properties {
             loanExpiration: loanExpiration,
             proposer: borrower,
             nonce: spro._proposalNonce(),
-            minAmount: Math.mulDiv(availableCreditLimit, spro._partialPositionBps(), spro.BPS_DIVISOR())
+            minAmount: Math.mulDiv(availableCreditLimit, spro._partialPositionBps(), BPS_DIVISOR)
         });
     }
 }

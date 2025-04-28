@@ -15,6 +15,10 @@ contract FuzzStorageVariables is Test {
     Spro spro;
     uint256 numberOfProposals;
 
+    // Spro constants
+    uint256 MAX_SDEX_FEE;
+    uint256 BPS_DIVISOR;
+
     // Spro initialization
     address payable constant PERMIT2 = payable(address(0x000000000022D473030F116dDEE9F6B43aC78BA3));
     uint256 public constant FEE = 20e18;
