@@ -93,4 +93,21 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
 
         _repayLoanPostconditions(success, returnData, loanWithId, statusBefore, actors);
     }
+
+    function fuzz_claimLoan(uint256 seed) public {
+        if (loans.length == 0) {
+            return;
+        }
+
+        Spro.LoanWithId memory loanWithId = getRandomLoan(seed);
+        address[] memory actors = new address[](2);
+        actors[0] = loanWithId.loan.lender;
+        actors[1] = loanWithId.loan.borrower;
+        LoanStatus statusBefore = _claimLoanPreconditions(loanWithId);
+        _before(actors);
+
+        (bool success, bytes memory returnData) = _claimLoanCall(actors[0], loanWithId.loanId);
+
+        _claimLoanPostconditions(success, returnData, loanWithId, statusBefore, actors);
+    }
 }

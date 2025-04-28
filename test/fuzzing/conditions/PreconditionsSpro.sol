@@ -62,4 +62,12 @@ contract PreconditionsSpro is Test, Properties {
         vm.warp(loanWithId.loan.startTimestamp);
         statusBefore = getStatus(loanWithId.loanId);
     }
+
+    function _claimLoanPreconditions(Spro.LoanWithId memory loanWithId)
+        internal
+        view
+        returns (LoanStatus statusBefore)
+    {
+        statusBefore = getStatus(loanWithId.loanId);
+    }
 }
