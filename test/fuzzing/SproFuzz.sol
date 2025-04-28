@@ -6,11 +6,20 @@ import { PostconditionsSpro } from "./conditions/PostconditionsSpro.sol";
 import { PreconditionsSpro } from "./conditions/PreconditionsSpro.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
-import { Spro } from "src/spro/Spro.sol";
 
 contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
     constructor() payable {
         setup(address(this));
+    }
+
+    function fuzz_setFee(uint256 seed) public {
+        uint256 newFee = _setFeePreconditions(seed);
+        _setFeeCall(address(this), newFee);
+    }
+
+    function fuzz_setPartialPositionPercentage(uint256 seed) public {
+        uint16 newPartialPositionBps = _setPartialPositionPercentagePreconditions(seed);
+        _setPartialPositionPercentageCall(address(this), newPartialPositionBps);
     }
 
     function fuzz_createProposal(
@@ -21,6 +30,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         uint40 loanExpiration
     ) public {
         address[] memory actors = getRandomUsers(seed1, 1);
+        sdex.mint(actors[0], spro._fee());
         _before(actors);
 
         ISproTypes.Proposal memory proposal =

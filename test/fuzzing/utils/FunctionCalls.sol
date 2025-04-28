@@ -12,6 +12,16 @@ import { ISproTypes } from "src/interfaces/ISproTypes.sol";
  * @dev Emits call-specific events and handles direct encoded calls to the USDN protocol and its modules
  */
 contract FunctionCalls is FuzzStorageVariables, FuzzActors {
+    function _setFeeCall(address caller, uint256 fee) internal {
+        vm.prank(caller);
+        spro.setFee(fee);
+    }
+
+    function _setPartialPositionPercentageCall(address caller, uint16 newPartialPositionBps) internal {
+        vm.prank(caller);
+        spro.setPartialPositionPercentage(newPartialPositionBps);
+    }
+
     function _createProposalCall(
         address caller,
         address collateralAddress,
