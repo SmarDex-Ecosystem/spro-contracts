@@ -6,6 +6,7 @@ import { PostconditionsSpro } from "./conditions/PostconditionsSpro.sol";
 import { PreconditionsSpro } from "./conditions/PreconditionsSpro.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
+import { Spro } from "src/spro/Spro.sol";
 
 contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
     constructor() payable {

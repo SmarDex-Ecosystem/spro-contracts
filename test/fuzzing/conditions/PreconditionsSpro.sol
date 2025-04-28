@@ -57,4 +57,16 @@ contract PreconditionsSpro is Test, Properties {
             token2.mint(lender, creditAmount - token2.balanceOf(lender));
         }
     }
+
+    function _repayLoanPreconditions(Spro.LoanWithId memory loanWithId, address borrower)
+        internal
+        returns (LoanStatus statusBefore)
+    {
+        uint256 repaymentAmount = loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+        if (repaymentAmount > token2.balanceOf(borrower)) {
+            token2.mint(borrower, repaymentAmount);
+        }
+        vm.warp(loanWithId.loan.startTimestamp);
+        statusBefore = getStatus(loanWithId.loanId);
+    }
 }
