@@ -28,4 +28,13 @@ contract FuzzActors is Test {
 
         return actors;
     }
+
+    function getAnotherUser(address user) internal view returns (address) {
+        for (uint256 i = 0; i < USERS.length; i++) {
+            if (USERS[i] != user) {
+                return USERS[i];
+            }
+        }
+        revert("No other user found");
+    }
 }

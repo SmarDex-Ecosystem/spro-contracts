@@ -52,4 +52,24 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
 
         _cancelProposalPostconditions(success, returnData, proposal, actors);
     }
+
+    function fuzz_createLoan(uint256 seed) public {
+        if (proposals.length == 0) {
+            return;
+        }
+
+        ISproTypes.Proposal memory proposal = getRandomProposal(seed);
+        address[] memory actors = new address[](2);
+        actors[0] = proposal.proposer;
+        actors[1] = getAnotherUser(actors[0]);
+        uint256 creditAmount = _createLoanPreconditions(seed, proposal, actors[1]);
+        if (creditAmount == 0) {
+            return;
+        }
+        _before(actors);
+
+        (bool success, bytes memory returnData) = _createLoanCall(actors[1], proposal, creditAmount);
+
+        _createLoanPostconditions(success, returnData, creditAmount, proposal, actors);
+    }
 }
