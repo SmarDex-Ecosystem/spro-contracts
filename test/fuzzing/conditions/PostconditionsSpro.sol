@@ -50,4 +50,26 @@ contract PostconditionsSpro is Properties {
             invariant_ERR(returnData);
         }
     }
+
+    function _createLoanPostconditions(
+        bool success,
+        bytes memory returnData,
+        uint256 creditAmount,
+        ISproTypes.Proposal memory proposal,
+        address[] memory actors
+    ) internal {
+        if (success) {
+            _after(actors);
+            invariant_LOAN_01(creditAmount, actors[1]);
+            invariant_LOAN_02(actors[1]);
+            invariant_LOAN_03(creditAmount, actors[0]);
+            invariant_LOAN_04(actors[0]);
+            invariant_LOAN_05(proposal);
+            invariant_LOAN_06(creditAmount, proposal);
+            invariant_LOAN_07(proposal);
+            invariant_LOAN_08(proposal, returnData);
+        } else {
+            invariant_ERR(returnData);
+        }
+    }
 }

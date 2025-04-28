@@ -46,4 +46,15 @@ contract PreconditionsSpro is Test, Properties {
             minAmount: Math.mulDiv(availableCreditLimit, spro._partialPositionBps(), BPS_DIVISOR)
         });
     }
+
+    function _createLoanPreconditions(uint256 seed, ISproTypes.Proposal memory proposal, address lender)
+        internal
+        returns (uint256 creditAmount)
+    {
+        uint256 remaining = proposal.availableCreditLimit - spro._creditUsed(keccak256(abi.encode(proposal)));
+        creditAmount = bound(seed, proposal.minAmount, remaining);
+        if (creditAmount > token2.balanceOf(lender)) {
+            token2.mint(lender, creditAmount - token2.balanceOf(lender));
+        }
+    }
 }
