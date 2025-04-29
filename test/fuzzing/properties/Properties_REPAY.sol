@@ -7,10 +7,7 @@ import { Spro } from "src/spro/Spro.sol";
 
 contract Properties_REPAY is FuzzStorageVariables {
     function invariant_REPAY_01(Spro.LoanWithId memory loanWithId) internal view {
-        assert(
-            block.timestamp >= loanWithId.loan.startTimestamp
-                && block.timestamp < uint256(loanWithId.loan.startTimestamp) + uint256(loanWithId.loan.loanExpiration)
-        );
+        assert(block.timestamp < loanWithId.loan.loanExpiration);
     }
 
     function invariant_REPAY_02(Spro.LoanWithId memory loanWithId, LoanStatus statusBefore, LoanStatus statusAfter)

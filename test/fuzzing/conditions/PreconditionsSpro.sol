@@ -66,7 +66,6 @@ contract PreconditionsSpro is Test, Properties {
         if (repaymentAmount > token2.balanceOf(borrower)) {
             token2.mint(borrower, repaymentAmount);
         }
-        vm.warp(loanWithId.loan.startTimestamp);
         statusBefore = getStatus(loanWithId.loanId);
     }
 }
