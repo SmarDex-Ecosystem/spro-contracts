@@ -22,8 +22,9 @@ contract Properties_ERR {
         allowedErrors[0] = ISproErrors.InvalidDuration.selector;
         allowedErrors[1] = ISproErrors.InvalidStartTime.selector;
 
-        // Create loan errors [2]
+        // Create loan errors [2-3]
         allowedErrors[2] = ISproErrors.Expired.selector;
+        allowedErrors[3] = ISproErrors.CreditAmountRemainingBelowMinimum.selector;
 
         // Claim loan errors [3]
         allowedErrors[3] = ISproErrors.LoanRunning.selector;

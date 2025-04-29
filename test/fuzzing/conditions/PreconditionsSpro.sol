@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 
 import { Properties } from "../properties/Properties.sol";
 
@@ -11,6 +10,18 @@ import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { Spro } from "src/spro/Spro.sol";
 
 contract PreconditionsSpro is Test, Properties {
+    function _setFeePreconditions(uint256 seed) internal view returns (uint256 fee) {
+        fee = bound(seed, 0, MAX_SDEX_FEE);
+    }
+
+    function _setPartialPositionPercentagePreconditions(uint256 seed)
+        internal
+        view
+        returns (uint16 partialPositionBps)
+    {
+        partialPositionBps = uint16(bound(seed, 1, BPS_DIVISOR / 2));
+    }
+
     function _createProposalPreconditions(
         uint256 seed1,
         uint256 seed2,
@@ -32,25 +43,18 @@ contract PreconditionsSpro is Test, Properties {
             loanExpiration: loanExpiration,
             proposer: borrower,
             nonce: spro._proposalNonce(),
-            minAmount: Math.mulDiv(availableCreditLimit, spro._partialPositionBps(), spro.BPS_DIVISOR())
+            minAmount: Math.mulDiv(availableCreditLimit, spro._partialPositionBps(), BPS_DIVISOR)
         });
     }
 
     function _createLoanPreconditions(uint256 seed, ISproTypes.Proposal memory proposal, address lender)
         internal
-        view
         returns (uint256 creditAmount)
     {
         uint256 remaining = proposal.availableCreditLimit - spro._creditUsed(keccak256(abi.encode(proposal)));
-        if (remaining == 0) {
-            return 0;
-        }
-        uint256 balanceLender = token2.balanceOf(lender);
-        if (seed == remaining && seed < balanceLender) {
-            creditAmount = seed;
-        } else {
-            uint256 maxCreditAmount = FixedPointMathLib.min(remaining - proposal.minAmount, balanceLender);
-            creditAmount = bound(seed, proposal.minAmount, maxCreditAmount);
+        creditAmount = bound(seed, proposal.minAmount, remaining);
+        if (creditAmount > token2.balanceOf(lender)) {
+            token2.mint(lender, creditAmount - token2.balanceOf(lender));
         }
     }
 
@@ -58,7 +62,10 @@ contract PreconditionsSpro is Test, Properties {
         internal
         returns (LoanStatus statusBefore)
     {
-        token2.mint(borrower, loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount);
+        uint256 repaymentAmount = loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+        if (repaymentAmount > token2.balanceOf(borrower)) {
+            token2.mint(borrower, repaymentAmount);
+        }
         vm.warp(loanWithId.loan.startTimestamp);
         statusBefore = getStatus(loanWithId.loanId);
     }

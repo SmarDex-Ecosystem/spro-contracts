@@ -10,9 +10,10 @@
       url = "github:hellwolf/solc.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    medusa.url= "github:crytic/medusa";
   };
 
-  outputs = { self, nixpkgs, flake-utils, foundry, solc }:
+  outputs = { self, nixpkgs, flake-utils, foundry, solc, medusa }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
@@ -34,7 +35,7 @@
             trufflehog
             typescript
             uv
-          ];
+          ] ++ [ medusa.packages.${system}.medusa ];
 
           shellHook = ''
             set -a; source .env; set +a
