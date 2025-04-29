@@ -69,4 +69,22 @@ contract PreconditionsSpro is Test, Properties {
         vm.warp(loanWithId.loan.startTimestamp);
         statusBefore = getStatus(loanWithId.loanId);
     }
+
+    function _repayMultipleLoansPreconditions(Spro.LoanWithId[] memory loanWithId, address[] memory actors)
+        internal
+        returns (LoanStatus[] memory statusBefore, uint256[] memory loanIds)
+    {
+        uint256 warpTimestamp;
+        for (uint256 i = 0; i < loanWithId.length; i++) {
+            if (loanWithId[i].loan.startTimestamp > warpTimestamp) {
+                warpTimestamp = loanWithId[i].loan.startTimestamp;
+            }
+            statusBefore[i] = getStatus(loanWithId[i].loanId);
+            loanIds[i] = loanWithId[i].loanId;
+        }
+        uint256 totalRepaymentAmount = spro.totalLoanRepaymentAmount(loanIds);
+        if (totalRepaymentAmount > token2.balanceOf(actors[0])) {
+            token2.mint(actors[0], totalRepaymentAmount);
+        }
+    }
 }

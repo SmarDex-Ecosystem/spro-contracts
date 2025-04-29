@@ -6,6 +6,7 @@ import { FuzzStorageVariables } from "../utils/FuzzStorageVariables.sol";
 
 import { ISpro } from "src/interfaces/ISpro.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
+import { Spro } from "src/spro/Spro.sol";
 
 /**
  * @notice Helper contract containing low-level protocol function wrappers for fuzzing
@@ -69,5 +70,14 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
         vm.prank(caller);
         (success, returnData) =
             address(spro).call(abi.encodeWithSelector(ISpro.repayLoan.selector, loanId, "", address(0)));
+    }
+
+    function _repayMultipleLoansCall(address caller, uint256[] memory loanIds)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        vm.prank(caller);
+        (success, returnData) =
+            address(spro).call(abi.encodeWithSelector(ISpro.repayMultipleLoans.selector, loanIds, "", address(0)));
     }
 }

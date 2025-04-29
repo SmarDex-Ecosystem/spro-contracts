@@ -104,4 +104,30 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
 
         _repayLoanPostconditions(success, returnData, loanWithId, statusBefore, actors);
     }
+
+    function fuzz_repayMultipleLoans(uint256 seed, uint8 size, bool blocked) public {
+        if (loans.length < size || size == 0) {
+            return;
+        }
+
+        Spro.LoanWithId[] memory loanWithIds = new Spro.LoanWithId[](size);
+        for (uint256 i = 0; i < loanWithIds.length; i++) {
+            loanWithIds[i] = getRandomLoan(seed / size + i);
+        }
+        address[] memory actors = new address[](size * 2);
+        for (uint256 i = 0; i < loanWithIds.length; i += 2) {
+            actors[i] = loanWithIds[i].loan.lender;
+            actors[i + 1] = loanWithIds[i].loan.borrower;
+            if (blocked) {
+                token2.blockTransfers(true, actors[i]);
+            }
+        }
+        (LoanStatus[] memory statusBefore, uint256[] memory loanIds) =
+            _repayMultipleLoansPreconditions(loanWithIds, actors);
+        _before(actors);
+
+        // (bool success, bytes memory returnData) = _repayMultipleLoansCall(actors[1], loanIds);
+
+        // _repayMultipleLoansPostconditions(success, returnData, loanWithIds, statusBefore, actors);
+    }
 }

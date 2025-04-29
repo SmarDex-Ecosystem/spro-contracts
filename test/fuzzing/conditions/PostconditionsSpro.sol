@@ -109,4 +109,38 @@ contract PostconditionsSpro is Properties {
         }
         token2.blockTransfers(false, address(0));
     }
+
+    function _repayMultipleLoansPostconditions(
+        bool success,
+        bytes memory returnData,
+        Spro.LoanWithId[] memory loanWithIds,
+        LoanStatus[] memory statusBefore,
+        address[] memory actors
+    ) internal {
+        if (success) {
+            _after(actors);
+            for (uint256 i = 0; i < loanWithIds.length; i++) {
+                for (uint256 j = 0; j < loans.length; j++) {
+                    if (loans[j].loanId == loanWithIds[i].loanId) {
+                        loans[j] = loans[loans.length - 1];
+                        loans.pop();
+                        break;
+                    }
+                }
+                LoanStatus statusAfter = getStatus(loanWithIds[i].loanId);
+                invariant_REPAY_01(loanWithIds[i]);
+                invariant_REPAY_02(loanWithIds[i], statusBefore[i], statusAfter);
+                invariant_REPAY_03(loanWithIds[i], actors[i + 1]);
+                invariant_REPAY_04(loanWithIds[i], actors[i + 1]);
+                invariant_ENDLOAN_01(actors[i]);
+                invariant_ENDLOAN_02(actors[i], statusBefore[i], statusAfter);
+                invariant_ENDLOAN_03(statusBefore[i], statusAfter);
+                invariant_ENDLOAN_04(loanWithIds[i], actors[i], statusBefore[i], statusAfter);
+                invariant_ENDLOAN_05(loanWithIds[i], statusBefore[i]);
+            }
+        } else {
+            invariant_ERR(returnData);
+        }
+        token2.blockTransfers(false, address(0));
+    }
 }
