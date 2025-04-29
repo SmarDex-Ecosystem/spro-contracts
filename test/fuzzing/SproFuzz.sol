@@ -94,10 +94,13 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         address[] memory actors = new address[](2);
         actors[0] = loanWithId.loan.lender;
         actors[1] = loanWithId.loan.borrower;
+        LoanStatus statusBefore = _repayLoanPreconditions(loanWithId, actors[1]);
+        if (statusBefore == LoanStatus.PAID_BACK) {
+            return;
+        }
         if (blocked) {
             token2.blockTransfers(true, actors[0]);
         }
-        LoanStatus statusBefore = _repayLoanPreconditions(loanWithId, actors[1]);
         _before(actors);
 
         (bool success, bytes memory returnData) = _repayLoanCall(actors[1], loanWithId.loanId);
