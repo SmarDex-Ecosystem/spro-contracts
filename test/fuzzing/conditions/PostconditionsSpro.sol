@@ -87,14 +87,10 @@ contract PostconditionsSpro is Properties {
     ) internal {
         if (success) {
             _after(actors);
-            for (uint256 i = 0; i < loans.length; i++) {
-                if (loans[i].loanId == loanWithId.loanId) {
-                    loans[i] = loans[loans.length - 1];
-                    loans.pop();
-                    break;
-                }
-            }
             LoanStatus statusAfter = getStatus(loanWithId.loanId);
+            if (statusAfter == LoanStatus.NONE) {
+                _removeLoan(loanWithId);
+            }
             invariant_REPAY_01(loanWithId);
             invariant_REPAY_02(loanWithId, statusBefore, statusAfter);
             invariant_REPAY_03(loanWithId, actors[1]);
@@ -119,14 +115,8 @@ contract PostconditionsSpro is Properties {
     ) internal {
         if (success) {
             _after(actors);
-            for (uint256 i = 0; i < loans.length; i++) {
-                if (loans[i].loanId == loanWithId.loanId) {
-                    loans[i] = loans[loans.length - 1];
-                    loans.pop();
-                    break;
-                }
-            }
             LoanStatus statusAfter = getStatus(loanWithId.loanId);
+            _removeLoan(loanWithId);
             invariant_CLAIM_01(statusBefore, statusAfter);
             invariant_CLAIM_02(loanWithId, statusBefore, statusAfter);
             invariant_CLAIM_03(loanWithId, statusBefore, statusAfter, actors[0]);
@@ -137,6 +127,16 @@ contract PostconditionsSpro is Properties {
             invariant_ENDLOAN_05(loanWithId, statusBefore, statusAfter);
         } else {
             invariant_ERR(returnData);
+        }
+    }
+
+    function _removeLoan(Spro.LoanWithId memory loanWithId) internal {
+        for (uint256 i = 0; i < loans.length; i++) {
+            if (loans[i].loanId == loanWithId.loanId) {
+                loans[i] = loans[loans.length - 1];
+                loans.pop();
+                break;
+            }
         }
     }
 }
