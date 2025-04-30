@@ -117,7 +117,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         for (uint256 i = 0; i < loanWithIds.length; i++) {
             loanWithIds[i] = getRandomLoan(seed / size + i);
         }
-        address[] memory actors = new address[](size * 2);
+        address[] memory actors = new address[](size * 2 + 1);
         for (uint256 i = 0; i < loanWithIds.length; i += 2) {
             actors[i] = loanWithIds[i].loan.lender;
             actors[i + 1] = loanWithIds[i].loan.borrower;
@@ -125,12 +125,22 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
                 token2.blockTransfers(true, actors[i]);
             }
         }
-        address payer = getAnotherUser(actors[1]);
-        uint256[] memory loanIds = _repayMultipleLoansPreconditions(loanWithIds, payer);
-        _before(actors, loanIds);
+        address payer = address(0x0000000000000000000000000000000000000001);
+        actors[actors.length - 1] = payer;
+        vm.prank(payer);
+        token2.approve(address(spro), type(uint256).max);
+        (
+            Spro.LoanWithId[] memory repayableLoans,
+            uint256[] memory repayableLoanIds,
+            uint256[] memory loanIds,
+            uint256 totalRepaymentAmount
+        ) = _repayMultipleLoansPreconditions(loanWithIds, payer);
+        _before(actors, repayableLoanIds);
 
         (bool success, bytes memory returnData) = _repayMultipleLoansCall(payer, loanIds);
 
-        _repayMultipleLoansPostconditions(success, returnData, loanWithIds, loanIds, actors, payer);
+        _repayMultipleLoansPostconditions(
+            success, returnData, repayableLoans, repayableLoanIds, actors, payer, totalRepaymentAmount
+        );
     }
 }
