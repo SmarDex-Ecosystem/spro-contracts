@@ -14,7 +14,7 @@ contract PostconditionsSpro is Properties {
         address[] memory actors
     ) internal {
         if (success) {
-            _after(actors, 0);
+            _after(actors);
             proposals.push(proposal);
             numberOfProposals++;
             invariant_PROP_01(proposal, actors[0]);
@@ -36,7 +36,7 @@ contract PostconditionsSpro is Properties {
         address[] memory actors
     ) internal {
         if (success) {
-            _after(actors, 0);
+            _after(actors);
             for (uint256 i = 0; i < proposals.length; i++) {
                 if (keccak256(abi.encode(proposal)) == keccak256(abi.encode(proposals[i]))) {
                     proposals[i] = proposals[proposals.length - 1];
@@ -62,7 +62,7 @@ contract PostconditionsSpro is Properties {
         if (success) {
             uint256 loanId = abi.decode(returnData, (uint256));
             numberOfLoans++;
-            _after(actors, 0);
+            _after(actors);
             invariant_LOAN_01(creditAmount, actors[1]);
             invariant_LOAN_02(actors[1]);
             invariant_LOAN_03(creditAmount, actors[0]);
@@ -84,15 +84,15 @@ contract PostconditionsSpro is Properties {
         address[] memory actors
     ) internal {
         if (success) {
-            _after(actors, loanWithId.loanId);
+            _after(actors);
             invariant_REPAY_01(loanWithId);
             invariant_REPAY_02(loanWithId);
             invariant_REPAY_03(loanWithId, actors[2]);
             invariant_REPAY_04(loanWithId, actors[1]);
             invariant_ENDLOAN_01(actors[0]);
-            invariant_ENDLOAN_02(actors[0]);
-            invariant_ENDLOAN_03();
-            invariant_ENDLOAN_04(loanWithId, actors[0]);
+            invariant_ENDLOAN_02(actors[0], loanWithId.loanId);
+            invariant_ENDLOAN_03(loanWithId.loanId);
+            invariant_ENDLOAN_04(loanWithId, actors[0], loanWithId.loanId);
             invariant_ENDLOAN_05(loanWithId);
         } else {
             invariant_ERR(returnData);
