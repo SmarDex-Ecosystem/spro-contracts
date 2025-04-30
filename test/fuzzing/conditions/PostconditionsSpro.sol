@@ -14,7 +14,7 @@ contract PostconditionsSpro is Properties {
         address[] memory actors
     ) internal {
         if (success) {
-            _after(actors, 0, 0);
+            _after(actors, 0, 0, 0);
             proposals.push(proposal);
             numberOfProposals++;
             invariant_PROP_01(proposal, actors[0]);
@@ -36,7 +36,7 @@ contract PostconditionsSpro is Properties {
         address[] memory actors
     ) internal {
         if (success) {
-            _after(actors, 0, 0);
+            _after(actors, 0, 0, 0);
             for (uint256 i = 0; i < proposals.length; i++) {
                 if (keccak256(abi.encode(proposal)) == keccak256(abi.encode(proposals[i]))) {
                     proposals[i] = proposals[proposals.length - 1];
@@ -61,7 +61,7 @@ contract PostconditionsSpro is Properties {
     ) internal {
         if (success) {
             uint256 loanId = abi.decode(returnData, (uint256));
-            _after(actors, loanId, 0);
+            _after(actors, loanId, 0, 0);
             invariant_LOAN_01(creditAmount, actors[1]);
             invariant_LOAN_02(actors[1]);
             invariant_LOAN_03(creditAmount, actors[0]);
@@ -80,21 +80,19 @@ contract PostconditionsSpro is Properties {
         bool success,
         bytes memory returnData,
         Spro.LoanWithId memory loanWithId,
-        LoanStatus statusBefore,
         address[] memory actors
     ) internal {
         if (success) {
-            _after(actors, 0, loanWithId.loanId);
-            LoanStatus statusAfter = getStatus(loanWithId.loanId);
+            _after(actors, 0, loanWithId.loanId, loanWithId.loanId);
             invariant_REPAY_01(loanWithId);
-            invariant_REPAY_02(loanWithId, statusBefore, statusAfter);
+            invariant_REPAY_02(loanWithId);
             invariant_REPAY_03(loanWithId, actors[1]);
             invariant_REPAY_04(loanWithId, actors[1]);
             invariant_ENDLOAN_01(actors[0]);
-            invariant_ENDLOAN_02(actors[0], statusBefore, statusAfter);
-            invariant_ENDLOAN_03(statusBefore, statusAfter);
-            invariant_ENDLOAN_04(loanWithId, actors[0], statusBefore, statusAfter);
-            invariant_ENDLOAN_05(loanWithId, statusBefore);
+            invariant_ENDLOAN_02(actors[0]);
+            invariant_ENDLOAN_03();
+            invariant_ENDLOAN_04(loanWithId, actors[0]);
+            invariant_ENDLOAN_05(loanWithId);
         } else {
             invariant_ERR(returnData);
         }

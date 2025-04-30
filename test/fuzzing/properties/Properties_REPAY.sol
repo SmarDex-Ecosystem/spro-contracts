@@ -10,11 +10,8 @@ contract Properties_REPAY is FuzzStorageVariables {
         assert(block.timestamp < loanWithId.loan.loanExpiration);
     }
 
-    function invariant_REPAY_02(Spro.LoanWithId memory loanWithId, LoanStatus statusBefore, LoanStatus statusAfter)
-        internal
-        view
-    {
-        if (statusBefore == LoanStatus.REPAYABLE && statusAfter == LoanStatus.PAID_BACK) {
+    function invariant_REPAY_02(Spro.LoanWithId memory loanWithId) internal view {
+        if (state[0].loanStatus == LoanStatus.REPAYABLE && state[1].loanStatus == LoanStatus.PAID_BACK) {
             assert(
                 state[1].actorStates[address(spro)].creditBalance
                     == state[0].actorStates[address(spro)].creditBalance + loanWithId.loan.principalAmount
