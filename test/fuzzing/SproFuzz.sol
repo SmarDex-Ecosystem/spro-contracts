@@ -91,9 +91,10 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         }
 
         Spro.LoanWithId memory loanWithId = getRandomLoan(seed);
-        address[] memory actors = new address[](2);
+        address[] memory actors = new address[](3);
         actors[0] = loanWithId.loan.lender;
-        actors[1] = loanWithId.loan.borrower;
+        actors[1] = getAnotherUser(actors[0]);
+        actors[2] = loanWithId.loan.borrower;
         if (blocked) {
             token2.blockTransfers(true, actors[0]);
         }
