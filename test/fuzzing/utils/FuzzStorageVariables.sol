@@ -37,7 +37,7 @@ contract FuzzStorageVariables is Test {
         mapping(address => ActorStates) actorStates;
         address borrower;
         address lender;
-        LoanStatus loanStatus;
+        LoanStatus[] loanStatus;
     }
 
     struct ActorStates {
@@ -92,17 +92,19 @@ contract FuzzStorageVariables is Test {
         state[index].actorStates[actor].sdexBalance = T20(sdex).balanceOf(actor);
     }
 
-    function _before(address[] memory actors, uint256 loanId) internal {
+    function _before(address[] memory actors, uint256[] memory loanIds) internal {
         fullReset();
         _setStates(0, actors);
-        _stateLoan(0, loanId);
+        _stateLoan(0, loanIds);
     }
 
-    function _after(address[] memory actors, uint256 newLoanId, uint256 loanId, uint256 stateLoanId) internal {
+    function _after(address[] memory actors, uint256 newLoanId, uint256 loanId, uint256[] memory stateLoanIds)
+        internal
+    {
         _setStates(1, actors);
         _newLoan(newLoanId);
         _removeLoanId(loanId);
-        _stateLoan(1, stateLoanId);
+        _stateLoan(1, stateLoanIds);
     }
 
     function fullReset() internal {
@@ -132,10 +134,14 @@ contract FuzzStorageVariables is Test {
         numberOfLoans++;
     }
 
-    function _stateLoan(uint8 index, uint256 loanId) internal {
-        if (loanId == 0) {
+    function _stateLoan(uint8 index, uint256[] memory loanIds) internal {
+        if (loanIds.length == 0) {
             return;
         }
-        state[index].loanStatus = getStatus(loanId);
+        LoanStatus[] memory loanStatus = new LoanStatus[](loanIds.length);
+        for (uint256 i = 0; i < loanIds.length; i++) {
+            loanStatus[i] = getStatus(loanIds[i]);
+        }
+        state[index].loanStatus = loanStatus;
     }
 }
