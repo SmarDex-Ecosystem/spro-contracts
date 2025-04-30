@@ -96,12 +96,36 @@ contract FuzzStorageVariables is Test {
         _setStates(0, actors);
     }
 
-    function _after(address[] memory actors) internal {
+    function _after(address[] memory actors, uint256 newLoanId, uint256 loanId) internal {
         _setStates(1, actors);
+        _newLoan(newLoanId);
+        _removeLoanId(loanId);
     }
 
     function fullReset() internal {
         delete state[0];
         delete state[1];
+    }
+
+    function _removeLoanId(uint256 loanId) internal {
+        if (loans.length == 0) {
+            return;
+        }
+        for (uint256 i = 0; i < loans.length; i++) {
+            if (loans[i].loanId == loanId) {
+                loans[i] = loans[loans.length - 1];
+                loans.pop();
+                break;
+            }
+        }
+    }
+
+    function _newLoan(uint256 loanId) internal {
+        if (loans.length == 0) {
+            return;
+        }
+        ISproTypes.Loan memory loan = spro.getLoan(loanId);
+        loans.push(Spro.LoanWithId(loanId, loan));
+        numberOfLoans++;
     }
 }

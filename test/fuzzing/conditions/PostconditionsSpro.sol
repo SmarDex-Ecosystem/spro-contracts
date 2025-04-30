@@ -14,7 +14,7 @@ contract PostconditionsSpro is Properties {
         address[] memory actors
     ) internal {
         if (success) {
-            _after(actors);
+            _after(actors, 0, 0);
             proposals.push(proposal);
             numberOfProposals++;
             invariant_PROP_01(proposal, actors[0]);
@@ -36,7 +36,7 @@ contract PostconditionsSpro is Properties {
         address[] memory actors
     ) internal {
         if (success) {
-            _after(actors);
+            _after(actors, 0, 0);
             for (uint256 i = 0; i < proposals.length; i++) {
                 if (keccak256(abi.encode(proposal)) == keccak256(abi.encode(proposals[i]))) {
                     proposals[i] = proposals[proposals.length - 1];
@@ -60,11 +60,8 @@ contract PostconditionsSpro is Properties {
         address[] memory actors
     ) internal {
         if (success) {
-            _after(actors);
             uint256 loanId = abi.decode(returnData, (uint256));
-            ISproTypes.Loan memory loan = spro.getLoan(loanId);
-            loans.push(Spro.LoanWithId(loanId, loan));
-            numberOfLoans++;
+            _after(actors, loanId, 0);
             invariant_LOAN_01(creditAmount, actors[1]);
             invariant_LOAN_02(actors[1]);
             invariant_LOAN_03(creditAmount, actors[0]);
@@ -72,6 +69,7 @@ contract PostconditionsSpro is Properties {
             invariant_LOAN_05(proposal);
             invariant_LOAN_06(creditAmount, proposal);
             invariant_LOAN_07(proposal);
+            ISproTypes.Loan memory loan = spro.getLoan(loanId);
             invariant_LOAN_08(proposal, loan);
         } else {
             invariant_ERR(returnData);
@@ -86,14 +84,7 @@ contract PostconditionsSpro is Properties {
         address[] memory actors
     ) internal {
         if (success) {
-            _after(actors);
-            for (uint256 i = 0; i < loans.length; i++) {
-                if (loans[i].loanId == loanWithId.loanId) {
-                    loans[i] = loans[loans.length - 1];
-                    loans.pop();
-                    break;
-                }
-            }
+            _after(actors, 0, loanWithId.loanId);
             LoanStatus statusAfter = getStatus(loanWithId.loanId);
             invariant_REPAY_01(loanWithId);
             invariant_REPAY_02(loanWithId, statusBefore, statusAfter);
