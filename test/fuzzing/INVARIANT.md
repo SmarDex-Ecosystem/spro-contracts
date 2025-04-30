@@ -92,7 +92,7 @@
 | CLAIM-01     | Lend repaid                    | Protocol's collateral token balance unchanged.                 | collateralToken.balanceOf(protocol) = previous            |
 | CLAIM-02     | Lend repaid                    | Protocol's borrow token balance decreased by lended amount and interests.                            | borrowToken.balanceOf(protocol) = previous - loan.principalAmount - loan.fixedInterestAmount|
 | CLAIM-03     | Loan expired                   | Lender's collateral token balance increased by the collateral amount.                       | collateralToken.balanceOf(lender) = previous + collateralAmount    |
-| REPAY-01     |                                | The borrower can't repay before the loan's start date but can repay anytime after.        | Borrower can't repay before startTimestamp|
+| REPAY-01     |                                | The borrower is required to repay the loan prior to its due date.        | block.timestamp < loanWithId.loan.loanExpiration|
 | REPAY-02     | The transfer fails             | Protocol's borrow token balance increased.                     | borrowToken.balanceOf(protocol) = previous + loan.principalAmount + loan.fixedInterestAmount  |
 | REPAY-03     |                                | Borrower's collateral token balance increased by the collateral amount.                     | collateralToken.balanceOf(borrower) = previous + collateralAmount  |
 | REPAY-04     |                                | Borrower's borrow token balance decreased by lended amount and interests.         | borrowToken.balanceOf(borrower) = previous - loan.principalAmount - loan.fixedInterestAmount|
