@@ -4,7 +4,6 @@ pragma solidity 0.8.26;
 import { Test } from "forge-std/Test.sol";
 
 import { Spro } from "src/spro/Spro.sol";
-import { SproLoan } from "src/spro/SproLoan.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 import { T20 } from "test/helper/T20.sol";
@@ -98,10 +97,10 @@ contract FuzzStorageVariables is Test {
         _stateLoan(0, loanId);
     }
 
-    function _after(address[] memory actors, uint256 newLoanId, uint256 loanId, uint256 stateLoanId) internal {
+    function _after(address[] memory actors, uint256 newLoanId, uint256 stateLoanId) internal {
         _setStates(1, actors);
         _newLoan(newLoanId);
-        _removeLoanId(loanId);
+        _removeNONELoans();
         _stateLoan(1, stateLoanId);
     }
 
@@ -110,12 +109,12 @@ contract FuzzStorageVariables is Test {
         delete state[1];
     }
 
-    function _removeLoanId(uint256 loanId) internal {
-        if (loanId == 0) {
-            return;
-        }
+    function _removeNONELoans() internal {
         for (uint256 i = 0; i < loans.length; i++) {
-            if (loans[i].loanId == loanId) {
+            if (loans[i].loan.status == ISproTypes.LoanStatus.NONE) {
+                while (loans[loans.length - 1].loan.status == ISproTypes.LoanStatus.NONE) {
+                    loans.pop();
+                }
                 loans[i] = loans[loans.length - 1];
                 loans.pop();
                 break;
