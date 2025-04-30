@@ -30,11 +30,30 @@ contract Properties_REPAY is FuzzStorageVariables {
         );
     }
 
-    function invariant_REPAY_04(Spro.LoanWithId memory loanWithId, address payer) internal view {
-        assert(
-            state[1].actorStates[payer].creditBalance
-                == state[0].actorStates[payer].creditBalance - loanWithId.loan.principalAmount
-                    - loanWithId.loan.fixedInterestAmount
-        );
+    function invariant_REPAY_04(Spro.LoanWithId memory loanWithId, address payer, address lender) internal view {
+        if (payer == lender) {
+            if (
+                state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
+                    && state[1].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
+            ) {
+                assert(
+                    state[1].actorStates[payer].creditBalance
+                        == state[0].actorStates[payer].creditBalance - loanWithId.loan.principalAmount
+                            - loanWithId.loan.fixedInterestAmount
+                );
+            }
+            if (
+                state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
+                    && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
+            ) {
+                assert(state[1].actorStates[payer].creditBalance == state[0].actorStates[payer].creditBalance);
+            }
+        } else {
+            assert(
+                state[1].actorStates[payer].creditBalance
+                    == state[0].actorStates[payer].creditBalance - loanWithId.loan.principalAmount
+                        - loanWithId.loan.fixedInterestAmount
+            );
+        }
     }
 }

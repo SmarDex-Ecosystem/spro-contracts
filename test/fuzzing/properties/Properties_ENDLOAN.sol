@@ -10,10 +10,14 @@ contract Properties_ENDLOAN is FuzzStorageVariables {
         assert(state[1].actorStates[lender].collateralBalance == state[0].actorStates[lender].collateralBalance);
     }
 
-    function invariant_ENDLOAN_02(address lender, uint256 loanId) internal view {
-        if (state[0].loanStatus[loanId] == LoanStatus.REPAYABLE && state[11].loanStatus[loanId] == LoanStatus.PAID_BACK)
-        {
-            assert(state[1].actorStates[lender].creditBalance == state[0].actorStates[lender].creditBalance);
+    function invariant_ENDLOAN_02(address payer, address lender, uint256 loanId) internal view {
+        if (payer != lender) {
+            if (
+                state[0].loanStatus[loanId] == LoanStatus.REPAYABLE
+                    && state[1].loanStatus[loanId] == LoanStatus.PAID_BACK
+            ) {
+                assert(state[1].actorStates[lender].creditBalance == state[0].actorStates[lender].creditBalance);
+            }
         }
     }
 
