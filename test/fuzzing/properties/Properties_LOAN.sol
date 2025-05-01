@@ -38,10 +38,7 @@ contract Properties_LOAN is FuzzStorageVariables {
         assert(remaining == 0 || remaining >= proposal.minAmount);
     }
 
-    function invariant_LOAN_08(ISproTypes.Proposal memory proposal, bytes memory returnData) internal view {
-        uint256 loanId = abi.decode(returnData, (uint256));
-        ISproTypes.Loan memory loan = spro.getLoan(loanId);
-
-        assert(proposal.collateralAmount >= loan.collateralAmount);
+    function invariant_LOAN_08(ISproTypes.Proposal memory proposal) internal view {
+        assert(proposal.collateralAmount >= loans[loans.length - 1].loan.collateralAmount);
     }
 }

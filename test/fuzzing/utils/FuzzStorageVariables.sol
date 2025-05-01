@@ -7,13 +7,15 @@ import { Spro } from "src/spro/Spro.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 import { T20 } from "test/helper/T20.sol";
+import { SproHandler } from "../FuzzSetup.sol";
 
 contract FuzzStorageVariables is Test {
     T20 sdex;
     T20 token1;
     T20 token2;
-    Spro spro;
+    SproHandler spro;
     uint256 numberOfProposals;
+    uint256 numberOfLoans;
 
     // Spro constants
     uint256 MAX_SDEX_FEE;
@@ -26,7 +28,7 @@ contract FuzzStorageVariables is Test {
 
     // Spro storage variables
     ISproTypes.Proposal[] internal proposals;
-    ISproTypes.Loan[] internal loans;
+    Spro.LoanWithId[] internal loans;
 
     mapping(uint8 => State) state;
 
@@ -34,6 +36,7 @@ contract FuzzStorageVariables is Test {
         mapping(address => ActorStates) actorStates;
         address borrower;
         address lender;
+        mapping(uint256 => LoanStatus) loanStatus;
     }
 
     struct ActorStates {
@@ -42,9 +45,36 @@ contract FuzzStorageVariables is Test {
         uint256 sdexBalance;
     }
 
+    enum LoanStatus {
+        NONE,
+        PAID_BACK,
+        REPAYABLE,
+        NOT_REPAYABLE
+    }
+
     function getRandomProposal(uint256 input) internal view returns (ISproTypes.Proposal memory) {
         uint256 randomIndex = input % proposals.length;
         return proposals[randomIndex];
+    }
+
+    function getRandomLoan(uint256 input) internal view returns (Spro.LoanWithId memory) {
+        uint256 randomIndex = input % loans.length;
+        return loans[randomIndex];
+    }
+
+    function getStatus(uint256 loanId) internal view returns (LoanStatus status) {
+        ISproTypes.Loan memory loan = spro.getLoan(loanId);
+        if (loan.status == ISproTypes.LoanStatus.NONE) {
+            return LoanStatus.NONE;
+        }
+        if (loan.status == ISproTypes.LoanStatus.PAID_BACK) {
+            return LoanStatus.PAID_BACK;
+        }
+        if (spro.i_isLoanRepayable(loan.status, loan.loanExpiration)) {
+            return LoanStatus.REPAYABLE;
+        } else {
+            return LoanStatus.NOT_REPAYABLE;
+        }
     }
 
     function _setStates(uint8 index, address[] memory actors) internal {
@@ -64,14 +94,55 @@ contract FuzzStorageVariables is Test {
     function _before(address[] memory actors) internal {
         fullReset();
         _setStates(0, actors);
+        _stateLoan(0);
     }
 
     function _after(address[] memory actors) internal {
         _setStates(1, actors);
+        _newLoan();
+        _removeLoansWithStatusNone();
+        _stateLoan(1);
     }
 
     function fullReset() internal {
         delete state[0];
         delete state[1];
+    }
+
+    function _removeLoansWithStatusNone() internal {
+        for (uint256 i = 0; i < loans.length; i++) {
+            if (loans[i].loan.status == ISproTypes.LoanStatus.NONE) {
+                while (loans[loans.length - 1].loan.status == ISproTypes.LoanStatus.NONE) {
+                    loans.pop();
+                    numberOfLoans--;
+                }
+                loans[i] = loans[loans.length - 1];
+                loans.pop();
+                numberOfLoans--;
+                break;
+            }
+        }
+    }
+
+    function _newLoan() internal {
+        if (numberOfLoans != loans.length) {
+            uint256 loanId = spro._loanToken()._lastLoanId();
+            ISproTypes.Loan memory loan = spro.getLoan(loanId);
+            if (loan.status == ISproTypes.LoanStatus.NONE) {
+                numberOfLoans--;
+            } else {
+                loans.push(Spro.LoanWithId(loanId, loan));
+                numberOfLoans++;
+            }
+        }
+    }
+
+    function _stateLoan(uint8 index) internal {
+        if (loans.length == 0) {
+            return;
+        }
+        for (uint256 i = 0; i < loans.length; i++) {
+            state[index].loanStatus[i] = getStatus(loans[i].loanId);
+        }
     }
 }

@@ -30,6 +30,9 @@ contract T20 is ERC20 {
     }
 
     function transferFrom(address from, address to, uint256 value) public override returns (bool) {
+        if (blockTransfer && to == blockedAddress) {
+            revert("T20: transfer blocked");
+        }
         if (fee) {
             value -= 1;
         }

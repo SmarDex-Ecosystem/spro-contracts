@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import { Properties } from "../properties/Properties.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
+import { Spro } from "src/spro/Spro.sol";
 
 contract PostconditionsSpro is Properties {
     function _createProposalPostconditions(
@@ -59,6 +60,7 @@ contract PostconditionsSpro is Properties {
         address[] memory actors
     ) internal {
         if (success) {
+            numberOfLoans++;
             _after(actors);
             invariant_LOAN_01(creditAmount, actors[1]);
             invariant_LOAN_02(actors[1]);
@@ -67,9 +69,32 @@ contract PostconditionsSpro is Properties {
             invariant_LOAN_05(proposal);
             invariant_LOAN_06(creditAmount, proposal);
             invariant_LOAN_07(proposal);
-            invariant_LOAN_08(proposal, returnData);
+            invariant_LOAN_08(proposal);
         } else {
             invariant_ERR(returnData);
         }
+    }
+
+    function _repayLoanPostconditions(
+        bool success,
+        bytes memory returnData,
+        Spro.LoanWithId memory loanWithId,
+        address[] memory actors
+    ) internal {
+        if (success) {
+            _after(actors);
+            invariant_REPAY_01(loanWithId);
+            invariant_REPAY_02(loanWithId);
+            invariant_REPAY_03(loanWithId, actors[2]);
+            invariant_REPAY_04(loanWithId, actors[1], actors[0]);
+            invariant_ENDLOAN_01(actors[0]);
+            invariant_ENDLOAN_02(actors[1], actors[0], loanWithId.loanId);
+            invariant_ENDLOAN_03(loanWithId.loanId);
+            invariant_ENDLOAN_04(loanWithId, actors[0]);
+            invariant_ENDLOAN_05(loanWithId);
+        } else {
+            invariant_ERR(returnData);
+        }
+        token2.blockTransfers(false, address(0));
     }
 }
