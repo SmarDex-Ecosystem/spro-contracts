@@ -33,7 +33,7 @@ contract Properties_REPAY is FuzzStorageVariables {
     function invariant_REPAY_04(Spro.LoanWithId memory loanWithId, address payer, address lender) internal view {
         if (
             (
-                payer == lender && state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
+                state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
                     && state[1].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
             ) || (payer != lender)
         ) {
