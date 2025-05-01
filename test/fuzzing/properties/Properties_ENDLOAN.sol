@@ -29,7 +29,13 @@ contract Properties_ENDLOAN is FuzzStorageVariables {
     }
 
     function invariant_ENDLOAN_03(uint256 loanId) internal view {
-        if (state[0].loanStatus[loanId] == LoanStatus.REPAYABLE && state[0].loanStatus[loanId] == LoanStatus.NONE) {
+        if (
+            (state[0].loanStatus[loanId] == LoanStatus.REPAYABLE && state[1].loanStatus[loanId] == LoanStatus.NONE)
+                || (
+                    state[0].loanStatus[loanId] == LoanStatus.NOT_REPAYABLE
+                        && state[1].loanStatus[loanId] == LoanStatus.NONE
+                )
+        ) {
             assert(
                 state[1].actorStates[address(spro)].creditBalance == state[0].actorStates[address(spro)].creditBalance
             );
@@ -50,7 +56,13 @@ contract Properties_ENDLOAN is FuzzStorageVariables {
     }
 
     function invariant_ENDLOAN_05(Spro.LoanWithId memory loanWithId) internal view {
-        if (state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE) {
+        if (
+            (state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE)
+                || (
+                    state[0].loanStatus[loanWithId.loanId] == LoanStatus.NOT_REPAYABLE
+                        && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
+                )
+        ) {
             assert(
                 state[1].actorStates[address(spro)].collateralBalance
                     == state[0].actorStates[address(spro)].collateralBalance - loanWithId.loan.collateralAmount

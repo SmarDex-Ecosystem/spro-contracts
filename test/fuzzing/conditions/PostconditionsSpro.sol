@@ -112,9 +112,9 @@ contract PostconditionsSpro is Properties {
             invariant_CLAIM_03(loanWithId, actors[0]);
             invariant_ENDLOAN_01(actors[0], loanWithId.loanId);
             invariant_ENDLOAN_02(actors[0], actors[0], loanWithId.loanId);
-            // invariant_ENDLOAN_03(loanWithId.loanId);
+            invariant_ENDLOAN_03(loanWithId.loanId);
             // invariant_ENDLOAN_04(loanWithId, actors[0]);
-            // invariant_ENDLOAN_05(loanWithId);
+            invariant_ENDLOAN_05(loanWithId);
             _clean();
         } else {
             invariant_ERR(returnData);
