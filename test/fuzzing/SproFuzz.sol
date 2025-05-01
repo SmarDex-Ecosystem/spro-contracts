@@ -91,21 +91,20 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         }
 
         Spro.LoanWithId memory loanWithId = getRandomLoan(seed);
-        address[] memory actors = new address[](2);
+        address[] memory payer = getRandomUsers(uint256(keccak256(abi.encode(seed))), 1);
+        address[] memory actors = new address[](3);
         actors[0] = loanWithId.loan.lender;
-        actors[1] = loanWithId.loan.borrower;
-        LoanStatus statusBefore = _repayLoanPreconditions(loanWithId, actors[1]);
-        if (statusBefore == LoanStatus.PAID_BACK) {
-            return;
-        }
+        actors[1] = payer[0];
+        actors[2] = loanWithId.loan.borrower;
         if (blocked) {
             token2.blockTransfers(true, actors[0]);
         }
+        _repayLoanPreconditions(loanWithId, actors[1]);
         _before(actors);
 
         (bool success, bytes memory returnData) = _repayLoanCall(actors[1], loanWithId.loanId);
 
-        _repayLoanPostconditions(success, returnData, loanWithId, statusBefore, actors);
+        _repayLoanPostconditions(success, returnData, loanWithId, actors);
     }
 
     function fuzz_claimLoan(uint256 seed, bool expired) public {
