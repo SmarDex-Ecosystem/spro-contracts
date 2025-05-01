@@ -60,7 +60,6 @@ contract PostconditionsSpro is Properties {
         address[] memory actors
     ) internal {
         if (success) {
-            uint256 loanId = abi.decode(returnData, (uint256));
             numberOfLoans++;
             _after(actors);
             invariant_LOAN_01(creditAmount, actors[1]);
@@ -70,8 +69,7 @@ contract PostconditionsSpro is Properties {
             invariant_LOAN_05(proposal);
             invariant_LOAN_06(creditAmount, proposal);
             invariant_LOAN_07(proposal);
-            ISproTypes.Loan memory loan = spro.getLoan(loanId);
-            invariant_LOAN_08(proposal, loan);
+            invariant_LOAN_08(proposal);
         } else {
             invariant_ERR(returnData);
         }
@@ -92,7 +90,7 @@ contract PostconditionsSpro is Properties {
             invariant_ENDLOAN_01(actors[0]);
             invariant_ENDLOAN_02(actors[1], actors[0], loanWithId.loanId);
             invariant_ENDLOAN_03(loanWithId.loanId);
-            invariant_ENDLOAN_04(loanWithId, actors[0], loanWithId.loanId);
+            invariant_ENDLOAN_04(loanWithId, actors[0]);
             invariant_ENDLOAN_05(loanWithId);
         } else {
             invariant_ERR(returnData);
