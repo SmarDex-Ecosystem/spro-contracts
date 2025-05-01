@@ -31,29 +31,23 @@ contract Properties_REPAY is FuzzStorageVariables {
     }
 
     function invariant_REPAY_04(Spro.LoanWithId memory loanWithId, address payer, address lender) internal view {
-        if (payer == lender) {
-            if (
+        if (
+            (
                 state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
                     && state[1].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
-            ) {
-                assert(
-                    state[1].actorStates[payer].creditBalance
-                        == state[0].actorStates[payer].creditBalance - loanWithId.loan.principalAmount
-                            - loanWithId.loan.fixedInterestAmount
-                );
-            }
-            if (
-                state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
-                    && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
-            ) {
-                assert(state[1].actorStates[payer].creditBalance == state[0].actorStates[payer].creditBalance);
-            }
-        } else {
+            ) || payer != lender
+        ) {
             assert(
                 state[1].actorStates[payer].creditBalance
                     == state[0].actorStates[payer].creditBalance - loanWithId.loan.principalAmount
                         - loanWithId.loan.fixedInterestAmount
             );
+        }
+        if (
+            payer == lender && state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
+                && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
+        ) {
+            assert(state[1].actorStates[payer].creditBalance == state[0].actorStates[payer].creditBalance);
         }
     }
 }
