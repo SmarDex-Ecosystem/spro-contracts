@@ -31,6 +31,7 @@ contract FuzzStorageVariables is Test {
     ISproTypes.Proposal[] internal proposals;
     Spro.LoanWithId[] internal loans;
 
+    // Temporary variables
     mapping(uint8 => State) state;
 
     struct State {
@@ -101,6 +102,10 @@ contract FuzzStorageVariables is Test {
     function _after(address[] memory actors) internal {
         _setStates(1, actors);
         _newLoan();
+        _stateLoan(1);
+    }
+
+    function _clean() internal {
         _removeLoansWithStatusNone();
         _stateLoan(1);
     }
@@ -111,29 +116,26 @@ contract FuzzStorageVariables is Test {
     }
 
     function _removeLoansWithStatusNone() internal {
-        for (uint256 i = 0; i < loans.length; i++) {
-            if (loans[i].loan.status == ISproTypes.LoanStatus.NONE) {
-                while (loans[loans.length - 1].loan.status == ISproTypes.LoanStatus.NONE) {
-                    loans.pop();
-                    numberOfLoans--;
-                }
+        uint256 i = 0;
+        while (i < loans.length) {
+            if (state[1].loanStatus[i] == LoanStatus.NONE) {
                 loans[i] = loans[loans.length - 1];
                 loans.pop();
                 numberOfLoans--;
-                break;
+            } else {
+                i++;
             }
         }
     }
 
     function _newLoan() internal {
-        if (numberOfLoans != loans.length) {
+        if (numberOfLoans == loans.length + 1) {
             uint256 loanId = spro._loanToken()._lastLoanId();
             ISproTypes.Loan memory loan = spro.getLoan(loanId);
             if (loan.status == ISproTypes.LoanStatus.NONE) {
                 numberOfLoans--;
             } else {
                 loans.push(Spro.LoanWithId(loanId, loan));
-                numberOfLoans++;
             }
         }
     }
@@ -143,7 +145,7 @@ contract FuzzStorageVariables is Test {
             return;
         }
         for (uint256 i = 0; i < loans.length; i++) {
-            state[index].loanStatus[i] = getStatus(loans[i].loanId);
+            state[index].loanStatus[loans[i].loanId] = getStatus(loans[i].loanId);
         }
     }
 }

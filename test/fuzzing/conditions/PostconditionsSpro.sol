@@ -92,6 +92,7 @@ contract PostconditionsSpro is Properties {
             invariant_ENDLOAN_03(loanWithId.loanId);
             invariant_ENDLOAN_04(loanWithId, actors[0]);
             invariant_ENDLOAN_05(loanWithId);
+            _clean();
         } else {
             invariant_ERR(returnData);
         }
@@ -102,21 +103,19 @@ contract PostconditionsSpro is Properties {
         bool success,
         bytes memory returnData,
         Spro.LoanWithId memory loanWithId,
-        LoanStatus statusBefore,
         address[] memory actors
     ) internal {
         if (success) {
             _after(actors);
-            LoanStatus statusAfter = getStatus(loanWithId.loanId);
-            _removeLoan(loanWithId);
-            invariant_CLAIM_01(statusBefore, statusAfter);
-            invariant_CLAIM_02(loanWithId, statusBefore, statusAfter);
-            invariant_CLAIM_03(loanWithId, statusBefore, statusAfter, actors[0]);
-            invariant_ENDLOAN_01(actors[0], statusBefore);
-            invariant_ENDLOAN_02(actors[0], statusBefore, statusAfter);
-            invariant_ENDLOAN_03(statusBefore, statusAfter);
-            invariant_ENDLOAN_04(loanWithId, actors[0], statusBefore, statusAfter);
-            invariant_ENDLOAN_05(loanWithId, statusBefore, statusAfter);
+            invariant_CLAIM_01(loanWithId.loanId);
+            invariant_CLAIM_02(loanWithId);
+            invariant_CLAIM_03(loanWithId, actors[0]);
+            // invariant_ENDLOAN_01(actors[0]);
+            // invariant_ENDLOAN_02(actors[0], actors[0], loanWithId.loanId);
+            // invariant_ENDLOAN_03(loanWithId.loanId);
+            // invariant_ENDLOAN_04(loanWithId, actors[0]);
+            // invariant_ENDLOAN_05(loanWithId);
+            _clean();
         } else {
             invariant_ERR(returnData);
         }

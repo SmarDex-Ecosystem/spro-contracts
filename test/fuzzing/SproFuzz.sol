@@ -119,11 +119,10 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         if (expired) {
             vm.warp(loanWithId.loan.loanExpiration);
         }
-        LoanStatus statusBefore = _claimLoanPreconditions(loanWithId);
         _before(actors);
 
         (bool success, bytes memory returnData) = _claimLoanCall(actors[0], loanWithId.loanId);
 
-        _claimLoanPostconditions(success, returnData, loanWithId, statusBefore, actors);
+        _claimLoanPostconditions(success, returnData, loanWithId, actors);
     }
 }

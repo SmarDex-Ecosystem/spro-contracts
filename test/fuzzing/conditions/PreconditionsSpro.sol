@@ -64,12 +64,4 @@ contract PreconditionsSpro is Test, Properties {
             token2.mint(payer, repaymentAmount);
         }
     }
-
-    function _claimLoanPreconditions(Spro.LoanWithId memory loanWithId)
-        internal
-        view
-        returns (LoanStatus statusBefore)
-    {
-        statusBefore = getStatus(loanWithId.loanId);
-    }
 }
