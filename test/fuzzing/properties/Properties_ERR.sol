@@ -26,7 +26,7 @@ contract Properties_ERR {
         allowedErrors[2] = ISproErrors.Expired.selector;
         allowedErrors[3] = ISproErrors.CreditAmountRemainingBelowMinimum.selector;
 
-        // Repay loan errors [4]
+        // Create repay loan errors [4]
         allowedErrors[4] = ISproErrors.LoanCannotBeRepaid.selector;
 
         // EVM errors returns nothing

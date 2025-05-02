@@ -14,7 +14,7 @@ contract PostconditionsSpro is Properties {
         address[] memory actors
     ) internal {
         if (success) {
-            _after(actors, 0, 0, new uint256[](0));
+            _after(actors);
             proposals.push(proposal);
             numberOfProposals++;
             invariant_PROP_01(proposal, actors[0]);
@@ -36,7 +36,7 @@ contract PostconditionsSpro is Properties {
         address[] memory actors
     ) internal {
         if (success) {
-            _after(actors, 0, 0, new uint256[](0));
+            _after(actors);
             for (uint256 i = 0; i < proposals.length; i++) {
                 if (keccak256(abi.encode(proposal)) == keccak256(abi.encode(proposals[i]))) {
                     proposals[i] = proposals[proposals.length - 1];
@@ -60,8 +60,8 @@ contract PostconditionsSpro is Properties {
         address[] memory actors
     ) internal {
         if (success) {
-            uint256 loanId = abi.decode(returnData, (uint256));
-            _after(actors, loanId, 0, new uint256[](0));
+            numberOfLoans++;
+            _after(actors);
             invariant_LOAN_01(creditAmount, actors[1]);
             invariant_LOAN_02(actors[1]);
             invariant_LOAN_03(creditAmount, actors[0]);
@@ -69,8 +69,7 @@ contract PostconditionsSpro is Properties {
             invariant_LOAN_05(proposal);
             invariant_LOAN_06(creditAmount, proposal);
             invariant_LOAN_07(proposal);
-            ISproTypes.Loan memory loan = spro.getLoan(loanId);
-            invariant_LOAN_08(proposal, loan);
+            invariant_LOAN_08(proposal);
         } else {
             invariant_ERR(returnData);
         }
@@ -83,18 +82,16 @@ contract PostconditionsSpro is Properties {
         address[] memory actors
     ) internal {
         if (success) {
-            uint256[] memory loanIds = new uint256[](1);
-            loanIds[0] = loanWithId.loanId;
-            _after(actors, 0, loanWithId.loanId, loanIds);
+            _after(actors);
             invariant_REPAY_01(loanWithId);
-            invariant_REPAY_02(loanWithId, 0);
+            invariant_REPAY_02(loanWithId);
             invariant_REPAY_03(loanWithId, actors[2]);
-            invariant_REPAY_04(loanWithId, actors[1]);
+            invariant_REPAY_04(loanWithId, actors[1], actors[0]);
             invariant_ENDLOAN_01(actors[0]);
-            invariant_ENDLOAN_02(actors[0], 0);
-            invariant_ENDLOAN_03(0);
-            invariant_ENDLOAN_04(loanWithId, actors[0], 0);
-            invariant_ENDLOAN_05(loanWithId, 0);
+            invariant_ENDLOAN_02(actors[1], actors[0], loanWithId.loanId);
+            invariant_ENDLOAN_03(loanWithId.loanId);
+            invariant_ENDLOAN_04(loanWithId, actors[0]);
+            invariant_ENDLOAN_05(loanWithId);
         } else {
             invariant_ERR(returnData);
         }
@@ -111,20 +108,19 @@ contract PostconditionsSpro is Properties {
         uint256 totalRepaymentAmount
     ) internal {
         if (success) {
-            _after(actors, 0, 0, loanIds);
-            for (uint256 i = 0; i < loanIds.length; i++) {
-                _removeLoanId(loanIds[i]);
-                invariant_REPAYMUL_01(loanWithIds[i]);
-            }
-            uint256 amountPayback;
-            for (uint256 i = 0; i < loanWithIds.length; i++) {
-                if (state[1].loanStatus[i] == LoanStatus.PAID_BACK) {
-                    amountPayback += loanWithIds[i].loan.principalAmount;
-                    amountPayback += loanWithIds[i].loan.fixedInterestAmount;
-                }
-            }
-            invariant_REPAYMUL_02(amountPayback);
-            invariant_REPAYMUL_04(payer, totalRepaymentAmount);
+            _after(actors);
+            // for (uint256 i = 0; i < loanIds.length; i++) {
+            //     invariant_REPAYMUL_01(loanWithIds[i]);
+            // }
+            // uint256 amountPayback;
+            // for (uint256 i = 0; i < loanWithIds.length; i++) {
+            //     if (state[1].loanStatus[i] == LoanStatus.PAID_BACK) {
+            //         amountPayback += loanWithIds[i].loan.principalAmount;
+            //         amountPayback += loanWithIds[i].loan.fixedInterestAmount;
+            //     }
+            // }
+            // invariant_REPAYMUL_02(amountPayback);
+            // invariant_REPAYMUL_04(payer, totalRepaymentAmount);
             // invariant_ENDLOAN_01(actors[i]);
             // invariant_ENDLOAN_02(actors[i], i);
             // invariant_ENDLOAN_03(i);

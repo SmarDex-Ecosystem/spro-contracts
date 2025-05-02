@@ -6,7 +6,6 @@ import { FuzzStorageVariables } from "../utils/FuzzStorageVariables.sol";
 
 import { ISpro } from "src/interfaces/ISpro.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
-import { Spro } from "src/spro/Spro.sol";
 
 /**
  * @notice Helper contract containing low-level protocol function wrappers for fuzzing

@@ -4,7 +4,6 @@ pragma solidity 0.8.26;
 import { Test } from "forge-std/Test.sol";
 
 import { Spro } from "src/spro/Spro.sol";
-import { SproLoan } from "src/spro/SproLoan.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 import { T20 } from "test/helper/T20.sol";
@@ -37,7 +36,7 @@ contract FuzzStorageVariables is Test {
         mapping(address => ActorStates) actorStates;
         address borrower;
         address lender;
-        LoanStatus[] loanStatus;
+        mapping(uint256 => LoanStatus) loanStatus;
     }
 
     struct ActorStates {
@@ -61,6 +60,27 @@ contract FuzzStorageVariables is Test {
     function getRandomLoan(uint256 input) internal view returns (Spro.LoanWithId memory) {
         uint256 randomIndex = input % loans.length;
         return loans[randomIndex];
+    }
+
+    function getRandomLoans(uint256 input, uint256 length)
+        internal
+        view
+        returns (Spro.LoanWithId[] memory randomLoans)
+    {
+        require(length <= loans.length, "Requested length exceeds USERS length");
+
+        Spro.LoanWithId[] memory shuffleLoans = loans;
+        for (uint256 i = loans.length - 1; i > 0; i--) {
+            uint256 j = uint256(keccak256(abi.encodePacked(input, i))) % (i + 1);
+            (shuffleLoans[i], shuffleLoans[j]) = (shuffleLoans[j], shuffleLoans[i]);
+        }
+
+        randomLoans = new Spro.LoanWithId[](length);
+        for (uint256 i = 0; i < length; i++) {
+            randomLoans[i] = shuffleLoans[i];
+        }
+
+        return randomLoans;
     }
 
     function getStatus(uint256 loanId) internal view returns (LoanStatus status) {
@@ -92,19 +112,17 @@ contract FuzzStorageVariables is Test {
         state[index].actorStates[actor].sdexBalance = T20(sdex).balanceOf(actor);
     }
 
-    function _before(address[] memory actors, uint256[] memory loanIds) internal {
+    function _before(address[] memory actors) internal {
         fullReset();
         _setStates(0, actors);
-        _stateLoan(0, loanIds);
+        _stateLoan(0);
     }
 
-    function _after(address[] memory actors, uint256 newLoanId, uint256 loanId, uint256[] memory stateLoanIds)
-        internal
-    {
+    function _after(address[] memory actors) internal {
         _setStates(1, actors);
-        _newLoan(newLoanId);
-        _removeLoanId(loanId);
-        _stateLoan(1, stateLoanIds);
+        _newLoan();
+        _removeLoansWithStatusNone();
+        _stateLoan(1);
     }
 
     function fullReset() internal {
@@ -112,36 +130,40 @@ contract FuzzStorageVariables is Test {
         delete state[1];
     }
 
-    function _removeLoanId(uint256 loanId) internal {
-        if (loanId == 0) {
-            return;
-        }
+    function _removeLoansWithStatusNone() internal {
         for (uint256 i = 0; i < loans.length; i++) {
-            if (loans[i].loanId == loanId) {
+            if (loans[i].loan.status == ISproTypes.LoanStatus.NONE) {
+                while (loans[loans.length - 1].loan.status == ISproTypes.LoanStatus.NONE) {
+                    loans.pop();
+                    numberOfLoans--;
+                }
                 loans[i] = loans[loans.length - 1];
                 loans.pop();
+                numberOfLoans--;
                 break;
             }
         }
     }
 
-    function _newLoan(uint256 loanId) internal {
-        if (loanId == 0) {
-            return;
+    function _newLoan() internal {
+        if (numberOfLoans != loans.length) {
+            uint256 loanId = spro._loanToken()._lastLoanId();
+            ISproTypes.Loan memory loan = spro.getLoan(loanId);
+            if (loan.status == ISproTypes.LoanStatus.NONE) {
+                numberOfLoans--;
+            } else {
+                loans.push(Spro.LoanWithId(loanId, loan));
+                numberOfLoans++;
+            }
         }
-        ISproTypes.Loan memory loan = spro.getLoan(loanId);
-        loans.push(Spro.LoanWithId(loanId, loan));
-        numberOfLoans++;
     }
 
-    function _stateLoan(uint8 index, uint256[] memory loanIds) internal {
-        if (loanIds.length == 0) {
+    function _stateLoan(uint8 index) internal {
+        if (loans.length == 0) {
             return;
         }
-        LoanStatus[] memory loanStatus = new LoanStatus[](loanIds.length);
-        for (uint256 i = 0; i < loanIds.length; i++) {
-            loanStatus[i] = getStatus(loanIds[i]);
+        for (uint256 i = 0; i < loans.length; i++) {
+            state[index].loanStatus[i] = getStatus(loans[i].loanId);
         }
-        state[index].loanStatus = loanStatus;
     }
 }

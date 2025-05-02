@@ -74,31 +74,46 @@ contract PreconditionsSpro is Test, Properties {
             uint256 totalRepaymentAmount
         )
     {
-        loanIds = new uint256[](loanWithId.length);
-        for (uint256 i = 0; i < loanWithId.length; i++) {
-            loanIds[i] = loanWithId[i].loanId;
-        }
-        totalRepaymentAmount = spro.totalLoanRepaymentAmount(loanIds);
-        if (totalRepaymentAmount > token2.balanceOf(payer)) {
-            token2.mint(payer, totalRepaymentAmount);
-        }
-
-        Spro.LoanWithId[] memory filteredLoans = new Spro.LoanWithId[](loanWithId.length);
-        uint256[] memory filteredLoanIds = new uint256[](loanIds.length);
-        uint256 count = 0;
-
-        for (uint256 i = 0; i < loanWithId.length; i++) {
-            if (spro.i_isLoanRepayable(loanWithId[i].loan.status, loanWithId[i].loan.loanExpiration)) {
-                filteredLoans[count] = loanWithId[i];
-                filteredLoanIds[count] = loanIds[i];
-                count++;
+        {
+            uint256 firstRepayable = 0;
+            while (
+                !spro.i_isLoanRepayable(
+                    loanWithId[firstRepayable].loan.status, loanWithId[firstRepayable].loan.loanExpiration
+                )
+            ) {
+                firstRepayable++;
+                if (firstRepayable == loanWithId.length) {
+                    return (repayableLoans, repayableLoanIds, loanIds, totalRepaymentAmount);
+                }
             }
-        }
-        repayableLoans = new Spro.LoanWithId[](count);
-        repayableLoanIds = new uint256[](count);
-        for (uint256 i = 0; i < count; i++) {
-            repayableLoans[i] = filteredLoans[i];
-            repayableLoanIds[i] = filteredLoanIds[i];
+
+            address firstCreditAddress = loanWithId[firstRepayable].loan.creditAddress;
+            uint256[] memory temporaryLoanIds = new uint256[](loanWithId.length);
+            Spro.LoanWithId[] memory temporaryLoanWithId = new Spro.LoanWithId[](loanWithId.length);
+            uint256 count = 0;
+            for (uint256 i = firstRepayable; i < loanWithId.length; i++) {
+                if (
+                    firstCreditAddress == loanWithId[i].loan.creditAddress
+                        && spro.i_isLoanRepayable(loanWithId[i].loan.status, loanWithId[i].loan.loanExpiration)
+                ) {
+                    temporaryLoanIds[count] = loanWithId[i].loanId;
+                    temporaryLoanWithId[count] = loanWithId[i];
+                    totalRepaymentAmount += loanWithId[i].loan.principalAmount + loanWithId[i].loan.fixedInterestAmount;
+                    count++;
+                }
+            }
+
+            if (totalRepaymentAmount > token2.balanceOf(payer)) {
+                token2.mint(payer, totalRepaymentAmount - token2.balanceOf(payer));
+            }
+
+            repayableLoans = new Spro.LoanWithId[](count);
+            repayableLoanIds = new uint256[](count);
+
+            for (uint256 i = 0; i < count; i++) {
+                repayableLoans[i] = temporaryLoanWithId[i];
+                repayableLoanIds[i] = temporaryLoanIds[i];
+            }
         }
     }
 }

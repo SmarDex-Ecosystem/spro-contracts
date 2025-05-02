@@ -32,7 +32,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
     ) public {
         address[] memory actors = getRandomUsers(seed1, 1);
         sdex.mint(actors[0], spro._fee());
-        _before(actors, new uint256[](0));
+        _before(actors);
 
         ISproTypes.Proposal memory proposal =
             _createProposalPreconditions(seed1, seed2, seed3, actors[0], startTimestamp, loanExpiration);
@@ -58,7 +58,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         ISproTypes.Proposal memory proposal = getRandomProposal(seed);
         address[] memory actors = new address[](1);
         actors[0] = proposal.proposer;
-        _before(actors, new uint256[](0));
+        _before(actors);
 
         (bool success, bytes memory returnData) = _cancelProposalCall(actors[0], proposal);
 
@@ -78,7 +78,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         if (creditAmount == 0) {
             return;
         }
-        _before(actors, new uint256[](0));
+        _before(actors);
 
         (bool success, bytes memory returnData) = _createLoanCall(actors[1], proposal, creditAmount);
 
@@ -91,17 +91,16 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         }
 
         Spro.LoanWithId memory loanWithId = getRandomLoan(seed);
+        address[] memory payer = getRandomUsers(uint256(keccak256(abi.encode(seed))), 1);
         address[] memory actors = new address[](3);
         actors[0] = loanWithId.loan.lender;
-        actors[1] = getAnotherUser(actors[0]);
+        actors[1] = payer[0];
         actors[2] = loanWithId.loan.borrower;
         if (blocked) {
             token2.blockTransfers(true, actors[0]);
         }
         _repayLoanPreconditions(loanWithId, actors[1]);
-        uint256[] memory loanIds = new uint256[](1);
-        loanIds[0] = loanWithId.loanId;
-        _before(actors, loanIds);
+        _before(actors);
 
         (bool success, bytes memory returnData) = _repayLoanCall(actors[1], loanWithId.loanId);
 
@@ -113,34 +112,39 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
             return;
         }
 
-        Spro.LoanWithId[] memory loanWithIds = new Spro.LoanWithId[](size);
-        for (uint256 i = 0; i < loanWithIds.length; i++) {
-            loanWithIds[i] = getRandomLoan(seed / size + i);
-        }
+        Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seed, size);
         address[] memory actors = new address[](size * 2 + 1);
-        for (uint256 i = 0; i < loanWithIds.length; i += 2) {
-            actors[i] = loanWithIds[i].loan.lender;
-            actors[i + 1] = loanWithIds[i].loan.borrower;
-            if (blocked) {
-                token2.blockTransfers(true, actors[i]);
-            }
-        }
-        address payer = address(0x0000000000000000000000000000000000000001);
-        actors[actors.length - 1] = payer;
-        vm.prank(payer);
-        token2.approve(address(spro), type(uint256).max);
+        address[] memory payer = getRandomUsers(uint256(keccak256(abi.encode(seed))), 1);
+        actors[actors.length - 1] = payer[0];
         (
             Spro.LoanWithId[] memory repayableLoans,
             uint256[] memory repayableLoanIds,
             uint256[] memory loanIds,
             uint256 totalRepaymentAmount
-        ) = _repayMultipleLoansPreconditions(loanWithIds, payer);
-        _before(actors, repayableLoanIds);
+        ) = _repayMultipleLoansPreconditions(loanWithIds, actors[actors.length - 1]);
 
-        (bool success, bytes memory returnData) = _repayMultipleLoansCall(payer, loanIds);
+        if (totalRepaymentAmount == 0) {
+            return;
+        }
+        for (uint256 i = 0; i < repayableLoans.length; i += 2) {
+            actors[i] = repayableLoans[i].loan.lender;
+            actors[i + 1] = repayableLoans[i].loan.borrower;
+            if (blocked) {
+                token2.blockTransfers(true, actors[i]);
+            }
+        }
+        _before(actors);
+
+        (bool success, bytes memory returnData) = _repayMultipleLoansCall(actors[actors.length - 1], repayableLoanIds);
 
         _repayMultipleLoansPostconditions(
-            success, returnData, repayableLoans, repayableLoanIds, actors, payer, totalRepaymentAmount
+            success,
+            returnData,
+            repayableLoans,
+            repayableLoanIds,
+            actors,
+            actors[actors.length - 1],
+            totalRepaymentAmount
         );
     }
 }
