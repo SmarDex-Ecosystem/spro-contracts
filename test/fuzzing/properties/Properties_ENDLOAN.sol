@@ -15,26 +15,19 @@ contract Properties_ENDLOAN is FuzzStorageVariables {
 
     function invariant_ENDLOAN_02(address payer, address lender, uint256 loanId) internal view {
         if (
-            (
-                payer != lender && state[0].loanStatus[loanId] == LoanStatus.REPAYABLE
-                    && state[1].loanStatus[loanId] == LoanStatus.PAID_BACK
-            )
-                || (
-                    state[0].loanStatus[loanId] == LoanStatus.NOT_REPAYABLE
-                        && state[1].loanStatus[loanId] == LoanStatus.NONE
-                )
+            payer != lender && state[0].loanStatus[loanId] == LoanStatus.REPAYABLE
+                && state[1].loanStatus[loanId] == LoanStatus.PAID_BACK
+                || state[0].loanStatus[loanId] == LoanStatus.NOT_REPAYABLE && state[1].loanStatus[loanId] == LoanStatus.NONE
         ) {
+            assert(false);
             assert(state[1].actorStates[lender].creditBalance == state[0].actorStates[lender].creditBalance);
         }
     }
 
     function invariant_ENDLOAN_03(uint256 loanId) internal view {
         if (
-            (state[0].loanStatus[loanId] == LoanStatus.REPAYABLE && state[1].loanStatus[loanId] == LoanStatus.NONE)
-                || (
-                    state[0].loanStatus[loanId] == LoanStatus.NOT_REPAYABLE
-                        && state[1].loanStatus[loanId] == LoanStatus.NONE
-                )
+            state[0].loanStatus[loanId] == LoanStatus.REPAYABLE && state[1].loanStatus[loanId] == LoanStatus.NONE
+                || state[0].loanStatus[loanId] == LoanStatus.NOT_REPAYABLE && state[1].loanStatus[loanId] == LoanStatus.NONE
         ) {
             assert(
                 state[1].actorStates[address(spro)].creditBalance == state[0].actorStates[address(spro)].creditBalance
@@ -44,14 +37,10 @@ contract Properties_ENDLOAN is FuzzStorageVariables {
 
     function invariant_ENDLOAN_04(address payer, address lender, Spro.LoanWithId memory loanWithId) internal view {
         if (
-            (
-                payer != lender && state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
+            payer != lender && state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
+                && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
+                || state[0].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
                     && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
-            )
-                || (
-                    state[0].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
-                        && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
-                )
         ) {
             assert(
                 state[1].actorStates[lender].creditBalance
@@ -63,11 +52,9 @@ contract Properties_ENDLOAN is FuzzStorageVariables {
 
     function invariant_ENDLOAN_05(Spro.LoanWithId memory loanWithId) internal view {
         if (
-            (state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE)
-                || (
-                    state[0].loanStatus[loanWithId.loanId] == LoanStatus.NOT_REPAYABLE
-                        && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
-                )
+            state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
+                || state[0].loanStatus[loanWithId.loanId] == LoanStatus.NOT_REPAYABLE
+                    && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
         ) {
             assert(
                 state[1].actorStates[address(spro)].collateralBalance
