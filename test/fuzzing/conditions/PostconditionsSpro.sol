@@ -114,11 +114,6 @@ contract PostconditionsSpro is Properties {
             }
             // invariant_REPAYMUL_02(amountPayback);
             // invariant_REPAYMUL_04(payer, totalRepaymentAmount - creditForPayer);
-            // invariant_ENDLOAN_01(actors[i]);
-            // invariant_ENDLOAN_02(actors[i], i);
-            // invariant_ENDLOAN_03(i);
-            // invariant_ENDLOAN_04(loanWithIds[i], actors[i], i);
-            // invariant_ENDLOAN_05(loanWithIds[i], i);
         } else {
             invariant_ERR(returnData);
         }
