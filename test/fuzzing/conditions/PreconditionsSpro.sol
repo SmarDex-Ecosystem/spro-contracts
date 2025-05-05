@@ -70,7 +70,6 @@ contract PreconditionsSpro is Test, Properties {
         returns (
             Spro.LoanWithId[] memory repayableLoans,
             uint256[] memory repayableLoanIds,
-            uint256[] memory loanIds,
             uint256 totalRepaymentAmount
         )
     {
@@ -83,7 +82,7 @@ contract PreconditionsSpro is Test, Properties {
             ) {
                 firstRepayable++;
                 if (firstRepayable == loanWithId.length) {
-                    return (repayableLoans, repayableLoanIds, loanIds, totalRepaymentAmount);
+                    return (repayableLoans, repayableLoanIds, totalRepaymentAmount);
                 }
             }
 

@@ -109,9 +109,9 @@ contract PostconditionsSpro is Properties {
     ) internal {
         if (success) {
             _after(actors);
-            // for (uint256 i = 0; i < loanIds.length; i++) {
-            //     invariant_REPAYMUL_01(loanWithIds[i]);
-            // }
+            for (uint256 i = 0; i < loanIds.length; i++) {
+                invariant_REPAYMUL_01(loanWithIds[i]);
+            }
             // uint256 amountPayback;
             // for (uint256 i = 0; i < loanWithIds.length; i++) {
             //     if (state[1].loanStatus[i] == LoanStatus.PAID_BACK) {

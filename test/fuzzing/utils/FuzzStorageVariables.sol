@@ -131,16 +131,14 @@ contract FuzzStorageVariables is Test {
     }
 
     function _removeLoansWithStatusNone() internal {
-        for (uint256 i = 0; i < loans.length; i++) {
-            if (loans[i].loan.status == ISproTypes.LoanStatus.NONE) {
-                while (loans[loans.length - 1].loan.status == ISproTypes.LoanStatus.NONE) {
-                    loans.pop();
-                    numberOfLoans--;
-                }
+        uint256 i = 0;
+        while (i < loans.length) {
+            if (LoanStatus.NONE == getStatus(loans[i].loanId)) {
                 loans[i] = loans[loans.length - 1];
                 loans.pop();
                 numberOfLoans--;
-                break;
+            } else {
+                i++;
             }
         }
     }
@@ -153,7 +151,6 @@ contract FuzzStorageVariables is Test {
                 numberOfLoans--;
             } else {
                 loans.push(Spro.LoanWithId(loanId, loan));
-                numberOfLoans++;
             }
         }
     }
