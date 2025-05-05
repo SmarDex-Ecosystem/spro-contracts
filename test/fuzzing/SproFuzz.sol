@@ -117,7 +117,6 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         address[] memory actors = new address[](size * 2 + 1);
         address[] memory payer = getRandomUsers(uint256(keccak256(abi.encode(seed))), 1);
         actors[actors.length - 1] = payer[0];
-        _before(actors);
         (Spro.LoanWithId[] memory repayableLoans, uint256[] memory repayableLoanIds, uint256 totalRepaymentAmount) =
             _repayMultipleLoansPreconditions(loanWithIds, actors[actors.length - 1]);
 

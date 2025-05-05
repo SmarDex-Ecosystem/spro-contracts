@@ -112,15 +112,8 @@ contract PostconditionsSpro is Properties {
             for (uint256 i = 0; i < loanIds.length; i++) {
                 invariant_REPAYMUL_01(loanWithIds[i]);
             }
-            // uint256 amountPayback;
-            // for (uint256 i = 0; i < loanWithIds.length; i++) {
-            //     if (state[1].loanStatus[i] == LoanStatus.PAID_BACK) {
-            //         amountPayback += loanWithIds[i].loan.principalAmount;
-            //         amountPayback += loanWithIds[i].loan.fixedInterestAmount;
-            //     }
-            // }
             // invariant_REPAYMUL_02(amountPayback);
-            // invariant_REPAYMUL_04(payer, totalRepaymentAmount);
+            // invariant_REPAYMUL_04(payer, totalRepaymentAmount - creditForPayer);
             // invariant_ENDLOAN_01(actors[i]);
             // invariant_ENDLOAN_02(actors[i], i);
             // invariant_ENDLOAN_03(i);
