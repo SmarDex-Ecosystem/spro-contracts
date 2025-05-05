@@ -113,7 +113,6 @@ contract FuzzStorageVariables is Test {
     }
 
     function _before(address[] memory actors) internal {
-        fullReset();
         _setStates(0, actors);
         _stateLoan(0);
     }
@@ -121,11 +120,15 @@ contract FuzzStorageVariables is Test {
     function _after(address[] memory actors) internal {
         _setStates(1, actors);
         _newLoan();
-        _removeLoansWithStatusNone();
         _stateLoan(1);
     }
 
-    function fullReset() internal {
+    function _clean() internal {
+        _removeLoansWithStatusNone();
+        _fullReset();
+    }
+
+    function _fullReset() internal {
         delete state[0];
         delete state[1];
     }

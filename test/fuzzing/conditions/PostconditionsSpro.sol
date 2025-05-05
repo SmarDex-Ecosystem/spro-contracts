@@ -27,6 +27,7 @@ contract PostconditionsSpro is Properties {
         } else {
             invariant_ERR(returnData);
         }
+        _clean();
     }
 
     function _cancelProposalPostconditions(
@@ -50,6 +51,7 @@ contract PostconditionsSpro is Properties {
         } else {
             invariant_ERR(returnData);
         }
+        _clean();
     }
 
     function _createLoanPostconditions(
@@ -73,6 +75,7 @@ contract PostconditionsSpro is Properties {
         } else {
             invariant_ERR(returnData);
         }
+        _clean();
     }
 
     function _repayLoanPostconditions(
@@ -83,18 +86,27 @@ contract PostconditionsSpro is Properties {
     ) internal {
         if (success) {
             _after(actors);
+
+            uint256 stateIndex = 0;
+            for (uint256 j = 0; j < loans.length; j++) {
+                if (loanWithId.loanId == loans[j].loanId) {
+                    stateIndex = j;
+                    break;
+                }
+            }
             invariant_REPAY_01(loanWithId);
-            invariant_REPAY_02(loanWithId);
+            invariant_REPAY_02(loanWithId, stateIndex);
             invariant_REPAY_03(loanWithId, actors[2]);
-            invariant_REPAY_04(loanWithId, actors[1], actors[0]);
+            invariant_REPAY_04(loanWithId, stateIndex, actors[1], actors[0]);
             invariant_ENDLOAN_01(actors[0]);
-            invariant_ENDLOAN_02(actors[1], actors[0], loanWithId.loanId);
-            invariant_ENDLOAN_03(loanWithId.loanId);
-            invariant_ENDLOAN_04(loanWithId, actors[0]);
-            invariant_ENDLOAN_05(loanWithId);
+            invariant_ENDLOAN_02(actors[1], actors[0], stateIndex);
+            invariant_ENDLOAN_03(stateIndex);
+            invariant_ENDLOAN_04(loanWithId, stateIndex, actors[0]);
+            invariant_ENDLOAN_05(loanWithId, stateIndex);
         } else {
             invariant_ERR(returnData);
         }
+        _clean();
         token2.blockTransfers(false, address(0));
     }
 
@@ -112,11 +124,32 @@ contract PostconditionsSpro is Properties {
             for (uint256 i = 0; i < loanIds.length; i++) {
                 invariant_REPAYMUL_01(loanWithIds[i]);
             }
-            // invariant_REPAYMUL_02(amountPayback);
-            // invariant_REPAYMUL_04(payer, totalRepaymentAmount - creditForPayer);
+
+            uint256 creditAmountForProtocol;
+            for (uint256 i = 0; i < loanWithIds.length; i++) {
+                uint256 stateIndex = 0;
+                for (uint256 j = 0; j < loans.length; j++) {
+                    if (loanWithIds[i].loanId == loans[j].loanId) {
+                        stateIndex = j;
+                        break;
+                    }
+                }
+                if (
+                    state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
+                        && state[1].loanStatus[stateIndex] == LoanStatus.PAID_BACK
+                ) {
+                    creditAmountForProtocol +=
+                        loanWithIds[i].loan.principalAmount + loanWithIds[i].loan.fixedInterestAmount;
+                }
+            }
+
+            invariant_REPAYMUL_02(creditAmountForProtocol);
+            // invariant_REPAYMUL_04(payer, totalRepaymentAmount);
+            // invariant_REPAYMUL_03(amountForBorrower[j], borrowers[j]);
         } else {
             invariant_ERR(returnData);
         }
+        _clean();
         token2.blockTransfers(false, address(0));
     }
 }
