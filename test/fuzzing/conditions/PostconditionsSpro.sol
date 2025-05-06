@@ -126,6 +126,8 @@ contract PostconditionsSpro is Properties {
             }
 
             uint256 creditAmountForProtocol;
+            // uint256 creditAmountForPayer;
+            totalRepaymentAmount = 0;
             for (uint256 i = 0; i < loanWithIds.length; i++) {
                 uint256 stateIndex = 0;
                 for (uint256 j = 0; j < loans.length; j++) {
@@ -141,11 +143,29 @@ contract PostconditionsSpro is Properties {
                     creditAmountForProtocol +=
                         loanWithIds[i].loan.principalAmount + loanWithIds[i].loan.fixedInterestAmount;
                 }
+
+                // if (
+                //     (
+                //         state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
+                //             && state[1].loanStatus[stateIndex] == LoanStatus.PAID_BACK
+                //     ) || (payer != loanWithIds[i].loan.lender)
+                // ) {
+                //     totalRepaymentAmount +=
+                //         loanWithIds[i].loan.principalAmount + loanWithIds[i].loan.fixedInterestAmount;
+                // }
+
+                // if (
+                //     payer == loanWithIds[i].loan.lender && state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
+                //         && state[1].loanStatus[stateIndex] == LoanStatus.NONE
+                // ) {
+                //     creditAmountForPayer +=
+                //         loanWithIds[i].loan.principalAmount + loanWithIds[i].loan.fixedInterestAmount;
+                // }
             }
 
             invariant_REPAYMUL_02(creditAmountForProtocol);
-            // invariant_REPAYMUL_04(payer, totalRepaymentAmount);
-            // invariant_REPAYMUL_03(amountForBorrower[j], borrowers[j]);
+
+            // invariant_REPAYMUL_04(payer, totalRepaymentAmount, 0);
         } else {
             invariant_ERR(returnData);
         }

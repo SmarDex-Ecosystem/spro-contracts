@@ -24,10 +24,13 @@ contract Properties_REPAYMUL is Properties_REPAY {
         );
     }
 
-    function invariant_REPAYMUL_04(address payer, uint256 totalRepaymentAmount) internal view {
+    function invariant_REPAYMUL_04(address payer, uint256 totalRepaymentAmount, uint256 totalAmountReceived)
+        internal
+        view
+    {
         assert(
             state[1].actorStates[payer].creditBalance
-                == state[0].actorStates[payer].creditBalance - totalRepaymentAmount
+                == state[0].actorStates[payer].creditBalance - totalRepaymentAmount + totalAmountReceived
         );
     }
 }
