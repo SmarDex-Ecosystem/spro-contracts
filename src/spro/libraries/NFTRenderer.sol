@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
-import { IERC20Metadata } from "@openzeppelin/contracts//token/ERC20/extensions/IERC20Metadata.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
