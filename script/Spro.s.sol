@@ -12,8 +12,7 @@ contract Deploy is Script {
     uint16 internal constant PARTIAL_POSITION_BPS = 500;
 
     function run() external {
-        address deployerAddress = vm.envAddress("DEPLOYER_ADDRESS");
-        vm.startBroadcast(deployerAddress);
+        vm.startBroadcast();
 
         Spro spro = new Spro(SDEX_MAINNET, PERMIT2, FEE, PARTIAL_POSITION_BPS);
 

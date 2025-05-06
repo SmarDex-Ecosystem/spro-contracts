@@ -121,3 +121,15 @@ The pre-commit configuration for Husky runs `forge fmt --check` to check the cod
 checks the gas snapshot and prevents committing if it has changed.
 
 In order to setup the git pre-commit hook, run `npm install`.
+
+## Scripts
+
+### Deploy protocol
+
+For a mainnet deployment, you can use the `Spro.s.sol` script with:
+
+```bash
+forge script -f RPC_URL script/Spro.s.sol --broadcast -i 1
+```
+
+You can use `-t` or `-l` options instead of `-i 1` for trezor or ledger hardware wallet.
