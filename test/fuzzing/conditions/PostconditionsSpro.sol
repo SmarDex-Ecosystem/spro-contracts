@@ -5,7 +5,6 @@ import { Properties } from "../properties/Properties.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { Spro } from "src/spro/Spro.sol";
-import { console2 } from "forge-std/console2.sol";
 
 contract PostconditionsSpro is Properties {
     function _createProposalPostconditions(
@@ -111,11 +110,6 @@ contract PostconditionsSpro is Properties {
         token2.blockTransfers(false, address(0));
     }
 
-    struct BorrowerInfo {
-        address borrower;
-        uint256 totalCollateral;
-    }
-
     function _repayMultipleLoansPostconditions(
         bool success,
         bytes memory returnData,
@@ -131,58 +125,57 @@ contract PostconditionsSpro is Properties {
             }
 
             uint256 creditAmountForProtocol;
-            uint256 totalRepaymentAmount = 0;
+            uint256 totalRepaymentAmount;
+            address[] memory borrowers = new address[](loanWithIds.length);
+            uint256[] memory totalCollaterals = new uint256[](loanWithIds.length);
+            uint256 borrowerCount;
+
             for (uint256 i = 0; i < loanWithIds.length; i++) {
-                uint256 stateIndex = 0;
+                Spro.LoanWithId memory loanWithId = loanWithIds[i];
+                uint256 stateIndex;
+
                 for (uint256 j = 0; j < loans.length; j++) {
-                    if (loanWithIds[i].loanId == loans[j].loanId) {
+                    if (loanWithId.loanId == loans[j].loanId) {
                         stateIndex = j;
                         break;
                     }
                 }
+
                 if (
                     state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
                         && state[1].loanStatus[stateIndex] == LoanStatus.PAID_BACK
                 ) {
-                    creditAmountForProtocol +=
-                        loanWithIds[i].loan.principalAmount + loanWithIds[i].loan.fixedInterestAmount;
+                    creditAmountForProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
                 }
-
                 if (
-                    (
-                        state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
-                            && state[1].loanStatus[stateIndex] == LoanStatus.PAID_BACK
-                    ) || (payer != loanWithIds[i].loan.lender)
+                    state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
+                        && state[1].loanStatus[stateIndex] == LoanStatus.PAID_BACK || payer != loanWithId.loan.lender
                 ) {
-                    totalRepaymentAmount +=
-                        loanWithIds[i].loan.principalAmount + loanWithIds[i].loan.fixedInterestAmount;
+                    totalRepaymentAmount += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
                 }
-            }
 
-            BorrowerInfo[] memory borrowerInfos = new BorrowerInfo[](loanWithIds.length);
-            uint256 borrowerCount = 0;
-
-            for (uint256 i = 0; i < loanWithIds.length; i++) {
-                address currentBorrower = loanWithIds[i].loan.borrower;
-                uint256 collateral = loanWithIds[i].loan.collateralAmount;
+                address borrower = loanWithId.loan.borrower;
+                uint256 collateral = loanWithId.loan.collateralAmount;
                 bool found = false;
 
                 for (uint256 j = 0; j < borrowerCount; j++) {
-                    if (borrowerInfos[j].borrower == currentBorrower) {
-                        borrowerInfos[j].totalCollateral += collateral;
+                    if (borrowers[j] == borrower) {
+                        totalCollaterals[j] += collateral;
                         found = true;
                         break;
                     }
                 }
+
                 if (!found) {
-                    borrowerInfos[borrowerCount] = BorrowerInfo(currentBorrower, collateral);
+                    borrowers[borrowerCount] = borrower;
+                    totalCollaterals[borrowerCount] = collateral;
                     borrowerCount++;
                 }
             }
 
             invariant_REPAYMUL_02(creditAmountForProtocol);
             for (uint256 i = 0; i < borrowerCount; i++) {
-                invariant_REPAYMUL_03(borrowerInfos[i].totalCollateral, borrowerInfos[i].borrower);
+                invariant_REPAYMUL_03(totalCollaterals[i], borrowers[i]);
             }
             invariant_REPAYMUL_04(payer, totalRepaymentAmount);
         } else {

@@ -7,7 +7,6 @@ import { PreconditionsSpro } from "./conditions/PreconditionsSpro.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { Spro } from "src/spro/Spro.sol";
-import { console2 } from "forge-std/console2.sol";
 
 contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
     constructor() payable {
@@ -109,14 +108,14 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
     }
 
     function fuzz_repayMultipleLoans(uint256 seed, uint256 size, bool blocked) public {
-        if (loans.length < 1) {
+        if (loans.length == 0) {
             return;
         }
 
-        size = bound(size, 1, loans.length - 1);
+        size = bound(size, 1, loans.length);
         Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seed, size);
-        address[] memory actors = new address[](size * 2 + 1);
         address[] memory payer = getRandomUsers(uint256(keccak256(abi.encode(seed))), 1);
+        address[] memory actors = new address[](size * 2 + 1);
         actors[actors.length - 1] = payer[0];
         (Spro.LoanWithId[] memory repayableLoans, uint256[] memory repayableLoanIds, uint256 totalRepaymentAmount) =
             _repayMultipleLoansPreconditions(loanWithIds, actors[actors.length - 1]);
@@ -128,7 +127,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
             actors[i * 2] = repayableLoans[i].loan.lender;
             actors[i * 2 + 1] = repayableLoans[i].loan.borrower;
             if (blocked) {
-                token2.blockTransfers(true, actors[i]);
+                token2.blockTransfers(true, actors[i * 2]);
             }
         }
         _before(actors);
