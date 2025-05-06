@@ -23,10 +23,10 @@ contract Properties_REPAY is FuzzStorageVariables {
         }
     }
 
-    function invariant_REPAY_03(Spro.LoanWithId memory loanWithId, address borrower) internal view {
+    function invariant_REPAY_03(uint256 collateralAmount, address borrower) internal view {
         assert(
             state[1].actorStates[borrower].collateralBalance
-                == state[0].actorStates[borrower].collateralBalance + loanWithId.loan.collateralAmount
+                == state[0].actorStates[borrower].collateralBalance + collateralAmount
         );
     }
 

@@ -7,6 +7,7 @@ import { PreconditionsSpro } from "./conditions/PreconditionsSpro.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { Spro } from "src/spro/Spro.sol";
+import { console2 } from "forge-std/console2.sol";
 
 contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
     constructor() payable {
@@ -123,9 +124,9 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         if (totalRepaymentAmount == 0) {
             return;
         }
-        for (uint256 i = 0; i < repayableLoans.length; i += 2) {
-            actors[i] = repayableLoans[i].loan.lender;
-            actors[i + 1] = repayableLoans[i].loan.borrower;
+        for (uint256 i = 0; i < repayableLoans.length; i++) {
+            actors[i * 2] = repayableLoans[i].loan.lender;
+            actors[i * 2 + 1] = repayableLoans[i].loan.borrower;
             if (blocked) {
                 token2.blockTransfers(true, actors[i]);
             }

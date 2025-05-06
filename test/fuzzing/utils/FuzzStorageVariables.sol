@@ -107,9 +107,9 @@ contract FuzzStorageVariables is Test {
     }
 
     function _setActorState(uint8 index, address actor) internal {
-        state[index].actorStates[actor].collateralBalance = T20(token1).balanceOf(actor);
-        state[index].actorStates[actor].creditBalance = T20(token2).balanceOf(actor);
-        state[index].actorStates[actor].sdexBalance = T20(sdex).balanceOf(actor);
+        state[index].actorStates[actor].collateralBalance = token1.balanceOf(actor);
+        state[index].actorStates[actor].creditBalance = token2.balanceOf(actor);
+        state[index].actorStates[actor].sdexBalance = sdex.balanceOf(actor);
     }
 
     function _before(address[] memory actors) internal {

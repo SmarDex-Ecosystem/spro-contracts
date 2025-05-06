@@ -17,20 +17,14 @@ contract Properties_REPAYMUL is Properties_REPAY {
         );
     }
 
-    function invariant_REPAYMUL_03(uint256 collateralAmountForBorrower, address borrower) internal view {
-        assert(
-            state[1].actorStates[borrower].collateralBalance
-                == state[0].actorStates[borrower].collateralBalance + collateralAmountForBorrower
-        );
+    function invariant_REPAYMUL_03(uint256 collateralAmount, address borrower) internal view {
+        invariant_REPAY_03(collateralAmount, borrower);
     }
 
-    function invariant_REPAYMUL_04(address payer, uint256 totalRepaymentAmount, uint256 totalAmountReceived)
-        internal
-        view
-    {
+    function invariant_REPAYMUL_04(address payer, uint256 totalRepaymentAmount) internal view {
         assert(
             state[1].actorStates[payer].creditBalance
-                == state[0].actorStates[payer].creditBalance - totalRepaymentAmount + totalAmountReceived
+                == state[0].actorStates[payer].creditBalance - totalRepaymentAmount
         );
     }
 }
