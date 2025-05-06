@@ -135,13 +135,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         (bool success, bytes memory returnData) = _repayMultipleLoansCall(actors[actors.length - 1], repayableLoanIds);
 
         _repayMultipleLoansPostconditions(
-            success,
-            returnData,
-            repayableLoans,
-            repayableLoanIds,
-            actors,
-            actors[actors.length - 1],
-            totalRepaymentAmount
+            success, returnData, repayableLoans, repayableLoanIds, actors, actors[actors.length - 1]
         );
     }
 }

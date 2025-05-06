@@ -116,8 +116,7 @@ contract PostconditionsSpro is Properties {
         Spro.LoanWithId[] memory loanWithIds,
         uint256[] memory loanIds,
         address[] memory actors,
-        address payer,
-        uint256 totalRepaymentAmount
+        address payer
     ) internal {
         if (success) {
             _after(actors);
@@ -127,7 +126,7 @@ contract PostconditionsSpro is Properties {
 
             uint256 creditAmountForProtocol;
             // uint256 creditAmountForPayer;
-            totalRepaymentAmount = 0;
+            uint256 totalRepaymentAmount = 0;
             for (uint256 i = 0; i < loanWithIds.length; i++) {
                 uint256 stateIndex = 0;
                 for (uint256 j = 0; j < loans.length; j++) {
@@ -144,28 +143,28 @@ contract PostconditionsSpro is Properties {
                         loanWithIds[i].loan.principalAmount + loanWithIds[i].loan.fixedInterestAmount;
                 }
 
-                // if (
-                //     (
-                //         state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
-                //             && state[1].loanStatus[stateIndex] == LoanStatus.PAID_BACK
-                //     ) || (payer != loanWithIds[i].loan.lender)
-                // ) {
-                //     totalRepaymentAmount +=
-                //         loanWithIds[i].loan.principalAmount + loanWithIds[i].loan.fixedInterestAmount;
-                // }
+                if (
+                    (
+                        state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
+                            && state[1].loanStatus[stateIndex] == LoanStatus.PAID_BACK
+                    ) || (payer != loanWithIds[i].loan.lender)
+                ) {
+                    totalRepaymentAmount +=
+                        loanWithIds[i].loan.principalAmount + loanWithIds[i].loan.fixedInterestAmount;
+                }
 
                 // if (
                 //     payer == loanWithIds[i].loan.lender && state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
                 //         && state[1].loanStatus[stateIndex] == LoanStatus.NONE
                 // ) {
-                //     creditAmountForPayer +=
+                //     totalRepaymentAmount +=
                 //         loanWithIds[i].loan.principalAmount + loanWithIds[i].loan.fixedInterestAmount;
                 // }
             }
 
             invariant_REPAYMUL_02(creditAmountForProtocol);
 
-            // invariant_REPAYMUL_04(payer, totalRepaymentAmount, 0);
+            invariant_REPAYMUL_04(payer, totalRepaymentAmount, 0);
         } else {
             invariant_ERR(returnData);
         }

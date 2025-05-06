@@ -77,7 +77,8 @@ contract PreconditionsSpro is Test, Properties {
             uint256 firstRepayable = 0;
             while (
                 !spro.i_isLoanRepayable(
-                    loanWithId[firstRepayable].loan.status, loanWithId[firstRepayable].loan.loanExpiration
+                    spro.getLoan(loanWithId[firstRepayable].loanId).status,
+                    loanWithId[firstRepayable].loan.loanExpiration
                 )
             ) {
                 firstRepayable++;
@@ -93,7 +94,9 @@ contract PreconditionsSpro is Test, Properties {
             for (uint256 i = firstRepayable; i < loanWithId.length; i++) {
                 if (
                     firstCreditAddress == loanWithId[i].loan.creditAddress
-                        && spro.i_isLoanRepayable(loanWithId[i].loan.status, loanWithId[i].loan.loanExpiration)
+                        && spro.i_isLoanRepayable(
+                            spro.getLoan(loanWithId[i].loanId).status, loanWithId[i].loan.loanExpiration
+                        )
                 ) {
                     temporaryLoanIds[count] = loanWithId[i].loanId;
                     temporaryLoanWithId[count] = loanWithId[i];
