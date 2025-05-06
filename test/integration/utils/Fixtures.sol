@@ -54,7 +54,7 @@ contract SDBaseIntegrationTest is Test {
         sdex = new T20("SDEX", "SDEX");
 
         vm.prank(ADMIN);
-        spro = new Spro(address(sdex), address(permit2), FEE, PARTIAL_POSITION_BPS);
+        spro = new Spro(address(sdex), address(permit2), FEE, PARTIAL_POSITION_BPS, address(this));
 
         loanToken = spro._loanToken();
 
