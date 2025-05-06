@@ -74,7 +74,7 @@ contract PreconditionsSpro is Test, Properties {
         )
     {
         {
-            uint256 firstRepayable = 0;
+            uint256 firstRepayable;
             while (
                 !spro.i_isLoanRepayable(
                     spro.getLoan(loanWithId[firstRepayable].loanId).status,
@@ -111,7 +111,6 @@ contract PreconditionsSpro is Test, Properties {
 
             repayableLoans = new Spro.LoanWithId[](count);
             repayableLoanIds = new uint256[](count);
-
             for (uint256 i = 0; i < count; i++) {
                 repayableLoans[i] = temporaryLoanWithId[i];
                 repayableLoanIds[i] = temporaryLoanIds[i];
