@@ -98,10 +98,10 @@ contract PostconditionsSpro is Properties {
             invariant_REPAY_02(loanWithId, stateIndex);
             invariant_REPAY_03(loanWithId.loan.collateralAmount, actors[2]);
             invariant_REPAY_04(loanWithId, stateIndex, actors[1], actors[0]);
-            invariant_ENDLOAN_01(actors[0]);
+            invariant_ENDLOAN_01(actors[0], stateIndex);
             invariant_ENDLOAN_02(actors[1], actors[0], stateIndex);
             invariant_ENDLOAN_03(stateIndex);
-            invariant_ENDLOAN_04(loanWithId, stateIndex, actors[0]);
+            invariant_ENDLOAN_04(loanWithId, stateIndex, actors[1], actors[0]);
             invariant_ENDLOAN_05(loanWithId, stateIndex);
         } else {
             invariant_ERR(returnData);
@@ -183,5 +183,35 @@ contract PostconditionsSpro is Properties {
         }
         _clean();
         token2.blockTransfers(false, address(0));
+    }
+
+    function _claimLoanPostconditions(
+        bool success,
+        bytes memory returnData,
+        Spro.LoanWithId memory loanWithId,
+        address[] memory actors
+    ) internal {
+        if (success) {
+            _after(actors);
+
+            uint256 stateIndex = 0;
+            for (uint256 j = 0; j < loans.length; j++) {
+                if (loanWithId.loanId == loans[j].loanId) {
+                    stateIndex = j;
+                    break;
+                }
+            }
+            invariant_CLAIM_01(stateIndex);
+            invariant_CLAIM_02(loanWithId, stateIndex);
+            invariant_CLAIM_03(loanWithId, stateIndex, actors[0]);
+            invariant_ENDLOAN_01(actors[0], stateIndex);
+            invariant_ENDLOAN_02(actors[1], actors[0], stateIndex);
+            invariant_ENDLOAN_03(stateIndex);
+            invariant_ENDLOAN_04(loanWithId, stateIndex, actors[0], actors[0]);
+            invariant_ENDLOAN_05(loanWithId, stateIndex);
+        } else {
+            invariant_ERR(returnData);
+        }
+        _clean();
     }
 }
