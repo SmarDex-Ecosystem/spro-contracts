@@ -15,7 +15,7 @@ contract SproStorage is ISproStorage {
     uint256 public constant BPS_DIVISOR = 10_000;
 
     /// @inheritdoc ISproStorage
-    uint256 public constant MAX_SDEX_FEE = 1_000_000e18; // 1,000,000 SDEX
+    uint256 public constant MAX_SDEX_FEE = 10_000_000e18; // 10,000,000 SDEX
 
     /// @inheritdoc ISproStorage
     uint32 public constant MIN_LOAN_DURATION = 10 minutes;

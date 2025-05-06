@@ -33,8 +33,9 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
      * @param permit2 The permit2 contract address.
      * @param fee The fixed SDEX fee value.
      * @param partialPositionBps The minimum usage ratio for partial lending (in basis points).
+     * @param owner The initial owner of the protocol.
      */
-    constructor(address sdex, address permit2, uint256 fee, uint16 partialPositionBps) Ownable(msg.sender) {
+    constructor(address sdex, address permit2, uint256 fee, uint16 partialPositionBps, address owner) Ownable(owner) {
         if (sdex == address(0) || permit2 == address(0)) {
             revert ZeroAddress();
         }

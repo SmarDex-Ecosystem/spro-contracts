@@ -12,7 +12,7 @@ contract SproInternalTest is Test {
     SproHandler sproHandler;
 
     function setUp() public {
-        sproHandler = new SproHandler(address(1), address(1), 1, 1);
+        sproHandler = new SproHandler(address(1), address(1), 1, 1, address(this));
     }
 
     function test_isLoanRepayable() external view {

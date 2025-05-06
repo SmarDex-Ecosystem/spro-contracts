@@ -21,7 +21,7 @@ contract SproTest is Test {
     uint16 partialPositionBps = 900;
 
     function setUp() public virtual {
-        spro = new Spro(sdex, permit2, FEE, partialPositionBps);
+        spro = new Spro(sdex, permit2, FEE, partialPositionBps, owner);
     }
 }
 
@@ -39,25 +39,25 @@ contract TestSproConstructor is SproTest {
 
     function test_RevertWhen_incorrectPartialPositionBps() external {
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, 0));
-        new Spro(sdex, permit2, FEE, 0);
+        new Spro(sdex, permit2, FEE, 0, owner);
 
         uint256 bpsDivisor = spro.BPS_DIVISOR();
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, bpsDivisor / 2 + 1));
-        new Spro(sdex, permit2, FEE, uint16(bpsDivisor / 2 + 1));
+        new Spro(sdex, permit2, FEE, uint16(bpsDivisor / 2 + 1), owner);
     }
 
     function test_RevertWhen_zeroAddress() external {
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.ZeroAddress.selector));
-        new Spro(address(0), permit2, FEE, partialPositionBps);
+        new Spro(address(0), permit2, FEE, partialPositionBps, owner);
 
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.ZeroAddress.selector));
-        new Spro(sdex, address(0), FEE, partialPositionBps);
+        new Spro(sdex, address(0), FEE, partialPositionBps, owner);
     }
 
     function test_RevertWhen_incorrectFee() external {
         uint256 maxSdexFee = spro.MAX_SDEX_FEE();
         vm.expectRevert(abi.encodeWithSelector(ISproErrors.ExcessiveFee.selector, maxSdexFee + 1));
-        new Spro(sdex, permit2, maxSdexFee + 1, partialPositionBps);
+        new Spro(sdex, permit2, maxSdexFee + 1, partialPositionBps, owner);
     }
 }
 
