@@ -78,12 +78,8 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
         (success, returnData) = address(spro).call(abi.encodeWithSelector(ISpro.claimLoan.selector, loanId));
     }
 
-    function _transferNFTCall(address caller, address to, uint256 tokenId)
-        internal
-        returns (bool success, bytes memory returnData)
-    {
+    function _transferNFTCall(address caller, address to, uint256 tokenId) internal returns (bool success) {
         vm.prank(caller);
-        (success, returnData) =
-            address(sproLoan).call(abi.encodeWithSelector(IERC721.transferFrom.selector, caller, to, tokenId));
+        (success,) = address(sproLoan).call(abi.encodeWithSelector(IERC721.transferFrom.selector, caller, to, tokenId));
     }
 }
