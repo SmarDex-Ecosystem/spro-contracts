@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.0;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
