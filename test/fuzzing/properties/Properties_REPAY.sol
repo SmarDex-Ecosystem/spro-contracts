@@ -35,10 +35,8 @@ contract Properties_REPAY is FuzzStorageVariables {
         view
     {
         if (
-            (
-                state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
-                    && state[1].loanStatus[stateIndex] == LoanStatus.PAID_BACK
-            ) || (payer != lender)
+            state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
+                && state[1].loanStatus[stateIndex] == LoanStatus.PAID_BACK || payer != lender
         ) {
             assert(
                 state[1].actorStates[payer].creditBalance
