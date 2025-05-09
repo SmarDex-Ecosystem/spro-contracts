@@ -8,8 +8,8 @@
       "foundry.toml",
       "soldeer.lock",
       "dist/abi/*",
-      "docs/**/*",
       "README.md"
-    ]
+    ],
+    "exclude": ["!docs/**/*"]
   }
 }
