@@ -4,7 +4,7 @@
   "version": "0.2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SmarDex-Ecosystem/SPRO_contracts.git"
+    "url": "git+https://github.com/SmarDex-Ecosystem/spro-contracts.git"
   },
   "author": {
     "name": "RA2 Tech SA",
