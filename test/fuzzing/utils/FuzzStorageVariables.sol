@@ -15,7 +15,7 @@ contract FuzzStorageVariables is Test {
     T20 token1;
     T20 token2;
     SproHandler spro;
-    SproLoan sproLoan;
+    SproLoan loanToken;
     uint256 numberOfProposals;
     uint256 numberOfLoans;
 
