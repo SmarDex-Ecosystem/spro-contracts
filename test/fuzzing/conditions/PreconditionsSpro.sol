@@ -67,11 +67,7 @@ contract PreconditionsSpro is Test, Properties {
 
     function _repayMultipleLoansPreconditions(Spro.LoanWithId[] memory loanWithId, address payer)
         internal
-        returns (
-            Spro.LoanWithId[] memory repayableLoans,
-            uint256[] memory repayableLoanIds,
-            uint256 totalRepaymentAmount
-        )
+        returns (uint256 totalRepaymentAmount)
     {
         {
             uint256 firstRepayable;
@@ -83,7 +79,7 @@ contract PreconditionsSpro is Test, Properties {
             ) {
                 firstRepayable++;
                 if (firstRepayable == loanWithId.length) {
-                    return (repayableLoans, repayableLoanIds, totalRepaymentAmount);
+                    return 0;
                 }
             }
 
@@ -109,11 +105,9 @@ contract PreconditionsSpro is Test, Properties {
                 token2.mint(payer, totalRepaymentAmount - token2.balanceOf(payer));
             }
 
-            repayableLoans = new Spro.LoanWithId[](count);
-            repayableLoanIds = new uint256[](count);
             for (uint256 i = 0; i < count; i++) {
-                repayableLoans[i] = temporaryLoanWithId[i];
-                repayableLoanIds[i] = temporaryLoanIds[i];
+                repayableLoans.push(temporaryLoanWithId[i]);
+                repayableLoanIds.push(temporaryLoanIds[i]);
             }
         }
     }

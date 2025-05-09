@@ -113,25 +113,23 @@ contract PostconditionsSpro is Properties {
     function _repayMultipleLoansPostconditions(
         bool success,
         bytes memory returnData,
-        Spro.LoanWithId[] memory loanWithIds,
-        uint256[] memory loanIds,
         address[] memory actors,
         address payer
     ) internal {
         if (success) {
             _after(actors);
-            for (uint256 i = 0; i < loanIds.length; i++) {
-                invariant_REPAYMUL_01(loanWithIds[i]);
+            for (uint256 i = 0; i < repayableLoanIds.length; i++) {
+                invariant_REPAYMUL_01(repayableLoans[i]);
             }
 
             uint256 creditAmountForProtocol;
             uint256 totalRepaymentAmount;
-            address[] memory borrowers = new address[](loanWithIds.length);
-            uint256[] memory totalCollaterals = new uint256[](loanWithIds.length);
+            address[] memory borrowers = new address[](repayableLoans.length);
+            uint256[] memory totalCollaterals = new uint256[](repayableLoans.length);
             uint256 borrowerCount;
 
-            for (uint256 i = 0; i < loanWithIds.length; i++) {
-                Spro.LoanWithId memory loanWithId = loanWithIds[i];
+            for (uint256 i = 0; i < repayableLoans.length; i++) {
+                Spro.LoanWithId memory loanWithId = repayableLoans[i];
                 uint256 stateIndex;
 
                 for (uint256 j = 0; j < loans.length; j++) {

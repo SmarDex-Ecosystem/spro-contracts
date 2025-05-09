@@ -136,8 +136,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         address[] memory payer = getRandomUsers(uint256(keccak256(abi.encode(seed))), 1);
         address[] memory actors = new address[](size * 2 + 1);
         actors[actors.length - 1] = payer[0];
-        (Spro.LoanWithId[] memory repayableLoans, uint256[] memory repayableLoanIds, uint256 totalRepaymentAmount) =
-            _repayMultipleLoansPreconditions(loanWithIds, actors[actors.length - 1]);
+        uint256 totalRepaymentAmount = _repayMultipleLoansPreconditions(loanWithIds, actors[actors.length - 1]);
 
         if (totalRepaymentAmount == 0) {
             return;
@@ -153,8 +152,6 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
 
         (bool success, bytes memory returnData) = _repayMultipleLoansCall(actors[actors.length - 1], repayableLoanIds);
 
-        _repayMultipleLoansPostconditions(
-            success, returnData, repayableLoans, repayableLoanIds, actors, actors[actors.length - 1]
-        );
+        _repayMultipleLoansPostconditions(success, returnData, actors, actors[actors.length - 1]);
     }
 }
