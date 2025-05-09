@@ -31,9 +31,6 @@ dependencies/
 .coverage/
 lcov.info
 
-# docs
-docs/
-
 # IDE
 .idea/
 
