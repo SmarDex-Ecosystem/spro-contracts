@@ -10,6 +10,6 @@
       "dist/abi/*",
       "README.md"
     ],
-    "exclude": ["!docs"]
+    "exclude": ["!docs", "!docs/*", "!docs/*/*", "!docs/*/*/*", "!docs/*/*/*/*"]
   }
 }
