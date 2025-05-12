@@ -1,0 +1,15 @@
+{
+  "name": "@smardex/spro-contracts",
+  "version": "0.2.0",
+  "exports": "./dist/abi/index.ts",
+  "publish": {
+    "include": [
+      "src/**/*",
+      "foundry.toml",
+      "soldeer.lock",
+      "dist/abi/*",
+      "README.md",
+      "docs"
+    ]
+  }
+}

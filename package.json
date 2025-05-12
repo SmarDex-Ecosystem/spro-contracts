@@ -2,7 +2,10 @@
   "name": "@smardex/spro",
   "description": "Spro",
   "version": "0.2.0",
-  "repository": "github:Blockchain-RA2-Tech/foundry-template",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SmarDex-Ecosystem/spro-contracts.git"
+  },
   "author": {
     "name": "RA2 Tech SA",
     "url": "https://ra2.tech"
@@ -30,8 +33,11 @@
   },
   "files": [
     "dist",
-    "broadcast",
-    "docs"
+    "docs",
+    "src/**/*",
+    "foundry.toml",
+    "soldeer.lock",
+    "README.md"
   ],
   "devDependencies": {
     "@biomejs/biome": "^1.9.2",

@@ -5,19 +5,17 @@
 
 # SmarDex fork of PWN Protocol
 
-PWN is a protocol that enables peer-to-peer (P2P) loans using arbitrary collateral. PWN smart contracts support ERC20 standards, making it versatile and adaptable to a wide range of use cases.
+SPRO is a peer-to-peer (P2P) lending protocol that enables the use of arbitrary ERC-20 tokens as collateral. It is designed to provide a secure, flexible, and decentralized approach to on-chain lending.
 
-Key changes made in this fork include:
+Key features and custom logic include:
 
-- Fees are now taken in the SDEX token and these token are burned, no modification is made to the loan/borrow amount.
-- Offchain proposal creation is disabled.
-- Creating a borrow proposal requires transfer of the collateral to the vault.
-- Lenders may no longer create lending proposals, but must match a borrow proposal which has been made onchain.
-- Multiple lenders may partially lend against an ERC-20 borrow request, up to a total specified borrow amount.
-- Removed loan refinance, loan extension features.
-- Thresholds added to the partial lending feature which does not allow a lender to match with less than 5% of the requested borrow amount.
-- Domain separators updated to ensure no permit reuse with the base PWN protocol is possible.
-- All lenders on the same loan have the same loanExpiration.
+- Fees are collected in SDEX tokens and are burned, without modifying the loan or borrow amounts.
+- All proposals must be created on-chain.
+- Borrowers must transfer collateral to the vault when creating a loan request.
+- Lenders cannot initiate lending proposals; they can only match existing on-chain borrow requests.
+- A borrow request can be partially funded by multiple lenders, up to the specified borrow amount.
+- Partial funding requires a minimum threshold: a lender must contribute at least x% of the requested amount.
+- All lenders participating in the same loan share a unified loan expiration date.
 
 ## Installation
 
