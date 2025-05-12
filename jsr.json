@@ -9,9 +9,7 @@
       "soldeer.lock",
       "dist/abi/*",
       "README.md",
-      "docs",
-      "docs/*",
-      "docs/**/*"
+      "docs"
     ]
   }
 }
