@@ -8,7 +8,8 @@
       "foundry.toml",
       "soldeer.lock",
       "dist/abi/*",
-      "README.md"
+      "README.md",
+      "docs"
     ]
   }
 }
