@@ -9,11 +9,9 @@
       "soldeer.lock",
       "dist/abi/*",
       "README.md",
-      "docs/**/*",
+      "docs",
       "docs/*",
-      "docs/*",
-      "docs"
-    ],
-    "exclude": ["!docs", "!docs/*", "!docs/*/*", "!docs/*/*/*", "!docs/*/*/*/*"]
+      "docs/**/*"
+    ]
   }
 }
