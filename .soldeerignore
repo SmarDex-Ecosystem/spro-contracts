@@ -10,8 +10,3 @@
 !foundry.toml
 !soldeer.lock
 !docs/
-!docs/*
-!docs/*/
-!docs/*/*/
-!docs/*/*/*
-!docs/*/*/*/*
