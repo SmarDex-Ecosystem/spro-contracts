@@ -6,26 +6,14 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { INFTRenderer } from "src/interfaces/INFTRenderer.sol";
 
 interface ISproLoan is IERC721 {
-    /* -------------------------------------------------------------------------- */
-    /*                                   Events                                   */
-    /* -------------------------------------------------------------------------- */
-
     /**
      * @notice Emitted when the NFT renderer is updated.
      * @param nftRenderer The new NFT renderer address.
      */
     event NftRendererUpdated(address nftRenderer);
 
-    /* -------------------------------------------------------------------------- */
-    /*                                   Errors                                   */
-    /* -------------------------------------------------------------------------- */
-
     /// @notice The given NFT renderer address is invalid.
     error SproLoanInvalidNftRendererAddress();
-
-    /* -------------------------------------------------------------------------- */
-    /*                                  Functions                                 */
-    /* -------------------------------------------------------------------------- */
 
     /**
      * @notice Retrieves the last used ID.
