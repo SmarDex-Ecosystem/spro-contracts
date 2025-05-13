@@ -64,7 +64,7 @@ contract TestSproLoanSetNftRenderer is SproLoanTest {
 
     function test_setNftRenderer() external {
         NFTRenderer newNftRenderer = new NFTRenderer();
-        vm.expectEmit(true, true, true, true);
+        vm.expectEmit();
         emit ISproLoan.NftRendererUpdated(address(newNftRenderer));
         loanToken.setNftRenderer(newNftRenderer);
 
