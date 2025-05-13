@@ -39,10 +39,10 @@ contract SproLoanTest is Test {
 
 contract TestSproLoanConstructor is SproLoanTest {
     function test_correctNameSymbolOwner() external view {
-        assertTrue(keccak256(abi.encodePacked(loanToken.name())) == keccak256("Spro Loan"));
-        assertTrue(keccak256(abi.encodePacked(loanToken.symbol())) == keccak256("LOAN"));
-        assertTrue(keccak256(abi.encodePacked(loanToken.owner())) == keccak256(abi.encodePacked(address(this))));
-        assertTrue(keccak256(abi.encodePacked(loanToken._nftRenderer())) != keccak256(abi.encodePacked(address(0))));
+        assertEq(loanToken.name(), "Spro Loan");
+        assertEq(loanToken.symbol(), "LOAN");
+        assertEq(loanToken.owner(), address(this));
+        assertTrue(address(loanToken._nftRenderer()) != address(0));
     }
 }
 
