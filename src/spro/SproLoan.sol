@@ -6,15 +6,29 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { ISproLoan } from "src/interfaces/ISproLoan.sol";
 import { ISpro } from "src/interfaces/ISpro.sol";
-import { NFTRenderer } from "src/spro/libraries/NFTRenderer.sol";
+import { NFTRenderer } from "src/spro/NFTRenderer.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract SproLoan is ISproLoan, ERC721, Ownable {
     /// @inheritdoc ISproLoan
     uint256 public _lastLoanId;
 
+    /// @inheritdoc ISproLoan
+    NFTRenderer public _nftRenderer;
+
     /// @param deployer The deployer address.
-    constructor(address deployer) ERC721("Spro Loan", "LOAN") Ownable(deployer) { }
+    constructor(address deployer) ERC721("Spro Loan", "LOAN") Ownable(deployer) {
+        _nftRenderer = new NFTRenderer();
+    }
+
+    /// @inheritdoc ISproLoan
+    function setNftRenderer(NFTRenderer nftRenderer) external onlyOwner {
+        if (address(nftRenderer) == address(0)) {
+            revert ISproLoan.SproLoanInvalidNftRendererAddress();
+        }
+        _nftRenderer = nftRenderer;
+        emit ISproLoan.NftRendererUpdated(address(nftRenderer));
+    }
 
     /// @inheritdoc ISproLoan
     function mint(address to) external onlyOwner returns (uint256 loanId_) {
@@ -31,6 +45,6 @@ contract SproLoan is ISproLoan, ERC721, Ownable {
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory uri_) {
         _requireOwned(tokenId);
         ISproTypes.Loan memory loan = ISpro(owner()).getLoan(tokenId);
-        return NFTRenderer.render(loan);
+        return _nftRenderer.render(loan);
     }
 }

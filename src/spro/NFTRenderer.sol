@@ -7,13 +7,13 @@ import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/I
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
-library NFTRenderer {
+contract NFTRenderer {
     /**
      * @notice Renders the JSON metadata for a given loan NFT.
      * @param loan The loan data.
      * @return uri_ The JSON metadata URI for the loan NFT.
      */
-    function render(ISproTypes.Loan memory loan) internal view returns (string memory uri_) {
+    function render(ISproTypes.Loan memory loan) external view returns (string memory uri_) {
         IERC20Metadata credit = IERC20Metadata(loan.creditAddress);
         IERC20Metadata collateral = IERC20Metadata(loan.collateralAddress);
 

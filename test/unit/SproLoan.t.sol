@@ -11,6 +11,7 @@ import { Base64 } from "solady/src/utils/Base64.sol";
 import { T20 } from "test/helper/T20.sol";
 
 import { SproLoan } from "src/spro/SproLoan.sol";
+import { NFTRenderer } from "src/spro/NFTRenderer.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { ISproLoan } from "src/interfaces/ISproLoan.sol";
 
@@ -41,6 +42,33 @@ contract TestSproLoanConstructor is SproLoanTest {
         assertTrue(keccak256(abi.encodePacked(loanToken.name())) == keccak256("Spro Loan"));
         assertTrue(keccak256(abi.encodePacked(loanToken.symbol())) == keccak256("LOAN"));
         assertTrue(keccak256(abi.encodePacked(loanToken.owner())) == keccak256(abi.encodePacked(address(this))));
+        assertTrue(keccak256(abi.encodePacked(loanToken._nftRenderer())) != keccak256(abi.encodePacked(address(0))));
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                   SETTER                                   */
+/* -------------------------------------------------------------------------- */
+
+contract TestSproLoanSetNftRenderer is SproLoanTest {
+    function test_RevertWhen_setNftRendererToZeroAddress() external {
+        vm.expectRevert(abi.encodeWithSelector(ISproLoan.SproLoanInvalidNftRendererAddress.selector));
+        loanToken.setNftRenderer(NFTRenderer(address(0)));
+    }
+
+    function test_RevertWhen_nonOwner() external {
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
+        vm.prank(alice);
+        loanToken.setNftRenderer(NFTRenderer(address(0)));
+    }
+
+    function test_setNftRenderer() external {
+        NFTRenderer newNftRenderer = new NFTRenderer();
+        vm.expectEmit(true, true, true, true);
+        emit ISproLoan.NftRendererUpdated(address(newNftRenderer));
+        loanToken.setNftRenderer(newNftRenderer);
+
+        assertEq(address(loanToken._nftRenderer()), address(newNftRenderer));
     }
 }
 
