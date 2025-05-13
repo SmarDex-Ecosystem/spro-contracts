@@ -97,7 +97,9 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         actors[1] = payer[0];
         actors[2] = loanWithId.loan.borrower;
         if (blocked) {
-            token2.blockTransfers(true, actors[0]);
+            if (actors[0] != address(spro)) {
+                token2.blockTransfers(true, actors[0]);
+            }
         }
         _repayLoanPreconditions(loanWithId, actors[1]);
         _before(actors);
@@ -126,7 +128,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         _claimLoanPostconditions(success, returnData, loanWithId, actors);
     }
 
-    function fuzz_transferNFT(uint256 seed) public {
+    function fuzz_transferNFT(uint256 seed, bool toIsProtocol) public {
         if (loans.length == 0) {
             return;
         }
@@ -134,7 +136,11 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         Spro.LoanWithId memory loanWithId = getRandomLoan(seed);
         address[] memory actors = new address[](2);
         actors[0] = loanToken.ownerOf(loanWithId.loanId);
-        actors[1] = getAnotherUser(actors[0]);
+        if (toIsProtocol) {
+            actors[1] = address(spro);
+        } else {
+            actors[1] = getAnotherUser(actors[0]);
+        }
 
         bool success = _transferNFTCall(actors[0], actors[1], loanWithId.loanId);
 
