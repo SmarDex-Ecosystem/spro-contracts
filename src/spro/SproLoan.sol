@@ -5,6 +5,7 @@ import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { ISproLoan } from "src/interfaces/ISproLoan.sol";
+import { INFTRenderer } from "src/interfaces/INFTRenderer.sol";
 import { ISpro } from "src/interfaces/ISpro.sol";
 import { NFTRenderer } from "src/spro/NFTRenderer.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
@@ -14,7 +15,7 @@ contract SproLoan is ISproLoan, ERC721, Ownable {
     uint256 public _lastLoanId;
 
     /// @inheritdoc ISproLoan
-    NFTRenderer public _nftRenderer;
+    INFTRenderer public _nftRenderer;
 
     /// @param deployer The deployer address.
     constructor(address deployer) ERC721("Spro Loan", "LOAN") Ownable(deployer) {
@@ -22,7 +23,7 @@ contract SproLoan is ISproLoan, ERC721, Ownable {
     }
 
     /// @inheritdoc ISproLoan
-    function setNftRenderer(NFTRenderer nftRenderer) external onlyOwner {
+    function setNftRenderer(INFTRenderer nftRenderer) external onlyOwner {
         if (address(nftRenderer) == address(0)) {
             revert ISproLoan.SproLoanInvalidNftRendererAddress();
         }

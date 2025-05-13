@@ -3,7 +3,7 @@ pragma solidity >=0.8.0;
 
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-import { NFTRenderer } from "src/spro/NFTRenderer.sol";
+import { INFTRenderer } from "src/interfaces/INFTRenderer.sol";
 
 interface ISproLoan is IERC721 {
     /* -------------------------------------------------------------------------- */
@@ -22,14 +22,14 @@ interface ISproLoan is IERC721 {
      * @dev The NFT renderer is used to render the token URI.
      * @return _nftRenderer The NFT renderer.
      */
-    function _nftRenderer() external view returns (NFTRenderer _nftRenderer);
+    function _nftRenderer() external view returns (INFTRenderer _nftRenderer);
 
     /**
      * @notice Sets the NFT renderer.
      * @dev Only the owner can set the NFT renderer.
      * @param nftRenderer The address of the new NFT renderer.
      */
-    function setNftRenderer(NFTRenderer nftRenderer) external;
+    function setNftRenderer(INFTRenderer nftRenderer) external;
 
     /**
      * @notice Mints a new token.
