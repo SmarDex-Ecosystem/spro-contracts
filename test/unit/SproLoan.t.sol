@@ -39,8 +39,8 @@ contract SproLoanTest is Test {
 
 contract TestSproLoanConstructor is SproLoanTest {
     function test_correctNameSymbolOwner() external view {
-        assertEq(loanToken.name(), "Spro Loan");
-        assertEq(loanToken.symbol(), "LOAN");
+        assertEq(loanToken.name(), "P2P Loan");
+        assertEq(loanToken.symbol(), "P2PLOAN");
         assertEq(loanToken.owner(), address(this));
         assertTrue(address(loanToken._nftRenderer()) != address(0));
     }
