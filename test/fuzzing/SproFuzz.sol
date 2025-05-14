@@ -134,13 +134,14 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         size = bound(size, 1, loans.length);
         Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seed, size);
         address[] memory payer = getRandomUsers(uint256(keccak256(abi.encode(seed))), 1);
-        address[] memory actors = new address[](size * 2 + 1);
-        actors[actors.length - 1] = payer[0];
-        uint256 totalRepaymentAmount = _repayMultipleLoansPreconditions(loanWithIds, actors[actors.length - 1]);
 
+        uint256 totalRepaymentAmount = _repayMultipleLoansPreconditions(loanWithIds, payer[0]);
         if (totalRepaymentAmount == 0) {
             return;
         }
+
+        address[] memory actors = new address[](size * 2 + 1);
+        actors[actors.length - 1] = payer[0];
         for (uint256 i = 0; i < repayableLoans.length; i++) {
             actors[i * 2] = repayableLoans[i].loan.lender;
             actors[i * 2 + 1] = repayableLoans[i].loan.borrower;
@@ -150,8 +151,8 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         }
         _before(actors);
 
-        (bool success, bytes memory returnData) = _repayMultipleLoansCall(actors[actors.length - 1], repayableLoanIds);
+        (bool success, bytes memory returnData) = _repayMultipleLoansCall(payer[0], repayableLoanIds);
 
-        _repayMultipleLoansPostconditions(success, returnData, actors, actors[actors.length - 1]);
+        _repayMultipleLoansPostconditions(success, returnData, actors, payer[0]);
     }
 }
