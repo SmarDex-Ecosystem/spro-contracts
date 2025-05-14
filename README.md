@@ -17,6 +17,8 @@ Key features and custom logic include:
 - Partial funding requires a minimum threshold: a lender must contribute at least x% of the requested amount.
 - All lenders participating in the same loan share a unified loan expiration date.
 
+note: "P2P_Lending" is the new name for the protocol previously referred to as "SPRO". The core functionality remains unchanged. Please note that the smart contracts and tests still use the original name "SPRO" in their naming and structure.
+
 ## Installation
 
 ### Foundry
