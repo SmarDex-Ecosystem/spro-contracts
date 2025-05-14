@@ -5,7 +5,7 @@
 
 # SmarDex fork of PWN Protocol
 
-This peer-to-peer (P2P) lending protocol enables the use of arbitrary ERC-20 tokens as collateral. It is designed to provide a secure, flexible, and decentralized approach to on-chain lending.
+This SMARDEX P2P Lending Protocol enables the use of arbitrary ERC-20 tokens as collateral. It is designed to provide a secure, flexible, and decentralized approach to on-chain lending.
 
 Key features and custom logic include:
 
