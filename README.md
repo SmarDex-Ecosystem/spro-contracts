@@ -1,11 +1,11 @@
-# <h1 align="center">SPRO_contracts</h1>
+# <h1 align="center">P2P_Lending_contracts</h1>
 
 [![Main workflow](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/ci.yml/badge.svg)](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/ci.yml)
 [![Release Workflow](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/release.yml/badge.svg)](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/release.yml)
 
 # SmarDex fork of PWN Protocol
 
-SPRO is a peer-to-peer (P2P) lending protocol that enables the use of arbitrary ERC-20 tokens as collateral. It is designed to provide a secure, flexible, and decentralized approach to on-chain lending.
+This peer-to-peer (P2P) lending protocol enables the use of arbitrary ERC-20 tokens as collateral. It is designed to provide a secure, flexible, and decentralized approach to on-chain lending.
 
 Key features and custom logic include:
 
@@ -16,6 +16,8 @@ Key features and custom logic include:
 - A borrow request can be partially funded by multiple lenders, up to the specified borrow amount.
 - Partial funding requires a minimum threshold: a lender must contribute at least x% of the requested amount.
 - All lenders participating in the same loan share a unified loan expiration date.
+
+note: "P2P_Lending" is the new name for the protocol previously referred to as "SPRO". The core functionality remains unchanged. Please note that the smart contracts and tests still use the original name "SPRO" in their naming and structure.
 
 ## Installation
 

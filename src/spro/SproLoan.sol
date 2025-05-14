@@ -18,7 +18,7 @@ contract SproLoan is ISproLoan, ERC721, Ownable {
     INFTRenderer public _nftRenderer;
 
     /// @param deployer The deployer address.
-    constructor(address deployer) ERC721("Spro Loan", "LOAN") Ownable(deployer) {
+    constructor(address deployer) ERC721("P2P Loan", "P2PLOAN") Ownable(deployer) {
         _nftRenderer = new NFTRenderer();
     }
 

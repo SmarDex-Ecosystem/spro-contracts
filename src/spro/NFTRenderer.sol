@@ -25,12 +25,12 @@ contract NFTRenderer is INFTRenderer {
             renderInfobox(creditTicker, collateralTicker, interest, creditAmount, collateralAmount)
         );
         string memory description =
-            "This NFT represents a unique loan created using the Spro Protocol, which is a key component of the SmarDex.io ecosystem. It enables decentralized lending and borrowing between users";
+            "This NFT represents a unique loan created using the P2PLending Protocol, which is a key component of the SmarDex.io ecosystem. It enables decentralized lending and borrowing between users";
         string memory image = string(abi.encodePacked("data:image/svg+xml;base64,", Base64.encode(svg)));
         string memory attributes =
             renderAttributes(creditTicker, collateralTicker, interest, creditAmount, collateralAmount);
         bytes memory json = abi.encodePacked(
-            '{"name":"Spro loan","description":"',
+            '{"name":"P2P loan","description":"',
             description,
             '","image":"',
             image,
