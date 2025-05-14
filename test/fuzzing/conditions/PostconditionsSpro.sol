@@ -212,4 +212,38 @@ contract PostconditionsSpro is Properties {
         }
         _clean();
     }
+
+    function _claimMultipleLoansPostconditions(bool success, bytes memory returnData, address[] memory actors)
+        internal
+    {
+        if (success) {
+            _after(actors);
+
+            uint256 collateralAmountForProtocol;
+
+            for (uint256 i = 0; i < claimableLoans.length; i++) {
+                Spro.LoanWithId memory loanWithId = claimableLoans[i];
+                uint256 stateIndex;
+
+                for (uint256 j = 0; j < loans.length; j++) {
+                    if (loanWithId.loanId == loans[j].loanId) {
+                        stateIndex = j;
+                        break;
+                    }
+                }
+
+                if (
+                    state[0].loanStatus[stateIndex] == LoanStatus.PAID_BACK
+                        && state[1].loanStatus[stateIndex] == LoanStatus.NONE
+                ) {
+                    collateralAmountForProtocol += loanWithId.loan.collateralAmount;
+                }
+            }
+
+            invariant_CLAIMMUL_01(collateralAmountForProtocol);
+        } else {
+            invariant_ERR(returnData);
+        }
+        _clean();
+    }
 }

@@ -9,6 +9,7 @@ import "./Properties_REPAY.sol";
 import "./Properties_REPAYMUL.sol";
 import "./Properties_ENDLOAN.sol";
 import "./Properties_CLAIM.sol";
+import "./Properties_CLAIMMUL.sol";
 
 contract Properties is
     Properties_PROP,
@@ -18,5 +19,6 @@ contract Properties is
     Properties_REPAYMUL,
     Properties_ENDLOAN,
     Properties_CLAIM,
+    Properties_CLAIMMUL,
     Properties_ERR
 { }

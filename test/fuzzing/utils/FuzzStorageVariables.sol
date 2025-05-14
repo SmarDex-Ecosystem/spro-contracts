@@ -31,6 +31,8 @@ contract FuzzStorageVariables is Test {
     Spro.LoanWithId[] internal loans;
     Spro.LoanWithId[] internal repayableLoans;
     uint256[] internal repayableLoanIds;
+    Spro.LoanWithId[] internal claimableLoans;
+    uint256[] internal claimableLoanIds;
 
     mapping(uint8 => State) state;
 
@@ -135,6 +137,8 @@ contract FuzzStorageVariables is Test {
         delete state[1];
         delete repayableLoans;
         delete repayableLoanIds;
+        delete claimableLoans;
+        delete claimableLoanIds;
     }
 
     function _removeLoansWithStatusNone() internal {

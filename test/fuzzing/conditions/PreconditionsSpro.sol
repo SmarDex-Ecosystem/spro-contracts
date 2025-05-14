@@ -111,4 +111,28 @@ contract PreconditionsSpro is Test, Properties {
             }
         }
     }
+
+    function _claimMultipleLoansPreconditions(Spro.LoanWithId[] memory loanWithId, address lender) internal {
+        uint256[] memory temporaryLoanIds = new uint256[](loanWithId.length);
+        Spro.LoanWithId[] memory temporaryLoanWithId = new Spro.LoanWithId[](loanWithId.length);
+        uint256 count = 0;
+        for (uint256 i = 0; i < loanWithId.length; i++) {
+            if (
+                loanWithId[i].loan.lender == lender && loanWithId[i].loan.lender == lender
+                    && (
+                        getStatus(loanWithId[i].loanId) == LoanStatus.REPAYABLE
+                            || getStatus(loanWithId[i].loanId) == LoanStatus.PAID_BACK
+                    )
+            ) {
+                temporaryLoanIds[count] = loanWithId[i].loanId;
+                temporaryLoanWithId[count] = loanWithId[i];
+                count++;
+            }
+        }
+
+        for (uint256 i = 0; i < count; i++) {
+            claimableLoans.push(temporaryLoanWithId[i]);
+            claimableLoanIds.push(temporaryLoanIds[i]);
+        }
+    }
 }
