@@ -2,10 +2,10 @@
 pragma solidity >=0.8.0;
 
 /**
- * @title Errors for the Spro Protocol
- * @notice Defines all custom errors emitted by the Spro protocol.
+ * @title Errors for the P2PLending Protocol
+ * @notice Defines all custom errors emitted by the P2PLending protocol.
  */
-interface ISproErrors {
+interface IP2PLendingErrors {
     /// @notice Thrown when the address is zero.
     error ZeroAddress();
 

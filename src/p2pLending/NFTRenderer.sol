@@ -5,12 +5,12 @@ import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { ISproTypes } from "src/interfaces/ISproTypes.sol";
+import { IP2PLendingTypes } from "src/interfaces/IP2PLendingTypes.sol";
 import { INFTRenderer } from "src/interfaces/INFTRenderer.sol";
 
 contract NFTRenderer is INFTRenderer {
     /// @inheritdoc INFTRenderer
-    function render(ISproTypes.Loan memory loan) external view returns (string memory uri_) {
+    function render(IP2PLendingTypes.Loan memory loan) external view returns (string memory uri_) {
         IERC20Metadata credit = IERC20Metadata(loan.creditAddress);
         IERC20Metadata collateral = IERC20Metadata(loan.collateralAddress);
 
@@ -25,12 +25,12 @@ contract NFTRenderer is INFTRenderer {
             renderInfobox(creditTicker, collateralTicker, interest, creditAmount, collateralAmount)
         );
         string memory description =
-            "This NFT represents a unique loan created using the Spro Protocol, which is a key component of the SmarDex.io ecosystem. It enables decentralized lending and borrowing between users";
+            "This NFT represents a unique loan created using the P2PLending Protocol, which is a key component of the SmarDex.io ecosystem. It enables decentralized lending and borrowing between users";
         string memory image = string(abi.encodePacked("data:image/svg+xml;base64,", Base64.encode(svg)));
         string memory attributes =
             renderAttributes(creditTicker, collateralTicker, interest, creditAmount, collateralAmount);
         bytes memory json = abi.encodePacked(
-            '{"name":"Spro loan","description":"',
+            '{"name":"P2PLending loan","description":"',
             description,
             '","image":"',
             image,

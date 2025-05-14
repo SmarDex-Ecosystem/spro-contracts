@@ -5,10 +5,10 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { SDBaseIntegrationTest } from "test/integration/utils/Fixtures.sol";
 
-import { ISproTypes } from "src/interfaces/ISproTypes.sol";
-import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { IP2PLendingTypes } from "src/interfaces/IP2PLendingTypes.sol";
+import { IP2PLendingErrors } from "src/interfaces/IP2PLendingErrors.sol";
 
-contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
+contract P2PLendingIntegrationRepayLoan is SDBaseIntegrationTest {
     function setUp() public {
         _setUp(false);
     }
@@ -18,7 +18,7 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
     /* -------------------------------------------------------------------------- */
 
     function test_RevertWhen_notRepayable() external {
-        vm.expectRevert(ISproErrors.LoanCannotBeRepaid.selector);
+        vm.expectRevert(IP2PLendingErrors.LoanCannotBeRepaid.selector);
         spro.repayLoan(0, "", address(0));
 
         _createERC20Proposal();
@@ -27,7 +27,7 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         // Warp ahead, just when loan default
         vm.warp(proposal.loanExpiration);
 
-        vm.expectRevert(ISproErrors.LoanCannotBeRepaid.selector);
+        vm.expectRevert(IP2PLendingErrors.LoanCannotBeRepaid.selector);
         spro.repayLoan(loanId, "", address(0));
     }
 
@@ -45,11 +45,11 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         _createERC20Proposal();
         uint256 loanId = _createLoan(proposal, CREDIT_AMOUNT, "");
 
-        ISproTypes.Loan memory loan = spro.getLoan(loanId);
+        IP2PLendingTypes.Loan memory loan = spro.getLoan(loanId);
         credit.mint(address(this), CREDIT_AMOUNT + loan.fixedInterestAmount);
         credit.approve(address(spro), CREDIT_AMOUNT + loan.fixedInterestAmount);
 
-        vm.expectRevert(ISproErrors.CallerNotBorrower.selector);
+        vm.expectRevert(IP2PLendingErrors.CallerNotBorrower.selector);
         spro.repayLoan(loanId, "", address(1));
     }
 
@@ -58,7 +58,7 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         uint256 loanId = _createLoan(proposal, CREDIT_AMOUNT, "");
 
         vm.startPrank(borrower);
-        ISproTypes.Loan memory loan = spro.getLoan(loanId);
+        IP2PLendingTypes.Loan memory loan = spro.getLoan(loanId);
         credit.mint(borrower, loan.fixedInterestAmount);
         credit.approve(address(spro), CREDIT_AMOUNT + loan.fixedInterestAmount);
 
@@ -77,12 +77,12 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
         (uint256[] memory loanIds,) = _setupMultipleRepay();
 
         for (uint256 i; i < loanIds.length; ++i) {
-            ISproTypes.Loan memory loan = spro.getLoan(loanIds[i]);
+            IP2PLendingTypes.Loan memory loan = spro.getLoan(loanIds[i]);
             credit.mint(address(this), CREDIT_AMOUNT + loan.fixedInterestAmount);
             credit.approve(address(spro), CREDIT_AMOUNT + loan.fixedInterestAmount);
         }
 
-        vm.expectRevert(ISproErrors.CallerNotBorrower.selector);
+        vm.expectRevert(IP2PLendingErrors.CallerNotBorrower.selector);
         spro.repayMultipleLoans(loanIds, "", address(1));
     }
 
@@ -234,7 +234,7 @@ contract SproIntegrationRepayLoan is SDBaseIntegrationTest {
 
         // set an non-existing loanId to test the revert
         loanIds[0] = 5;
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.DifferentCreditAddress.selector, credit, address(0)));
+        vm.expectRevert(abi.encodeWithSelector(IP2PLendingErrors.DifferentCreditAddress.selector, credit, address(0)));
         spro.totalLoanRepaymentAmount(loanIds);
     }
 

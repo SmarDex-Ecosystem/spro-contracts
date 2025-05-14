@@ -5,10 +5,10 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { SDBaseIntegrationTest } from "test/integration/utils/Fixtures.sol";
 
-import { ISproTypes } from "src/interfaces/ISproTypes.sol";
-import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { IP2PLendingTypes } from "src/interfaces/IP2PLendingTypes.sol";
+import { IP2PLendingErrors } from "src/interfaces/IP2PLendingErrors.sol";
 
-contract SproIntegrationProposal is SDBaseIntegrationTest {
+contract P2PLendingIntegrationProposal is SDBaseIntegrationTest {
     function setUp() public {
         _setUp(false);
     }
@@ -35,13 +35,13 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
 
     function test_RevertWhen_CallerNotProposer() external {
         _createERC20Proposal();
-        vm.expectRevert(ISproErrors.CallerNotProposer.selector);
+        vm.expectRevert(IP2PLendingErrors.CallerNotProposer.selector);
         spro.cancelProposal(proposal);
     }
 
     function test_RevertWhen_AvailableCreditLimitZero() public {
         proposal.availableCreditLimit = 0;
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.AvailableCreditLimitZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(IP2PLendingErrors.AvailableCreditLimitZero.selector));
         vm.prank(borrower);
         spro.createProposal(
             proposal.collateralAddress,
@@ -66,7 +66,7 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         collateral.approve(address(spro), proposal.collateralAmount);
 
         vm.prank(borrower);
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidStartTime.selector));
+        vm.expectRevert(abi.encodeWithSelector(IP2PLendingErrors.InvalidStartTime.selector));
         spro.createProposal(
             proposal.collateralAddress,
             proposal.collateralAmount,
@@ -82,7 +82,7 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         proposal.startTimestamp = uint40(block.timestamp - 1);
         proposal.loanExpiration = proposal.startTimestamp + spro.MIN_LOAN_DURATION();
         vm.prank(borrower);
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.InvalidStartTime.selector));
+        vm.expectRevert(abi.encodeWithSelector(IP2PLendingErrors.InvalidStartTime.selector));
         spro.createProposal(
             proposal.collateralAddress,
             proposal.collateralAmount,
@@ -108,7 +108,9 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         vm.prank(borrower);
         vm.expectRevert(
             abi.encodeWithSelector(
-                ISproErrors.InvalidDuration.selector, proposal.loanExpiration - proposal.startTimestamp, minDuration
+                IP2PLendingErrors.InvalidDuration.selector,
+                proposal.loanExpiration - proposal.startTimestamp,
+                minDuration
             )
         );
         spro.createProposal(
@@ -173,7 +175,7 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
         // Borrower approvals for credit token
-        ISproTypes.Loan memory loan = spro.getLoan(loanId);
+        IP2PLendingTypes.Loan memory loan = spro.getLoan(loanId);
         credit.mint(borrower, loan.fixedInterestAmount);
         credit.approve(address(spro), CREDIT_AMOUNT + loan.fixedInterestAmount);
 
@@ -200,12 +202,12 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
     }
 
     function test_RevertWhen_getProposalCreditStatus_ProposalDoesNotExists() external {
-        vm.expectRevert(ISproErrors.ProposalDoesNotExists.selector);
+        vm.expectRevert(IP2PLendingErrors.ProposalDoesNotExists.selector);
         spro.getProposalCreditStatus(proposal);
     }
 
     function test_RevertWhen_ProposalDoesNotExistsCancelProposal() external {
-        vm.expectRevert(ISproErrors.ProposalDoesNotExists.selector);
+        vm.expectRevert(IP2PLendingErrors.ProposalDoesNotExists.selector);
         vm.prank(borrower);
         spro.cancelProposal(proposal);
     }
@@ -235,7 +237,7 @@ contract SproIntegrationProposal is SDBaseIntegrationTest {
 
         collateral.setFee(true);
 
-        vm.expectRevert(ISproErrors.TransferMismatch.selector);
+        vm.expectRevert(IP2PLendingErrors.TransferMismatch.selector);
         vm.prank(borrower);
         spro.createProposal(
             proposal.collateralAddress,

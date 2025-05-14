@@ -5,9 +5,9 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { SDBaseIntegrationTest } from "test/integration/utils/Fixtures.sol";
 
-import { ISproErrors } from "src/interfaces/ISproErrors.sol";
+import { IP2PLendingErrors } from "src/interfaces/IP2PLendingErrors.sol";
 
-contract SproIntegrationClaimLoan is SDBaseIntegrationTest {
+contract P2PLendingIntegrationClaimLoan is SDBaseIntegrationTest {
     function setUp() public {
         _setUp(false);
     }
@@ -32,7 +32,7 @@ contract SproIntegrationClaimLoan is SDBaseIntegrationTest {
 
         // Initial lender repays loan
         vm.startPrank(lender);
-        vm.expectRevert(ISproErrors.CallerNotLoanTokenHolder.selector);
+        vm.expectRevert(IP2PLendingErrors.CallerNotLoanTokenHolder.selector);
         spro.claimLoan(loanId);
     }
 
@@ -73,7 +73,7 @@ contract SproIntegrationClaimLoan is SDBaseIntegrationTest {
 
         // Try to repay loan
         vm.startPrank(lender);
-        vm.expectRevert(ISproErrors.LoanRunning.selector);
+        vm.expectRevert(IP2PLendingErrors.LoanRunning.selector);
         spro.claimLoan(loanId);
     }
 }

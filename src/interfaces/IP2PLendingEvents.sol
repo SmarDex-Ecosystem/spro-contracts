@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { ISproTypes } from "./ISproTypes.sol";
+import { IP2PLendingTypes } from "./IP2PLendingTypes.sol";
 
 /**
- * @title Events for the Spro Protocol
- * @notice Defines all custom events emitted by the Spro protocol.
+ * @title Events for the P2PLending Protocol
+ * @notice Defines all custom events emitted by the P2PLending protocol.
  */
-interface ISproEvents is ISproTypes {
+interface IP2PLendingEvents is IP2PLendingTypes {
     /**
      * @notice The fee was updated.
      * @param newFee The new fee.

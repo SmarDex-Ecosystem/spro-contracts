@@ -3,9 +3,9 @@ pragma solidity >=0.8.0;
 
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 
-import { SproLoan } from "src/spro/SproLoan.sol";
+import { P2PLendingLoan } from "src/p2pLending/P2PLendingLoan.sol";
 
-interface ISproStorage {
+interface IP2PLendingStorage {
     /**
      * @notice Retrieves the denominator used for the reward multipliers.
      * @return BPS_DIVISOR The BPS divisor.
@@ -55,10 +55,10 @@ interface ISproStorage {
     function _fee() external view returns (uint256 _fee);
 
     /**
-     * @notice Retrieves the address of the {SproLoan} contract.
+     * @notice Retrieves the address of the {P2PLendingLoan} contract.
      * @return _loanToken The contract is an ERC721 token.
      */
-    function _loanToken() external view returns (SproLoan _loanToken);
+    function _loanToken() external view returns (P2PLendingLoan _loanToken);
 
     /**
      * @notice Retrieves the withdrawable collateral amount for a given proposal hash.

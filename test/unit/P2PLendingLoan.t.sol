@@ -10,25 +10,25 @@ import { Base64 } from "solady/src/utils/Base64.sol";
 
 import { T20 } from "test/helper/T20.sol";
 
-import { SproLoan } from "src/spro/SproLoan.sol";
-import { NFTRenderer } from "src/spro/NFTRenderer.sol";
-import { ISproTypes } from "src/interfaces/ISproTypes.sol";
-import { ISproLoan } from "src/interfaces/ISproLoan.sol";
+import { P2PLendingLoan } from "src/p2pLending/P2PLendingLoan.sol";
+import { NFTRenderer } from "src/p2pLending/NFTRenderer.sol";
+import { IP2PLendingTypes } from "src/interfaces/IP2PLendingTypes.sol";
+import { IP2PLendingLoan } from "src/interfaces/IP2PLendingLoan.sol";
 
-contract SproLoanTest is Test {
-    SproLoan loanToken;
+contract P2PLendingLoanTest is Test {
+    P2PLendingLoan loanToken;
     address alice = address(0xa11ce);
-    mapping(uint256 => ISproTypes.Loan) internal _loans;
+    mapping(uint256 => IP2PLendingTypes.Loan) internal _loans;
 
     function setUp() public virtual {
-        loanToken = new SproLoan(address(this));
+        loanToken = new P2PLendingLoan(address(this));
     }
 
-    function setLoan(uint256 loanId, ISproTypes.Loan memory loan) public {
+    function setLoan(uint256 loanId, IP2PLendingTypes.Loan memory loan) public {
         _loans[loanId] = loan;
     }
 
-    function getLoan(uint256 loanId) external view returns (ISproTypes.Loan memory loan_) {
+    function getLoan(uint256 loanId) external view returns (IP2PLendingTypes.Loan memory loan_) {
         loan_ = _loans[loanId];
     }
 }
@@ -37,10 +37,10 @@ contract SproLoanTest is Test {
 /*                                 CONSTRUCTOR                                */
 /* -------------------------------------------------------------------------- */
 
-contract TestSproLoanConstructor is SproLoanTest {
+contract TestP2PLendingLoanConstructor is P2PLendingLoanTest {
     function test_correctNameSymbolOwner() external view {
-        assertEq(loanToken.name(), "Spro Loan");
-        assertEq(loanToken.symbol(), "LOAN");
+        assertEq(loanToken.name(), "P2P Loan");
+        assertEq(loanToken.symbol(), "P2PLOAN");
         assertEq(loanToken.owner(), address(this));
         assertTrue(address(loanToken._nftRenderer()) != address(0));
     }
@@ -50,9 +50,9 @@ contract TestSproLoanConstructor is SproLoanTest {
 /*                                   SETTER                                   */
 /* -------------------------------------------------------------------------- */
 
-contract TestSproLoanSetNftRenderer is SproLoanTest {
+contract TestP2PLendingLoanSetNftRenderer is P2PLendingLoanTest {
     function test_RevertWhen_setNftRendererToZeroAddress() external {
-        vm.expectRevert(abi.encodeWithSelector(ISproLoan.SproLoanInvalidNftRendererAddress.selector));
+        vm.expectRevert(abi.encodeWithSelector(IP2PLendingLoan.P2PLendingLoanInvalidNftRendererAddress.selector));
         loanToken.setNftRenderer(NFTRenderer(address(0)));
     }
 
@@ -65,7 +65,7 @@ contract TestSproLoanSetNftRenderer is SproLoanTest {
     function test_setNftRenderer() external {
         NFTRenderer newNftRenderer = new NFTRenderer();
         vm.expectEmit();
-        emit ISproLoan.NftRendererUpdated(address(newNftRenderer));
+        emit IP2PLendingLoan.NftRendererUpdated(address(newNftRenderer));
         loanToken.setNftRenderer(newNftRenderer);
 
         assertEq(address(loanToken._nftRenderer()), address(newNftRenderer));
@@ -76,7 +76,7 @@ contract TestSproLoanSetNftRenderer is SproLoanTest {
 /*                                    MINT                                    */
 /* -------------------------------------------------------------------------- */
 
-contract TestSproLoanMint is SproLoanTest {
+contract TestP2PLendingLoanMint is P2PLendingLoanTest {
     function test_RevertWhen_callerIsNotActiveLoanContract() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(alice)));
         vm.prank(alice);
@@ -116,7 +116,7 @@ contract TestSproLoanMint is SproLoanTest {
 /*                                    BURN                                    */
 /* -------------------------------------------------------------------------- */
 
-contract TestSproLoanBurn is SproLoanTest {
+contract TestP2PLendingLoanBurn is P2PLendingLoanTest {
     uint256 loanId;
 
     function setUp() public override {
@@ -150,7 +150,7 @@ contract TestSproLoanBurn is SproLoanTest {
 /*                                  TOKEN URI                                 */
 /* -------------------------------------------------------------------------- */
 
-contract TestSproLoanTokenUri is SproLoanTest {
+contract TestP2PLendingLoanTokenUri is P2PLendingLoanTest {
     uint256 loanId;
     T20 eth;
     T20 usd;
@@ -166,8 +166,8 @@ contract TestSproLoanTokenUri is SproLoanTest {
     function test_tokenUriReturnCorrectValue() external {
         setLoan(
             loanId,
-            ISproTypes.Loan({
-                status: ISproTypes.LoanStatus.RUNNING,
+            IP2PLendingTypes.Loan({
+                status: IP2PLendingTypes.LoanStatus.RUNNING,
                 lender: alice,
                 borrower: alice,
                 startTimestamp: uint40(1_742_203_988),

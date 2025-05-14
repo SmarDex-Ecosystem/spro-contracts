@@ -8,9 +8,9 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { T20 } from "test/helper/T20.sol";
 
-import { ISproTypes } from "src/interfaces/ISproTypes.sol";
-import { Spro } from "src/spro/Spro.sol";
-import { SproLoan } from "src/spro/SproLoan.sol";
+import { IP2PLendingTypes } from "src/interfaces/IP2PLendingTypes.sol";
+import { P2PLending } from "src/p2pLending/P2PLending.sol";
+import { P2PLendingLoan } from "src/p2pLending/P2PLendingLoan.sol";
 
 contract SDBaseIntegrationTest is Test {
     T20 collateral;
@@ -18,7 +18,7 @@ contract SDBaseIntegrationTest is Test {
 
     address lender = vm.addr(777);
     address borrower = vm.addr(888);
-    ISproTypes.Proposal proposal;
+    IP2PLendingTypes.Proposal proposal;
 
     // Additional lenders
     address alice;
@@ -38,8 +38,8 @@ contract SDBaseIntegrationTest is Test {
     uint256 public constant FEE = 20e18;
     uint16 public constant PARTIAL_POSITION_BPS = 500;
 
-    Spro spro;
-    SproLoan loanToken;
+    P2PLending spro;
+    P2PLendingLoan loanToken;
     T20 sdex;
     IAllowanceTransfer permit2;
 
@@ -54,7 +54,7 @@ contract SDBaseIntegrationTest is Test {
         sdex = new T20("SDEX", "SDEX");
 
         vm.prank(ADMIN);
-        spro = new Spro(address(sdex), address(permit2), FEE, PARTIAL_POSITION_BPS, ADMIN);
+        spro = new P2PLending(address(sdex), address(permit2), FEE, PARTIAL_POSITION_BPS, ADMIN);
 
         loanToken = spro._loanToken();
 
@@ -62,7 +62,7 @@ contract SDBaseIntegrationTest is Test {
         collateral = new T20("collateral", "collateral");
         credit = new T20("credit", "credit");
 
-        proposal = ISproTypes.Proposal(
+        proposal = IP2PLendingTypes.Proposal(
             address(collateral),
             COLLATERAL_AMOUNT,
             address(credit),
@@ -107,7 +107,7 @@ contract SDBaseIntegrationTest is Test {
         );
     }
 
-    function _createLoan(ISproTypes.Proposal memory newProposal, uint256 amount, bytes memory revertData)
+    function _createLoan(IP2PLendingTypes.Proposal memory newProposal, uint256 amount, bytes memory revertData)
         internal
         returns (uint256 loanId)
     {

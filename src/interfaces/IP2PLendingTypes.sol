@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-interface ISproTypes {
+interface IP2PLendingTypes {
     /**
      * @notice Represents the status of a loan.
      * @param NONE The loan doesn't exist.

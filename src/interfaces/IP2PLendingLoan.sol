@@ -5,7 +5,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import { INFTRenderer } from "src/interfaces/INFTRenderer.sol";
 
-interface ISproLoan is IERC721 {
+interface IP2PLendingLoan is IERC721 {
     /**
      * @notice Emitted when the NFT renderer is updated.
      * @param nftRenderer The new NFT renderer address.
@@ -13,7 +13,7 @@ interface ISproLoan is IERC721 {
     event NftRendererUpdated(address nftRenderer);
 
     /// @notice The given NFT renderer address is invalid.
-    error SproLoanInvalidNftRendererAddress();
+    error P2PLendingLoanInvalidNftRendererAddress();
 
     /**
      * @notice Retrieves the last used ID.

@@ -5,11 +5,11 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { SDBaseIntegrationTest } from "test/integration/utils/Fixtures.sol";
 
-import { ISproErrors } from "src/interfaces/ISproErrors.sol";
-import { ISproTypes } from "src/interfaces/ISproTypes.sol";
-import { Spro } from "src/spro/Spro.sol";
+import { IP2PLendingErrors } from "src/interfaces/IP2PLendingErrors.sol";
+import { IP2PLendingTypes } from "src/interfaces/IP2PLendingTypes.sol";
+import { P2PLending } from "src/p2pLending/P2PLending.sol";
 
-contract SproIntegrationLoan is SDBaseIntegrationTest {
+contract P2PLendingIntegrationLoan is SDBaseIntegrationTest {
     function setUp() public {
         _setUp(false);
     }
@@ -27,35 +27,37 @@ contract SproIntegrationLoan is SDBaseIntegrationTest {
         assertEq(sdex.balanceOf(borrower), INITIAL_SDEX_BALANCE - spro._fee());
         assertEq(sdex.balanceOf(lender), INITIAL_SDEX_BALANCE);
 
-        Spro.Loan memory loanInfo = spro.getLoan(loanId);
-        assertTrue(loanInfo.status == ISproTypes.LoanStatus.RUNNING);
+        P2PLending.Loan memory loanInfo = spro.getLoan(loanId);
+        assertTrue(loanInfo.status == IP2PLendingTypes.LoanStatus.RUNNING);
 
         assertEq(credit.balanceOf(lender), INITIAL_CREDIT_BALANCE - CREDIT_LIMIT);
         assertEq(credit.balanceOf(borrower), CREDIT_LIMIT);
     }
 
     function test_RevertWhen_ProposalDoesNotExists() external {
-        vm.expectRevert(ISproErrors.ProposalDoesNotExists.selector);
+        vm.expectRevert(IP2PLendingErrors.ProposalDoesNotExists.selector);
         spro.createLoan(proposal, CREDIT_LIMIT, "");
     }
 
     function test_RevertWhen_proposerIsAcceptor() external {
         _createERC20Proposal();
         vm.prank(proposal.proposer);
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.AcceptorIsProposer.selector, proposal.proposer));
+        vm.expectRevert(abi.encodeWithSelector(IP2PLendingErrors.AcceptorIsProposer.selector, proposal.proposer));
         spro.createLoan(proposal, CREDIT_LIMIT, "");
     }
 
     function test_RevertWhen_proposalExpired() external {
         _createERC20Proposal();
         vm.warp(proposal.startTimestamp);
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.Expired.selector, block.timestamp, proposal.startTimestamp));
+        vm.expectRevert(
+            abi.encodeWithSelector(IP2PLendingErrors.Expired.selector, block.timestamp, proposal.startTimestamp)
+        );
         spro.createLoan(proposal, CREDIT_LIMIT, "");
     }
 
     function test_RevertWhen_availableCreditExceeded() external {
         _createERC20Proposal();
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.AvailableCreditLimitExceeded.selector, CREDIT_LIMIT));
+        vm.expectRevert(abi.encodeWithSelector(IP2PLendingErrors.AvailableCreditLimitExceeded.selector, CREDIT_LIMIT));
         spro.createLoan(proposal, CREDIT_LIMIT + 1, "");
     }
 
@@ -74,7 +76,7 @@ contract SproIntegrationLoan is SDBaseIntegrationTest {
         // Create loan, expecting revert
         vm.expectRevert(
             abi.encodeWithSelector(
-                ISproErrors.CreditAmountRemainingBelowMinimum.selector,
+                IP2PLendingErrors.CreditAmountRemainingBelowMinimum.selector,
                 amount,
                 spro._partialPositionBps() * CREDIT_LIMIT / spro.BPS_DIVISOR()
             )
@@ -97,7 +99,7 @@ contract SproIntegrationLoan is SDBaseIntegrationTest {
         // Create loan, expecting revert
         vm.expectRevert(
             abi.encodeWithSelector(
-                ISproErrors.CreditAmountTooSmall.selector,
+                IP2PLendingErrors.CreditAmountTooSmall.selector,
                 amount,
                 PARTIAL_POSITION_BPS * CREDIT_LIMIT / spro.BPS_DIVISOR()
             )
@@ -119,7 +121,7 @@ contract SproIntegrationLoan is SDBaseIntegrationTest {
         _createERC20Proposal();
         uint256 loanId = _createLoan(proposal, amount, "");
 
-        ISproTypes.Loan memory loanInfo = spro.getLoan(loanId);
+        IP2PLendingTypes.Loan memory loanInfo = spro.getLoan(loanId);
         assertEq(loanInfo.principalAmount, amount);
         assertEq(loanInfo.principalAmount + loanInfo.fixedInterestAmount, amount + fixedInterestAmount);
     }
@@ -133,7 +135,7 @@ contract SproIntegrationLoan is SDBaseIntegrationTest {
 
         credit.setFee(true);
 
-        vm.expectRevert(ISproErrors.TransferMismatch.selector);
+        vm.expectRevert(IP2PLendingErrors.TransferMismatch.selector);
         vm.prank(lender);
         spro.createLoan(proposal, CREDIT_LIMIT, "");
     }

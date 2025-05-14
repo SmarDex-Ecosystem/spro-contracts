@@ -5,13 +5,13 @@ import { Test } from "forge-std/Test.sol";
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { Spro } from "src/spro/Spro.sol";
-import { ISproEvents } from "src/interfaces/ISproEvents.sol";
-import { ISproErrors } from "src/interfaces/ISproErrors.sol";
-import { ISproTypes } from "src/interfaces/ISproTypes.sol";
+import { P2PLending } from "src/p2pLending/P2PLending.sol";
+import { IP2PLendingEvents } from "src/interfaces/IP2PLendingEvents.sol";
+import { IP2PLendingErrors } from "src/interfaces/IP2PLendingErrors.sol";
+import { IP2PLendingTypes } from "src/interfaces/IP2PLendingTypes.sol";
 
-contract SproTest is Test {
-    Spro spro;
+contract P2PLendingTest is Test {
+    P2PLending spro;
     address owner = address(this);
     address sdex = makeAddr("sdex");
     address permit2 = makeAddr("permit2");
@@ -21,7 +21,7 @@ contract SproTest is Test {
     uint16 partialPositionBps = 900;
 
     function setUp() public virtual {
-        spro = new Spro(sdex, permit2, FEE, partialPositionBps, owner);
+        spro = new P2PLending(sdex, permit2, FEE, partialPositionBps, owner);
     }
 }
 
@@ -29,7 +29,7 @@ contract SproTest is Test {
 /*                                 CONSTRUCTOR                                */
 /* -------------------------------------------------------------------------- */
 
-contract TestSproConstructor is SproTest {
+contract TestP2PLendingConstructor is P2PLendingTest {
     function test_shouldInitializeWithCorrectValues() external view {
         assertEq(spro.owner(), owner);
         assertEq(spro._partialPositionBps(), partialPositionBps);
@@ -38,26 +38,26 @@ contract TestSproConstructor is SproTest {
     }
 
     function test_RevertWhen_incorrectPartialPositionBps() external {
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, 0));
-        new Spro(sdex, permit2, FEE, 0, owner);
+        vm.expectRevert(abi.encodeWithSelector(IP2PLendingErrors.IncorrectPercentageValue.selector, 0));
+        new P2PLending(sdex, permit2, FEE, 0, owner);
 
         uint256 bpsDivisor = spro.BPS_DIVISOR();
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, bpsDivisor / 2 + 1));
-        new Spro(sdex, permit2, FEE, uint16(bpsDivisor / 2 + 1), owner);
+        vm.expectRevert(abi.encodeWithSelector(IP2PLendingErrors.IncorrectPercentageValue.selector, bpsDivisor / 2 + 1));
+        new P2PLending(sdex, permit2, FEE, uint16(bpsDivisor / 2 + 1), owner);
     }
 
     function test_RevertWhen_zeroAddress() external {
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.ZeroAddress.selector));
-        new Spro(address(0), permit2, FEE, partialPositionBps, owner);
+        vm.expectRevert(abi.encodeWithSelector(IP2PLendingErrors.ZeroAddress.selector));
+        new P2PLending(address(0), permit2, FEE, partialPositionBps, owner);
 
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.ZeroAddress.selector));
-        new Spro(sdex, address(0), FEE, partialPositionBps, owner);
+        vm.expectRevert(abi.encodeWithSelector(IP2PLendingErrors.ZeroAddress.selector));
+        new P2PLending(sdex, address(0), FEE, partialPositionBps, owner);
     }
 
     function test_RevertWhen_incorrectFee() external {
         uint256 maxSdexFee = spro.MAX_SDEX_FEE();
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.ExcessiveFee.selector, maxSdexFee + 1));
-        new Spro(sdex, permit2, maxSdexFee + 1, partialPositionBps, owner);
+        vm.expectRevert(abi.encodeWithSelector(IP2PLendingErrors.ExcessiveFee.selector, maxSdexFee + 1));
+        new P2PLending(sdex, permit2, maxSdexFee + 1, partialPositionBps, owner);
     }
 }
 
@@ -65,7 +65,7 @@ contract TestSproConstructor is SproTest {
 /*                                   SET FEE                                  */
 /* -------------------------------------------------------------------------- */
 
-contract TestSproSetFee is SproTest {
+contract TestP2PLendingSetFee is P2PLendingTest {
     function test_RevertWhen_callerIsNotOwner() external {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         vm.prank(alice);
@@ -74,14 +74,14 @@ contract TestSproSetFee is SproTest {
 
     function test_RevertWhen_excessiveFee() external {
         uint256 maxSdexFee = spro.MAX_SDEX_FEE();
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.ExcessiveFee.selector, maxSdexFee + 1));
+        vm.expectRevert(abi.encodeWithSelector(IP2PLendingErrors.ExcessiveFee.selector, maxSdexFee + 1));
         vm.prank(owner);
         spro.setFee(maxSdexFee + 1);
     }
 
     function test_feeUpdated() external {
         vm.expectEmit(true, true, true, true);
-        emit ISproEvents.FeeUpdated(FEE + 1);
+        emit IP2PLendingEvents.FeeUpdated(FEE + 1);
 
         vm.prank(owner);
         spro.setFee(FEE + 1);
@@ -93,7 +93,7 @@ contract TestSproSetFee is SproTest {
 /*                         PARTIAL LENDING THRESHOLDS                         */
 /* -------------------------------------------------------------------------- */
 
-contract TestSproPartialLendingThresholds is SproTest {
+contract TestP2PLendingPartialLendingThresholds is P2PLendingTest {
     uint16 internal constant PARTIAL_POSITION_BPS = 500;
 
     function setUp() public override {
@@ -106,7 +106,7 @@ contract TestSproPartialLendingThresholds is SproTest {
 
     function test_partialPositionBpsUpdatedEmitEvent() external {
         vm.expectEmit(true, true, true, true);
-        emit ISproEvents.PartialPositionBpsUpdated(PARTIAL_POSITION_BPS + 1);
+        emit IP2PLendingEvents.PartialPositionBpsUpdated(PARTIAL_POSITION_BPS + 1);
 
         vm.prank(owner);
         spro.setPartialPositionPercentage(PARTIAL_POSITION_BPS + 1);
@@ -121,7 +121,7 @@ contract TestSproPartialLendingThresholds is SproTest {
 
     function test_RevertWhen_whenZeroPercentage() external {
         vm.startPrank(owner);
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, 0));
+        vm.expectRevert(abi.encodeWithSelector(IP2PLendingErrors.IncorrectPercentageValue.selector, 0));
         spro.setPartialPositionPercentage(0);
     }
 
@@ -129,7 +129,7 @@ contract TestSproPartialLendingThresholds is SproTest {
         vm.assume(percentage > spro.BPS_DIVISOR() / 2);
         vm.startPrank(owner);
 
-        vm.expectRevert(abi.encodeWithSelector(ISproErrors.IncorrectPercentageValue.selector, percentage));
+        vm.expectRevert(abi.encodeWithSelector(IP2PLendingErrors.IncorrectPercentageValue.selector, percentage));
         spro.setPartialPositionPercentage(percentage);
     }
 }
@@ -138,9 +138,9 @@ contract TestSproPartialLendingThresholds is SproTest {
 /*                             tryClaimRepaidLoan                             */
 /* -------------------------------------------------------------------------- */
 
-contract TestSproTryClaimRepaidLoan is SproTest {
+contract TestP2PLendingTryClaimRepaidLoan is P2PLendingTest {
     function test_RevertWhen_tryClaimRepaidLoanUnauthorized() external {
-        vm.expectRevert(ISproErrors.UnauthorizedCaller.selector);
+        vm.expectRevert(IP2PLendingErrors.UnauthorizedCaller.selector);
         spro.tryClaimRepaidLoan(0, 0, address(0), address(0));
     }
 }
@@ -149,9 +149,9 @@ contract TestSproTryClaimRepaidLoan is SproTest {
 /*                                   GETTER                                   */
 /* -------------------------------------------------------------------------- */
 
-contract TestSproGetLoan is SproTest {
+contract TestP2PLendingGetLoan is P2PLendingTest {
     function test_getLoanReturnZeroForNonExistingLoan() external view {
-        ISproTypes.Loan memory loan = spro.getLoan(0);
+        IP2PLendingTypes.Loan memory loan = spro.getLoan(0);
 
         assertEq(loan.lender, address(0));
     }

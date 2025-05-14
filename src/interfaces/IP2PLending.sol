@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { ISproTypes } from "src/interfaces/ISproTypes.sol";
-import { ISproErrors } from "src/interfaces/ISproErrors.sol";
-import { ISproEvents } from "src/interfaces/ISproEvents.sol";
+import { IP2PLendingTypes } from "src/interfaces/IP2PLendingTypes.sol";
+import { IP2PLendingErrors } from "src/interfaces/IP2PLendingErrors.sol";
+import { IP2PLendingEvents } from "src/interfaces/IP2PLendingEvents.sol";
 
 /**
- * @title Spro Protocol Interface
- * @notice Interface for the Spro protocol.
+ * @title P2PLending Protocol Interface
+ * @notice Interface for the P2PLending protocol.
  */
-interface ISpro is ISproTypes, ISproErrors, ISproEvents {
+interface IP2PLending is IP2PLendingTypes, IP2PLendingErrors, IP2PLendingEvents {
     /**
      * @notice Sets the protocol fee value.
      * @param newFee The new fee value in SDEX tokens.
@@ -35,7 +35,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @return used_ The used credit of the proposal.
      * @return remaining_ The remaining credit of the proposal.
      */
-    function getProposalCreditStatus(ISproTypes.Proposal memory proposal)
+    function getProposalCreditStatus(IP2PLendingTypes.Proposal memory proposal)
         external
         view
         returns (uint256 used_, uint256 remaining_);
@@ -45,7 +45,7 @@ interface ISpro is ISproTypes, ISproErrors, ISproEvents {
      * @param proposal The proposal structure.
      * @return proposalHash_ The hash of the proposal.
      */
-    function getProposalHash(ISproTypes.Proposal memory proposal) external returns (bytes32 proposalHash_);
+    function getProposalHash(IP2PLendingTypes.Proposal memory proposal) external returns (bytes32 proposalHash_);
 
     /**
      * @notice Calculates the total repayment amount for multiple loans, with the fixed interest amounts.

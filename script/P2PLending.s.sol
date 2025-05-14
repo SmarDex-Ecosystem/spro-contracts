@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 
 import { Script } from "forge-std/Script.sol";
-import { Spro } from "src/spro/Spro.sol";
-import { SproLoan } from "src/spro/SproLoan.sol";
+import { P2PLending } from "src/p2pLending/P2PLending.sol";
+import { P2PLendingLoan } from "src/p2pLending/P2PLendingLoan.sol";
 
 contract Deploy is Script {
     address constant SDEX_MAINNET = 0x5DE8ab7E27f6E7A1fFf3E5B337584Aa43961BEeF;
@@ -12,9 +12,9 @@ contract Deploy is Script {
     uint256 internal constant FEE = 50e18;
     uint16 internal constant PARTIAL_POSITION_BPS = 500;
 
-    function run() external returns (Spro spro_, SproLoan sproLoan_) {
+    function run() external returns (P2PLending spro_, P2PLendingLoan sproLoan_) {
         vm.broadcast();
-        spro_ = new Spro(SDEX_MAINNET, PERMIT2, FEE, PARTIAL_POSITION_BPS, SAFE_WALLET);
+        spro_ = new P2PLending(SDEX_MAINNET, PERMIT2, FEE, PARTIAL_POSITION_BPS, SAFE_WALLET);
         sproLoan_ = spro_._loanToken();
     }
 }

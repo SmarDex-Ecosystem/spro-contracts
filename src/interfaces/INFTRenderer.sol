@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import { ISproTypes } from "src/interfaces/ISproTypes.sol";
+import { IP2PLendingTypes } from "src/interfaces/IP2PLendingTypes.sol";
 
 interface INFTRenderer {
     /**
@@ -9,5 +9,5 @@ interface INFTRenderer {
      * @param loan The loan data.
      * @return uri_ The JSON metadata URI for the loan NFT.
      */
-    function render(ISproTypes.Loan memory loan) external view returns (string memory uri_);
+    function render(IP2PLendingTypes.Loan memory loan) external view returns (string memory uri_);
 }

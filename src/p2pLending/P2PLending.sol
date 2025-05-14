@@ -10,11 +10,11 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { ISpro } from "src/interfaces/ISpro.sol";
-import { SproLoan } from "src/spro/SproLoan.sol";
-import { SproStorage } from "src/spro/SproStorage.sol";
+import { IP2PLending } from "src/interfaces/IP2PLending.sol";
+import { P2PLendingLoan } from "src/p2pLending/P2PLendingLoan.sol";
+import { P2PLendingStorage } from "src/p2pLending/P2PLendingStorage.sol";
 
-contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
+contract P2PLending is P2PLendingStorage, IP2PLending, Ownable2Step, ReentrancyGuard {
     using SafeERC20 for IERC20Metadata;
     using SafeCast for uint256;
 
@@ -48,7 +48,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
 
         PERMIT2 = IAllowanceTransfer(permit2);
         SDEX = sdex;
-        _loanToken = new SproLoan(address(this));
+        _loanToken = new P2PLendingLoan(address(this));
         _fee = fee;
         _partialPositionBps = partialPositionBps;
     }
@@ -57,7 +57,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     /*                             External Functions                             */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc ISpro
+    /// @inheritdoc IP2PLending
     function setFee(uint256 newFee) external onlyOwner {
         if (newFee > MAX_SDEX_FEE) {
             revert ExcessiveFee(newFee);
@@ -66,7 +66,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         emit FeeUpdated(newFee);
     }
 
-    /// @inheritdoc ISpro
+    /// @inheritdoc IP2PLending
     function setPartialPositionPercentage(uint16 newPartialPositionBps) external onlyOwner {
         if (newPartialPositionBps == 0 || newPartialPositionBps > BPS_DIVISOR / 2) {
             revert IncorrectPercentageValue(newPartialPositionBps);
@@ -75,7 +75,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         emit PartialPositionBpsUpdated(newPartialPositionBps);
     }
 
-    /// @inheritdoc ISpro
+    /// @inheritdoc IP2PLending
     function getProposalCreditStatus(Proposal calldata proposal)
         external
         view
@@ -90,12 +90,12 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
     }
 
-    /// @inheritdoc ISpro
+    /// @inheritdoc IP2PLending
     function getLoan(uint256 loanId) external view returns (Loan memory loan_) {
         loan_ = _loans[loanId];
     }
 
-    /// @inheritdoc ISpro
+    /// @inheritdoc IP2PLending
     function totalLoanRepaymentAmount(uint256[] calldata loanIds) external view returns (uint256 amount_) {
         if (loanIds.length == 0) return 0;
         address firstCreditAddress = _loans[loanIds[0]].creditAddress;
@@ -113,7 +113,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
     }
 
-    /// @inheritdoc ISpro
+    /// @inheritdoc IP2PLending
     function createProposal(
         address collateralAddress,
         uint256 collateralAmount,
@@ -172,7 +172,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
     }
 
-    /// @inheritdoc ISpro
+    /// @inheritdoc IP2PLending
     function cancelProposal(Proposal memory proposal) external nonReentrant {
         if (msg.sender != proposal.proposer) {
             revert CallerNotProposer();
@@ -190,7 +190,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         emit ProposalCanceled(proposalHash);
     }
 
-    /// @inheritdoc ISpro
+    /// @inheritdoc IP2PLending
     function createLoan(Proposal calldata proposal, uint256 creditAmount, bytes calldata permit2Data)
         external
         nonReentrant
@@ -225,7 +225,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
     }
 
-    /// @inheritdoc ISpro
+    /// @inheritdoc IP2PLending
     function repayLoan(uint256 loanId, bytes calldata permit2Data, address collateralRecipient) external nonReentrant {
         Loan storage loan = _loans[loanId];
 
@@ -258,7 +258,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
     }
 
-    /// @inheritdoc ISpro
+    /// @inheritdoc IP2PLending
     function repayMultipleLoans(uint256[] calldata loanIds, bytes calldata permit2Data, address collateralRecipient)
         external
         nonReentrant
@@ -324,7 +324,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
     }
 
-    /// @inheritdoc ISpro
+    /// @inheritdoc IP2PLending
     function tryClaimRepaidLoan(uint256 loanId, uint256 creditAmount, address creditAddress, address loanOwner)
         external
     {
@@ -338,7 +338,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         emit LoanClaimed(loanId, false);
     }
 
-    /// @inheritdoc ISpro
+    /// @inheritdoc IP2PLending
     function claimMultipleLoans(uint256[] calldata loanIds) external nonReentrant {
         uint256 l = loanIds.length;
         for (uint256 i; i < l; ++i) {
@@ -346,7 +346,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
         }
     }
 
-    /// @inheritdoc ISpro
+    /// @inheritdoc IP2PLending
     function claimLoan(uint256 loanId) external nonReentrant {
         _claimLoan(loanId);
     }
@@ -355,7 +355,7 @@ contract Spro is SproStorage, ISpro, Ownable2Step, ReentrancyGuard {
     /*                              Public Functions                              */
     /* -------------------------------------------------------------------------- */
 
-    /// @inheritdoc ISpro
+    /// @inheritdoc IP2PLending
     function getProposalHash(Proposal memory proposal) public pure returns (bytes32 proposalHash_) {
         return keccak256(abi.encode(proposal));
     }

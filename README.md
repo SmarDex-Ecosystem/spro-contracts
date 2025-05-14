@@ -1,11 +1,11 @@
-# <h1 align="center">SPRO_contracts</h1>
+# <h1 align="center">P2P_Lending_contracts</h1>
 
 [![Main workflow](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/ci.yml/badge.svg)](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/ci.yml)
 [![Release Workflow](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/release.yml/badge.svg)](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/release.yml)
 
 # SmarDex fork of PWN Protocol
 
-SPRO is a peer-to-peer (P2P) lending protocol that enables the use of arbitrary ERC-20 tokens as collateral. It is designed to provide a secure, flexible, and decentralized approach to on-chain lending.
+This peer-to-peer (P2P) lending protocol that enables the use of arbitrary ERC-20 tokens as collateral. It is designed to provide a secure, flexible, and decentralized approach to on-chain lending.
 
 Key features and custom logic include:
 
@@ -124,10 +124,10 @@ In order to setup the git pre-commit hook, run `npm install`.
 
 ### Deploy protocol
 
-For a mainnet deployment, you can use the `Spro.s.sol` script with:
+For a mainnet deployment, you can use the `P2PLending.s.sol` script with:
 
 ```bash
-forge script -f RPC_URL script/Spro.s.sol --broadcast -i 1
+forge script -f RPC_URL script/P2PLending.s.sol --broadcast -i 1
 ```
 
 You can use `-t` or `-l` options instead of `-i 1` for trezor or ledger hardware wallet.

@@ -7,9 +7,9 @@ import { PermitSignature } from "permit2/test/utils/PermitSignature.sol";
 
 import { SDBaseIntegrationTest } from "test/integration/utils/Fixtures.sol";
 
-import { ISproTypes } from "src/interfaces/ISproTypes.sol";
-import { ISproErrors } from "src/interfaces/ISproErrors.sol";
-import { Spro } from "src/spro/Spro.sol";
+import { IP2PLendingTypes } from "src/interfaces/IP2PLendingTypes.sol";
+import { IP2PLendingErrors } from "src/interfaces/IP2PLendingErrors.sol";
+import { P2PLending } from "src/p2pLending/P2PLending.sol";
 
 contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
     uint256 internal constant SIG_USER1_PK = 1;
@@ -129,7 +129,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         // Warp ahead, just before loan default
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
-        ISproTypes.Loan memory loan = spro.getLoan(loanId);
+        IP2PLendingTypes.Loan memory loan = spro.getLoan(loanId);
         uint256 repaymentAmount = loan.principalAmount + loan.fixedInterestAmount;
         IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(repaymentAmount), 0, 0);
@@ -160,7 +160,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
         // Warp ahead, just before loan default
         vm.warp(proposal.loanExpiration - proposal.startTimestamp - 1);
 
-        ISproTypes.Loan memory loan = spro.getLoan(loanId);
+        IP2PLendingTypes.Loan memory loan = spro.getLoan(loanId);
         uint256 repaymentAmount = loan.principalAmount + loan.fixedInterestAmount;
         IAllowanceTransfer.PermitDetails memory details =
             IAllowanceTransfer.PermitDetails(address(proposal.creditAddress), uint160(repaymentAmount - 1), 0, 0);
@@ -317,7 +317,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
 
         collateral.setFee(true);
 
-        vm.expectRevert(ISproErrors.TransferMismatch.selector);
+        vm.expectRevert(IP2PLendingErrors.TransferMismatch.selector);
         spro.createProposal(
             proposal.collateralAddress,
             proposal.collateralAmount,
@@ -345,7 +345,7 @@ contract TestForkPermit2 is SDBaseIntegrationTest, PermitSignature {
 
         credit.setFee(true);
 
-        vm.expectRevert(ISproErrors.TransferMismatch.selector);
+        vm.expectRevert(IP2PLendingErrors.TransferMismatch.selector);
         vm.prank(sigUser1);
         spro.createLoan(proposal, CREDIT_LIMIT, abi.encode(permitSign, signature));
     }
