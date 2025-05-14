@@ -123,8 +123,8 @@ contract PostconditionsSpro is Properties {
                 invariant_REPAYMUL_01(repayableLoans[i]);
             }
             invariant_REPAYMUL_02(creditAmountForProtocol);
-            for (uint256 i = 0; i < borrowerCount; i++) {
-                invariant_REPAYMUL_03(totalCollaterals[i], borrowers[i]);
+            for (uint256 i = 0; i < borrowers.length; i++) {
+                invariant_REPAYMUL_03(borrowers[i], totalCollaterals[i]);
             }
             invariant_REPAYMUL_04(payer, totalRepaymentAmount);
         } else {

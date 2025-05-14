@@ -17,7 +17,7 @@ contract Properties_REPAYMUL is Properties_REPAY {
         );
     }
 
-    function invariant_REPAYMUL_03(uint256 collateralAmount, address borrower) internal view {
+    function invariant_REPAYMUL_03(address borrower, uint256 collateralAmount) internal view {
         invariant_REPAY_03(collateralAmount, borrower);
     }
 

@@ -129,7 +129,7 @@ contract FuzzStorageVariables is Test {
         _setStates(1, actors);
         _newLoan();
         _stateLoan(1);
-        _state(actors[actors.length - 1]);
+        _processRepayableLoans(actors[actors.length - 1]);
     }
 
     function _clean() internal {
@@ -184,46 +184,39 @@ contract FuzzStorageVariables is Test {
         }
     }
 
-    function _state(address payer) internal {
+    function _processRepayableLoans(address payer) internal {
         for (uint256 i = 0; i < repayableLoans.length; i++) {
             Spro.LoanWithId memory loanWithId = repayableLoans[i];
             uint256 stateIndex;
-
             for (uint256 j = 0; j < loans.length; j++) {
-                if (loanWithId.loanId == loans[j].loanId) {
+                if (loans[j].loanId == loanWithId.loanId) {
                     stateIndex = j;
                     break;
                 }
             }
 
-            if (
-                state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
-                    && state[1].loanStatus[stateIndex] == LoanStatus.PAID_BACK
-            ) {
-                creditAmountForProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+            bool wasRepaid = state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
+                && state[1].loanStatus[stateIndex] == LoanStatus.PAID_BACK;
+            uint256 repaymentAmount = loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+            if (wasRepaid) {
+                creditAmountForProtocol += repaymentAmount;
             }
-            if (
-                state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
-                    && state[1].loanStatus[stateIndex] == LoanStatus.PAID_BACK || payer != loanWithId.loan.lender
-            ) {
-                totalRepaymentAmount += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+            if (wasRepaid || payer != loanWithId.loan.lender) {
+                totalRepaymentAmount += repaymentAmount;
             }
 
             address borrower = loanWithId.loan.borrower;
-            uint256 collateral = loanWithId.loan.collateralAmount;
             bool found = false;
-
             for (uint256 j = 0; j < borrowers.length; j++) {
                 if (borrowers[j] == borrower) {
-                    totalCollaterals[j] += collateral;
+                    totalCollaterals[j] += loanWithId.loan.collateralAmount;
                     found = true;
                     break;
                 }
             }
-
             if (!found) {
                 borrowers.push(borrower);
-                totalCollaterals.push(collateral);
+                totalCollaterals.push(loanWithId.loan.collateralAmount);
             }
         }
     }
