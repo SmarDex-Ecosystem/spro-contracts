@@ -118,59 +118,10 @@ contract PostconditionsSpro is Properties {
     ) internal {
         if (success) {
             _after(actors);
+
             for (uint256 i = 0; i < repayableLoanIds.length; i++) {
                 invariant_REPAYMUL_01(repayableLoans[i]);
             }
-
-            uint256 creditAmountForProtocol;
-            uint256 totalRepaymentAmount;
-            address[] memory borrowers = new address[](repayableLoans.length);
-            uint256[] memory totalCollaterals = new uint256[](repayableLoans.length);
-            uint256 borrowerCount;
-
-            for (uint256 i = 0; i < repayableLoans.length; i++) {
-                Spro.LoanWithId memory loanWithId = repayableLoans[i];
-                uint256 stateIndex;
-
-                for (uint256 j = 0; j < loans.length; j++) {
-                    if (loanWithId.loanId == loans[j].loanId) {
-                        stateIndex = j;
-                        break;
-                    }
-                }
-
-                if (
-                    state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
-                        && state[1].loanStatus[stateIndex] == LoanStatus.PAID_BACK
-                ) {
-                    creditAmountForProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
-                }
-                if (
-                    state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
-                        && state[1].loanStatus[stateIndex] == LoanStatus.PAID_BACK || payer != loanWithId.loan.lender
-                ) {
-                    totalRepaymentAmount += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
-                }
-
-                address borrower = loanWithId.loan.borrower;
-                uint256 collateral = loanWithId.loan.collateralAmount;
-                bool found = false;
-
-                for (uint256 j = 0; j < borrowerCount; j++) {
-                    if (borrowers[j] == borrower) {
-                        totalCollaterals[j] += collateral;
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found) {
-                    borrowers[borrowerCount] = borrower;
-                    totalCollaterals[borrowerCount] = collateral;
-                    borrowerCount++;
-                }
-            }
-
             invariant_REPAYMUL_02(creditAmountForProtocol);
             for (uint256 i = 0; i < borrowerCount; i++) {
                 invariant_REPAYMUL_03(totalCollaterals[i], borrowers[i]);

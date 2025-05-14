@@ -29,8 +29,14 @@ contract FuzzStorageVariables is Test {
     // Spro storage variables
     ISproTypes.Proposal[] internal proposals;
     Spro.LoanWithId[] internal loans;
+
+    // Repayable loans
     Spro.LoanWithId[] internal repayableLoans;
     uint256[] internal repayableLoanIds;
+    uint256 creditAmountForProtocol;
+    uint256 totalRepaymentAmount;
+    address[] borrowers;
+    uint256[] totalCollaterals;
 
     mapping(uint8 => State) state;
 
@@ -123,6 +129,7 @@ contract FuzzStorageVariables is Test {
         _setStates(1, actors);
         _newLoan();
         _stateLoan(1);
+        _state(actors[actors.length - 1]);
     }
 
     function _clean() internal {
@@ -133,8 +140,14 @@ contract FuzzStorageVariables is Test {
     function _fullReset() internal {
         delete state[0];
         delete state[1];
+
+        // Reset repayable loans variables
         delete repayableLoans;
         delete repayableLoanIds;
+        delete creditAmountForProtocol;
+        delete totalRepaymentAmount;
+        delete borrowers;
+        delete totalCollaterals;
     }
 
     function _removeLoansWithStatusNone() internal {
@@ -168,6 +181,50 @@ contract FuzzStorageVariables is Test {
         }
         for (uint256 i = 0; i < loans.length; i++) {
             state[index].loanStatus[i] = getStatus(loans[i].loanId);
+        }
+    }
+
+    function _state(address payer) internal {
+        for (uint256 i = 0; i < repayableLoans.length; i++) {
+            Spro.LoanWithId memory loanWithId = repayableLoans[i];
+            uint256 stateIndex;
+
+            for (uint256 j = 0; j < loans.length; j++) {
+                if (loanWithId.loanId == loans[j].loanId) {
+                    stateIndex = j;
+                    break;
+                }
+            }
+
+            if (
+                state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
+                    && state[1].loanStatus[stateIndex] == LoanStatus.PAID_BACK
+            ) {
+                creditAmountForProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+            }
+            if (
+                state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
+                    && state[1].loanStatus[stateIndex] == LoanStatus.PAID_BACK || payer != loanWithId.loan.lender
+            ) {
+                totalRepaymentAmount += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+            }
+
+            address borrower = loanWithId.loan.borrower;
+            uint256 collateral = loanWithId.loan.collateralAmount;
+            bool found = false;
+
+            for (uint256 j = 0; j < borrowers.length; j++) {
+                if (borrowers[j] == borrower) {
+                    totalCollaterals[j] += collateral;
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                borrowers.push(borrower);
+                totalCollaterals.push(collateral);
+            }
         }
     }
 }
