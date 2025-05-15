@@ -37,4 +37,16 @@ contract FuzzActors is Test {
         }
         revert("No other user found");
     }
+
+    function getRandomUserOrProtocol(uint256 input, address protocol) internal view returns (address) {
+        address[] memory candidates = new address[](USERS.length + 1);
+
+        for (uint256 i = 0; i < USERS.length; i++) {
+            candidates[i] = USERS[i];
+        }
+        candidates[USERS.length] = protocol;
+
+        uint256 index = uint256(keccak256(abi.encodePacked(input))) % candidates.length;
+        return candidates[index];
+    }
 }
