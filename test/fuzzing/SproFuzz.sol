@@ -96,10 +96,8 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         actors[0] = loanToken.ownerOf(loanWithId.loanId);
         actors[1] = payer[0];
         actors[2] = loanWithId.loan.borrower;
-        if (blocked) {
-            if (actors[0] != address(spro)) {
-                token2.blockTransfers(true, actors[0]);
-            }
+        if (blocked && actors[0] != address(spro)) {
+            token2.blockTransfers(true, actors[0]);
         }
         _repayLoanPreconditions(loanWithId, actors[1]);
         _before(actors);
