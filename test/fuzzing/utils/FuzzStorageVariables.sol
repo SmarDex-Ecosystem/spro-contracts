@@ -129,7 +129,6 @@ contract FuzzStorageVariables is Test {
         _setStates(1, actors);
         _newLoan();
         _stateLoan(1);
-        _processRepayableLoans(actors[actors.length - 1]);
     }
 
     function _clean() internal {

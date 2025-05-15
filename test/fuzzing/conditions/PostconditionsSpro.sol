@@ -110,11 +110,15 @@ contract PostconditionsSpro is Properties {
         token2.blockTransfers(false, address(0));
     }
 
-    function _repayMultipleLoansPostconditions(bool success, bytes memory returnData, address[] memory actors)
-        internal
-    {
+    function _repayMultipleLoansPostconditions(
+        bool success,
+        bytes memory returnData,
+        address[] memory actors,
+        address payer
+    ) internal {
         if (success) {
             _after(actors);
+            _processRepayableLoans(payer);
 
             for (uint256 i = 0; i < repayableLoanIds.length; i++) {
                 invariant_REPAYMUL_01(repayableLoans[i]);
@@ -123,7 +127,7 @@ contract PostconditionsSpro is Properties {
             for (uint256 i = 0; i < borrowers.length; i++) {
                 invariant_REPAYMUL_03(borrowers[i], borrowersCollateral[i]);
             }
-            invariant_REPAYMUL_04(actors[actors.length - 1]);
+            invariant_REPAYMUL_04(payer);
         } else {
             invariant_ERR(returnData);
         }
