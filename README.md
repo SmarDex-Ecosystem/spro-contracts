@@ -3,9 +3,9 @@
 [![Main workflow](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/ci.yml/badge.svg)](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/ci.yml)
 [![Release Workflow](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/release.yml/badge.svg)](https://github.com/SmarDex-Ecosystem/SPRO_contracts/actions/workflows/release.yml)
 
-# SmarDex fork of PWN Protocol
+# SMARDEX fork of PWN Protocol
 
-This peer-to-peer (P2P) lending protocol enables the use of arbitrary ERC-20 tokens as collateral. It is designed to provide a secure, flexible, and decentralized approach to on-chain lending.
+This SMARDEX P2P Lending Protocol enables the use of arbitrary ERC-20 tokens as collateral. It is designed to provide a secure, flexible, and decentralized approach to on-chain lending.
 
 Key features and custom logic include:
 
