@@ -127,4 +127,35 @@ contract PostconditionsSpro is Properties {
             assert(false);
         }
     }
+
+    function _transferTokenPostconditions(
+        bool success,
+        bytes memory returnData,
+        address[] memory actors,
+        address token,
+        uint256 amount
+    ) internal {
+        if (success) {
+            _after(actors);
+            bool isToken1 = token == address(token1);
+
+            uint256 actor0BalanceBefore = isToken1
+                ? state[0].actorStates[actors[0]].collateralBalance
+                : state[0].actorStates[actors[0]].creditBalance;
+            uint256 actor0BalanceAfter = isToken1
+                ? state[1].actorStates[actors[0]].collateralBalance
+                : state[1].actorStates[actors[0]].creditBalance;
+            uint256 sproBalanceBefore = isToken1
+                ? state[0].actorStates[address(spro)].collateralBalance
+                : state[0].actorStates[address(spro)].creditBalance;
+            uint256 sproBalanceAfter = isToken1
+                ? state[1].actorStates[address(spro)].collateralBalance
+                : state[1].actorStates[address(spro)].creditBalance;
+
+            assert(actor0BalanceBefore == actor0BalanceAfter + amount);
+            assert(sproBalanceBefore == sproBalanceAfter - amount);
+        } else {
+            invariant_ERR(returnData);
+        }
+    }
 }

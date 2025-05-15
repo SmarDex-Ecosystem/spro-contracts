@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { FuzzActors } from "./FuzzActors.sol";
 import { FuzzStorageVariables } from "../utils/FuzzStorageVariables.sol";
@@ -81,5 +82,13 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
     function _transferNFTCall(address caller, address to, uint256 tokenId) internal returns (bool success) {
         vm.prank(caller);
         (success,) = address(loanToken).call(abi.encodeWithSelector(IERC721.transferFrom.selector, caller, to, tokenId));
+    }
+
+    function _transferTokenCall(address caller, address token, address to, uint256 amount)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        vm.prank(caller);
+        (success, returnData) = address(token).call(abi.encodeWithSelector(IERC20.transfer.selector, to, amount));
     }
 }

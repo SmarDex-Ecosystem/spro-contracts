@@ -5,6 +5,8 @@ import { FuzzSetup } from "./FuzzSetup.sol";
 import { PostconditionsSpro } from "./conditions/PostconditionsSpro.sol";
 import { PreconditionsSpro } from "./conditions/PreconditionsSpro.sol";
 
+import { T20 } from "test/helper/T20.sol";
+
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { Spro } from "src/spro/Spro.sol";
 
@@ -143,5 +145,18 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         bool success = _transferNFTCall(actors[0], actors[1], loanWithId.loanId);
 
         _transferNFTPostconditions(success, loanWithId.loanId, actors);
+    }
+
+    function fuzz_transferTokenToProtocol(uint256 seed1, uint256 seed2, bool tokenOne) public {
+        address[] memory actors = getRandomUsers(seed1, 1);
+        T20 token = tokenOne ? token1 : token2;
+        if (token.balanceOf(actors[0]) == 0) {
+            return;
+        }
+        seed2 = bound(seed2, 0, token.balanceOf(actors[0]));
+        _before(actors);
+
+        (bool success, bytes memory returnData) = _transferTokenCall(actors[0], address(token), address(spro), seed2);
+        _transferTokenPostconditions(success, returnData, actors, address(token), seed2);
     }
 }
