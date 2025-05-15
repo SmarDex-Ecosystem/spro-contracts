@@ -36,7 +36,7 @@ contract FuzzStorageVariables is Test {
     uint256 creditAmountForProtocol;
     uint256 totalRepaymentAmount;
     address[] borrowers;
-    uint256[] totalCollaterals;
+    uint256[] borrowersCollateral;
 
     mapping(uint8 => State) state;
 
@@ -147,7 +147,7 @@ contract FuzzStorageVariables is Test {
         delete creditAmountForProtocol;
         delete totalRepaymentAmount;
         delete borrowers;
-        delete totalCollaterals;
+        delete borrowersCollateral;
     }
 
     function _removeLoansWithStatusNone() internal {
@@ -209,14 +209,14 @@ contract FuzzStorageVariables is Test {
             bool found = false;
             for (uint256 j = 0; j < borrowers.length; j++) {
                 if (borrowers[j] == borrower) {
-                    totalCollaterals[j] += loanWithId.loan.collateralAmount;
+                    borrowersCollateral[j] += loanWithId.loan.collateralAmount;
                     found = true;
                     break;
                 }
             }
             if (!found) {
                 borrowers.push(borrower);
-                totalCollaterals.push(loanWithId.loan.collateralAmount);
+                borrowersCollateral.push(loanWithId.loan.collateralAmount);
             }
         }
     }
