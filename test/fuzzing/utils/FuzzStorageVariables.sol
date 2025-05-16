@@ -30,6 +30,9 @@ contract FuzzStorageVariables is Test {
     ISproTypes.Proposal[] internal proposals;
     Spro.LoanWithId[] internal loans;
 
+    // Loan variables
+    mapping(uint256 => uint256) internal loanIdToStateIndex;
+
     // Repayable loans
     Spro.LoanWithId[] internal repayableLoans;
     uint256[] internal repayableLoanIds;
@@ -129,9 +132,14 @@ contract FuzzStorageVariables is Test {
         _setStates(1, actors);
         _newLoan();
         _stateLoan(1);
+        // Process match state with loans
+        _matchStateWithLoans();
+        // Process repayable loans
+        _processRepayableLoans(actors[actors.length - 1]);
     }
 
     function _clean() internal {
+        token2.blockTransfers(false, address(0));
         _removeLoansWithStatusNone();
         _fullReset();
     }
@@ -217,6 +225,12 @@ contract FuzzStorageVariables is Test {
                 borrowers.push(borrower);
                 borrowersCollateral.push(loanWithId.loan.collateralAmount);
             }
+        }
+    }
+
+    function _matchStateWithLoans() internal {
+        for (uint256 i = 0; i < loans.length; i++) {
+            loanIdToStateIndex[loans[i].loanId] = i;
         }
     }
 }

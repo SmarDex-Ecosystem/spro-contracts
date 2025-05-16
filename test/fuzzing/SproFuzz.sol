@@ -91,10 +91,10 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         }
 
         Spro.LoanWithId memory loanWithId = getRandomLoan(seed);
-        address[] memory payer = getRandomUsers(uint256(keccak256(abi.encode(seed))), 1);
+        address payer = getRandomUsers(uint256(keccak256(abi.encode(seed))), 1)[0];
         address[] memory actors = new address[](3);
         actors[0] = loanWithId.loan.lender;
-        actors[1] = payer[0];
+        actors[1] = payer;
         actors[2] = loanWithId.loan.borrower;
         if (blocked) {
             token2.blockTransfers(true, actors[0]);
@@ -126,30 +126,38 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         _claimLoanPostconditions(success, returnData, loanWithId, actors);
     }
 
-    function fuzz_repayMultipleLoans(uint256 seed, uint256 size, bool blocked) public {
+    function fuzz_repayMultipleLoans(uint256 seed, uint256 numLoansToRepaySeed, bool blocked) public {
         if (loans.length == 0) {
             return;
         }
 
-        size = bound(size, 1, loans.length);
-        Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seed, size);
-        address[] memory payer = getRandomUsers(uint256(keccak256(abi.encode(seed))), 1);
+        numLoansToRepaySeed = bound(numLoansToRepaySeed, 1, loans.length);
+        Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seed, numLoansToRepaySeed);
 
-        uint256 totalRepaymentAmount = _repayMultipleLoansPreconditions(loanWithIds, payer[0]);
+        address payer = getRandomUsers(uint256(keccak256(abi.encode(seed))), 1)[0];
+
+        uint256 totalRepaymentAmount = _repayMultipleLoansPreconditions(loanWithIds, payer);
         if (totalRepaymentAmount == 0) {
             return;
         }
 
+        uint256 usersLength = USERS.length;
         if (blocked) {
-            for (uint256 i = 0; i < USERS.length; i++) {
+            for (uint256 i = 0; i < usersLength; ++i) {
                 token2.blockTransfers(true, USERS[i]);
             }
         }
 
-        _before(USERS);
+        address[] memory actors = new address[](usersLength + 1);
+        for (uint256 i = 0; i < usersLength; ++i) {
+            actors[i] = USERS[i];
+        }
+        actors[usersLength] = payer;
 
-        (bool success, bytes memory returnData) = _repayMultipleLoansCall(payer[0]);
+        _before(actors);
 
-        _repayMultipleLoansPostconditions(success, returnData, USERS, payer[0]);
+        (bool success, bytes memory returnData) = _repayMultipleLoansCall(payer);
+
+        _repayMultipleLoansPostconditions(success, returnData, actors);
     }
 }

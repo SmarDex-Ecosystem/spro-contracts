@@ -87,13 +87,7 @@ contract PostconditionsSpro is Properties {
         if (success) {
             _after(actors);
 
-            uint256 stateIndex = 0;
-            for (uint256 j = 0; j < loans.length; j++) {
-                if (loanWithId.loanId == loans[j].loanId) {
-                    stateIndex = j;
-                    break;
-                }
-            }
+            uint256 stateIndex = loanIdToStateIndex[loanWithId.loanId];
             invariant_REPAY_01(loanWithId);
             invariant_REPAY_02(loanWithId, stateIndex);
             invariant_REPAY_03(loanWithId.loan.collateralAmount, actors[2]);
@@ -107,18 +101,13 @@ contract PostconditionsSpro is Properties {
             invariant_ERR(returnData);
         }
         _clean();
-        token2.blockTransfers(false, address(0));
     }
 
-    function _repayMultipleLoansPostconditions(
-        bool success,
-        bytes memory returnData,
-        address[] memory actors,
-        address payer
-    ) internal {
+    function _repayMultipleLoansPostconditions(bool success, bytes memory returnData, address[] memory actors)
+        internal
+    {
         if (success) {
             _after(actors);
-            _processRepayableLoans(payer);
 
             for (uint256 i = 0; i < repayableLoanIds.length; i++) {
                 invariant_REPAYMUL_01(repayableLoans[i]);
@@ -127,12 +116,11 @@ contract PostconditionsSpro is Properties {
             for (uint256 i = 0; i < borrowers.length; i++) {
                 invariant_REPAYMUL_03(borrowers[i], borrowersCollateral[i]);
             }
-            invariant_REPAYMUL_04(payer);
+            invariant_REPAYMUL_04(actors[actors.length - 1]);
         } else {
             invariant_ERR(returnData);
         }
         _clean();
-        token2.blockTransfers(false, address(0));
     }
 
     function _claimLoanPostconditions(
@@ -144,13 +132,7 @@ contract PostconditionsSpro is Properties {
         if (success) {
             _after(actors);
 
-            uint256 stateIndex = 0;
-            for (uint256 j = 0; j < loans.length; j++) {
-                if (loanWithId.loanId == loans[j].loanId) {
-                    stateIndex = j;
-                    break;
-                }
-            }
+            uint256 stateIndex = loanIdToStateIndex[loanWithId.loanId];
             invariant_CLAIM_01(stateIndex);
             invariant_CLAIM_02(loanWithId, stateIndex);
             invariant_CLAIM_03(loanWithId, stateIndex, actors[0]);
