@@ -189,23 +189,16 @@ contract FuzzStorageVariables is Test {
             return;
         }
         for (uint256 i = 0; i < loans.length; i++) {
-            state[index].loanStatus[i] = getStatus(loans[i].loanId);
+            state[index].loanStatus[loans[i].loanId] = getStatus(loans[i].loanId);
         }
     }
 
     function _processRepayableLoans(address payer) internal {
         for (uint256 i = 0; i < repayableLoans.length; i++) {
             Spro.LoanWithId memory loanWithId = repayableLoans[i];
-            uint256 stateIndex;
-            for (uint256 j = 0; j < loans.length; j++) {
-                if (loans[j].loanId == loanWithId.loanId) {
-                    stateIndex = j;
-                    break;
-                }
-            }
 
-            bool wasRepaid = state[0].loanStatus[stateIndex] == LoanStatus.REPAYABLE
-                && state[1].loanStatus[stateIndex] == LoanStatus.PAID_BACK;
+            bool wasRepaid = state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
+                && state[1].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK;
             uint256 repaymentAmount = loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
             if (wasRepaid) {
                 creditAmountForProtocol += repaymentAmount;
