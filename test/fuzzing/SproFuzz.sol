@@ -93,7 +93,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         Spro.LoanWithId memory loanWithId = getRandomLoan(seed);
         address[] memory payer = getRandomUsers(uint256(keccak256(abi.encode(seed))), 1);
         address[] memory actors = new address[](3);
-        actors[0] = loanWithId.loan.lender;
+        actors[0] = loanToken.ownerOf(loanWithId.loanId);
         actors[1] = payer[0];
         actors[2] = loanWithId.loan.borrower;
         if (blocked) {
@@ -114,7 +114,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
 
         Spro.LoanWithId memory loanWithId = getRandomLoan(seed);
         address[] memory actors = new address[](2);
-        actors[0] = loanWithId.loan.lender;
+        actors[0] = loanToken.ownerOf(loanWithId.loanId);
         actors[1] = loanWithId.loan.borrower;
         if (expired) {
             vm.warp(loanWithId.loan.loanExpiration);
@@ -124,5 +124,20 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         (bool success, bytes memory returnData) = _claimLoanCall(actors[0], loanWithId.loanId);
 
         _claimLoanPostconditions(success, returnData, loanWithId, actors);
+    }
+
+    function fuzz_transferNFT(uint256 seed) public {
+        if (loans.length == 0) {
+            return;
+        }
+
+        Spro.LoanWithId memory loanWithId = getRandomLoan(seed);
+        address[] memory actors = new address[](2);
+        actors[0] = loanToken.ownerOf(loanWithId.loanId);
+        actors[1] = getAnotherUser(actors[0]);
+
+        (bool success, bytes memory returnData) = _transferNFTCall(actors[0], actors[1], loanWithId.loanId);
+
+        _transferNFTPostconditions(success, returnData, loanWithId.loanId, actors);
     }
 }

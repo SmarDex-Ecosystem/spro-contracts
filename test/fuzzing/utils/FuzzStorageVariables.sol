@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import { Test } from "forge-std/Test.sol";
 
 import { Spro } from "src/spro/Spro.sol";
+import { SproLoan } from "src/spro/SproLoan.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 import { T20 } from "test/helper/T20.sol";
@@ -14,6 +15,7 @@ contract FuzzStorageVariables is Test {
     T20 token1;
     T20 token2;
     SproHandler spro;
+    SproLoan loanToken;
     uint256 numberOfProposals;
     uint256 numberOfLoans;
 

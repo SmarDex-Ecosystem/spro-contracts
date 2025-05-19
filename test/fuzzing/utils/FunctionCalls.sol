@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
 import { FuzzActors } from "./FuzzActors.sol";
 import { FuzzStorageVariables } from "../utils/FuzzStorageVariables.sol";
 
@@ -74,5 +76,14 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
     function _claimLoanCall(address caller, uint256 loanId) internal returns (bool success, bytes memory returnData) {
         vm.prank(caller);
         (success, returnData) = address(spro).call(abi.encodeWithSelector(ISpro.claimLoan.selector, loanId));
+    }
+
+    function _transferNFTCall(address caller, address to, uint256 tokenId)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        vm.prank(caller);
+        (success, returnData) =
+            address(loanToken).call(abi.encodeWithSelector(IERC721.transferFrom.selector, caller, to, tokenId));
     }
 }

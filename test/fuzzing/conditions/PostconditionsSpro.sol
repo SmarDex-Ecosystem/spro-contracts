@@ -118,4 +118,14 @@ contract PostconditionsSpro is Properties {
             invariant_ERR(returnData);
         }
     }
+
+    function _transferNFTPostconditions(bool success, bytes memory returnData, uint256 loanId, address[] memory actors)
+        internal
+    {
+        if (success) {
+            assert(loanToken.ownerOf(loanId) == actors[1]);
+        } else {
+            invariant_ERR(returnData);
+        }
+    }
 }
