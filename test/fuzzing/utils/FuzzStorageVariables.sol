@@ -3,6 +3,8 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
+import { LibPRNG } from "solady/src/utils/LibPRNG.sol";
+
 import { Spro } from "src/spro/Spro.sol";
 import { SproLoan } from "src/spro/SproLoan.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
@@ -80,12 +82,17 @@ contract FuzzStorageVariables is Test {
         view
         returns (Spro.LoanWithId[] memory randomLoans)
     {
+        LibPRNG.PRNG memory rng = LibPRNG.PRNG(input);
         require(length <= loans.length, "Requested length exceeds USERS length");
 
-        Spro.LoanWithId[] memory shuffleLoans = loans;
-        for (uint256 i = loans.length - 1; i > 0; i--) {
-            uint256 j = uint256(keccak256(abi.encodePacked(input, i))) % (i + 1);
-            (shuffleLoans[i], shuffleLoans[j]) = (shuffleLoans[j], shuffleLoans[i]);
+        uint256[] memory shuffleIndexes = new uint256[](loans.length);
+        for (uint256 i = 0; i < loans.length; i++) {
+            shuffleIndexes[i] = i;
+        }
+        LibPRNG.shuffle(rng, shuffleIndexes);
+        Spro.LoanWithId[] memory shuffleLoans = new Spro.LoanWithId[](loans.length);
+        for (uint256 i = 0; i < loans.length; i++) {
+            shuffleLoans[i] = loans[shuffleIndexes[i]];
         }
 
         randomLoans = new Spro.LoanWithId[](length);

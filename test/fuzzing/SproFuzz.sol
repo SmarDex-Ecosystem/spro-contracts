@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0;
 
+import { LibPRNG } from "solady/src/utils/LibPRNG.sol";
+
 import { FuzzSetup } from "./FuzzSetup.sol";
 import { PostconditionsSpro } from "./conditions/PostconditionsSpro.sol";
 import { PreconditionsSpro } from "./conditions/PreconditionsSpro.sol";
@@ -86,12 +88,13 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
     }
 
     function fuzz_repayLoan(uint256 seed, bool blocked) public {
+        LibPRNG.PRNG memory rng = LibPRNG.PRNG(seed);
         if (loans.length == 0) {
             return;
         }
 
         Spro.LoanWithId memory loanWithId = getRandomLoan(seed);
-        address payer = getRandomUsers(uint256(keccak256(abi.encode(seed))), 1)[0];
+        address payer = getRandomUsers(LibPRNG.next(rng), 1)[0];
         address[] memory actors = new address[](3);
         actors[0] = loanToken.ownerOf(loanWithId.loanId);
         actors[1] = payer;
@@ -142,6 +145,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
     // }
 
     function fuzz_repayMultipleLoans(uint256 seed, uint256 seedNumLoansToRepay, bool blocked) public {
+        LibPRNG.PRNG memory rng = LibPRNG.PRNG(seed);
         if (loans.length == 0) {
             return;
         }
@@ -149,7 +153,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         seedNumLoansToRepay = bound(seedNumLoansToRepay, 1, loans.length);
         Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seed, seedNumLoansToRepay);
 
-        address payer = getRandomUsers(uint256(keccak256(abi.encode(seed))), 1)[0];
+        address payer = getRandomUsers(LibPRNG.next(rng), 1)[0];
 
         uint256 totalRepaymentAmount = _repayMultipleLoansPreconditions(loanWithIds, payer);
         if (totalRepaymentAmount == 0) {

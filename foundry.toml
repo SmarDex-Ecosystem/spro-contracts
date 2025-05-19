@@ -129,4 +129,4 @@ forge-std = "1.9.2"
 "openzeppelin-contracts" = { version = "4.7.0", url = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v4.7.0.zip" }
 "@uniswap-permit2" = { version = "1.0.0", url = "https://github.com/Uniswap/permit2/archive/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219.zip" }
 solmate = "6.7.0"
-solady = "0.1.14"
+solady = "0.1.18"
