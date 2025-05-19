@@ -33,6 +33,7 @@ contract FuzzStorageVariables is Test {
     // Spro storage variables
     ISproTypes.Proposal[] internal proposals;
     Spro.LoanWithId[] internal loans;
+    mapping(uint256 => address) lastOwnerOfLoan;
 
     // Repayable loans
     Spro.LoanWithId[] internal repayableLoans;
@@ -132,6 +133,7 @@ contract FuzzStorageVariables is Test {
     function _before(address[] memory actors) internal {
         _setStates(0, actors);
         _stateLoan(0);
+        _getLastOwnerOfLoan();
     }
 
     function _after(address[] memory actors) internal {
@@ -182,6 +184,7 @@ contract FuzzStorageVariables is Test {
                 numberOfLoans--;
             } else {
                 loans.push(Spro.LoanWithId(loanId, loan));
+                lastOwnerOfLoan[loanId] = loanToken.ownerOf(loanId);
             }
         }
     }
@@ -195,6 +198,16 @@ contract FuzzStorageVariables is Test {
         }
     }
 
+    function _getLastOwnerOfLoan() internal {
+        for (uint256 i = 0; i < loans.length; i++) {
+            if (getStatus(loans[i].loanId) != LoanStatus.NONE) {
+                lastOwnerOfLoan[loans[i].loanId] = loanToken.ownerOf(loans[i].loanId);
+            } else {
+                lastOwnerOfLoan[loans[i].loanId] = address(0);
+            }
+        }
+    }
+
     function _processRepayableLoans(address payer) internal {
         for (uint256 i = 0; i < repayableLoans.length; i++) {
             Spro.LoanWithId memory loanWithId = repayableLoans[i];
@@ -205,7 +218,7 @@ contract FuzzStorageVariables is Test {
             if (wasRepaid) {
                 creditAmountForProtocol += repaymentAmount;
             }
-            if (wasRepaid || payer != loanToken.ownerOf(loanWithId.loanId)) {
+            if (wasRepaid || payer != lastOwnerOfLoan[loanWithId.loanId]) {
                 totalRepaymentAmount += repaymentAmount;
             }
 
