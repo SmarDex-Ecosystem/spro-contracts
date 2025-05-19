@@ -210,7 +210,7 @@ contract FuzzStorageVariables is Test {
             if (wasRepaid) {
                 creditAmountForProtocol += repaymentAmount;
             }
-            if (wasRepaid || payer != loanWithId.loan.lender) {
+            if (wasRepaid || payer != loanToken.ownerOf(loanWithId.loanId)) {
                 totalRepaymentAmount += repaymentAmount;
             }
 

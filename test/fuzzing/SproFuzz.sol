@@ -129,20 +129,20 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         _claimLoanPostconditions(success, returnData, loanWithId, actors);
     }
 
-    // function fuzz_transferNFT(uint256 seed) public {
-    //     if (loans.length == 0) {
-    //         return;
-    //     }
+    function fuzz_transferNFT(uint256 seed) public {
+        if (loans.length == 0) {
+            return;
+        }
 
-    //     Spro.LoanWithId memory loanWithId = getRandomLoan(seed);
-    //     address[] memory actors = new address[](2);
-    //     actors[0] = loanToken.ownerOf(loanWithId.loanId);
-    //     actors[1] = getAnotherUser(actors[0]);
+        Spro.LoanWithId memory loanWithId = getRandomLoan(seed);
+        address[] memory actors = new address[](2);
+        actors[0] = loanToken.ownerOf(loanWithId.loanId);
+        actors[1] = getAnotherUser(actors[0]);
 
-    //     (bool success, bytes memory returnData) = _transferNFTCall(actors[0], actors[1], loanWithId.loanId);
+        (bool success, bytes memory returnData) = _transferNFTCall(actors[0], actors[1], loanWithId.loanId);
 
-    //     _transferNFTPostconditions(success, returnData, loanWithId.loanId, actors);
-    // }
+        _transferNFTPostconditions(success, returnData, loanWithId.loanId, actors);
+    }
 
     function fuzz_repayMultipleLoans(uint256 seed, uint256 seedNumLoansToRepay, bool blocked) public {
         LibPRNG.PRNG memory rng = LibPRNG.PRNG(seed);

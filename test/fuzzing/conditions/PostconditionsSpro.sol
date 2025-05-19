@@ -91,11 +91,14 @@ contract PostconditionsSpro is Properties {
             invariant_REPAY_02(loanWithId);
             invariant_REPAY_03(loanWithId.loan.collateralAmount, actors[2]);
             invariant_REPAY_04(loanWithId, actors[1], actors[0]);
-            invariant_ENDLOAN_01(actors[0], loanWithId.loanId);
-            invariant_ENDLOAN_02(actors[1], actors[0], loanWithId.loanId);
             invariant_ENDLOAN_03(loanWithId.loanId);
-            invariant_ENDLOAN_04(loanWithId, actors[1], actors[0]);
             invariant_ENDLOAN_05(loanWithId);
+            // Check if the lender is not the borrower
+            if (actors[0] != actors[2]) {
+                invariant_ENDLOAN_01(actors[0], loanWithId.loanId);
+                invariant_ENDLOAN_02(actors[1], actors[0], loanWithId.loanId);
+                invariant_ENDLOAN_04(loanWithId, actors[1], actors[0]);
+            }
         } else {
             invariant_ERR(returnData);
         }
