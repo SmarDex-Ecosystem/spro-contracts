@@ -141,13 +141,13 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
     //     _transferNFTPostconditions(success, returnData, loanWithId.loanId, actors);
     // }
 
-    function fuzz_repayMultipleLoans(uint256 seed, uint256 numLoansToRepaySeed, bool blocked) public {
+    function fuzz_repayMultipleLoans(uint256 seed, uint256 seedNumLoansToRepay, bool blocked) public {
         if (loans.length == 0) {
             return;
         }
 
-        numLoansToRepaySeed = bound(numLoansToRepaySeed, 1, loans.length);
-        Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seed, numLoansToRepaySeed);
+        seedNumLoansToRepay = bound(seedNumLoansToRepay, 1, loans.length);
+        Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seed, seedNumLoansToRepay);
 
         address payer = getRandomUsers(uint256(keccak256(abi.encode(seed))), 1)[0];
 
