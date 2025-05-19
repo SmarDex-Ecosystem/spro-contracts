@@ -138,9 +138,9 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         actors[0] = loanToken.ownerOf(loanWithId.loanId);
         actors[1] = getRandomUserOrProtocol(seed2, address(spro));
 
-        bool success = _transferNFTCall(actors[0], actors[1], loanWithId.loanId);
+        (bool success, bytes memory returnData) = _transferNFTCall(actors[0], actors[1], loanWithId.loanId);
 
-        _transferNFTPostconditions(success, loanWithId.loanId, actors);
+        _transferNFTPostconditions(success, returnData, loanWithId.loanId, actors);
     }
 
     function fuzz_transferTokenToProtocol(uint256 seed1, uint256 seed2, bool tokenOne) public {
