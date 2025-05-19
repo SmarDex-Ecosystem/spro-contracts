@@ -64,6 +64,7 @@ contract PostconditionsSpro is Properties {
         if (success) {
             numberOfLoans++;
             _after(actors);
+
             invariant_LOAN_01(creditAmount, actors[1]);
             invariant_LOAN_02(actors[1]);
             invariant_LOAN_03(creditAmount, actors[0]);

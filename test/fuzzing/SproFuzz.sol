@@ -118,7 +118,6 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
 
         seedNumLoansToRepay = bound(seedNumLoansToRepay, 1, loans.length);
         Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seed, seedNumLoansToRepay);
-
         address payer = getRandomUsers(LibPRNG.next(rng), 1)[0];
 
         uint256 totalRepaymentAmount = _repayMultipleLoansPreconditions(loanWithIds, payer);
