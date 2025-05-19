@@ -99,10 +99,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         actors[0] = loanToken.ownerOf(loanWithId.loanId);
         actors[1] = payer;
         actors[2] = loanWithId.loan.borrower;
-        if (blocked) {
-            token2.blockTransfers(true, actors[0]);
-        }
-        _repayLoanPreconditions(loanWithId, actors[1]);
+        _repayLoanPreconditions(loanWithId, actors[1], blocked, actors[0]);
         _before(actors);
 
         (bool success, bytes memory returnData) = _repayLoanCall(actors[1], loanWithId.loanId);
@@ -111,27 +108,24 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
     }
 
     function fuzz_repayMultipleLoans(uint256 seed, uint256 seedNumLoansToRepay, bool blocked) public {
-        LibPRNG.PRNG memory rng = LibPRNG.PRNG(seed);
         if (loans.length == 0) {
             return;
         }
 
+        LibPRNG.PRNG memory rng = LibPRNG.PRNG(seed);
+        uint256 nextSeed = LibPRNG.next(rng);
+        LibPRNG.PRNG memory nextRng = LibPRNG.PRNG(nextSeed);
         seedNumLoansToRepay = bound(seedNumLoansToRepay, 1, loans.length);
         Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seed, seedNumLoansToRepay);
-        address payer = getRandomUsers(LibPRNG.next(rng), 1)[0];
+        address payer = getRandomUsers(nextSeed, 1)[0];
 
-        uint256 totalRepaymentAmount = _repayMultipleLoansPreconditions(loanWithIds, payer);
+        address userBlocked = getRandomUsers(LibPRNG.next(nextRng), 1)[0];
+        uint256 totalRepaymentAmount = _repayMultipleLoansPreconditions(loanWithIds, payer, blocked, userBlocked);
         if (totalRepaymentAmount == 0) {
             return;
         }
 
         uint256 usersLength = USERS.length;
-        if (blocked) {
-            for (uint256 i = 0; i < usersLength; ++i) {
-                token2.blockTransfers(true, USERS[i]);
-            }
-        }
-
         address[] memory actors = new address[](usersLength + 1);
         for (uint256 i = 0; i < usersLength; ++i) {
             actors[i] = USERS[i];

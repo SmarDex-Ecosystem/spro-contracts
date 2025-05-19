@@ -56,15 +56,22 @@ contract PreconditionsSpro is Test, Properties {
         _ensureSufficientBalance(lender, creditAmount);
     }
 
-    function _repayLoanPreconditions(Spro.LoanWithId memory loanWithId, address payer) internal {
+    function _repayLoanPreconditions(Spro.LoanWithId memory loanWithId, address payer, bool blocked, address user)
+        internal
+    {
+        if (blocked) {
+            token2.blockTransfers(true, user);
+        }
         uint256 repaymentAmount = loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
         _ensureSufficientBalance(payer, repaymentAmount);
     }
 
-    function _repayMultipleLoansPreconditions(Spro.LoanWithId[] memory loanWithId, address payer)
-        internal
-        returns (uint256 totalRepaymentAmount)
-    {
+    function _repayMultipleLoansPreconditions(
+        Spro.LoanWithId[] memory loanWithId,
+        address payer,
+        bool blocked,
+        address userBlocked
+    ) internal returns (uint256 totalRepaymentAmount) {
         uint256 firstRepayable = _findFirstRepayableLoanIndex(loanWithId);
         if (firstRepayable == loanWithId.length) {
             return 0;
@@ -75,6 +82,10 @@ contract PreconditionsSpro is Test, Properties {
 
         _ensureSufficientBalance(payer, totalAmount);
         _storeRepayableLoans(validLoanIds, validLoanWithId);
+
+        if (blocked) {
+            token2.blockTransfers(true, userBlocked);
+        }
 
         return totalAmount;
     }
