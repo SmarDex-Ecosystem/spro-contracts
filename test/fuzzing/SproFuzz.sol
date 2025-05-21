@@ -145,7 +145,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
 
     function fuzz_mintTokenForProtocol(uint256 seedAmount, bool tokenOne) public {
         T20 token = tokenOne ? token1 : token2;
-        seedAmount = bound(seedAmount, 0, type(uint248).max);
+        seedAmount = bound(seedAmount, 0, 1e36);
         token.mint(address(spro), seedAmount);
     }
 }
