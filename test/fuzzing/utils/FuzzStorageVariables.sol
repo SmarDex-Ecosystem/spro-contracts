@@ -80,7 +80,7 @@ contract FuzzStorageVariables is Test {
         view
         returns (Spro.LoanWithId[] memory randomLoans)
     {
-        require(length <= loans.length, "Requested length exceeds USERS length");
+        require(length <= loans.length, "Requested length exceeds loan length");
         LibPRNG.PRNG memory rng = LibPRNG.PRNG(input);
 
         uint256[] memory shuffleIndexes = new uint256[](loans.length);

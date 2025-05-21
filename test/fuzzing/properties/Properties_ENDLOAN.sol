@@ -6,12 +6,7 @@ import { FuzzStorageVariables } from "../utils/FuzzStorageVariables.sol";
 import { Spro } from "src/spro/Spro.sol";
 
 contract Properties_ENDLOAN is FuzzStorageVariables {
-    function invariant_ENDLOAN_01(address lender, uint256 loanId) internal {
-        emit log_uint(loanId);
-        emit log_address(lender);
-        emit log_uint(state[1].actorStates[lender].collateralBalance);
-        emit log_uint(state[0].actorStates[lender].collateralBalance);
-
+    function invariant_ENDLOAN_01(address lender, uint256 loanId) internal view {
         if (state[0].loanStatus[loanId] == LoanStatus.REPAYABLE || state[0].loanStatus[loanId] == LoanStatus.PAID_BACK)
         {
             assert(state[1].actorStates[lender].collateralBalance == state[0].actorStates[lender].collateralBalance);
