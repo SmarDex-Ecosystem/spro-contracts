@@ -87,14 +87,13 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         _createLoanPostconditions(success, returnData, creditAmount, proposal, actors);
     }
 
-    function fuzz_repayLoan(uint256 seed, bool blocked) public {
-        LibPRNG.PRNG memory rng = LibPRNG.PRNG(seed);
+    function fuzz_repayLoan(uint256 seedRandomLoan, uint256 seedPayer, bool blocked) public {
         if (loans.length == 0) {
             return;
         }
 
-        Spro.LoanWithId memory loanWithId = getRandomLoan(seed);
-        address payer = getRandomUsers(LibPRNG.next(rng), 1)[0];
+        Spro.LoanWithId memory loanWithId = getRandomLoan(seedRandomLoan);
+        address payer = getRandomUsers(seedPayer, 1)[0];
         address[] memory actors = new address[](3);
         actors[0] = loanToken.ownerOf(loanWithId.loanId);
         actors[1] = payer;
@@ -107,19 +106,22 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         _repayLoanPostconditions(success, returnData, loanWithId, actors);
     }
 
-    function fuzz_repayMultipleLoans(uint256 seed, uint256 seedNumLoansToRepay, bool blocked) public {
+    function fuzz_repayMultipleLoans(
+        uint256 seedRandomLoan,
+        uint256 seedNumLoansToRepay,
+        uint256 seedUserBlocked,
+        uint256 seedPayer,
+        bool blocked
+    ) public {
         if (loans.length == 0) {
             return;
         }
 
-        LibPRNG.PRNG memory rng = LibPRNG.PRNG(seed);
-        uint256 nextSeed = LibPRNG.next(rng);
-        LibPRNG.PRNG memory nextRng = LibPRNG.PRNG(nextSeed);
         seedNumLoansToRepay = bound(seedNumLoansToRepay, 1, loans.length);
-        Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seed, seedNumLoansToRepay);
-        address payer = getRandomUsers(nextSeed, 1)[0];
+        Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seedRandomLoan, seedNumLoansToRepay);
+        address payer = getRandomUsers(seedPayer, 1)[0];
 
-        address userBlocked = getRandomUsers(LibPRNG.next(nextRng), 1)[0];
+        address userBlocked = getRandomUsers(seedUserBlocked, 1)[0];
         uint256 totalRepaymentAmount = _repayMultipleLoansPreconditions(loanWithIds, payer, blocked, userBlocked);
         if (totalRepaymentAmount == 0) {
             return;
