@@ -43,7 +43,16 @@ contract FuzzStorageVariables is Test {
     address[] borrowers;
     uint256[] borrowersCollateral;
 
+    // Actors addresses
+    Actors actors;
+
     mapping(uint8 => State) state;
+
+    struct Actors {
+        address borrower;
+        address lender;
+        address payer;
+    }
 
     struct State {
         mapping(address => ActorStates) actorStates;
@@ -130,18 +139,18 @@ contract FuzzStorageVariables is Test {
         state[index].actorStates[actor].sdexBalance = sdex.balanceOf(actor);
     }
 
-    function _before(address[] memory actors) internal {
-        _setStates(0, actors);
+    function _before(address[] memory users) internal {
+        _setStates(0, users);
         _stateLoan(0);
         _getLastOwnerOfLoan();
     }
 
-    function _after(address[] memory actors) internal {
-        _setStates(1, actors);
+    function _after(address[] memory users) internal {
+        _setStates(1, users);
         _newLoan();
         _stateLoan(1);
         // Process repayable loans
-        _processRepayableLoans(actors[actors.length - 1]);
+        _processRepayableLoans();
     }
 
     function _clean() internal {
@@ -161,6 +170,9 @@ contract FuzzStorageVariables is Test {
         delete totalRepaymentAmount;
         delete borrowers;
         delete borrowersCollateral;
+
+        // Reset address variables
+        delete actors;
     }
 
     function _removeLoansWithStatusNone() internal {
@@ -208,7 +220,7 @@ contract FuzzStorageVariables is Test {
         }
     }
 
-    function _processRepayableLoans(address payer) internal {
+    function _processRepayableLoans() internal {
         for (uint256 i = 0; i < repayableLoans.length; i++) {
             Spro.LoanWithId memory loanWithId = repayableLoans[i];
 
@@ -218,21 +230,20 @@ contract FuzzStorageVariables is Test {
             if (wasRepaid) {
                 creditAmountForProtocol += repaymentAmount;
             }
-            if (wasRepaid || payer != lastOwnerOfLoan[loanWithId.loanId]) {
+            if (wasRepaid || actors.payer != lastOwnerOfLoan[loanWithId.loanId]) {
                 totalRepaymentAmount += repaymentAmount;
             }
 
-            address borrower = loanWithId.loan.borrower;
             bool found = false;
             for (uint256 j = 0; j < borrowers.length; j++) {
-                if (borrowers[j] == borrower) {
+                if (borrowers[j] == loanWithId.loan.borrower) {
                     borrowersCollateral[j] += loanWithId.loan.collateralAmount;
                     found = true;
                     break;
                 }
             }
             if (!found) {
-                borrowers.push(borrower);
+                borrowers.push(loanWithId.loan.borrower);
                 borrowersCollateral.push(loanWithId.loan.collateralAmount);
             }
         }

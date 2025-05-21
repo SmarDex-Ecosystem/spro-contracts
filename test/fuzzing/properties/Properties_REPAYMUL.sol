@@ -21,10 +21,10 @@ contract Properties_REPAYMUL is Properties_REPAY {
         invariant_REPAY_03(collateralAmount, borrower);
     }
 
-    function invariant_REPAYMUL_04(address payer) internal view {
+    function invariant_REPAYMUL_04() internal view {
         assert(
-            state[1].actorStates[payer].creditBalance
-                == state[0].actorStates[payer].creditBalance - totalRepaymentAmount
+            state[1].actorStates[actors.payer].creditBalance
+                == state[0].actorStates[actors.payer].creditBalance - totalRepaymentAmount
         );
     }
 }

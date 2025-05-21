@@ -28,14 +28,14 @@ contract Properties_CLAIM is FuzzStorageVariables {
         }
     }
 
-    function invariant_CLAIM_03(Spro.LoanWithId memory loanWithId, address lender) internal view {
+    function invariant_CLAIM_03(Spro.LoanWithId memory loanWithId) internal view {
         if (
             state[0].loanStatus[loanWithId.loanId] == LoanStatus.NOT_REPAYABLE
                 && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
         ) {
             assert(
-                state[1].actorStates[lender].collateralBalance
-                    == state[0].actorStates[lender].collateralBalance + loanWithId.loan.collateralAmount
+                state[1].actorStates[actors.lender].collateralBalance
+                    == state[0].actorStates[actors.lender].collateralBalance + loanWithId.loan.collateralAmount
             );
         }
     }
