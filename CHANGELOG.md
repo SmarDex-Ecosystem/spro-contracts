@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.0](https://github.com/SmarDex-Ecosystem/spro-contracts/compare/v0.2.0...v1.0.0) (2025-05-22)
+
+
+### Features
+
+* change naming ([#117](https://github.com/SmarDex-Ecosystem/spro-contracts/issues/117)) ([e9424df](https://github.com/SmarDex-Ecosystem/spro-contracts/commit/e9424df3c9ceea2bce2b1d02b8e35ba53d55be13))
+* clean interface ([#114](https://github.com/SmarDex-Ecosystem/spro-contracts/issues/114)) ([7cb009f](https://github.com/SmarDex-Ecosystem/spro-contracts/commit/7cb009facbc6a9a13fd584f8e8aa38b37aa2ac00))
+* move nftrenderer in an external contract ([#112](https://github.com/SmarDex-Ecosystem/spro-contracts/issues/112)) ([516dded](https://github.com/SmarDex-Ecosystem/spro-contracts/commit/516dded408cc166eb059db6ed51425dad5c90d36))
+* release 1.0 ([#120](https://github.com/SmarDex-Ecosystem/spro-contracts/issues/120)) ([4a684cc](https://github.com/SmarDex-Ecosystem/spro-contracts/commit/4a684ccdd506cab3662b1dd9af9a446abeadef83))
+* simplify deployment ([#105](https://github.com/SmarDex-Ecosystem/spro-contracts/issues/105)) ([fd3b511](https://github.com/SmarDex-Ecosystem/spro-contracts/commit/fd3b5113e5bc4490da1ff5f533a5729069d80ee1))
+* use directly safe wallet to be the owner ([#107](https://github.com/SmarDex-Ecosystem/spro-contracts/issues/107)) ([1cb7b48](https://github.com/SmarDex-Ecosystem/spro-contracts/commit/1cb7b489a5b6125d099a9b033230100776c84271))
+
 ## [0.2.0](https://github.com/SmarDex-Ecosystem/SPRO_contracts/compare/v0.1.4...v0.2.0) (2025-04-10)
 
 
