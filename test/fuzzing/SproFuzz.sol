@@ -5,6 +5,8 @@ import { FuzzSetup } from "./FuzzSetup.sol";
 import { PostconditionsSpro } from "./conditions/PostconditionsSpro.sol";
 import { PreconditionsSpro } from "./conditions/PreconditionsSpro.sol";
 
+import { T20 } from "test/helper/T20.sol";
+
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { Spro } from "src/spro/Spro.sol";
 
@@ -96,7 +98,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         actors[0] = loanToken.ownerOf(loanWithId.loanId);
         actors[1] = payer[0];
         actors[2] = loanWithId.loan.borrower;
-        if (blocked) {
+        if (blocked && actors[0] != address(spro)) {
             token2.blockTransfers(true, actors[0]);
         }
         _repayLoanPreconditions(loanWithId, actors[1]);
@@ -126,18 +128,24 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         _claimLoanPostconditions(success, returnData, loanWithId, actors);
     }
 
-    function fuzz_transferNFT(uint256 seed) public {
+    function fuzz_transferNFT(uint256 seedLoan, uint256 seedUser) public {
         if (loans.length == 0) {
             return;
         }
 
-        Spro.LoanWithId memory loanWithId = getRandomLoan(seed);
+        Spro.LoanWithId memory loanWithId = getRandomLoan(seedLoan);
         address[] memory actors = new address[](2);
         actors[0] = loanToken.ownerOf(loanWithId.loanId);
-        actors[1] = getAnotherUser(actors[0]);
+        actors[1] = getRandomUserOrProtocol(seedUser, address(spro));
 
         (bool success, bytes memory returnData) = _transferNFTCall(actors[0], actors[1], loanWithId.loanId);
 
         _transferNFTPostconditions(success, returnData, loanWithId.loanId, actors);
+    }
+
+    function fuzz_mintTokenForProtocol(uint256 seedAmount, bool tokenOne) public {
+        T20 token = tokenOne ? token1 : token2;
+        seedAmount = bound(seedAmount, 0, 1e36);
+        token.mint(address(spro), seedAmount);
     }
 }
