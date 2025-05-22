@@ -30,12 +30,12 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         uint40 startTimestamp,
         uint40 loanExpiration
     ) public {
-        ISproTypes.Proposal memory proposal =
-            _createProposalPreconditions(seed1, seed2, seed3, actors.borrower, startTimestamp, loanExpiration);
-
         actors.borrower = getRandomUsers(seed1, 1)[0];
         sdex.mint(actors.borrower, spro._fee());
         _before(USERS);
+
+        ISproTypes.Proposal memory proposal =
+            _createProposalPreconditions(seed1, seed2, seed3, actors.borrower, startTimestamp, loanExpiration);
 
         (bool success, bytes memory returnData) = _createProposalCall(
             actors.borrower,
