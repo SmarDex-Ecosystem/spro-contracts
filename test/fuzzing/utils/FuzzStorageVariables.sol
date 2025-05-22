@@ -142,7 +142,7 @@ contract FuzzStorageVariables is Test {
     function _before(address[] memory users) internal {
         _setStates(0, users);
         _stateLoan(0);
-        _getLastOwnerOfLoan();
+        _setLastOwnerOfLoans();
     }
 
     function _after(address[] memory users) internal {
@@ -210,7 +210,7 @@ contract FuzzStorageVariables is Test {
         }
     }
 
-    function _getLastOwnerOfLoan() internal {
+    function _setLastOwnerOfLoans() internal {
         for (uint256 i = 0; i < loans.length; i++) {
             if (getStatus(loans[i].loanId) != LoanStatus.NONE) {
                 lastOwnerOfLoan[loans[i].loanId] = loanToken.ownerOf(loans[i].loanId);
