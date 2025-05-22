@@ -103,7 +103,6 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
     }
 
     function fuzz_repayMultipleLoans(
-        uint256 seedRandomLoan,
         uint256 seedNumLoansToRepay,
         uint256 seedUserBlocked,
         uint256 seedPayer,
@@ -114,7 +113,8 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         }
 
         seedNumLoansToRepay = bound(seedNumLoansToRepay, 1, loans.length);
-        Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seedRandomLoan, seedNumLoansToRepay);
+        // The first argument will be hashed, so it's not important to use a specific seed.
+        Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seedUserBlocked, seedNumLoansToRepay);
         address userBlocked = getRandomUsers(seedUserBlocked, 1)[0];
         uint256 totalRepaymentAmount = _repayMultipleLoansPreconditions(loanWithIds, actors.payer, blocked, userBlocked);
         if (totalRepaymentAmount == 0) {
