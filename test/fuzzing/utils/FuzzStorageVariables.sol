@@ -47,6 +47,9 @@ contract FuzzStorageVariables is Test {
     Actors actors;
     // Credit in the protocol
     uint256 creditFromLoansPaidBack;
+    // Minted to the protocol
+    uint256 token1MintedToProtocol;
+    uint256 token2MintedToProtocol;
 
     mapping(uint8 => State) state;
 
