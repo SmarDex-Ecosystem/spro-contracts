@@ -5,6 +5,7 @@ import { Test } from "forge-std/Test.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { Properties } from "../properties/Properties.sol";
+import { T20 } from "test/helper/T20.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 import { Spro } from "src/spro/Spro.sol";
@@ -28,15 +29,23 @@ contract PreconditionsSpro is Test, Properties {
         uint256 seed3,
         address borrower,
         uint40 startTimestamp,
-        uint40 loanExpiration
-    ) internal view returns (ISproTypes.Proposal memory proposal) {
-        uint256 collateralAmount = bound(seed1, 0, token1.balanceOf(borrower));
-        uint256 availableCreditLimit = bound(seed2, 1, token2.balanceOf(borrower));
+        uint40 loanExpiration,
+        bool isCollateralTokenOne
+    ) internal returns (ISproTypes.Proposal memory proposal) {
+        if (isCollateralTokenOne) {
+            selectedCollateral = address(token1);
+            selectedCredit = address(token2);
+        } else {
+            selectedCollateral = address(token2);
+            selectedCredit = address(token1);
+        }
+        uint256 collateralAmount = bound(seed1, 0, T20(selectedCollateral).balanceOf(borrower));
+        uint256 availableCreditLimit = bound(seed2, 1, T20(selectedCredit).balanceOf(borrower));
         uint256 fixedInterestAmount = bound(seed3, 0, availableCreditLimit);
         proposal = ISproTypes.Proposal({
-            collateralAddress: address(token1),
+            collateralAddress: selectedCollateral,
             collateralAmount: collateralAmount,
-            creditAddress: address(token2),
+            creditAddress: selectedCredit,
             availableCreditLimit: availableCreditLimit,
             fixedInterestAmount: fixedInterestAmount,
             startTimestamp: startTimestamp,
@@ -53,7 +62,9 @@ contract PreconditionsSpro is Test, Properties {
     {
         uint256 remaining = proposal.availableCreditLimit - spro._creditUsed(keccak256(abi.encode(proposal)));
         creditAmount = bound(seed, proposal.minAmount, remaining);
-        _ensureSufficientBalance(actors.lender, creditAmount);
+        selectedCollateral = proposal.collateralAddress;
+        selectedCredit = proposal.creditAddress;
+        _ensureSufficientBalance(actors.lender, selectedCredit, creditAmount);
     }
 
     function _repayLoanPreconditions(Spro.LoanWithId memory loanWithId, bool blocked) internal {
@@ -61,7 +72,7 @@ contract PreconditionsSpro is Test, Properties {
             token2.blockTransfers(true, actors.lender);
         }
         uint256 repaymentAmount = loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
-        _ensureSufficientBalance(actors.payer, repaymentAmount);
+        _ensureSufficientBalance(actors.payer, selectedCredit, repaymentAmount);
     }
 
     function _repayMultipleLoansPreconditions(
@@ -78,7 +89,7 @@ contract PreconditionsSpro is Test, Properties {
         (uint256[] memory validLoanIds, Spro.LoanWithId[] memory validLoanWithId, uint256 totalAmount) =
             _filterRepayableLoansWithSameCreditAddress(loanWithId, firstRepayable);
 
-        _ensureSufficientBalance(payer, totalAmount);
+        _ensureSufficientBalance(payer, selectedCredit, totalAmount);
         _storeRepayableLoans(validLoanIds, validLoanWithId);
 
         if (blocked) {
@@ -138,10 +149,10 @@ contract PreconditionsSpro is Test, Properties {
     /*                                    Utils                                   */
     /* -------------------------------------------------------------------------- */
 
-    function _ensureSufficientBalance(address payer, uint256 requiredAmount) internal {
-        uint256 currentBalance = token2.balanceOf(payer);
+    function _ensureSufficientBalance(address payer, address token, uint256 requiredAmount) internal {
+        uint256 currentBalance = T20(token).balanceOf(payer);
         if (requiredAmount > currentBalance) {
-            token2.mint(payer, requiredAmount - currentBalance);
+            T20(token).mint(payer, requiredAmount - currentBalance);
         }
     }
 }

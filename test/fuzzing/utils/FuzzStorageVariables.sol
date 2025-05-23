@@ -46,6 +46,9 @@ contract FuzzStorageVariables is Test {
     // Actors addresses
     Actors actors;
 
+    address selectedCollateral;
+    address selectedCredit;
+
     mapping(uint8 => State) state;
 
     struct Actors {
@@ -55,16 +58,10 @@ contract FuzzStorageVariables is Test {
     }
 
     struct State {
-        mapping(address => ActorStates) actorStates;
+        mapping(address => mapping(address => uint256)) actorStates;
         address borrower;
         address lender;
         mapping(uint256 => LoanStatus) loanStatus;
-    }
-
-    struct ActorStates {
-        uint256 collateralBalance;
-        uint256 creditBalance;
-        uint256 sdexBalance;
     }
 
     enum LoanStatus {
@@ -134,9 +131,9 @@ contract FuzzStorageVariables is Test {
     }
 
     function _setActorState(uint8 index, address actor) internal {
-        state[index].actorStates[actor].collateralBalance = token1.balanceOf(actor);
-        state[index].actorStates[actor].creditBalance = token2.balanceOf(actor);
-        state[index].actorStates[actor].sdexBalance = sdex.balanceOf(actor);
+        state[index].actorStates[actor][address(token1)] = token1.balanceOf(actor);
+        state[index].actorStates[actor][address(token2)] = token2.balanceOf(actor);
+        state[index].actorStates[actor][address(sdex)] = sdex.balanceOf(actor);
     }
 
     function _before(address[] memory users) internal {
@@ -173,6 +170,9 @@ contract FuzzStorageVariables is Test {
 
         // Reset address variables
         delete actors;
+
+        delete selectedCollateral;
+        delete selectedCredit;
     }
 
     function _removeLoansWithStatusNone() internal {

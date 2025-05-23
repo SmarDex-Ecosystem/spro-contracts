@@ -9,29 +9,29 @@ import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 contract Properties_LOAN is FuzzStorageVariables {
     function invariant_LOAN_01(uint256 creditAmount) internal view {
         assert(
-            state[1].actorStates[actors.lender].creditBalance
-                == state[0].actorStates[actors.lender].creditBalance - creditAmount
+            state[1].actorStates[actors.lender][selectedCredit]
+                == state[0].actorStates[actors.lender][selectedCredit] - creditAmount
         );
     }
 
     function invariant_LOAN_02() internal view {
         assert(
-            state[1].actorStates[actors.lender].collateralBalance
-                == state[0].actorStates[actors.lender].collateralBalance
+            state[1].actorStates[actors.lender][selectedCollateral]
+                == state[0].actorStates[actors.lender][selectedCollateral]
         );
     }
 
     function invariant_LOAN_03(uint256 creditAmount) internal view {
         assert(
-            state[1].actorStates[actors.borrower].creditBalance
-                == state[0].actorStates[actors.borrower].creditBalance + creditAmount
+            state[1].actorStates[actors.borrower][selectedCredit]
+                == state[0].actorStates[actors.borrower][selectedCredit] + creditAmount
         );
     }
 
     function invariant_LOAN_04() internal view {
         assert(
-            state[1].actorStates[actors.borrower].collateralBalance
-                == state[0].actorStates[actors.borrower].collateralBalance
+            state[1].actorStates[actors.borrower][selectedCollateral]
+                == state[0].actorStates[actors.borrower][selectedCollateral]
         );
     }
 

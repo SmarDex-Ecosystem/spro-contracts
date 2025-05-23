@@ -30,14 +30,16 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         uint256 seed2,
         uint256 seed3,
         uint40 startTimestamp,
-        uint40 loanExpiration
+        uint40 loanExpiration,
+        bool isCollateralTokenOne
     ) public {
         actors.borrower = getRandomUsers(seed1, 1)[0];
         sdex.mint(actors.borrower, spro._fee());
         _before(USERS);
 
-        ISproTypes.Proposal memory proposal =
-            _createProposalPreconditions(seed1, seed2, seed3, actors.borrower, startTimestamp, loanExpiration);
+        ISproTypes.Proposal memory proposal = _createProposalPreconditions(
+            seed1, seed2, seed3, actors.borrower, startTimestamp, loanExpiration, isCollateralTokenOne
+        );
 
         (bool success, bytes memory returnData) = _createProposalCall(
             actors.borrower,
@@ -58,6 +60,8 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
             return;
         }
         ISproTypes.Proposal memory proposal = getRandomProposal(seed);
+        selectedCollateral = proposal.collateralAddress;
+        selectedCredit = proposal.creditAddress;
         actors.borrower = proposal.proposer;
         _before(USERS);
 
@@ -72,14 +76,14 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         }
 
         ISproTypes.Proposal memory proposal = getRandomProposal(seed);
+        actors.borrower = proposal.proposer;
+        actors.lender = getAnotherUser(proposal.proposer);
+        _before(USERS);
+
         uint256 creditAmount = _createLoanPreconditions(seed, proposal);
         if (creditAmount == 0) {
             return;
         }
-
-        actors.borrower = proposal.proposer;
-        actors.lender = getAnotherUser(proposal.proposer);
-        _before(USERS);
 
         (bool success, bytes memory returnData) = _createLoanCall(actors.lender, proposal, creditAmount);
 
@@ -132,6 +136,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
     }
 
     function fuzz_claimLoan(uint256 seed, bool expired) public {
+        //TODO : [panic: arithmetic underflow/overflow]
         if (loans.length == 0) {
             return;
         }
@@ -140,6 +145,8 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         actors.lender = loanToken.ownerOf(loanWithId.loanId);
         actors.payer = actors.lender;
         actors.borrower = loanWithId.loan.borrower;
+        selectedCollateral = loanWithId.loan.collateralAddress;
+        selectedCredit = loanWithId.loan.creditAddress;
         if (expired) {
             vm.warp(loanWithId.loan.loanExpiration);
         }
