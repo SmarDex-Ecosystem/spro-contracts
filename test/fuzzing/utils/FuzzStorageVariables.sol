@@ -125,9 +125,9 @@ contract FuzzStorageVariables is Test {
         }
     }
 
-    function _setStates(uint8 index, address[] memory actors) internal {
-        for (uint256 i = 0; i < actors.length; i++) {
-            _setActorState(index, actors[i]);
+    function _setStates(uint8 index, address[] memory users) internal {
+        for (uint256 i = 0; i < users.length; i++) {
+            _setActorState(index, users[i]);
         }
         _setActorState(index, address(spro));
         _setActorState(index, address(0xdead));
