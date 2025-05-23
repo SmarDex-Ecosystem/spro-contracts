@@ -57,7 +57,7 @@ contract PreconditionsSpro is Test, Properties {
     }
 
     function _repayLoanPreconditions(Spro.LoanWithId memory loanWithId, bool blocked) internal {
-        if (blocked) {
+        if (blocked && actors.lender != address(spro)) {
             token2.blockTransfers(true, actors.lender);
         }
         uint256 repaymentAmount = loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
