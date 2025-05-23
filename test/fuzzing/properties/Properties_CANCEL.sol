@@ -6,12 +6,12 @@ import { FuzzStorageVariables } from "../utils/FuzzStorageVariables.sol";
 import { Spro } from "src/spro/Spro.sol";
 
 contract Properties_CANCEL is FuzzStorageVariables {
-    function invariant_CANCEL_01(bytes32 proposalHash, address borrower) internal view {
+    function invariant_CANCEL_01(bytes32 proposalHash) internal view {
         uint256 withdrawableCollateralAmount = spro._withdrawableCollateral(proposalHash);
 
         assert(
-            state[1].actorStates[borrower].collateralBalance
-                == state[0].actorStates[borrower].collateralBalance + withdrawableCollateralAmount
+            state[1].actorStates[actors.borrower].collateralBalance
+                == state[0].actorStates[actors.borrower].collateralBalance + withdrawableCollateralAmount
         );
     }
 

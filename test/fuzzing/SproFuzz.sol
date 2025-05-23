@@ -32,15 +32,15 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         uint40 startTimestamp,
         uint40 loanExpiration
     ) public {
-        address[] memory actors = getRandomUsers(seed1, 1);
-        sdex.mint(actors[0], spro._fee());
-        _before(actors);
+        actors.borrower = getRandomUsers(seed1, 1)[0];
+        sdex.mint(actors.borrower, spro._fee());
+        _before(USERS);
 
         ISproTypes.Proposal memory proposal =
-            _createProposalPreconditions(seed1, seed2, seed3, actors[0], startTimestamp, loanExpiration);
+            _createProposalPreconditions(seed1, seed2, seed3, actors.borrower, startTimestamp, loanExpiration);
 
         (bool success, bytes memory returnData) = _createProposalCall(
-            actors[0],
+            actors.borrower,
             proposal.collateralAddress,
             proposal.collateralAmount,
             proposal.creditAddress,
@@ -50,7 +50,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
             proposal.loanExpiration
         );
 
-        _createProposalPostconditions(success, returnData, proposal, actors);
+        _createProposalPostconditions(success, returnData, proposal, USERS);
     }
 
     function fuzz_cancelProposal(uint256 seed) public {
@@ -58,13 +58,12 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
             return;
         }
         ISproTypes.Proposal memory proposal = getRandomProposal(seed);
-        address[] memory actors = new address[](1);
-        actors[0] = proposal.proposer;
-        _before(actors);
+        actors.borrower = proposal.proposer;
+        _before(USERS);
 
-        (bool success, bytes memory returnData) = _cancelProposalCall(actors[0], proposal);
+        (bool success, bytes memory returnData) = _cancelProposalCall(actors.borrower, proposal);
 
-        _cancelProposalPostconditions(success, returnData, proposal, actors);
+        _cancelProposalPostconditions(success, returnData, proposal, USERS);
     }
 
     function fuzz_createLoan(uint256 seed) public {
@@ -73,40 +72,63 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         }
 
         ISproTypes.Proposal memory proposal = getRandomProposal(seed);
-        address[] memory actors = new address[](2);
-        actors[0] = proposal.proposer;
-        actors[1] = getAnotherUser(actors[0]);
-        uint256 creditAmount = _createLoanPreconditions(seed, proposal, actors[1]);
+        uint256 creditAmount = _createLoanPreconditions(seed, proposal);
         if (creditAmount == 0) {
             return;
         }
-        _before(actors);
 
-        (bool success, bytes memory returnData) = _createLoanCall(actors[1], proposal, creditAmount);
+        actors.borrower = proposal.proposer;
+        actors.lender = getAnotherUser(proposal.proposer);
+        _before(USERS);
 
-        _createLoanPostconditions(success, returnData, creditAmount, proposal, actors);
+        (bool success, bytes memory returnData) = _createLoanCall(actors.lender, proposal, creditAmount);
+
+        _createLoanPostconditions(success, returnData, creditAmount, proposal, USERS);
     }
 
-    function fuzz_repayLoan(uint256 seed, bool blocked) public {
+    function fuzz_repayLoan(uint256 seedRandomLoan, uint256 seedPayer, bool blocked) public {
         if (loans.length == 0) {
             return;
         }
 
-        Spro.LoanWithId memory loanWithId = getRandomLoan(seed);
-        address[] memory payer = getRandomUsers(uint256(keccak256(abi.encode(seed))), 1);
-        address[] memory actors = new address[](3);
-        actors[0] = loanToken.ownerOf(loanWithId.loanId);
-        actors[1] = payer[0];
-        actors[2] = loanWithId.loan.borrower;
-        if (blocked && actors[0] != address(spro)) {
-            token2.blockTransfers(true, actors[0]);
+        Spro.LoanWithId memory loanWithId = getRandomLoan(seedRandomLoan);
+        _repayLoanPreconditions(loanWithId, blocked);
+
+        actors.lender = loanToken.ownerOf(loanWithId.loanId);
+        actors.payer = getRandomUsers(seedPayer, 1)[0];
+        actors.borrower = loanWithId.loan.borrower;
+        _before(USERS);
+
+        (bool success, bytes memory returnData) = _repayLoanCall(actors.payer, loanWithId.loanId);
+
+        _repayLoanPostconditions(success, returnData, loanWithId, USERS);
+    }
+
+    function fuzz_repayMultipleLoans(
+        uint256 seedNumLoansToRepay,
+        uint256 seedUserBlocked,
+        uint256 seedPayer,
+        bool blocked
+    ) public {
+        if (loans.length == 0) {
+            return;
         }
-        _repayLoanPreconditions(loanWithId, actors[1]);
-        _before(actors);
 
-        (bool success, bytes memory returnData) = _repayLoanCall(actors[1], loanWithId.loanId);
+        seedNumLoansToRepay = bound(seedNumLoansToRepay, 1, loans.length);
+        // The first argument will be hashed, so it's not important to use a specific seed.
+        Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seedUserBlocked, seedNumLoansToRepay);
+        address userBlocked = getRandomUsers(seedUserBlocked, 1)[0];
+        uint256 totalRepaymentAmount = _repayMultipleLoansPreconditions(loanWithIds, actors.payer, blocked, userBlocked);
+        if (totalRepaymentAmount == 0) {
+            return;
+        }
 
-        _repayLoanPostconditions(success, returnData, loanWithId, actors);
+        actors.payer = getRandomUsers(seedPayer, 1)[0];
+        _before(USERS);
+
+        (bool success, bytes memory returnData) = _repayMultipleLoansCall(actors.payer);
+
+        _repayMultipleLoansPostconditions(success, returnData, USERS);
     }
 
     function fuzz_claimLoan(uint256 seed, bool expired) public {
@@ -115,17 +137,17 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         }
 
         Spro.LoanWithId memory loanWithId = getRandomLoan(seed);
-        address[] memory actors = new address[](2);
-        actors[0] = loanToken.ownerOf(loanWithId.loanId);
-        actors[1] = loanWithId.loan.borrower;
+        actors.lender = loanToken.ownerOf(loanWithId.loanId);
+        actors.payer = actors.lender;
+        actors.borrower = loanWithId.loan.borrower;
         if (expired) {
             vm.warp(loanWithId.loan.loanExpiration);
         }
-        _before(actors);
+        _before(USERS);
 
-        (bool success, bytes memory returnData) = _claimLoanCall(actors[0], loanWithId.loanId);
+        (bool success, bytes memory returnData) = _claimLoanCall(actors.payer, loanWithId.loanId);
 
-        _claimLoanPostconditions(success, returnData, loanWithId, actors);
+        _claimLoanPostconditions(success, returnData, loanWithId, USERS);
     }
 
     function fuzz_transferNFT(uint256 seedLoan, uint256 seedUser) public {
@@ -134,13 +156,12 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         }
 
         Spro.LoanWithId memory loanWithId = getRandomLoan(seedLoan);
-        address[] memory actors = new address[](2);
-        actors[0] = loanToken.ownerOf(loanWithId.loanId);
-        actors[1] = getRandomUserOrProtocol(seedUser, address(spro));
+        actors.lender = loanToken.ownerOf(loanWithId.loanId);
+        address to = getRandomUserOrProtocol(seedUser, address(spro));
 
-        (bool success, bytes memory returnData) = _transferNFTCall(actors[0], actors[1], loanWithId.loanId);
+        (bool success, bytes memory returnData) = _transferNFTCall(actors.lender, to, loanWithId.loanId);
 
-        _transferNFTPostconditions(success, returnData, loanWithId.loanId, actors);
+        _transferNFTPostconditions(success, returnData, loanWithId.loanId, to);
     }
 
     function fuzz_mintTokenForProtocol(uint256 seedAmount, bool tokenOne) public {

@@ -7,19 +7,24 @@ import { Spro } from "src/spro/Spro.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract Properties_PROP is FuzzStorageVariables {
-    function invariant_PROP_01(ISproTypes.Proposal memory proposal, address borrower) internal view {
+    function invariant_PROP_01(ISproTypes.Proposal memory proposal) internal view {
         assert(
-            state[1].actorStates[borrower].collateralBalance
-                == state[0].actorStates[borrower].collateralBalance - proposal.collateralAmount
+            state[1].actorStates[actors.borrower].collateralBalance
+                == state[0].actorStates[actors.borrower].collateralBalance - proposal.collateralAmount
         );
     }
 
-    function invariant_PROP_02(address borrower) internal view {
-        assert(state[1].actorStates[borrower].sdexBalance == state[0].actorStates[borrower].sdexBalance - spro._fee());
+    function invariant_PROP_02() internal view {
+        assert(
+            state[1].actorStates[actors.borrower].sdexBalance
+                == state[0].actorStates[actors.borrower].sdexBalance - spro._fee()
+        );
     }
 
-    function invariant_PROP_03(address borrower) internal view {
-        assert(state[1].actorStates[borrower].creditBalance == state[0].actorStates[borrower].creditBalance);
+    function invariant_PROP_03() internal view {
+        assert(
+            state[1].actorStates[actors.borrower].creditBalance == state[0].actorStates[actors.borrower].creditBalance
+        );
     }
 
     function invariant_PROP_04(ISproTypes.Proposal memory proposal) internal view {
