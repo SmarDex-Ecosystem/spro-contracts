@@ -47,23 +47,21 @@ contract PreconditionsSpro is Test, Properties {
         });
     }
 
-    function _createLoanPreconditions(uint256 seed, ISproTypes.Proposal memory proposal, address lender)
+    function _createLoanPreconditions(uint256 seed, ISproTypes.Proposal memory proposal)
         internal
         returns (uint256 creditAmount)
     {
         uint256 remaining = proposal.availableCreditLimit - spro._creditUsed(keccak256(abi.encode(proposal)));
         creditAmount = bound(seed, proposal.minAmount, remaining);
-        _ensureSufficientBalance(lender, creditAmount);
+        _ensureSufficientBalance(actors.lender, creditAmount);
     }
 
-    function _repayLoanPreconditions(Spro.LoanWithId memory loanWithId, address payer, bool blocked, address user)
-        internal
-    {
-        if (blocked) {
-            token2.blockTransfers(true, user);
+    function _repayLoanPreconditions(Spro.LoanWithId memory loanWithId, bool blocked) internal {
+        if (blocked && actors.lender != address(spro)) {
+            token2.blockTransfers(true, actors.lender);
         }
         uint256 repaymentAmount = loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
-        _ensureSufficientBalance(payer, repaymentAmount);
+        _ensureSufficientBalance(actors.payer, repaymentAmount);
     }
 
     function _repayMultipleLoansPreconditions(
