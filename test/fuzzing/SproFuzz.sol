@@ -168,5 +168,10 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         T20 token = tokenOne ? token1 : token2;
         seedAmount = bound(seedAmount, 0, 1e36);
         token.mint(address(spro), seedAmount);
+        if (tokenOne) {
+            token1MintedToProtocol += seedAmount;
+        } else {
+            token2MintedToProtocol += seedAmount;
+        }
     }
 }

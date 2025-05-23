@@ -65,27 +65,27 @@
     Balance(collateral) = previous - collateralAmount
 
 ## Global
-- The balance of the Spro is equal to the available credit limit from the open proposal, plus the loan amount and interest if the loan status is 'PAID_BACK'.
+- The credit balance of the Spro is equal to the loan amount and interest if the loan status is 'PAID_BACK'.
 
 ## Suite invariants table
 
-| Invariant ID | Condition | Invariant Description                                                   | Tech Checks                                                           |
-| ------------ | ----------| ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| GLOB-01      |           | The protocol balance should reflect the available credit limit from open proposals and loans.        | token.balanceOf(protocol) = available credit limit from open proposals + (loan amount + interest) if loan status is 'PAID_BACK' and nft not burned      |
-| PROP-01      |     | Borrower's collateral token balance decreased by collateral amount.       | collateralToken.balanceOf(borrower) = previous - collateralAmount     |
-| PROP-02      |     | Borrower must pay the SDEX fee.                                           | sdex.balanceOf(borrower) = previous - fee                             |
-| PROP-03      |     | Borrower's borrow token balance unchanged.                                | borrowToken.balanceOf(borrower) = previous                            |
-| PROP-04      |     | Protocol's collateral token balance increased by collateral amount.       | collateralToken.balanceOf(protocol) = previous + collateralAmount     |
-| PROP-05      |     | Protocol's borrow token balance unchanged.                                | borrowToken.balanceOf(protocol) = previous                            |
-| PROP-06      |     | The proposal nonce should be equal to the total number of proposals.      | _proposalNonce == number of proposal                                  |
-| PROP-07      |     | Dead address's sdex balance increased by fee.                             | sdex.balanceOf(deadAddress) == previous + fee                         |
-| LOAN-01      |     | Lender's borrow token balance decreased by credit amount.                 | borrowToken.balanceOf(lender) = previous - loanTerms.creditAmount     |
-| LOAN-02      |     | Lender's collateral token balance unchanged.                              | collateralToken.balanceOf(lender) = previous                          |
-| LOAN-03      |     | Borrower's borrow token balance increased by credit amount.               | borrowToken.balanceOf(borrower) = previous + loanTerms.creditAmount   |
-| LOAN-04      |     | Borrower's collateral token balance unchanged.                            | collateralToken.balanceOf(borrower) = previous                        |
-| LOAN-05      |     | A loan cannot be accepted after its start date.                           | startTimestamp > block.timestamp                                      |
-| LOAN-06      |     | The loan amount must be greater than or equal to the proposal minimum amount.                       | loan amount is at least >= proposal.minAmount                                     |
-| LOAN-07      |     | The rest in the proposal must be greater than or equal to the proposal minimum amount or equal to 0.            | proposal.availableCreditLimit - _creditUsed[proposalHash_] >= proposal.minAmount   or proposal.availableCreditLimit - _creditUsed[proposalHash_] == 0 |
+| Invariant ID | Condition | Invariant Description                                                     | Tech Checks                                                           |
+| ------------ | ----------| ------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| GLOB-01      |           | The protocol balance should reflect the loans(loan status = 'PAID_BACK'). | token.balanceOf(protocol) = loan amount + interest (if loan status is 'PAID_BACK')      |
+| PROP-01      |           | Borrower's collateral token balance decreased by collateral amount.       | collateralToken.balanceOf(borrower) = previous - collateralAmount     |
+| PROP-02      |           | Borrower must pay the SDEX fee.                                           | sdex.balanceOf(borrower) = previous - fee                             |
+| PROP-03      |           | Borrower's borrow token balance unchanged.                                | borrowToken.balanceOf(borrower) = previous                            |
+| PROP-04      |           | Protocol's collateral token balance increased by collateral amount.       | collateralToken.balanceOf(protocol) = previous + collateralAmount     |
+| PROP-05      |           | Protocol's borrow token balance unchanged.                                | borrowToken.balanceOf(protocol) = previous                            |
+| PROP-06      |           | The proposal nonce should be equal to the total number of proposals.      | _proposalNonce == number of proposal                                  |
+| PROP-07      |           | Dead address's sdex balance increased by fee.                             | sdex.balanceOf(deadAddress) == previous + fee                         |
+| LOAN-01      |           | Lender's borrow token balance decreased by credit amount.                 | borrowToken.balanceOf(lender) = previous - loanTerms.creditAmount     |
+| LOAN-02      |           | Lender's collateral token balance unchanged.                              | collateralToken.balanceOf(lender) = previous                          |
+| LOAN-03      |           | Borrower's borrow token balance increased by credit amount.               | borrowToken.balanceOf(borrower) = previous + loanTerms.creditAmount   |
+| LOAN-04      |           | Borrower's collateral token balance unchanged.                            | collateralToken.balanceOf(borrower) = previous                        |
+| LOAN-05      |           | A loan cannot be accepted after its start date.                           | startTimestamp > block.timestamp                                      |
+| LOAN-06      |           | The loan amount must be greater than or equal to the proposal minimum amount.                       | loan amount is at least >= proposal.minAmount                                     |
+| LOAN-07      |           | The rest in the proposal must be greater than or equal to the proposal minimum amount or equal to 0.            | proposal.availableCreditLimit - _creditUsed[proposalHash_] >= proposal.minAmount   or proposal.availableCreditLimit - _creditUsed[proposalHash_] == 0 |
 | LOAN-08      |     | The collateral in a proposal should be greater than or equal to the loan’s required collateral.     | Collateral in proposal >= required collateral                                     |
 | CANCEL-01    |     | The borrower can withdraw the unused part of the collateral anytime after proposal creation.        | collateralToken.balanceOf(borrower) + _withdrawableCollateral[proposalHash]       |
 | CANCEL-02    |     | The protocol sent the withdrawn collateral by the borrower.               | collateralToken.balanceOf(protocol) - _withdrawableCollateral[proposalHash]       |

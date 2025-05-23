@@ -14,10 +14,11 @@ contract PostconditionsSpro is Properties {
         address[] memory users
     ) internal {
         if (success) {
-            _after(users);
             proposals.push(proposal);
             numberOfProposals++;
+            _after(users);
 
+            invariant_GLOB_01();
             invariant_PROP_01(proposal);
             invariant_PROP_02();
             invariant_PROP_03();
@@ -38,7 +39,6 @@ contract PostconditionsSpro is Properties {
         address[] memory users
     ) internal {
         if (success) {
-            _after(users);
             for (uint256 i = 0; i < proposals.length; i++) {
                 if (keccak256(abi.encode(proposal)) == keccak256(abi.encode(proposals[i]))) {
                     proposals[i] = proposals[proposals.length - 1];
@@ -46,6 +46,9 @@ contract PostconditionsSpro is Properties {
                     break;
                 }
             }
+            _after(users);
+
+            invariant_GLOB_01();
             bytes32 proposalHash = keccak256(abi.encode(proposal));
             invariant_CANCEL_01(proposalHash);
             invariant_CANCEL_02(proposalHash);
@@ -66,6 +69,7 @@ contract PostconditionsSpro is Properties {
             numberOfLoans++;
             _after(users);
 
+            invariant_GLOB_01();
             invariant_LOAN_01(creditAmount);
             invariant_LOAN_02();
             invariant_LOAN_03(creditAmount);
@@ -89,6 +93,7 @@ contract PostconditionsSpro is Properties {
         if (success) {
             _after(users);
 
+            invariant_GLOB_01();
             invariant_REPAY_01(loanWithId);
             invariant_REPAY_02(loanWithId);
             invariant_REPAY_03(loanWithId.loan.collateralAmount, actors.borrower);
@@ -113,6 +118,7 @@ contract PostconditionsSpro is Properties {
         if (success) {
             _after(users);
 
+            invariant_GLOB_01();
             for (uint256 i = 0; i < repayableLoanIds.length; i++) {
                 invariant_REPAYMUL_01(repayableLoans[i]);
             }
@@ -136,6 +142,7 @@ contract PostconditionsSpro is Properties {
         if (success) {
             _after(users);
 
+            invariant_GLOB_01();
             invariant_CLAIM_01(loanWithId.loanId);
             invariant_CLAIM_02(loanWithId);
             invariant_CLAIM_03(loanWithId);
@@ -152,6 +159,7 @@ contract PostconditionsSpro is Properties {
 
     function _transferNFTPostconditions(bool success, bytes memory returnData, uint256 loanId, address to) internal {
         if (success) {
+            invariant_GLOB_01();
             assert(loanToken.ownerOf(loanId) == to);
         } else {
             invariant_ERR(returnData);
