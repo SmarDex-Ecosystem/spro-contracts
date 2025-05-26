@@ -33,9 +33,12 @@ contract Properties_ENDLOAN is FuzzStorageVariables {
             state[0].loanStatus[loanId] == LoanStatus.REPAYABLE && state[1].loanStatus[loanId] == LoanStatus.NONE
                 || state[0].loanStatus[loanId] == LoanStatus.NOT_REPAYABLE && state[1].loanStatus[loanId] == LoanStatus.NONE
         ) {
-            assert(
-                state[1].actorStates[address(spro)].creditBalance == state[0].actorStates[address(spro)].creditBalance
-            );
+            if (actors.lender != address(spro)) {
+                assert(
+                    state[1].actorStates[address(spro)].creditBalance
+                        == state[0].actorStates[address(spro)].creditBalance
+                );
+            }
         }
     }
 

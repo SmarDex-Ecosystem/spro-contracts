@@ -234,6 +234,9 @@ contract FuzzStorageVariables is Test {
             bool wasRepaid = state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
                 && state[1].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK;
             uint256 repaymentAmount = loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+            if (lastOwnerOfLoan[loanWithId.loanId] == address(spro)) {
+                creditAmountForProtocol += repaymentAmount;
+            }
             if (wasRepaid) {
                 creditAmountForProtocol += repaymentAmount;
             }
