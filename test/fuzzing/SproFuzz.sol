@@ -122,7 +122,6 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         seedNumLoansToRepay = bound(seedNumLoansToRepay, 1, loans.length);
         // The first argument will be hashed, so it's not important to use a specific seed.
         Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seedUserBlocked, seedNumLoansToRepay);
-        emit log_uint(loanWithIds.length);
         address userBlocked = getRandomUsers(seedUserBlocked, 1)[0];
         uint256 totalRepaymentAmount = _repayMultipleLoansPreconditions(loanWithIds, blocked, userBlocked);
         if (totalRepaymentAmount == 0) {
@@ -164,8 +163,6 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         Spro.LoanWithId memory loanWithId = getRandomLoan(seedLoan);
         actors.lender = loanToken.ownerOf(loanWithId.loanId);
         address to = getRandomUserOrProtocol(seedUser, address(spro));
-        emit log_address(to);
-        emit log_address(address(spro));
 
         (bool success, bytes memory returnData) = _transferNFTCall(actors.lender, to, loanWithId.loanId);
 
