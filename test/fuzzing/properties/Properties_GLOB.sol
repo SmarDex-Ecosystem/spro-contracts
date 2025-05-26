@@ -7,6 +7,9 @@ import { Spro } from "src/spro/Spro.sol";
 
 contract Properties_GLOB is FuzzStorageVariables {
     function invariant_GLOB_01() internal view {
-        assert(state[1].actorStates[address(spro)].creditBalance == creditFromLoansPaidBack + token2MintedToProtocol);
+        assert(
+            state[1].actorStates[address(spro)].creditBalance
+                == creditFromLoansPaidBack + token2MintedToProtocol + token2ReceivedByProtocol
+        );
     }
 }

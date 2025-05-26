@@ -50,6 +50,7 @@ contract FuzzStorageVariables is Test {
     // Minted to the protocol
     uint256 token1MintedToProtocol;
     uint256 token2MintedToProtocol;
+    uint256 token2ReceivedByProtocol;
 
     mapping(uint8 => State) state;
 
@@ -235,6 +236,7 @@ contract FuzzStorageVariables is Test {
                 && state[1].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK;
             uint256 repaymentAmount = loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
             if (lastOwnerOfLoan[loanWithId.loanId] == address(spro)) {
+                token2ReceivedByProtocol += repaymentAmount;
                 creditAmountForProtocol += repaymentAmount;
             }
             if (wasRepaid) {

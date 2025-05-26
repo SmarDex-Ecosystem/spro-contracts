@@ -92,7 +92,13 @@ contract PostconditionsSpro is Properties {
     ) internal {
         if (success) {
             _after(users);
-
+            if (
+                state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
+                    && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
+                    && lastOwnerOfLoan[loanWithId.loanId] == address(spro)
+            ) {
+                token2ReceivedByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+            }
             invariant_GLOB_01();
             invariant_REPAY_01(loanWithId);
             invariant_REPAY_02(loanWithId);
@@ -145,6 +151,12 @@ contract PostconditionsSpro is Properties {
         if (success) {
             _after(users);
 
+            if (
+                state[0].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
+                    && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE && actors.lender == address(spro)
+            ) {
+                token2ReceivedByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+            }
             invariant_GLOB_01();
             invariant_CLAIM_01(loanWithId.loanId);
             invariant_CLAIM_02(loanWithId);
@@ -165,10 +177,14 @@ contract PostconditionsSpro is Properties {
 
     function _transferNFTPostconditions(bool success, bytes memory returnData, uint256 loanId, address to) internal {
         if (success) {
+            _setActorState(1, address(spro));
+            _processCreditFromPaidBackLoans();
+
             invariant_GLOB_01();
             assert(loanToken.ownerOf(loanId) == to);
         } else {
             invariant_ERR(returnData);
         }
+        _clean();
     }
 }
