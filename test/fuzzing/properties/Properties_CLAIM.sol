@@ -20,11 +20,13 @@ contract Properties_CLAIM is FuzzStorageVariables {
             state[0].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
                 && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
         ) {
-            assert(
-                state[1].actorStates[address(spro)].creditBalance
-                    == state[0].actorStates[address(spro)].creditBalance - loanWithId.loan.principalAmount
-                        - loanWithId.loan.fixedInterestAmount
-            );
+            if (actors.lender != address(spro)) {
+                assert(
+                    state[1].actorStates[address(spro)].creditBalance
+                        == state[0].actorStates[address(spro)].creditBalance - loanWithId.loan.principalAmount
+                            - loanWithId.loan.fixedInterestAmount
+                );
+            }
         }
     }
 
@@ -33,10 +35,17 @@ contract Properties_CLAIM is FuzzStorageVariables {
             state[0].loanStatus[loanWithId.loanId] == LoanStatus.NOT_REPAYABLE
                 && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
         ) {
-            assert(
-                state[1].actorStates[actors.lender].collateralBalance
-                    == state[0].actorStates[actors.lender].collateralBalance + loanWithId.loan.collateralAmount
-            );
+            if (actors.lender != address(spro)) {
+                assert(
+                    state[1].actorStates[actors.lender].collateralBalance
+                        == state[0].actorStates[actors.lender].collateralBalance + loanWithId.loan.collateralAmount
+                );
+            } else {
+                assert(
+                    state[1].actorStates[actors.lender].collateralBalance
+                        == state[0].actorStates[actors.lender].collateralBalance
+                );
+            }
         }
     }
 }

@@ -34,10 +34,11 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
     ) public {
         actors.borrower = getRandomUsers(seed1, 1)[0];
         sdex.mint(actors.borrower, spro._fee());
-        _before(USERS);
 
         ISproTypes.Proposal memory proposal =
             _createProposalPreconditions(seed1, seed2, seed3, actors.borrower, startTimestamp, loanExpiration);
+
+        _before(USERS);
 
         (bool success, bytes memory returnData) = _createProposalCall(
             actors.borrower,
@@ -59,6 +60,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         }
         ISproTypes.Proposal memory proposal = getRandomProposal(seed);
         actors.borrower = proposal.proposer;
+
         _before(USERS);
 
         (bool success, bytes memory returnData) = _cancelProposalCall(actors.borrower, proposal);
@@ -72,13 +74,14 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         }
 
         ISproTypes.Proposal memory proposal = getRandomProposal(seed);
+        actors.borrower = proposal.proposer;
+        actors.lender = getAnotherUser(proposal.proposer);
+
         uint256 creditAmount = _createLoanPreconditions(seed, proposal);
         if (creditAmount == 0) {
             return;
         }
 
-        actors.borrower = proposal.proposer;
-        actors.lender = getAnotherUser(proposal.proposer);
         _before(USERS);
 
         (bool success, bytes memory returnData) = _createLoanCall(actors.lender, proposal, creditAmount);
@@ -92,11 +95,12 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         }
 
         Spro.LoanWithId memory loanWithId = getRandomLoan(seedRandomLoan);
-        _repayLoanPreconditions(loanWithId, blocked);
-
         actors.lender = loanToken.ownerOf(loanWithId.loanId);
         actors.payer = getRandomUsers(seedPayer, 1)[0];
         actors.borrower = loanWithId.loan.borrower;
+
+        _repayLoanPreconditions(loanWithId, blocked);
+
         _before(USERS);
 
         (bool success, bytes memory returnData) = _repayLoanCall(actors.payer, loanWithId.loanId);
@@ -114,16 +118,17 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
             return;
         }
 
+        actors.payer = getRandomUsers(seedPayer, 1)[0];
         seedNumLoansToRepay = bound(seedNumLoansToRepay, 1, loans.length);
         // The first argument will be hashed, so it's not important to use a specific seed.
         Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seedUserBlocked, seedNumLoansToRepay);
+        emit log_uint(loanWithIds.length);
         address userBlocked = getRandomUsers(seedUserBlocked, 1)[0];
-        uint256 totalRepaymentAmount = _repayMultipleLoansPreconditions(loanWithIds, actors.payer, blocked, userBlocked);
+        uint256 totalRepaymentAmount = _repayMultipleLoansPreconditions(loanWithIds, blocked, userBlocked);
         if (totalRepaymentAmount == 0) {
             return;
         }
 
-        actors.payer = getRandomUsers(seedPayer, 1)[0];
         _before(USERS);
 
         (bool success, bytes memory returnData) = _repayMultipleLoansCall(actors.payer);
@@ -143,6 +148,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         if (expired) {
             vm.warp(loanWithId.loan.loanExpiration);
         }
+
         _before(USERS);
 
         (bool success, bytes memory returnData) = _claimLoanCall(actors.payer, loanWithId.loanId);
@@ -158,6 +164,8 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         Spro.LoanWithId memory loanWithId = getRandomLoan(seedLoan);
         actors.lender = loanToken.ownerOf(loanWithId.loanId);
         address to = getRandomUserOrProtocol(seedUser, address(spro));
+        emit log_address(to);
+        emit log_address(address(spro));
 
         (bool success, bytes memory returnData) = _transferNFTCall(actors.lender, to, loanWithId.loanId);
 
