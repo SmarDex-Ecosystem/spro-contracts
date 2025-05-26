@@ -93,13 +93,16 @@ contract PostconditionsSpro is Properties {
             invariant_REPAY_02(loanWithId);
             invariant_REPAY_03(loanWithId.loan.collateralAmount, actors.borrower);
             invariant_REPAY_04(loanWithId);
-            invariant_ENDLOAN_03(loanWithId.loanId);
-            invariant_ENDLOAN_05(loanWithId);
-            // Check if the lender is not the borrower
-            if (actors.lender != actors.borrower) {
-                invariant_ENDLOAN_01(loanWithId.loanId);
-                invariant_ENDLOAN_02(loanWithId.loanId);
-                invariant_ENDLOAN_04(loanWithId);
+
+            if (actors.lender != address(spro)) {
+                invariant_ENDLOAN_03(loanWithId.loanId);
+                invariant_ENDLOAN_05(loanWithId);
+                // Check if the lender is not the borrower
+                if (actors.lender != actors.borrower) {
+                    invariant_ENDLOAN_01(loanWithId.loanId);
+                    invariant_ENDLOAN_02(loanWithId.loanId);
+                    invariant_ENDLOAN_04(loanWithId);
+                }
             }
         } else {
             invariant_ERR(returnData);
@@ -139,11 +142,14 @@ contract PostconditionsSpro is Properties {
             invariant_CLAIM_01(loanWithId.loanId);
             invariant_CLAIM_02(loanWithId);
             invariant_CLAIM_03(loanWithId);
-            invariant_ENDLOAN_01(loanWithId.loanId);
-            invariant_ENDLOAN_02(loanWithId.loanId);
-            invariant_ENDLOAN_03(loanWithId.loanId);
-            invariant_ENDLOAN_04(loanWithId);
-            invariant_ENDLOAN_05(loanWithId);
+
+            if (actors.lender != address(spro)) {
+                invariant_ENDLOAN_01(loanWithId.loanId);
+                invariant_ENDLOAN_02(loanWithId.loanId);
+                invariant_ENDLOAN_03(loanWithId.loanId);
+                invariant_ENDLOAN_04(loanWithId);
+                invariant_ENDLOAN_05(loanWithId);
+            }
         } else {
             invariant_ERR(returnData);
         }

@@ -9,12 +9,10 @@ contract Properties_ENDLOAN is FuzzStorageVariables {
     function invariant_ENDLOAN_01(uint256 loanId) internal view {
         if (state[0].loanStatus[loanId] == LoanStatus.REPAYABLE || state[0].loanStatus[loanId] == LoanStatus.PAID_BACK)
         {
-            if (actors.lender != address(spro)) {
-                assert(
-                    state[1].actorStates[actors.lender].collateralBalance
-                        == state[0].actorStates[actors.lender].collateralBalance
-                );
-            }
+            assert(
+                state[1].actorStates[actors.lender].collateralBalance
+                    == state[0].actorStates[actors.lender].collateralBalance
+            );
         }
     }
 
@@ -24,12 +22,9 @@ contract Properties_ENDLOAN is FuzzStorageVariables {
                 && state[1].loanStatus[loanId] == LoanStatus.PAID_BACK
                 || state[0].loanStatus[loanId] == LoanStatus.NOT_REPAYABLE && state[1].loanStatus[loanId] == LoanStatus.NONE
         ) {
-            if (actors.lender != address(spro)) {
-                assert(
-                    state[1].actorStates[actors.lender].creditBalance
-                        == state[0].actorStates[actors.lender].creditBalance
-                );
-            }
+            assert(
+                state[1].actorStates[actors.lender].creditBalance == state[0].actorStates[actors.lender].creditBalance
+            );
         }
     }
 
@@ -54,13 +49,11 @@ contract Properties_ENDLOAN is FuzzStorageVariables {
                 || state[0].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
                     && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
         ) {
-            if (actors.lender != address(spro)) {
-                assert(
-                    state[1].actorStates[actors.lender].creditBalance
-                        == state[0].actorStates[actors.lender].creditBalance + loanWithId.loan.principalAmount
-                            + loanWithId.loan.fixedInterestAmount
-                );
-            }
+            assert(
+                state[1].actorStates[actors.lender].creditBalance
+                    == state[0].actorStates[actors.lender].creditBalance + loanWithId.loan.principalAmount
+                        + loanWithId.loan.fixedInterestAmount
+            );
         }
     }
 
@@ -70,12 +63,10 @@ contract Properties_ENDLOAN is FuzzStorageVariables {
                 || state[0].loanStatus[loanWithId.loanId] == LoanStatus.NOT_REPAYABLE
                     && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
         ) {
-            if (actors.lender != address(spro)) {
-                assert(
-                    state[1].actorStates[address(spro)].collateralBalance
-                        == state[0].actorStates[address(spro)].collateralBalance - loanWithId.loan.collateralAmount
-                );
-            }
+            assert(
+                state[1].actorStates[address(spro)].collateralBalance
+                    == state[0].actorStates[address(spro)].collateralBalance - loanWithId.loan.collateralAmount
+            );
         }
     }
 }
