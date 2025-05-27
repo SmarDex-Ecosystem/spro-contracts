@@ -12,4 +12,10 @@ contract Properties_GLOB is FuzzStorageVariables {
                 == creditFromLoansPaidBack + token2MintedToProtocol + token2ReceivedByProtocol
         );
     }
+
+    function invariant_GLOB_02() internal view {
+        assert(
+            state[1].actorStates[address(spro)].collateralBalance == collateralFromProposals + token1MintedToProtocol
+        );
+    }
 }

@@ -60,12 +60,13 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         }
         ISproTypes.Proposal memory proposal = getRandomProposal(seed);
         actors.borrower = proposal.proposer;
+        uint256 withdrawableCollateralAmount = spro._withdrawableCollateral(keccak256(abi.encode(proposal)));
 
         _before(USERS);
 
         (bool success, bytes memory returnData) = _cancelProposalCall(actors.borrower, proposal);
 
-        _cancelProposalPostconditions(success, returnData, proposal, USERS);
+        _cancelProposalPostconditions(success, returnData, proposal, USERS, withdrawableCollateralAmount);
     }
 
     function fuzz_createLoan(uint256 seed) public {

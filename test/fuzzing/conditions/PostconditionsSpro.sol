@@ -16,9 +16,11 @@ contract PostconditionsSpro is Properties {
         if (success) {
             proposals.push(proposal);
             numberOfProposals++;
+            collateralFromProposals += proposal.collateralAmount;
             _after(users);
 
             invariant_GLOB_01();
+            invariant_GLOB_02();
             invariant_PROP_01(proposal);
             invariant_PROP_02();
             invariant_PROP_03();
@@ -36,7 +38,8 @@ contract PostconditionsSpro is Properties {
         bool success,
         bytes memory returnData,
         ISproTypes.Proposal memory proposal,
-        address[] memory users
+        address[] memory users,
+        uint256 withdrawableCollateralAmount
     ) internal {
         if (success) {
             for (uint256 i = 0; i < proposals.length; i++) {
@@ -46,9 +49,11 @@ contract PostconditionsSpro is Properties {
                     break;
                 }
             }
+            collateralFromProposals -= withdrawableCollateralAmount;
             _after(users);
 
             invariant_GLOB_01();
+            invariant_GLOB_02();
             bytes32 proposalHash = keccak256(abi.encode(proposal));
             invariant_CANCEL_01(proposalHash);
             invariant_CANCEL_02(proposalHash);
@@ -70,6 +75,7 @@ contract PostconditionsSpro is Properties {
             _after(users);
 
             invariant_GLOB_01();
+            invariant_GLOB_02();
             invariant_LOAN_01(creditAmount);
             invariant_LOAN_02();
             invariant_LOAN_03(creditAmount);
@@ -99,8 +105,10 @@ contract PostconditionsSpro is Properties {
             ) {
                 token2ReceivedByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
             }
+            collateralFromProposals -= loanWithId.loan.collateralAmount;
 
             invariant_GLOB_01();
+            invariant_GLOB_02();
             invariant_REPAY_01(loanWithId);
             invariant_REPAY_02(loanWithId);
             invariant_REPAY_03(loanWithId.loan.collateralAmount, actors.borrower);
@@ -137,9 +145,11 @@ contract PostconditionsSpro is Properties {
                     token2ReceivedByProtocol +=
                         repayableLoans[i].loan.principalAmount + repayableLoans[i].loan.fixedInterestAmount;
                 }
+                collateralFromProposals -= repayableLoans[i].loan.collateralAmount;
             }
 
             invariant_GLOB_01();
+            invariant_GLOB_02();
             for (uint256 i = 0; i < repayableLoanIds.length; i++) {
                 invariant_REPAYMUL_01(repayableLoans[i]);
             }
@@ -169,7 +179,16 @@ contract PostconditionsSpro is Properties {
             ) {
                 token2ReceivedByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
             }
+            if (
+                state[0].loanStatus[loanWithId.loanId] == LoanStatus.NOT_REPAYABLE
+                    && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
+                    && lastOwnerOfLoan[loanWithId.loanId] != address(spro)
+            ) {
+                collateralFromProposals -= loanWithId.loan.collateralAmount;
+            }
+
             invariant_GLOB_01();
+            invariant_GLOB_02();
             invariant_CLAIM_01(loanWithId.loanId);
             invariant_CLAIM_02(loanWithId);
             invariant_CLAIM_03(loanWithId);
@@ -193,6 +212,7 @@ contract PostconditionsSpro is Properties {
             _processCreditFromPaidBackLoans();
 
             invariant_GLOB_01();
+            invariant_GLOB_02();
             assert(loanToken.ownerOf(loanId) == to);
         } else {
             invariant_ERR(returnData);

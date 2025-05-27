@@ -47,6 +47,8 @@ contract FuzzStorageVariables is Test {
     Actors actors;
     // Credit in the protocol
     uint256 creditFromLoansPaidBack;
+    // Collateral in the protocol
+    uint256 collateralFromProposals;
     // Minted to the protocol
     uint256 token1MintedToProtocol;
     uint256 token2MintedToProtocol;
@@ -148,6 +150,7 @@ contract FuzzStorageVariables is Test {
         _setStates(1, users);
         _newLoan();
         _stateLoan(1);
+        // Token in the protocol
         _processCreditFromPaidBackLoans();
         // Process repayable loans
         _processRepayableLoans();

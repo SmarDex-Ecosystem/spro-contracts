@@ -71,7 +71,7 @@
 
 | Invariant ID | Condition | Invariant Description                                                     | Tech Checks                                                           |
 | ------------ | ----------| ------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| GLOB-01      |           | The protocol balance should reflect the loans(loan status = 'PAID_BACK'). | token.balanceOf(protocol) = loan amount + interest (if loan status is 'PAID_BACK')      |
+| GLOB-01      |           | If a loan has the status PAID_BACK, it should be reflected in the protocol balance. | token.balanceOf(protocol) = loan amount + interest (if loan status is 'PAID_BACK')      |
 | PROP-01      |           | Borrower's collateral token balance decreased by collateral amount.       | collateralToken.balanceOf(borrower) = previous - collateralAmount     |
 | PROP-02      |           | Borrower must pay the SDEX fee.                                           | sdex.balanceOf(borrower) = previous - fee                             |
 | PROP-03      |           | Borrower's borrow token balance unchanged.                                | borrowToken.balanceOf(borrower) = previous                            |
