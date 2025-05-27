@@ -99,6 +99,7 @@ contract PostconditionsSpro is Properties {
             ) {
                 token2ReceivedByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
             }
+
             invariant_GLOB_01();
             invariant_REPAY_01(loanWithId);
             invariant_REPAY_02(loanWithId);
@@ -126,6 +127,17 @@ contract PostconditionsSpro is Properties {
     {
         if (success) {
             _after(users);
+
+            for (uint256 i = 0; i < repayableLoanIds.length; i++) {
+                if (
+                    state[0].loanStatus[repayableLoanIds[i]] == LoanStatus.REPAYABLE
+                        && state[1].loanStatus[repayableLoanIds[i]] == LoanStatus.NONE
+                        && lastOwnerOfLoan[repayableLoanIds[i]] == address(spro)
+                ) {
+                    token2ReceivedByProtocol +=
+                        repayableLoans[i].loan.principalAmount + repayableLoans[i].loan.fixedInterestAmount;
+                }
+            }
 
             invariant_GLOB_01();
             for (uint256 i = 0; i < repayableLoanIds.length; i++) {
