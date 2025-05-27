@@ -155,6 +155,26 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         _claimLoanPostconditions(success, returnData, loanWithId, USERS);
     }
 
+    function fuzz_claimMultipleLoans(uint256 seed, uint256 size, bool expired) public {
+        if (loans.length == 0) {
+            return;
+        }
+
+        size = bound(size, 1, loans.length);
+        Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seed, size);
+        actors.lender = loanToken.ownerOf(loanWithIds[0].loanId);
+        bool claimable = _claimMultipleLoansPreconditions(loanWithIds, actors.lender);
+        if (!claimable) {
+            return;
+        }
+
+        _before(USERS);
+
+        (bool success, bytes memory returnData) = _claimMultipleLoansCall(actors.lender, claimableLoanIds);
+
+        _claimMultipleLoansPostconditions(success, returnData, USERS);
+    }
+
     function fuzz_transferNFT(uint256 seedLoan, uint256 seedUser) public {
         if (loans.length == 0) {
             return;
@@ -173,23 +193,5 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         T20 token = tokenOne ? token1 : token2;
         seedAmount = bound(seedAmount, 0, 1e36);
         token.mint(address(spro), seedAmount);
-    }
-
-    function fuzz_claimMultipleLoans(uint256 seed, uint256 size, bool expired) public {
-        if (loans.length == 0) {
-            return;
-        }
-
-        size = bound(size, 1, loans.length);
-        Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seed, size);
-        address[] memory actors = new address[](size + 1);
-        actors[actors.length - 1] = loanWithIds[0].loan.lender;
-        _claimMultipleLoansPreconditions(loanWithIds, actors[actors.length - 1]);
-
-        _before(actors);
-
-        (bool success, bytes memory returnData) = _claimMultipleLoansCall(actors[actors.length - 1], claimableLoanIds);
-
-        _claimMultipleLoansPostconditions(success, returnData, actors);
     }
 }

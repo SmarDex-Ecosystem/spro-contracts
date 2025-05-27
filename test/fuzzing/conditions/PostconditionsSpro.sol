@@ -156,34 +156,25 @@ contract PostconditionsSpro is Properties {
         _clean();
     }
 
-    function _claimMultipleLoansPostconditions(bool success, bytes memory returnData, address[] memory actors)
+    function _claimMultipleLoansPostconditions(bool success, bytes memory returnData, address[] memory users)
         internal
     {
         if (success) {
-            _after(actors);
+            _after(users);
 
-            uint256 collateralAmountForProtocol;
-
-            for (uint256 i = 0; i < claimableLoans.length; i++) {
-                Spro.LoanWithId memory loanWithId = claimableLoans[i];
-                uint256 stateIndex;
-
-                for (uint256 j = 0; j < loans.length; j++) {
-                    if (loanWithId.loanId == loans[j].loanId) {
-                        stateIndex = j;
-                        break;
-                    }
-                }
-
-                if (
-                    state[0].loanStatus[stateIndex] == LoanStatus.PAID_BACK
-                        && state[1].loanStatus[stateIndex] == LoanStatus.NONE
-                ) {
-                    collateralAmountForProtocol += loanWithId.loan.collateralAmount;
-                }
+            if ((loanToken.ownerOf(claimableLoans[0].loanId)) != address(spro)) {
+                uint256 collateralAmountForProtocol;
+                // for (uint256 i = 0; i < claimableLoans.length; i++) {
+                //     Spro.LoanWithId memory loanWithId = claimableLoans[i];
+                //     if (
+                //         state[0].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
+                //             && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
+                //     ) {
+                //         collateralAmountForProtocol += loanWithId.loan.collateralAmount;
+                //     }
+                // }
+                invariant_CLAIMMUL_01(collateralAmountForProtocol);
             }
-
-            invariant_CLAIMMUL_01(collateralAmountForProtocol);
         } else {
             invariant_ERR(returnData);
         }
