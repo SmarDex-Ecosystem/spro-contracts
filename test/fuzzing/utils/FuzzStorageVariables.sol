@@ -97,17 +97,10 @@ contract FuzzStorageVariables is Test {
             shuffleIndexes[i] = i;
         }
         LibPRNG.shuffle(rng, shuffleIndexes);
-        Spro.LoanWithId[] memory shuffleLoans = new Spro.LoanWithId[](loans.length);
-        for (uint256 i = 0; i < loans.length; i++) {
-            shuffleLoans[i] = loans[shuffleIndexes[i]];
-        }
-
         randomLoans = new Spro.LoanWithId[](length);
         for (uint256 i = 0; i < length; i++) {
-            randomLoans[i] = shuffleLoans[i];
+            randomLoans[i] = loans[shuffleIndexes[i]];
         }
-
-        return randomLoans;
     }
 
     function getStatus(uint256 loanId) internal view returns (LoanStatus status) {
