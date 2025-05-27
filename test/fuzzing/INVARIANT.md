@@ -66,12 +66,14 @@
 
 ## Global
 - The credit balance of the Spro is equal to the loan amount and interest if the loan status is 'PAID_BACK'.
+- The Spro's collateral balance reflects the amount of collateral locked from the proposals.
 
 ## Suite invariants table
 
 | Invariant ID | Condition | Invariant Description                                                     | Tech Checks                                                           |
 | ------------ | ----------| ------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| GLOB-01      |           | If a loan has the status PAID_BACK, it should be reflected in the protocol balance. | token.balanceOf(protocol) = loan amount + interest (if loan status is 'PAID_BACK')      |
+| GLOB-01      |           | If a loan has the status PAID_BACK, it should be reflected in the protocol balance. | borrowToken.balanceOf(protocol) = loan amount + interest (if loan status is 'PAID_BACK')      |
+| GLOB-02      |           | The collateral Spro balance is equal to the total collateral from all proposals. | collateralToken.balanceOf(protocol) = proposal.collateralAmount      |
 | PROP-01      |           | Borrower's collateral token balance decreased by collateral amount.       | collateralToken.balanceOf(borrower) = previous - collateralAmount     |
 | PROP-02      |           | Borrower must pay the SDEX fee.                                           | sdex.balanceOf(borrower) = previous - fee                             |
 | PROP-03      |           | Borrower's borrow token balance unchanged.                                | borrowToken.balanceOf(borrower) = previous                            |
