@@ -98,14 +98,7 @@ contract PostconditionsSpro is Properties {
     ) internal {
         if (success) {
             _after(users);
-            if (
-                state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
-                    && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
-                    && lastOwnerOfLoan[loanWithId.loanId] == address(spro)
-            ) {
-                token2ReceivedByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
-            }
-            collateralFromProposals -= loanWithId.loan.collateralAmount;
+            _repayLoanProcessCollateral(loanWithId);
 
             invariant_GLOB_01();
             invariant_GLOB_02();
@@ -135,18 +128,7 @@ contract PostconditionsSpro is Properties {
     {
         if (success) {
             _after(users);
-
-            for (uint256 i = 0; i < repayableLoanIds.length; i++) {
-                if (
-                    state[0].loanStatus[repayableLoanIds[i]] == LoanStatus.REPAYABLE
-                        && state[1].loanStatus[repayableLoanIds[i]] == LoanStatus.NONE
-                        && lastOwnerOfLoan[repayableLoanIds[i]] == address(spro)
-                ) {
-                    token2ReceivedByProtocol +=
-                        repayableLoans[i].loan.principalAmount + repayableLoans[i].loan.fixedInterestAmount;
-                }
-                collateralFromProposals -= repayableLoans[i].loan.collateralAmount;
-            }
+            _repayMultipleLoanProcessCollateral();
 
             invariant_GLOB_01();
             invariant_GLOB_02();
@@ -218,5 +200,30 @@ contract PostconditionsSpro is Properties {
             invariant_ERR(returnData);
         }
         _clean();
+    }
+
+    function _repayMultipleLoanProcessCollateral() internal {
+        for (uint256 i = 0; i < repayableLoanIds.length; i++) {
+            if (
+                state[0].loanStatus[repayableLoanIds[i]] == LoanStatus.REPAYABLE
+                    && state[1].loanStatus[repayableLoanIds[i]] == LoanStatus.NONE
+                    && lastOwnerOfLoan[repayableLoanIds[i]] == address(spro)
+            ) {
+                token2ReceivedByProtocol +=
+                    repayableLoans[i].loan.principalAmount + repayableLoans[i].loan.fixedInterestAmount;
+            }
+            collateralFromProposals -= repayableLoans[i].loan.collateralAmount;
+        }
+    }
+
+    function _repayLoanProcessCollateral(Spro.LoanWithId memory loanWithId) internal {
+        if (
+            state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
+                && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
+                && lastOwnerOfLoan[loanWithId.loanId] == address(spro)
+        ) {
+            token2ReceivedByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+        }
+        collateralFromProposals -= loanWithId.loan.collateralAmount;
     }
 }
