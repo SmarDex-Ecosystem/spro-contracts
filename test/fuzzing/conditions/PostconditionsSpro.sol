@@ -67,7 +67,8 @@ contract PostconditionsSpro is Properties {
     ) internal {
         if (success) {
             numberOfLoans++;
-            _after(actors);
+            _after(users);
+
             invariant_LOAN_01(creditAmount);
             invariant_LOAN_02();
             invariant_LOAN_03(creditAmount);
@@ -89,7 +90,7 @@ contract PostconditionsSpro is Properties {
         address[] memory users
     ) internal {
         if (success) {
-            _after(actors);
+            _after(users);
             if (
                 state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
                     && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
@@ -147,7 +148,7 @@ contract PostconditionsSpro is Properties {
         address[] memory users
     ) internal {
         if (success) {
-            _after(actors);
+            _after(users);
 
             if (
                 state[0].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
@@ -179,7 +180,7 @@ contract PostconditionsSpro is Properties {
             _processCreditFromPaidBackLoans();
 
             invariant_GLOB_01();
-            assert(loanToken.ownerOf(loanId) == actors[1]);
+            assert(loanToken.ownerOf(loanId) == to);
         } else {
             invariant_ERR(returnData);
         }
