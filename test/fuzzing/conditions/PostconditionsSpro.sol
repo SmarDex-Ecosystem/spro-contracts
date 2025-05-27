@@ -69,6 +69,7 @@ contract PostconditionsSpro is Properties {
             numberOfLoans++;
             _after(users);
 
+            invariant_GLOB_01();
             invariant_LOAN_01(creditAmount);
             invariant_LOAN_02();
             invariant_LOAN_03(creditAmount);
