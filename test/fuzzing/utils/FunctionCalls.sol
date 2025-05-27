@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
 import { FuzzActors } from "./FuzzActors.sol";
 import { FuzzStorageVariables } from "../utils/FuzzStorageVariables.sol";
 
@@ -71,13 +73,11 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
             address(spro).call(abi.encodeWithSelector(ISpro.repayLoan.selector, loanId, "", address(0)));
     }
 
-    function _repayMultipleLoansCall(address caller, uint256[] memory loanIds)
-        internal
-        returns (bool success, bytes memory returnData)
-    {
+    function _repayMultipleLoansCall(address caller) internal returns (bool success, bytes memory returnData) {
         vm.prank(caller);
-        (success, returnData) =
-            address(spro).call(abi.encodeWithSelector(ISpro.repayMultipleLoans.selector, loanIds, "", address(0)));
+        (success, returnData) = address(spro).call(
+            abi.encodeWithSelector(ISpro.repayMultipleLoans.selector, repayableLoanIds, "", address(0))
+        );
     }
 
     function _claimLoanCall(address caller, uint256 loanId) internal returns (bool success, bytes memory returnData) {
@@ -91,5 +91,14 @@ contract FunctionCalls is FuzzStorageVariables, FuzzActors {
     {
         vm.prank(caller);
         (success, returnData) = address(spro).call(abi.encodeWithSelector(ISpro.claimMultipleLoans.selector, loanIds));
+    }
+
+    function _transferNFTCall(address caller, address to, uint256 tokenId)
+        internal
+        returns (bool success, bytes memory returnData)
+    {
+        vm.prank(caller);
+        (success, returnData) =
+            address(loanToken).call(abi.encodeWithSelector(IERC721.transferFrom.selector, caller, to, tokenId));
     }
 }

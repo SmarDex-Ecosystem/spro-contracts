@@ -10,21 +10,21 @@ contract Properties_REPAYMUL is Properties_REPAY {
         invariant_REPAY_01(loanWithId);
     }
 
-    function invariant_REPAYMUL_02(uint256 creditAmount) internal view {
+    function invariant_REPAYMUL_02() internal view {
         assert(
             state[1].actorStates[address(spro)].creditBalance
-                == state[0].actorStates[address(spro)].creditBalance + creditAmount
+                == state[0].actorStates[address(spro)].creditBalance + creditAmountForProtocol
         );
     }
 
-    function invariant_REPAYMUL_03(uint256 collateralAmount, address borrower) internal view {
+    function invariant_REPAYMUL_03(address borrower, uint256 collateralAmount) internal view {
         invariant_REPAY_03(collateralAmount, borrower);
     }
 
-    function invariant_REPAYMUL_04(address payer, uint256 totalRepaymentAmount) internal view {
+    function invariant_REPAYMUL_04() internal view {
         assert(
-            state[1].actorStates[payer].creditBalance
-                == state[0].actorStates[payer].creditBalance - totalRepaymentAmount
+            state[1].actorStates[actors.payer].creditBalance
+                == state[0].actorStates[actors.payer].creditBalance - totalRepaymentAmount
         );
     }
 }

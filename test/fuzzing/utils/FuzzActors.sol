@@ -3,6 +3,8 @@ pragma solidity >=0.8.0;
 
 import { Test } from "forge-std/Test.sol";
 
+import { LibPRNG } from "solady/src/utils/LibPRNG.sol";
+
 contract FuzzActors is Test {
     address internal DEPLOYER;
 
@@ -14,12 +16,10 @@ contract FuzzActors is Test {
 
     function getRandomUsers(uint256 input, uint256 length) internal view returns (address[] memory actors) {
         require(length <= USERS.length, "Requested length exceeds USERS length");
+        LibPRNG.PRNG memory rng = LibPRNG.PRNG(input);
 
         address[] memory shuffleUsers = USERS;
-        for (uint256 i = USERS.length - 1; i > 0; i--) {
-            uint256 j = uint256(keccak256(abi.encodePacked(input, i))) % (i + 1);
-            (shuffleUsers[i], shuffleUsers[j]) = (shuffleUsers[j], shuffleUsers[i]);
-        }
+        LibPRNG.shuffle(rng, shuffleUsers);
 
         actors = new address[](length);
         for (uint256 i = 0; i < length; i++) {
@@ -36,5 +36,16 @@ contract FuzzActors is Test {
             }
         }
         revert("No other user found");
+    }
+
+    function getRandomUserOrProtocol(uint256 seedUser, address protocol) internal view returns (address) {
+        uint256 total = USERS.length + 1;
+        uint256 index = seedUser % total;
+
+        if (index < USERS.length) {
+            return USERS[index];
+        } else {
+            return protocol;
+        }
     }
 }

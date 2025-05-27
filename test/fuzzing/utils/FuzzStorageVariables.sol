@@ -3,7 +3,10 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
+import { LibPRNG } from "solady/src/utils/LibPRNG.sol";
+
 import { Spro } from "src/spro/Spro.sol";
+import { SproLoan } from "src/spro/SproLoan.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 import { T20 } from "test/helper/T20.sol";
@@ -14,6 +17,7 @@ contract FuzzStorageVariables is Test {
     T20 token1;
     T20 token2;
     SproHandler spro;
+    SproLoan loanToken;
     uint256 numberOfProposals;
     uint256 numberOfLoans;
 
@@ -29,12 +33,28 @@ contract FuzzStorageVariables is Test {
     // Spro storage variables
     ISproTypes.Proposal[] internal proposals;
     Spro.LoanWithId[] internal loans;
+    mapping(uint256 => address) lastOwnerOfLoan;
+
+    // Repayable loans
     Spro.LoanWithId[] internal repayableLoans;
     uint256[] internal repayableLoanIds;
+    uint256 creditAmountForProtocol;
+    uint256 totalRepaymentAmount;
+    address[] borrowers;
+    uint256[] borrowersCollateral;
     Spro.LoanWithId[] internal claimableLoans;
     uint256[] internal claimableLoanIds;
 
+    // Actors addresses
+    Actors actors;
+
     mapping(uint8 => State) state;
+
+    struct Actors {
+        address borrower;
+        address lender;
+        address payer;
+    }
 
     struct State {
         mapping(address => ActorStates) actorStates;
@@ -71,12 +91,17 @@ contract FuzzStorageVariables is Test {
         view
         returns (Spro.LoanWithId[] memory randomLoans)
     {
-        require(length <= loans.length, "Requested length exceeds USERS length");
+        require(length <= loans.length, "Requested length exceeds loan length");
+        LibPRNG.PRNG memory rng = LibPRNG.PRNG(input);
 
-        Spro.LoanWithId[] memory shuffleLoans = loans;
-        for (uint256 i = loans.length - 1; i > 0; i--) {
-            uint256 j = uint256(keccak256(abi.encodePacked(input, i))) % (i + 1);
-            (shuffleLoans[i], shuffleLoans[j]) = (shuffleLoans[j], shuffleLoans[i]);
+        uint256[] memory shuffleIndexes = new uint256[](loans.length);
+        for (uint256 i = 0; i < loans.length; i++) {
+            shuffleIndexes[i] = i;
+        }
+        LibPRNG.shuffle(rng, shuffleIndexes);
+        Spro.LoanWithId[] memory shuffleLoans = new Spro.LoanWithId[](loans.length);
+        for (uint256 i = 0; i < loans.length; i++) {
+            shuffleLoans[i] = loans[shuffleIndexes[i]];
         }
 
         randomLoans = new Spro.LoanWithId[](length);
@@ -102,9 +127,9 @@ contract FuzzStorageVariables is Test {
         }
     }
 
-    function _setStates(uint8 index, address[] memory actors) internal {
-        for (uint256 i = 0; i < actors.length; i++) {
-            _setActorState(index, actors[i]);
+    function _setStates(uint8 index, address[] memory users) internal {
+        for (uint256 i = 0; i < users.length; i++) {
+            _setActorState(index, users[i]);
         }
         _setActorState(index, address(spro));
         _setActorState(index, address(0xdead));
@@ -116,18 +141,22 @@ contract FuzzStorageVariables is Test {
         state[index].actorStates[actor].sdexBalance = sdex.balanceOf(actor);
     }
 
-    function _before(address[] memory actors) internal {
-        _setStates(0, actors);
+    function _before(address[] memory users) internal {
+        _setStates(0, users);
         _stateLoan(0);
+        _setLastOwnerOfLoans();
     }
 
-    function _after(address[] memory actors) internal {
-        _setStates(1, actors);
+    function _after(address[] memory users) internal {
+        _setStates(1, users);
         _newLoan();
         _stateLoan(1);
+        // Process repayable loans
+        _processRepayableLoans();
     }
 
     function _clean() internal {
+        token2.blockTransfers(false, address(0));
         _removeLoansWithStatusNone();
         _fullReset();
     }
@@ -135,10 +164,19 @@ contract FuzzStorageVariables is Test {
     function _fullReset() internal {
         delete state[0];
         delete state[1];
+
+        // Reset repayable loans variables
         delete repayableLoans;
         delete repayableLoanIds;
+        delete creditAmountForProtocol;
+        delete totalRepaymentAmount;
+        delete borrowers;
+        delete borrowersCollateral;
         delete claimableLoans;
         delete claimableLoanIds;
+
+        // Reset address variables
+        delete actors;
     }
 
     function _removeLoansWithStatusNone() internal {
@@ -162,6 +200,7 @@ contract FuzzStorageVariables is Test {
                 numberOfLoans--;
             } else {
                 loans.push(Spro.LoanWithId(loanId, loan));
+                lastOwnerOfLoan[loanId] = loanToken.ownerOf(loanId);
             }
         }
     }
@@ -171,7 +210,49 @@ contract FuzzStorageVariables is Test {
             return;
         }
         for (uint256 i = 0; i < loans.length; i++) {
-            state[index].loanStatus[i] = getStatus(loans[i].loanId);
+            state[index].loanStatus[loans[i].loanId] = getStatus(loans[i].loanId);
+        }
+    }
+
+    function _setLastOwnerOfLoans() internal {
+        for (uint256 i = 0; i < loans.length; i++) {
+            if (getStatus(loans[i].loanId) != LoanStatus.NONE) {
+                lastOwnerOfLoan[loans[i].loanId] = loanToken.ownerOf(loans[i].loanId);
+            } else {
+                lastOwnerOfLoan[loans[i].loanId] = address(0);
+            }
+        }
+    }
+
+    function _processRepayableLoans() internal {
+        for (uint256 i = 0; i < repayableLoans.length; i++) {
+            Spro.LoanWithId memory loanWithId = repayableLoans[i];
+
+            bool wasRepaid = state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
+                && state[1].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK;
+            uint256 repaymentAmount = loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+            if (lastOwnerOfLoan[loanWithId.loanId] == address(spro)) {
+                creditAmountForProtocol += repaymentAmount;
+            }
+            if (wasRepaid) {
+                creditAmountForProtocol += repaymentAmount;
+            }
+            if (wasRepaid || actors.payer != lastOwnerOfLoan[loanWithId.loanId]) {
+                totalRepaymentAmount += repaymentAmount;
+            }
+
+            bool found = false;
+            for (uint256 j = 0; j < borrowers.length; j++) {
+                if (borrowers[j] == loanWithId.loan.borrower) {
+                    borrowersCollateral[j] += loanWithId.loan.collateralAmount;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                borrowers.push(loanWithId.loan.borrower);
+                borrowersCollateral.push(loanWithId.loan.collateralAmount);
+            }
         }
     }
 }

@@ -47,68 +47,99 @@ contract PreconditionsSpro is Test, Properties {
         });
     }
 
-    function _createLoanPreconditions(uint256 seed, ISproTypes.Proposal memory proposal, address lender)
+    function _createLoanPreconditions(uint256 seed, ISproTypes.Proposal memory proposal)
         internal
         returns (uint256 creditAmount)
     {
         uint256 remaining = proposal.availableCreditLimit - spro._creditUsed(keccak256(abi.encode(proposal)));
         creditAmount = bound(seed, proposal.minAmount, remaining);
-        if (creditAmount > token2.balanceOf(lender)) {
-            token2.mint(lender, creditAmount - token2.balanceOf(lender));
-        }
+        _ensureSufficientBalance(actors.lender, creditAmount);
     }
 
-    function _repayLoanPreconditions(Spro.LoanWithId memory loanWithId, address payer) internal {
+    function _repayLoanPreconditions(Spro.LoanWithId memory loanWithId, bool blocked) internal {
+        if (blocked && actors.lender != address(spro)) {
+            token2.blockTransfers(true, actors.lender);
+        }
         uint256 repaymentAmount = loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
-        if (repaymentAmount > token2.balanceOf(payer)) {
-            token2.mint(payer, repaymentAmount);
-        }
+        _ensureSufficientBalance(actors.payer, repaymentAmount);
     }
 
-    function _repayMultipleLoansPreconditions(Spro.LoanWithId[] memory loanWithId, address payer)
+    function _repayMultipleLoansPreconditions(Spro.LoanWithId[] memory loanWithId, bool blocked, address userBlocked)
         internal
         returns (uint256 totalRepaymentAmount)
     {
-        {
-            uint256 firstRepayable;
-            while (
-                !spro.i_isLoanRepayable(
-                    spro.getLoan(loanWithId[firstRepayable].loanId).status,
-                    loanWithId[firstRepayable].loan.loanExpiration
-                )
+        uint256 firstRepayable = _findFirstRepayableLoanIndex(loanWithId);
+        if (firstRepayable == loanWithId.length) {
+            return 0;
+        }
+
+        (uint256[] memory validLoanIds, Spro.LoanWithId[] memory validLoanWithId, uint256 totalAmount) =
+            _filterRepayableLoansWithSameCreditAddress(loanWithId, firstRepayable);
+
+        _ensureSufficientBalance(actors.payer, totalAmount);
+        _storeRepayableLoans(validLoanIds, validLoanWithId);
+
+        if (blocked) {
+            token2.blockTransfers(true, userBlocked);
+        }
+
+        return totalAmount;
+    }
+
+    function _findFirstRepayableLoanIndex(Spro.LoanWithId[] memory loanWithId) internal view returns (uint256 index) {
+        while (
+            !spro.i_isLoanRepayable(spro.getLoan(loanWithId[index].loanId).status, loanWithId[index].loan.loanExpiration)
+        ) {
+            index++;
+            if (index == loanWithId.length) {
+                break;
+            }
+        }
+    }
+
+    function _filterRepayableLoansWithSameCreditAddress(Spro.LoanWithId[] memory loanWithId, uint256 start)
+        internal
+        view
+        returns (uint256[] memory loanIds, Spro.LoanWithId[] memory loans, uint256 totalAmount)
+    {
+        address creditAddress = loanWithId[start].loan.creditAddress;
+        uint256 count;
+
+        loanIds = new uint256[](loanWithId.length);
+        loans = new Spro.LoanWithId[](loanWithId.length);
+
+        for (uint256 i = start; i < loanWithId.length; i++) {
+            if (
+                loanWithId[i].loan.creditAddress == creditAddress
+                    && spro.i_isLoanRepayable(spro.getLoan(loanWithId[i].loanId).status, loanWithId[i].loan.loanExpiration)
             ) {
-                firstRepayable++;
-                if (firstRepayable == loanWithId.length) {
-                    return 0;
-                }
+                loanIds[count] = loanWithId[i].loanId;
+                loans[count] = loanWithId[i];
+                totalAmount += loanWithId[i].loan.principalAmount + loanWithId[i].loan.fixedInterestAmount;
+                count++;
             }
+        }
+        assembly {
+            mstore(loanIds, count)
+            mstore(loans, count)
+        }
+    }
 
-            address firstCreditAddress = loanWithId[firstRepayable].loan.creditAddress;
-            uint256[] memory temporaryLoanIds = new uint256[](loanWithId.length);
-            Spro.LoanWithId[] memory temporaryLoanWithId = new Spro.LoanWithId[](loanWithId.length);
-            uint256 count = 0;
-            for (uint256 i = firstRepayable; i < loanWithId.length; i++) {
-                if (
-                    firstCreditAddress == loanWithId[i].loan.creditAddress
-                        && spro.i_isLoanRepayable(
-                            spro.getLoan(loanWithId[i].loanId).status, loanWithId[i].loan.loanExpiration
-                        )
-                ) {
-                    temporaryLoanIds[count] = loanWithId[i].loanId;
-                    temporaryLoanWithId[count] = loanWithId[i];
-                    totalRepaymentAmount += loanWithId[i].loan.principalAmount + loanWithId[i].loan.fixedInterestAmount;
-                    count++;
-                }
-            }
+    function _storeRepayableLoans(uint256[] memory loanIds, Spro.LoanWithId[] memory loans) internal {
+        for (uint256 i = 0; i < loanIds.length; i++) {
+            repayableLoanIds.push(loanIds[i]);
+            repayableLoans.push(loans[i]);
+        }
+    }
 
-            if (totalRepaymentAmount > token2.balanceOf(payer)) {
-                token2.mint(payer, totalRepaymentAmount - token2.balanceOf(payer));
-            }
+    /* -------------------------------------------------------------------------- */
+    /*                                    Utils                                   */
+    /* -------------------------------------------------------------------------- */
 
-            for (uint256 i = 0; i < count; i++) {
-                repayableLoans.push(temporaryLoanWithId[i]);
-                repayableLoanIds.push(temporaryLoanIds[i]);
-            }
+    function _ensureSufficientBalance(address payer, uint256 requiredAmount) internal {
+        uint256 currentBalance = token2.balanceOf(payer);
+        if (requiredAmount > currentBalance) {
+            token2.mint(payer, requiredAmount - currentBalance);
         }
     }
 

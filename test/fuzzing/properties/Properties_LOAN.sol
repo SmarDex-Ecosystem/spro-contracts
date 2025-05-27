@@ -7,22 +7,32 @@ import { Spro } from "src/spro/Spro.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 
 contract Properties_LOAN is FuzzStorageVariables {
-    function invariant_LOAN_01(uint256 creditAmount, address lender) internal view {
-        assert(state[1].actorStates[lender].creditBalance == state[0].actorStates[lender].creditBalance - creditAmount);
-    }
-
-    function invariant_LOAN_02(address lender) internal view {
-        assert(state[1].actorStates[lender].collateralBalance == state[0].actorStates[lender].collateralBalance);
-    }
-
-    function invariant_LOAN_03(uint256 creditAmount, address borrower) internal view {
+    function invariant_LOAN_01(uint256 creditAmount) internal view {
         assert(
-            state[1].actorStates[borrower].creditBalance == state[0].actorStates[borrower].creditBalance + creditAmount
+            state[1].actorStates[actors.lender].creditBalance
+                == state[0].actorStates[actors.lender].creditBalance - creditAmount
         );
     }
 
-    function invariant_LOAN_04(address borrower) internal view {
-        assert(state[1].actorStates[borrower].collateralBalance == state[0].actorStates[borrower].collateralBalance);
+    function invariant_LOAN_02() internal view {
+        assert(
+            state[1].actorStates[actors.lender].collateralBalance
+                == state[0].actorStates[actors.lender].collateralBalance
+        );
+    }
+
+    function invariant_LOAN_03(uint256 creditAmount) internal view {
+        assert(
+            state[1].actorStates[actors.borrower].creditBalance
+                == state[0].actorStates[actors.borrower].creditBalance + creditAmount
+        );
+    }
+
+    function invariant_LOAN_04() internal view {
+        assert(
+            state[1].actorStates[actors.borrower].collateralBalance
+                == state[0].actorStates[actors.borrower].collateralBalance
+        );
     }
 
     function invariant_LOAN_05(ISproTypes.Proposal memory proposal) internal view {
