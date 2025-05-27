@@ -103,17 +103,10 @@ contract FuzzStorageVariables is Test {
             shuffleIndexes[i] = i;
         }
         LibPRNG.shuffle(rng, shuffleIndexes);
-        Spro.LoanWithId[] memory shuffleLoans = new Spro.LoanWithId[](loans.length);
-        for (uint256 i = 0; i < loans.length; i++) {
-            shuffleLoans[i] = loans[shuffleIndexes[i]];
-        }
-
         randomLoans = new Spro.LoanWithId[](length);
         for (uint256 i = 0; i < length; i++) {
-            randomLoans[i] = shuffleLoans[i];
+            randomLoans[i] = loans[shuffleIndexes[i]];
         }
-
-        return randomLoans;
     }
 
     function getStatus(uint256 loanId) internal view returns (LoanStatus status) {
@@ -177,6 +170,7 @@ contract FuzzStorageVariables is Test {
         delete totalRepaymentAmount;
         delete borrowers;
         delete borrowersCollateral;
+
         // Reset address variables
         delete actors;
         // Reset balance variables
@@ -236,7 +230,6 @@ contract FuzzStorageVariables is Test {
                 && state[1].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK;
             uint256 repaymentAmount = loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
             if (lastOwnerOfLoan[loanWithId.loanId] == address(spro)) {
-                token2ReceivedByProtocol += repaymentAmount;
                 creditAmountForProtocol += repaymentAmount;
             }
             if (wasRepaid) {
