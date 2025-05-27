@@ -3,6 +3,8 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 
+import { LibPRNG } from "solady/src/utils/LibPRNG.sol";
+
 import { Spro } from "src/spro/Spro.sol";
 import { SproLoan } from "src/spro/SproLoan.sol";
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
@@ -31,9 +33,26 @@ contract FuzzStorageVariables is Test {
     // Spro storage variables
     ISproTypes.Proposal[] internal proposals;
     Spro.LoanWithId[] internal loans;
+    mapping(uint256 => address) lastOwnerOfLoan;
 
-    // Temporary variables
+    // Repayable loans
+    Spro.LoanWithId[] internal repayableLoans;
+    uint256[] internal repayableLoanIds;
+    uint256 creditAmountForProtocol;
+    uint256 totalRepaymentAmount;
+    address[] borrowers;
+    uint256[] borrowersCollateral;
+
+    // Actors addresses
+    Actors actors;
+
     mapping(uint8 => State) state;
+
+    struct Actors {
+        address borrower;
+        address lender;
+        address payer;
+    }
 
     struct State {
         mapping(address => ActorStates) actorStates;
@@ -65,6 +84,25 @@ contract FuzzStorageVariables is Test {
         return loans[randomIndex];
     }
 
+    function getRandomLoans(uint256 input, uint256 length)
+        internal
+        view
+        returns (Spro.LoanWithId[] memory randomLoans)
+    {
+        require(length <= loans.length, "Requested length exceeds loan length");
+        LibPRNG.PRNG memory rng = LibPRNG.PRNG(input);
+
+        uint256[] memory shuffleIndexes = new uint256[](loans.length);
+        for (uint256 i = 0; i < loans.length; i++) {
+            shuffleIndexes[i] = i;
+        }
+        LibPRNG.shuffle(rng, shuffleIndexes);
+        randomLoans = new Spro.LoanWithId[](length);
+        for (uint256 i = 0; i < length; i++) {
+            randomLoans[i] = loans[shuffleIndexes[i]];
+        }
+    }
+
     function getStatus(uint256 loanId) internal view returns (LoanStatus status) {
         ISproTypes.Loan memory loan = spro.getLoan(loanId);
         if (loan.status == ISproTypes.LoanStatus.NONE) {
@@ -80,42 +118,60 @@ contract FuzzStorageVariables is Test {
         }
     }
 
-    function _setStates(uint8 index, address[] memory actors) internal {
-        for (uint256 i = 0; i < actors.length; i++) {
-            _setActorState(index, actors[i]);
+    function _setStates(uint8 index, address[] memory users) internal {
+        for (uint256 i = 0; i < users.length; i++) {
+            _setActorState(index, users[i]);
         }
         _setActorState(index, address(spro));
         _setActorState(index, address(0xdead));
     }
 
     function _setActorState(uint8 index, address actor) internal {
-        state[index].actorStates[actor].collateralBalance = T20(token1).balanceOf(actor);
-        state[index].actorStates[actor].creditBalance = T20(token2).balanceOf(actor);
-        state[index].actorStates[actor].sdexBalance = T20(sdex).balanceOf(actor);
+        state[index].actorStates[actor].collateralBalance = token1.balanceOf(actor);
+        state[index].actorStates[actor].creditBalance = token2.balanceOf(actor);
+        state[index].actorStates[actor].sdexBalance = sdex.balanceOf(actor);
     }
 
-    function _before(address[] memory actors) internal {
-        fullReset();
-        _setStates(0, actors);
-        _removeLoansWithStatusNone();
+    function _before(address[] memory users) internal {
+        _setStates(0, users);
         _stateLoan(0);
+        _setLastOwnerOfLoans();
     }
 
-    function _after(address[] memory actors) internal {
-        _setStates(1, actors);
+    function _after(address[] memory users) internal {
+        _setStates(1, users);
         _newLoan();
         _stateLoan(1);
+        // Process repayable loans
+        _processRepayableLoans();
     }
 
-    function fullReset() internal {
+    function _clean() internal {
+        token2.blockTransfers(false, address(0));
+        _removeLoansWithStatusNone();
+        _fullReset();
+    }
+
+    function _fullReset() internal {
         delete state[0];
         delete state[1];
+
+        // Reset repayable loans variables
+        delete repayableLoans;
+        delete repayableLoanIds;
+        delete creditAmountForProtocol;
+        delete totalRepaymentAmount;
+        delete borrowers;
+        delete borrowersCollateral;
+
+        // Reset address variables
+        delete actors;
     }
 
     function _removeLoansWithStatusNone() internal {
         uint256 i = 0;
         while (i < loans.length) {
-            if (state[1].loanStatus[i] == LoanStatus.NONE) {
+            if (LoanStatus.NONE == getStatus(loans[i].loanId)) {
                 loans[i] = loans[loans.length - 1];
                 loans.pop();
                 numberOfLoans--;
@@ -126,13 +182,14 @@ contract FuzzStorageVariables is Test {
     }
 
     function _newLoan() internal {
-        if (numberOfLoans == loans.length + 1) {
+        if (numberOfLoans != loans.length) {
             uint256 loanId = spro._loanToken()._lastLoanId();
             ISproTypes.Loan memory loan = spro.getLoan(loanId);
             if (loan.status == ISproTypes.LoanStatus.NONE) {
                 numberOfLoans--;
             } else {
                 loans.push(Spro.LoanWithId(loanId, loan));
+                lastOwnerOfLoan[loanId] = loanToken.ownerOf(loanId);
             }
         }
     }
@@ -143,6 +200,48 @@ contract FuzzStorageVariables is Test {
         }
         for (uint256 i = 0; i < loans.length; i++) {
             state[index].loanStatus[loans[i].loanId] = getStatus(loans[i].loanId);
+        }
+    }
+
+    function _setLastOwnerOfLoans() internal {
+        for (uint256 i = 0; i < loans.length; i++) {
+            if (getStatus(loans[i].loanId) != LoanStatus.NONE) {
+                lastOwnerOfLoan[loans[i].loanId] = loanToken.ownerOf(loans[i].loanId);
+            } else {
+                lastOwnerOfLoan[loans[i].loanId] = address(0);
+            }
+        }
+    }
+
+    function _processRepayableLoans() internal {
+        for (uint256 i = 0; i < repayableLoans.length; i++) {
+            Spro.LoanWithId memory loanWithId = repayableLoans[i];
+
+            bool wasRepaid = state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
+                && state[1].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK;
+            uint256 repaymentAmount = loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+            if (lastOwnerOfLoan[loanWithId.loanId] == address(spro)) {
+                creditAmountForProtocol += repaymentAmount;
+            }
+            if (wasRepaid) {
+                creditAmountForProtocol += repaymentAmount;
+            }
+            if (wasRepaid || actors.payer != lastOwnerOfLoan[loanWithId.loanId]) {
+                totalRepaymentAmount += repaymentAmount;
+            }
+
+            bool found = false;
+            for (uint256 j = 0; j < borrowers.length; j++) {
+                if (borrowers[j] == loanWithId.loan.borrower) {
+                    borrowersCollateral[j] += loanWithId.loan.collateralAmount;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                borrowers.push(loanWithId.loan.borrower);
+                borrowersCollateral.push(loanWithId.loan.collateralAmount);
+            }
         }
     }
 }
