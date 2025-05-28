@@ -154,20 +154,7 @@ contract PostconditionsSpro is Properties {
     ) internal {
         if (success) {
             _after(users);
-
-            if (
-                state[0].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
-                    && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE && actors.lender == address(spro)
-            ) {
-                token2ReceivedByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
-            }
-            if (
-                state[0].loanStatus[loanWithId.loanId] == LoanStatus.NOT_REPAYABLE
-                    && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
-                    && lastOwnerOfLoan[loanWithId.loanId] != address(spro)
-            ) {
-                collateralFromProposals -= loanWithId.loan.collateralAmount;
-            }
+            _claimLoanProcessCollateral(loanWithId);
 
             invariant_GLOB_01();
             invariant_GLOB_02();
@@ -188,6 +175,24 @@ contract PostconditionsSpro is Properties {
         _clean();
     }
 
+    function _claimMultipleLoansPostconditions(bool success, bytes memory returnData, address[] memory users)
+        internal
+    {
+        if (success) {
+            _after(users);
+            _claimMultipleLoanProcessCollateral();
+
+            if (actors.lender != address(spro)) {
+                invariant_CLAIMMUL_01();
+                invariant_CLAIMMUL_02();
+            }
+            invariant_CLAIMMUL_03();
+        } else {
+            invariant_ERR(returnData);
+        }
+        _clean();
+    }
+
     function _transferNFTPostconditions(bool success, bytes memory returnData, uint256 loanId, address to) internal {
         if (success) {
             _setActorState(1, address(spro));
@@ -200,6 +205,17 @@ contract PostconditionsSpro is Properties {
             invariant_ERR(returnData);
         }
         _clean();
+    }
+
+    function _repayLoanProcessCollateral(Spro.LoanWithId memory loanWithId) internal {
+        if (
+            state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
+                && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
+                && lastOwnerOfLoan[loanWithId.loanId] == address(spro)
+        ) {
+            token2ReceivedByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+        }
+        collateralFromProposals -= loanWithId.loan.collateralAmount;
     }
 
     function _repayMultipleLoanProcessCollateral() internal {
@@ -216,14 +232,38 @@ contract PostconditionsSpro is Properties {
         }
     }
 
-    function _repayLoanProcessCollateral(Spro.LoanWithId memory loanWithId) internal {
+    function _claimLoanProcessCollateral(Spro.LoanWithId memory loanWithId) internal {
         if (
-            state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
-                && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
-                && lastOwnerOfLoan[loanWithId.loanId] == address(spro)
+            state[0].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
+                && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE && actors.lender == address(spro)
         ) {
             token2ReceivedByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
         }
-        collateralFromProposals -= loanWithId.loan.collateralAmount;
+        if (
+            state[0].loanStatus[loanWithId.loanId] == LoanStatus.NOT_REPAYABLE
+                && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
+                && lastOwnerOfLoan[loanWithId.loanId] != address(spro)
+        ) {
+            collateralFromProposals -= loanWithId.loan.collateralAmount;
+        }
+    }
+
+    function _claimMultipleLoanProcessCollateral() internal {
+        for (uint256 i = 0; i < claimableLoanIds.length; i++) {
+            if (
+                state[0].loanStatus[claimableLoanIds[i]] == LoanStatus.PAID_BACK
+                    && state[1].loanStatus[claimableLoanIds[i]] == LoanStatus.NONE && actors.lender == address(spro)
+            ) {
+                token2ReceivedByProtocol +=
+                    claimableLoans[i].loan.principalAmount + claimableLoans[i].loan.fixedInterestAmount;
+            }
+            if (
+                state[0].loanStatus[claimableLoanIds[i]] == LoanStatus.NOT_REPAYABLE
+                    && state[1].loanStatus[claimableLoanIds[i]] == LoanStatus.NONE
+                    && lastOwnerOfLoan[claimableLoanIds[i]] != address(spro)
+            ) {
+                collateralFromProposals -= claimableLoans[i].loan.collateralAmount;
+            }
+        }
     }
 }
