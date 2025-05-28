@@ -31,7 +31,8 @@ contract PreconditionsSpro is Test, Properties {
         uint40 loanExpiration
     ) internal view returns (ISproTypes.Proposal memory proposal) {
         uint256 collateralAmount = bound(seed1, 0, token1.balanceOf(borrower));
-        uint256 availableCreditLimit = bound(seed2, 1, token2.balanceOf(borrower));
+        uint256 token2Balance = token2.balanceOf(borrower);
+        uint256 availableCreditLimit = bound(seed2, 1, token2Balance == 0 ? 1 : token2Balance);
         uint256 fixedInterestAmount = bound(seed3, 0, availableCreditLimit);
         proposal = ISproTypes.Proposal({
             collateralAddress: address(token1),
