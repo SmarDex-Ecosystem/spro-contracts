@@ -45,6 +45,14 @@ contract FuzzStorageVariables is Test {
 
     // Actors addresses
     Actors actors;
+    // Credit in the protocol
+    uint256 creditFromLoansPaidBack;
+    // Collateral in the protocol
+    uint256 collateralFromProposals;
+    // Minted to the protocol
+    uint256 token1MintedToProtocol;
+    uint256 token2MintedToProtocol;
+    uint256 token2ReceivedByProtocol;
 
     mapping(uint8 => State) state;
 
@@ -142,6 +150,8 @@ contract FuzzStorageVariables is Test {
         _setStates(1, users);
         _newLoan();
         _stateLoan(1);
+        // Token in the protocol
+        _processCreditFromPaidBackLoans();
         // Process repayable loans
         _processRepayableLoans();
     }
@@ -166,6 +176,8 @@ contract FuzzStorageVariables is Test {
 
         // Reset address variables
         delete actors;
+        // Reset balance variables
+        delete creditFromLoansPaidBack;
     }
 
     function _removeLoansWithStatusNone() internal {
@@ -241,6 +253,15 @@ contract FuzzStorageVariables is Test {
             if (!found) {
                 borrowers.push(loanWithId.loan.borrower);
                 borrowersCollateral.push(loanWithId.loan.collateralAmount);
+            }
+        }
+    }
+
+    function _processCreditFromPaidBackLoans() internal {
+        for (uint256 i = 0; i < loans.length; i++) {
+            LoanStatus status = state[1].loanStatus[loans[i].loanId];
+            if (status == LoanStatus.PAID_BACK) {
+                creditFromLoansPaidBack += loans[i].loan.principalAmount + loans[i].loan.fixedInterestAmount;
             }
         }
     }
