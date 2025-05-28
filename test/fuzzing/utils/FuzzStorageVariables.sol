@@ -170,9 +170,9 @@ contract FuzzStorageVariables is Test {
         delete totalRepaymentAmount;
         delete borrowers;
         delete borrowersCollateral;
+        // Reset claimable loans variable
         delete claimableLoans;
         delete claimableLoanIds;
-        // Reset claimable loans variable
         delete collateralAmountSentByProtocol;
         delete creditAmountSentByProtocol;
 
