@@ -132,6 +132,67 @@ contract PreconditionsSpro is Test, Properties {
         }
     }
 
+    function _claimMultipleLoansPreconditions(Spro.LoanWithId[] memory loanWithId) internal returns (bool) {
+        uint256 firstClaimable = _findFirstClaimableLoanIndex(loanWithId);
+        if (firstClaimable == loanWithId.length) {
+            return false;
+        }
+
+        (uint256[] memory validLoanIds, Spro.LoanWithId[] memory validLoanWithId) =
+            _filterClaimableLoansWithSameLender(loanWithId, firstClaimable);
+
+        _storeClaimableLoans(validLoanIds, validLoanWithId);
+
+        return true;
+    }
+
+    function _findFirstClaimableLoanIndex(Spro.LoanWithId[] memory loanWithId) internal view returns (uint256 index) {
+        while (
+            spro.i_isLoanRepayable(spro.getLoan(loanWithId[index].loanId).status, loanWithId[index].loan.loanExpiration)
+                || spro.getLoan(loanWithId[index].loanId).status != ISproTypes.LoanStatus.PAID_BACK
+        ) {
+            index++;
+            if (index == loanWithId.length) {
+                break;
+            }
+        }
+    }
+
+    function _filterClaimableLoansWithSameLender(Spro.LoanWithId[] memory loanWithId, uint256 start)
+        internal
+        returns (uint256[] memory loanIds, Spro.LoanWithId[] memory loans)
+    {
+        uint256 count;
+        loanIds = new uint256[](loanWithId.length);
+        loans = new Spro.LoanWithId[](loanWithId.length);
+        actors.lender = loanToken.ownerOf(loanWithId[start].loanId);
+
+        for (uint256 i = start; i < loanWithId.length; i++) {
+            if (
+                !spro.i_isLoanRepayable(spro.getLoan(loanWithId[i].loanId).status, loanWithId[i].loan.loanExpiration)
+                    && loanToken.ownerOf(loanWithId[i].loanId) == actors.lender
+                    || spro.getLoan(loanWithId[i].loanId).status != ISproTypes.LoanStatus.PAID_BACK
+                        && loanToken.ownerOf(loanWithId[i].loanId) == actors.lender
+            ) {
+                loanIds[count] = loanWithId[i].loanId;
+                loans[count] = loanWithId[i];
+                count++;
+            }
+        }
+
+        assembly {
+            mstore(loanIds, count)
+            mstore(loans, count)
+        }
+    }
+
+    function _storeClaimableLoans(uint256[] memory loanIds, Spro.LoanWithId[] memory loans) internal {
+        for (uint256 i = 0; i < loanIds.length; i++) {
+            claimableLoanIds.push(loanIds[i]);
+            claimableLoans.push(loans[i]);
+        }
+    }
+
     /* -------------------------------------------------------------------------- */
     /*                                    Utils                                   */
     /* -------------------------------------------------------------------------- */
@@ -140,52 +201,6 @@ contract PreconditionsSpro is Test, Properties {
         uint256 currentBalance = token2.balanceOf(payer);
         if (requiredAmount > currentBalance) {
             token2.mint(payer, requiredAmount - currentBalance);
-        }
-    }
-
-    function _claimMultipleLoansPreconditions(Spro.LoanWithId[] memory loanWithId, address lender)
-        internal
-        returns (bool)
-    {
-        // TODO: change code
-        uint256 firstRepayable = _findFirstClaimableLoanIndex(loanWithId);
-        if (firstRepayable == loanWithId.length) {
-            return false;
-        }
-
-        uint256[] memory temporaryLoanIds = new uint256[](loanWithId.length);
-        Spro.LoanWithId[] memory temporaryLoanWithId = new Spro.LoanWithId[](loanWithId.length);
-        uint256 count = 0;
-
-        for (uint256 i = 0; i < loanWithId.length; i++) {
-            if (
-                loanWithId[i].loan.lender == lender
-                    && (
-                        getStatus(loanWithId[i].loanId) == LoanStatus.NOT_REPAYABLE
-                            || getStatus(loanWithId[i].loanId) == LoanStatus.PAID_BACK
-                    )
-            ) {
-                temporaryLoanIds[count] = loanWithId[i].loanId;
-                temporaryLoanWithId[count] = loanWithId[i];
-                count++;
-            }
-        }
-
-        for (uint256 i = 0; i < count; i++) {
-            claimableLoans.push(temporaryLoanWithId[i]);
-            claimableLoanIds.push(temporaryLoanIds[i]);
-        }
-        return true;
-    }
-
-    function _findFirstClaimableLoanIndex(Spro.LoanWithId[] memory loanWithId) internal view returns (uint256 index) {
-        while (
-            spro.i_isLoanRepayable(spro.getLoan(loanWithId[index].loanId).status, loanWithId[index].loan.loanExpiration)
-        ) {
-            index++;
-            if (index == loanWithId.length) {
-                break;
-            }
         }
     }
 }

@@ -6,10 +6,31 @@ import { FuzzStorageVariables } from "../utils/FuzzStorageVariables.sol";
 import { Spro } from "src/spro/Spro.sol";
 
 contract Properties_CLAIMMUL is FuzzStorageVariables {
-    function invariant_CLAIMMUL_01(uint256 collateralAmount) internal view {
+    function invariant_CLAIMMUL_01() internal view {
         assert(
             state[1].actorStates[address(spro)].collateralBalance
-                == state[0].actorStates[address(spro)].collateralBalance + collateralAmount
+                == state[0].actorStates[address(spro)].collateralBalance - collateralAmountSentByProtocol
         );
+    }
+
+    function invariant_CLAIMMUL_02() internal view {
+        assert(
+            state[1].actorStates[address(spro)].creditBalance
+                == state[0].actorStates[address(spro)].creditBalance - creditAmountSentByProtocol
+        );
+    }
+
+    function invariant_CLAIMMUL_03() internal view {
+        if (actors.lender != address(spro)) {
+            assert(
+                state[1].actorStates[actors.lender].collateralBalance
+                    == state[0].actorStates[actors.lender].collateralBalance + collateralAmountSentByProtocol
+            );
+        } else {
+            assert(
+                state[1].actorStates[actors.lender].collateralBalance
+                    == state[0].actorStates[actors.lender].collateralBalance
+            );
+        }
     }
 }

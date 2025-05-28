@@ -162,19 +162,11 @@ contract PostconditionsSpro is Properties {
         if (success) {
             _after(users);
 
-            if ((loanToken.ownerOf(claimableLoans[0].loanId)) != address(spro)) {
-                uint256 collateralAmountForProtocol;
-                // for (uint256 i = 0; i < claimableLoans.length; i++) {
-                //     Spro.LoanWithId memory loanWithId = claimableLoans[i];
-                //     if (
-                //         state[0].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
-                //             && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
-                //     ) {
-                //         collateralAmountForProtocol += loanWithId.loan.collateralAmount;
-                //     }
-                // }
-                invariant_CLAIMMUL_01(collateralAmountForProtocol);
+            if (actors.lender != address(spro)) {
+                invariant_CLAIMMUL_01();
+                invariant_CLAIMMUL_02();
             }
+            invariant_CLAIMMUL_03();
         } else {
             invariant_ERR(returnData);
         }
