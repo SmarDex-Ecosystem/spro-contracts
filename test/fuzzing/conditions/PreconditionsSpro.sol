@@ -153,8 +153,6 @@ contract PreconditionsSpro is Test, Properties {
             _filterClaimableLoansWithSameLender(loanWithId, firstClaimable);
 
         _storeClaimableLoans(validLoanIds, validLoanWithId);
-        credit = validLoanWithId[0].loan.creditAddress;
-        collateral = validLoanWithId[0].loan.collateralAddress;
 
         return true;
     }

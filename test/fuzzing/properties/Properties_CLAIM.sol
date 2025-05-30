@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import { FuzzStorageVariables } from "../utils/FuzzStorageVariables.sol";
 
 import { Spro } from "src/spro/Spro.sol";
-import { T20 } from "test/helper/T20.sol";
 
 contract Properties_CLAIM is FuzzStorageVariables {
     function invariant_CLAIM_01(uint256 loanId) internal view {
@@ -28,7 +27,7 @@ contract Properties_CLAIM is FuzzStorageVariables {
         }
     }
 
-    function invariant_CLAIM_03(Spro.LoanWithId memory loanWithId) internal {
+    function invariant_CLAIM_03(Spro.LoanWithId memory loanWithId) internal view {
         if (
             state[0].loanStatus[loanWithId.loanId] == LoanStatus.NOT_REPAYABLE
                 && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE

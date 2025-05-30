@@ -9,14 +9,18 @@ contract Properties_CLAIMMUL is FuzzStorageVariables {
     function invariant_CLAIMMUL_01() internal view {
         assert(
             state[1].actorStates[address(spro)][collateral]
-                == state[0].actorStates[address(spro)][collateral] - collateralAmountSentByProtocol
+                == state[0].actorStates[address(spro)][collateral] - amountSentByProtocol[collateral]
         );
     }
 
-    function invariant_CLAIMMUL_02() internal view {
+    function invariant_CLAIMMUL_02() internal {
+        emit log_uint(99_999_999_999_999_999_999_999_999_999_999_999_999);
+        emit log_uint(state[1].actorStates[address(spro)][credit]);
+        emit log_uint(state[0].actorStates[address(spro)][credit]);
+        emit log_uint(amountSentByProtocol[credit]);
         assert(
             state[1].actorStates[address(spro)][credit]
-                == state[0].actorStates[address(spro)][credit] - creditAmountSentByProtocol
+                == state[0].actorStates[address(spro)][credit] - amountSentByProtocol[credit]
         );
     }
 
@@ -24,7 +28,7 @@ contract Properties_CLAIMMUL is FuzzStorageVariables {
         if (actors.lender != address(spro)) {
             assert(
                 state[1].actorStates[actors.lender][collateral]
-                    == state[0].actorStates[actors.lender][collateral] + collateralAmountSentByProtocol
+                    == state[0].actorStates[actors.lender][collateral] + amountSentByProtocol[collateral]
             );
         } else {
             assert(state[1].actorStates[actors.lender][collateral] == state[0].actorStates[actors.lender][collateral]);

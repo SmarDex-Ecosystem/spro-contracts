@@ -47,8 +47,7 @@ contract FuzzStorageVariables is Test {
     // Claimable loans
     Spro.LoanWithId[] internal claimableLoans;
     uint256[] internal claimableLoanIds;
-    uint256 collateralAmountSentByProtocol;
-    uint256 creditAmountSentByProtocol;
+    mapping(address => uint256) amountSentByProtocol;
 
     // Actors addresses
     Actors actors;
@@ -182,8 +181,8 @@ contract FuzzStorageVariables is Test {
         // Reset claimable loans variable
         delete claimableLoans;
         delete claimableLoanIds;
-        delete collateralAmountSentByProtocol;
-        delete creditAmountSentByProtocol;
+        delete amountSentByProtocol[address(token1)];
+        delete amountSentByProtocol[address(token2)];
 
         // Reset address variables
         delete actors;
@@ -276,13 +275,14 @@ contract FuzzStorageVariables is Test {
                 state[0].loanStatus[loanWithId.loanId] == LoanStatus.NOT_REPAYABLE
                     && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
             ) {
-                collateralAmountSentByProtocol += loanWithId.loan.collateralAmount;
+                amountSentByProtocol[loanWithId.loan.collateralAddress] += loanWithId.loan.collateralAmount;
             }
             if (
                 state[0].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
                     && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
             ) {
-                creditAmountSentByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+                amountSentByProtocol[loanWithId.loan.creditAddress] +=
+                    loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
             }
         }
     }
