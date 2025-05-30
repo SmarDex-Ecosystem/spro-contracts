@@ -13,11 +13,7 @@ contract Properties_CLAIMMUL is FuzzStorageVariables {
         );
     }
 
-    function invariant_CLAIMMUL_02() internal {
-        emit log_uint(99_999_999_999_999_999_999_999_999_999_999_999_999);
-        emit log_uint(state[1].actorStates[address(spro)][credit]);
-        emit log_uint(state[0].actorStates[address(spro)][credit]);
-        emit log_uint(amountSentByProtocol[credit]);
+    function invariant_CLAIMMUL_02() internal view {
         assert(
             state[1].actorStates[address(spro)][credit]
                 == state[0].actorStates[address(spro)][credit] - amountSentByProtocol[credit]
