@@ -8,14 +8,17 @@ import { Spro } from "src/spro/Spro.sol";
 contract Properties_GLOB is FuzzStorageVariables {
     function invariant_GLOB_01() internal view {
         assert(
-            state[1].actorStates[address(spro)].creditBalance
-                == creditFromLoansPaidBack + token2MintedToProtocol + token2ReceivedByProtocol
+            state[1].actorStates[address(spro)][credit]
+                == creditFromLoansPaidBack[credit] + collateralFromProposals[credit] + tokenMintedToProtocol[credit]
+                    + tokenReceivedByProtocol[credit]
         );
     }
 
     function invariant_GLOB_02() internal view {
         assert(
-            state[1].actorStates[address(spro)].collateralBalance == collateralFromProposals + token1MintedToProtocol
+            state[1].actorStates[address(spro)][collateral]
+                == collateralFromProposals[collateral] + creditFromLoansPaidBack[collateral]
+                    + tokenMintedToProtocol[collateral] + tokenReceivedByProtocol[collateral]
         );
     }
 }

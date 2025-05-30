@@ -9,33 +9,31 @@ import { ISproTypes } from "src/interfaces/ISproTypes.sol";
 contract Properties_PROP is FuzzStorageVariables {
     function invariant_PROP_01(ISproTypes.Proposal memory proposal) internal view {
         assert(
-            state[1].actorStates[actors.borrower].collateralBalance
-                == state[0].actorStates[actors.borrower].collateralBalance - proposal.collateralAmount
+            state[1].actorStates[actors.borrower][collateral]
+                == state[0].actorStates[actors.borrower][collateral] - proposal.collateralAmount
         );
     }
 
     function invariant_PROP_02() internal view {
         assert(
-            state[1].actorStates[actors.borrower].sdexBalance
-                == state[0].actorStates[actors.borrower].sdexBalance - spro._fee()
+            state[1].actorStates[actors.borrower][address(sdex)]
+                == state[0].actorStates[actors.borrower][address(sdex)] - spro._fee()
         );
     }
 
     function invariant_PROP_03() internal view {
-        assert(
-            state[1].actorStates[actors.borrower].creditBalance == state[0].actorStates[actors.borrower].creditBalance
-        );
+        assert(state[1].actorStates[actors.borrower][credit] == state[0].actorStates[actors.borrower][credit]);
     }
 
     function invariant_PROP_04(ISproTypes.Proposal memory proposal) internal view {
         assert(
-            state[1].actorStates[address(spro)].collateralBalance
-                == state[0].actorStates[address(spro)].collateralBalance + proposal.collateralAmount
+            state[1].actorStates[address(spro)][collateral]
+                == state[0].actorStates[address(spro)][collateral] + proposal.collateralAmount
         );
     }
 
     function invariant_PROP_05() internal view {
-        assert(state[1].actorStates[address(spro)].creditBalance == state[0].actorStates[address(spro)].creditBalance);
+        assert(state[1].actorStates[address(spro)][credit] == state[0].actorStates[address(spro)][credit]);
     }
 
     function invariant_PROP_06() internal view {
@@ -44,8 +42,8 @@ contract Properties_PROP is FuzzStorageVariables {
 
     function invariant_PROP_07() internal view {
         assert(
-            state[1].actorStates[address(0xdead)].sdexBalance
-                == state[0].actorStates[address(0xdead)].sdexBalance + spro._fee()
+            state[1].actorStates[address(0xdead)][address(sdex)]
+                == state[0].actorStates[address(0xdead)][address(sdex)] + spro._fee()
         );
     }
 }
