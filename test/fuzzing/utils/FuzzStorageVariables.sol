@@ -57,9 +57,8 @@ contract FuzzStorageVariables is Test {
     // Collateral in the protocol
     mapping(address => uint256) collateralFromProposals;
     // Minted to the protocol
-    uint256 token1MintedToProtocol;
-    uint256 token2MintedToProtocol;
-    uint256 token2ReceivedByProtocol;
+    mapping(address => uint256) tokenMintedToProtocol;
+    mapping(address => uint256) tokenReceivedByProtocol;
 
     mapping(uint8 => State) state;
 
@@ -161,6 +160,7 @@ contract FuzzStorageVariables is Test {
 
     function _clean() internal {
         token2.blockTransfers(false, address(0));
+        token1.blockTransfers(false, address(0));
         _removeLoansWithStatusNone();
         _fullReset();
     }

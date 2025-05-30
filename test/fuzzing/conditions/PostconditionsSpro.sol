@@ -213,7 +213,8 @@ contract PostconditionsSpro is Properties {
                 && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
                 && lastOwnerOfLoan[loanWithId.loanId] == address(spro)
         ) {
-            token2ReceivedByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+            tokenReceivedByProtocol[loanWithId.loan.creditAddress] +=
+                loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
         }
         collateralFromProposals[loanWithId.loan.collateralAddress] -= loanWithId.loan.collateralAmount;
     }
@@ -225,7 +226,7 @@ contract PostconditionsSpro is Properties {
                     && state[1].loanStatus[repayableLoanIds[i]] == LoanStatus.NONE
                     && lastOwnerOfLoan[repayableLoanIds[i]] == address(spro)
             ) {
-                token2ReceivedByProtocol +=
+                tokenReceivedByProtocol[repayableLoans[i].loan.creditAddress] +=
                     repayableLoans[i].loan.principalAmount + repayableLoans[i].loan.fixedInterestAmount;
             }
             collateralFromProposals[repayableLoans[i].loan.collateralAddress] -= repayableLoans[i].loan.collateralAmount;
@@ -237,7 +238,8 @@ contract PostconditionsSpro is Properties {
             state[0].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
                 && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE && actors.lender == address(spro)
         ) {
-            token2ReceivedByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+            tokenReceivedByProtocol[loanWithId.loan.creditAddress] +=
+                loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
         }
         if (
             state[0].loanStatus[loanWithId.loanId] == LoanStatus.NOT_REPAYABLE
@@ -254,7 +256,7 @@ contract PostconditionsSpro is Properties {
                 state[0].loanStatus[claimableLoanIds[i]] == LoanStatus.PAID_BACK
                     && state[1].loanStatus[claimableLoanIds[i]] == LoanStatus.NONE && actors.lender == address(spro)
             ) {
-                token2ReceivedByProtocol +=
+                tokenReceivedByProtocol[claimableLoans[i].loan.creditAddress] +=
                     claimableLoans[i].loan.principalAmount + claimableLoans[i].loan.fixedInterestAmount;
             }
             if (

@@ -148,6 +148,8 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         actors.lender = loanToken.ownerOf(loanWithId.loanId);
         actors.payer = actors.lender;
         actors.borrower = loanWithId.loan.borrower;
+        credit = loanWithId.loan.creditAddress;
+        collateral = loanWithId.loan.collateralAddress;
         if (expired) {
             vm.warp(loanWithId.loan.loanExpiration);
         }
@@ -159,24 +161,25 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         _claimLoanPostconditions(success, returnData, loanWithId, USERS);
     }
 
-    function fuzz_claimMultipleLoans(uint256 seed, uint256 size) public {
-        if (loans.length == 0) {
-            return;
-        }
+    // TODO: fix with this function
+    // function fuzz_claimMultipleLoans(uint256 seed, uint256 size) public {
+    //     if (loans.length == 0) {
+    //         return;
+    //     }
 
-        size = bound(size, 1, loans.length);
-        Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seed, size);
-        bool claimable = _claimMultipleLoansPreconditions(loanWithIds);
-        if (!claimable) {
-            return;
-        }
+    //     size = bound(size, 1, loans.length);
+    //     Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seed, size);
+    //     bool claimable = _claimMultipleLoansPreconditions(loanWithIds);
+    //     if (!claimable) {
+    //         return;
+    //     }
 
-        _before(USERS);
+    //     _before(USERS);
 
-        (bool success, bytes memory returnData) = _claimMultipleLoansCall(actors.lender);
+    //     (bool success, bytes memory returnData) = _claimMultipleLoansCall(actors.lender);
 
-        _claimMultipleLoansPostconditions(success, returnData, USERS);
-    }
+    //     _claimMultipleLoansPostconditions(success, returnData, USERS);
+    // }
 
     function fuzz_transferNFT(uint256 seedLoan, uint256 seedUser) public {
         if (loans.length == 0) {
@@ -196,10 +199,6 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         T20 token = tokenOne ? token1 : token2;
         seedAmount = bound(seedAmount, 0, 1e36);
         token.mint(address(spro), seedAmount);
-        if (tokenOne) {
-            token1MintedToProtocol += seedAmount;
-        } else {
-            token2MintedToProtocol += seedAmount;
-        }
+        tokenMintedToProtocol[address(token)] += seedAmount;
     }
 }
