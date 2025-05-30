@@ -16,7 +16,7 @@ contract PostconditionsSpro is Properties {
         if (success) {
             proposals.push(proposal);
             numberOfProposals++;
-            collateralFromProposals += proposal.collateralAmount;
+            collateralFromProposals[proposal.collateralAddress] += proposal.collateralAmount;
             _after(users);
 
             invariant_GLOB_01();
@@ -49,7 +49,7 @@ contract PostconditionsSpro is Properties {
                     break;
                 }
             }
-            collateralFromProposals -= withdrawableCollateralAmount;
+            collateralFromProposals[proposal.collateralAddress] -= withdrawableCollateralAmount;
             _after(users);
 
             invariant_GLOB_01();
@@ -215,7 +215,7 @@ contract PostconditionsSpro is Properties {
         ) {
             token2ReceivedByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
         }
-        collateralFromProposals -= loanWithId.loan.collateralAmount;
+        collateralFromProposals[loanWithId.loan.collateralAddress] -= loanWithId.loan.collateralAmount;
     }
 
     function _repayMultipleLoanProcessCollateral() internal {
@@ -228,7 +228,7 @@ contract PostconditionsSpro is Properties {
                 token2ReceivedByProtocol +=
                     repayableLoans[i].loan.principalAmount + repayableLoans[i].loan.fixedInterestAmount;
             }
-            collateralFromProposals -= repayableLoans[i].loan.collateralAmount;
+            collateralFromProposals[repayableLoans[i].loan.collateralAddress] -= repayableLoans[i].loan.collateralAmount;
         }
     }
 
@@ -244,7 +244,7 @@ contract PostconditionsSpro is Properties {
                 && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
                 && lastOwnerOfLoan[loanWithId.loanId] != address(spro)
         ) {
-            collateralFromProposals -= loanWithId.loan.collateralAmount;
+            collateralFromProposals[loanWithId.loan.collateralAddress] -= loanWithId.loan.collateralAmount;
         }
     }
 
@@ -262,7 +262,8 @@ contract PostconditionsSpro is Properties {
                     && state[1].loanStatus[claimableLoanIds[i]] == LoanStatus.NONE
                     && lastOwnerOfLoan[claimableLoanIds[i]] != address(spro)
             ) {
-                collateralFromProposals -= claimableLoans[i].loan.collateralAmount;
+                collateralFromProposals[claimableLoans[i].loan.collateralAddress] -=
+                    claimableLoans[i].loan.collateralAmount;
             }
         }
     }

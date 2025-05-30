@@ -12,8 +12,8 @@ contract Properties_REPAYMUL is Properties_REPAY {
 
     function invariant_REPAYMUL_02() internal view {
         assert(
-            state[1].actorStates[address(spro)].creditBalance
-                == state[0].actorStates[address(spro)].creditBalance + creditAmountForProtocol
+            state[1].actorStates[address(spro)][credit]
+                == state[0].actorStates[address(spro)][credit] + creditAmountForProtocol
         );
     }
 
@@ -23,8 +23,8 @@ contract Properties_REPAYMUL is Properties_REPAY {
 
     function invariant_REPAYMUL_04() internal view {
         assert(
-            state[1].actorStates[actors.payer].creditBalance
-                == state[0].actorStates[actors.payer].creditBalance - totalRepaymentAmount
+            state[1].actorStates[actors.payer][credit]
+                == state[0].actorStates[actors.payer][credit] - totalRepaymentAmount
         );
     }
 }
