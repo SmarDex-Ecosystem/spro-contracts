@@ -150,7 +150,6 @@ contract PreconditionsSpro is Test, Properties {
     function _findFirstClaimableLoanIndex(Spro.LoanWithId[] memory loanWithId) internal view returns (uint256 index) {
         while (
             spro.i_isLoanRepayable(spro.getLoan(loanWithId[index].loanId).status, loanWithId[index].loan.loanExpiration)
-                || spro.getLoan(loanWithId[index].loanId).status != ISproTypes.LoanStatus.PAID_BACK
         ) {
             index++;
             if (index == loanWithId.length) {
