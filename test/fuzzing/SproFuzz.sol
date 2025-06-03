@@ -156,7 +156,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         _claimLoanPostconditions(success, returnData, loanWithId, USERS);
     }
 
-    function fuzz_claimMultipleLoans(uint256 seed, uint256 size) public {
+    function fuzz_claimMultipleLoans(uint256 seed, uint256 size, bool expired) public {
         if (loans.length == 0) {
             return;
         }
@@ -168,6 +168,9 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
             return;
         }
 
+        if (expired) {
+            vm.warp(claimableLoans[0].loan.loanExpiration);
+        }
         _before(USERS);
 
         (bool success, bytes memory returnData) = _claimMultipleLoansCall(actors.lender);
