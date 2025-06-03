@@ -182,11 +182,11 @@ contract PostconditionsSpro is Properties {
             _after(users);
             _claimMultipleLoanProcessCollateral();
 
+            invariant_CLAIMMUL_01();
             if (actors.lender != address(spro)) {
-                invariant_CLAIMMUL_01();
                 invariant_CLAIMMUL_02();
+                invariant_CLAIMMUL_03();
             }
-            invariant_CLAIMMUL_03();
         } else {
             invariant_ERR(returnData);
         }
@@ -251,22 +251,8 @@ contract PostconditionsSpro is Properties {
     }
 
     function _claimMultipleLoanProcessCollateral() internal {
-        for (uint256 i = 0; i < claimableLoanIds.length; i++) {
-            if (
-                state[0].loanStatus[claimableLoanIds[i]] == LoanStatus.PAID_BACK
-                    && state[1].loanStatus[claimableLoanIds[i]] == LoanStatus.NONE && actors.lender == address(spro)
-            ) {
-                tokenReceivedByProtocol[claimableLoans[i].loan.creditAddress] +=
-                    claimableLoans[i].loan.principalAmount + claimableLoans[i].loan.fixedInterestAmount;
-            }
-            if (
-                state[0].loanStatus[claimableLoanIds[i]] == LoanStatus.NOT_REPAYABLE
-                    && state[1].loanStatus[claimableLoanIds[i]] == LoanStatus.NONE
-                    && lastOwnerOfLoan[claimableLoanIds[i]] != address(spro)
-            ) {
-                collateralFromProposals[claimableLoans[i].loan.collateralAddress] -=
-                    claimableLoans[i].loan.collateralAmount;
-            }
+        for (uint256 i = 0; i < claimableLoans.length; i++) {
+            _claimLoanProcessCollateral(claimableLoans[i]);
         }
     }
 }
