@@ -186,6 +186,7 @@ contract PostconditionsSpro is Properties {
             if (actors.lender != address(spro)) {
                 invariant_CLAIMMUL_02();
                 invariant_CLAIMMUL_03();
+                invariant_CLAIMMUL_04();
             }
         } else {
             invariant_ERR(returnData);
