@@ -35,8 +35,8 @@ contract PreconditionsSpro is Test, Properties {
         collateral = tokenOne ? address(token1) : address(token2);
         credit = tokenOne ? address(token2) : address(token1);
         uint256 collateralAmount = bound(seed1, 0, T20(collateral).balanceOf(borrower));
-        uint256 token2Balance = T20(credit).balanceOf(borrower);
-        uint256 availableCreditLimit = bound(seed2, 1, token2Balance == 0 ? 1 : token2Balance);
+        uint256 creditBalance = T20(credit).balanceOf(borrower);
+        uint256 availableCreditLimit = bound(seed2, 1, creditBalance == 0 ? 1 : creditBalance);
         uint256 fixedInterestAmount = bound(seed3, 0, availableCreditLimit);
         proposal = ISproTypes.Proposal({
             collateralAddress: collateral,
