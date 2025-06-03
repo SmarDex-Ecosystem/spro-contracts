@@ -249,21 +249,8 @@ contract PostconditionsSpro is Properties {
     }
 
     function _claimMultipleLoanProcessCollateral() internal {
-        for (uint256 i = 0; i < claimableLoanIds.length; i++) {
-            if (
-                state[0].loanStatus[claimableLoanIds[i]] == LoanStatus.PAID_BACK
-                    && state[1].loanStatus[claimableLoanIds[i]] == LoanStatus.NONE && actors.lender == address(spro)
-            ) {
-                token2ReceivedByProtocol +=
-                    claimableLoans[i].loan.principalAmount + claimableLoans[i].loan.fixedInterestAmount;
-            }
-            if (
-                state[0].loanStatus[claimableLoanIds[i]] == LoanStatus.NOT_REPAYABLE
-                    && state[1].loanStatus[claimableLoanIds[i]] == LoanStatus.NONE
-                    && lastOwnerOfLoan[claimableLoanIds[i]] != address(spro)
-            ) {
-                collateralFromProposals -= claimableLoans[i].loan.collateralAmount;
-            }
+        for (uint256 i = 0; i < claimableLoans.length; i++) {
+            _claimLoanProcessCollateral(claimableLoans[i]);
         }
     }
 }
