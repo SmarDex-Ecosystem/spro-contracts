@@ -21,16 +21,9 @@ contract Properties_CLAIMMUL is FuzzStorageVariables {
     }
 
     function invariant_CLAIMMUL_03() internal view {
-        if (actors.lender != address(spro)) {
-            assert(
-                state[1].actorStates[actors.lender].collateralBalance
-                    == state[0].actorStates[actors.lender].collateralBalance + collateralAmountSentByProtocol
-            );
-        } else {
-            assert(
-                state[1].actorStates[actors.lender].collateralBalance
-                    == state[0].actorStates[actors.lender].collateralBalance
-            );
-        }
+        assert(
+            state[1].actorStates[actors.lender].collateralBalance
+                == state[0].actorStates[actors.lender].collateralBalance + collateralAmountSentByProtocol
+        );
     }
 }
