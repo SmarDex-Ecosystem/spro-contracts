@@ -15,15 +15,13 @@ contract Properties_CLAIM is FuzzStorageVariables {
     function invariant_CLAIM_02(Spro.LoanWithId memory loanWithId) internal view {
         if (
             state[0].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
-                && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
+                && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE && actors.lender != address(spro)
         ) {
-            if (actors.lender != address(spro)) {
-                assert(
-                    state[1].actorStates[address(spro)][credit]
-                        == state[0].actorStates[address(spro)][credit] - loanWithId.loan.principalAmount
-                            - loanWithId.loan.fixedInterestAmount
-                );
-            }
+            assert(
+                state[1].actorStates[address(spro)][credit]
+                    == state[0].actorStates[address(spro)][credit] - loanWithId.loan.principalAmount
+                        - loanWithId.loan.fixedInterestAmount
+            );
         }
     }
 
