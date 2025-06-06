@@ -270,19 +270,21 @@ contract FuzzStorageVariables is Test {
     }
 
     function _processClaimableLoans() internal {
-        for (uint256 i = 0; i < claimableLoans.length; i++) {
-            Spro.LoanWithId memory loanWithId = claimableLoans[i];
-            if (
-                state[0].loanStatus[loanWithId.loanId] == LoanStatus.NOT_REPAYABLE
-                    && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
-            ) {
-                collateralAmountSentByProtocol += loanWithId.loan.collateralAmount;
-            }
-            if (
-                state[0].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
-                    && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
-            ) {
-                creditAmountSentByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+        if (actors.lender != address(spro)) {
+            for (uint256 i = 0; i < claimableLoans.length; i++) {
+                Spro.LoanWithId memory loanWithId = claimableLoans[i];
+                if (
+                    state[0].loanStatus[loanWithId.loanId] == LoanStatus.NOT_REPAYABLE
+                        && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
+                ) {
+                    collateralAmountSentByProtocol += loanWithId.loan.collateralAmount;
+                }
+                if (
+                    state[0].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
+                        && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
+                ) {
+                    creditAmountSentByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+                }
             }
         }
     }

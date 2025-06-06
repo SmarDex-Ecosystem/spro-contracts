@@ -94,6 +94,10 @@
 | CLAIM-01     | Lend repaid                    | Protocol's collateral token balance unchanged.                 | collateralToken.balanceOf(protocol) = previous            |
 | CLAIM-02     | Lend repaid                    | Protocol's borrow token balance decreased by lended amount and interests.                            | borrowToken.balanceOf(protocol) = previous - loan.principalAmount - loan.fixedInterestAmount|
 | CLAIM-03     | Loan expired                   | Lender's collateral token balance increased by the collateral amount.                       | collateralToken.balanceOf(lender) = previous + collateralAmount    |
+| CLAIMMUL-01 | Lend was not repaid | Protocol's collateral token balance decreased by the collateral amount of each loan. | collateralToken.balanceOf(protocol) = previous - x * collateralAmount    |
+| CLAIMMUL-02 | Lend was repaid and credit waiting in spro | Protocol's borrow token balance decreased by the credit amount of each loan.     | borrowToken.balanceOf(protocol) = previous - x * creditAmount        |
+| CLAIMMUL-03 | Lend was not repaid | Lender's collateral token balance increased by the collateral amount of each loan.                 | collateralToken.balanceOf(lender) = previous + x * collateralAmount            |
+| CLAIMMUL-04 | Lend was repaid and credit waiting in spro | Lender's borrow token balance increased by the credit amount of each loan. | borrowToken.balanceOf(lender) = previous + x * creditAmount            |
 | REPAY-01     |                                | The borrower is required to repay the loan prior to its due date.        | block.timestamp < loanWithId.loan.loanExpiration|
 | REPAY-02     | The transfer fails             | Protocol's borrow token balance increased.                     | borrowToken.balanceOf(protocol) = previous + loan.principalAmount + loan.fixedInterestAmount  |
 | REPAY-03     |                                | Borrower's collateral token balance increased by the collateral amount.                     | collateralToken.balanceOf(borrower) = previous + collateralAmount  |

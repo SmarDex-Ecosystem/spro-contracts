@@ -182,15 +182,10 @@ contract PostconditionsSpro is Properties {
             _after(users);
             _claimMultipleLoanProcessCollateral();
 
-            if (actors.lender != address(spro)) {
-                invariant_CLAIMMUL_01();
-                invariant_CLAIMMUL_02();
-                invariant_CLAIMMUL_03();
-                invariant_CLAIMMUL_04();
-            } else {
-                invariant_CLAIMMUL_05();
-                invariant_CLAIMMUL_06();
-            }
+            invariant_CLAIMMUL_01();
+            invariant_CLAIMMUL_02();
+            invariant_CLAIMMUL_03();
+            invariant_CLAIMMUL_04();
         } else {
             invariant_ERR(returnData);
         }
