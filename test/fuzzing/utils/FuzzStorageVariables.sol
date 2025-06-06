@@ -42,6 +42,11 @@ contract FuzzStorageVariables is Test {
     uint256 totalRepaymentAmount;
     address[] borrowers;
     uint256[] borrowersCollateral;
+    // Claimable loans
+    Spro.LoanWithId[] internal claimableLoans;
+    uint256[] internal claimableLoanIds;
+    uint256 collateralAmountSentByProtocol;
+    uint256 creditAmountSentByProtocol;
 
     // Actors addresses
     Actors actors;
@@ -154,6 +159,8 @@ contract FuzzStorageVariables is Test {
         _processCreditFromPaidBackLoans();
         // Process repayable loans
         _processRepayableLoans();
+        // Process claimable loans
+        _processClaimableLoans();
     }
 
     function _clean() internal {
@@ -173,6 +180,11 @@ contract FuzzStorageVariables is Test {
         delete totalRepaymentAmount;
         delete borrowers;
         delete borrowersCollateral;
+        // Reset claimable loans variable
+        delete claimableLoans;
+        delete claimableLoanIds;
+        delete collateralAmountSentByProtocol;
+        delete creditAmountSentByProtocol;
 
         // Reset address variables
         delete actors;
@@ -253,6 +265,26 @@ contract FuzzStorageVariables is Test {
             if (!found) {
                 borrowers.push(loanWithId.loan.borrower);
                 borrowersCollateral.push(loanWithId.loan.collateralAmount);
+            }
+        }
+    }
+
+    function _processClaimableLoans() internal {
+        if (actors.lender != address(spro)) {
+            for (uint256 i = 0; i < claimableLoans.length; i++) {
+                Spro.LoanWithId memory loanWithId = claimableLoans[i];
+                if (
+                    state[0].loanStatus[loanWithId.loanId] == LoanStatus.NOT_REPAYABLE
+                        && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
+                ) {
+                    collateralAmountSentByProtocol += loanWithId.loan.collateralAmount;
+                }
+                if (
+                    state[0].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
+                        && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
+                ) {
+                    creditAmountSentByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+                }
             }
         }
     }

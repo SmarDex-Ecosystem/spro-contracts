@@ -156,6 +156,28 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         _claimLoanPostconditions(success, returnData, loanWithId, USERS);
     }
 
+    function fuzz_claimMultipleLoans(uint256 seed, uint256 size, bool expired) public {
+        if (loans.length == 0) {
+            return;
+        }
+
+        size = bound(size, 1, loans.length);
+        Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seed, size);
+        bool claimable = _claimMultipleLoansPreconditions(loanWithIds);
+        if (!claimable) {
+            return;
+        }
+
+        if (expired) {
+            vm.warp(claimableLoans[0].loan.loanExpiration);
+        }
+        _before(USERS);
+
+        (bool success, bytes memory returnData) = _claimMultipleLoansCall(actors.lender);
+
+        _claimMultipleLoansPostconditions(success, returnData, USERS);
+    }
+
     function fuzz_transferNFT(uint256 seedLoan, uint256 seedUser) public {
         if (loans.length == 0) {
             return;
