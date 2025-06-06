@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import { Test } from "forge-std/Test.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
+import { T20 } from "test/helper/T20.sol";
 import { Properties } from "../properties/Properties.sol";
 
 import { ISproTypes } from "src/interfaces/ISproTypes.sol";
@@ -26,18 +27,21 @@ contract PreconditionsSpro is Test, Properties {
         uint256 seed1,
         uint256 seed2,
         uint256 seed3,
+        bool tokenOne,
         address borrower,
         uint40 startTimestamp,
         uint40 loanExpiration
-    ) internal view returns (ISproTypes.Proposal memory proposal) {
-        uint256 collateralAmount = bound(seed1, 0, token1.balanceOf(borrower));
-        uint256 token2Balance = token2.balanceOf(borrower);
-        uint256 availableCreditLimit = bound(seed2, 1, token2Balance == 0 ? 1 : token2Balance);
+    ) internal returns (ISproTypes.Proposal memory proposal) {
+        collateral = tokenOne ? address(token1) : address(token2);
+        credit = tokenOne ? address(token2) : address(token1);
+        uint256 collateralAmount = bound(seed1, 0, T20(collateral).balanceOf(borrower));
+        uint256 creditBalance = T20(credit).balanceOf(borrower);
+        uint256 availableCreditLimit = bound(seed2, 1, creditBalance == 0 ? 1 : creditBalance);
         uint256 fixedInterestAmount = bound(seed3, 0, availableCreditLimit);
         proposal = ISproTypes.Proposal({
-            collateralAddress: address(token1),
+            collateralAddress: collateral,
             collateralAmount: collateralAmount,
-            creditAddress: address(token2),
+            creditAddress: credit,
             availableCreditLimit: availableCreditLimit,
             fixedInterestAmount: fixedInterestAmount,
             startTimestamp: startTimestamp,
@@ -54,15 +58,19 @@ contract PreconditionsSpro is Test, Properties {
     {
         uint256 remaining = proposal.availableCreditLimit - spro._creditUsed(keccak256(abi.encode(proposal)));
         creditAmount = bound(seed, proposal.minAmount, remaining);
-        _ensureSufficientBalance(actors.lender, creditAmount);
+        _ensureSufficientBalance(actors.lender, proposal.creditAddress, creditAmount);
+        credit = proposal.creditAddress;
+        collateral = proposal.collateralAddress;
     }
 
     function _repayLoanPreconditions(Spro.LoanWithId memory loanWithId, bool blocked) internal {
         if (blocked && actors.lender != address(spro)) {
-            token2.blockTransfers(true, actors.lender);
+            T20(loanWithId.loan.creditAddress).blockTransfers(true, actors.lender);
         }
         uint256 repaymentAmount = loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
-        _ensureSufficientBalance(actors.payer, repaymentAmount);
+        _ensureSufficientBalance(actors.payer, loanWithId.loan.creditAddress, repaymentAmount);
+        credit = loanWithId.loan.creditAddress;
+        collateral = loanWithId.loan.collateralAddress;
     }
 
     function _repayMultipleLoansPreconditions(Spro.LoanWithId[] memory loanWithId, bool blocked, address userBlocked)
@@ -77,12 +85,14 @@ contract PreconditionsSpro is Test, Properties {
         (uint256[] memory validLoanIds, Spro.LoanWithId[] memory validLoanWithId, uint256 totalAmount) =
             _filterRepayableLoansWithSameCreditAddress(loanWithId, firstRepayable);
 
-        _ensureSufficientBalance(actors.payer, totalAmount);
+        _ensureSufficientBalance(actors.payer, validLoanWithId[0].loan.creditAddress, totalAmount);
         _storeRepayableLoans(validLoanIds, validLoanWithId);
 
         if (blocked) {
-            token2.blockTransfers(true, userBlocked);
+            T20(validLoanWithId[0].loan.creditAddress).blockTransfers(true, userBlocked);
         }
+        credit = validLoanWithId[0].loan.creditAddress;
+        collateral = validLoanWithId[0].loan.collateralAddress;
 
         return totalAmount;
     }
@@ -150,6 +160,7 @@ contract PreconditionsSpro is Test, Properties {
     function _findFirstClaimableLoanIndex(Spro.LoanWithId[] memory loanWithId) internal view returns (uint256 index) {
         while (
             spro.i_isLoanRepayable(spro.getLoan(loanWithId[index].loanId).status, loanWithId[index].loan.loanExpiration)
+                || spro.getLoan(loanWithId[index].loanId).status != ISproTypes.LoanStatus.PAID_BACK
         ) {
             index++;
             if (index == loanWithId.length) {
@@ -197,10 +208,10 @@ contract PreconditionsSpro is Test, Properties {
     /*                                    Utils                                   */
     /* -------------------------------------------------------------------------- */
 
-    function _ensureSufficientBalance(address payer, uint256 requiredAmount) internal {
-        uint256 currentBalance = token2.balanceOf(payer);
+    function _ensureSufficientBalance(address payer, address token, uint256 requiredAmount) internal {
+        uint256 currentBalance = T20(token).balanceOf(payer);
         if (requiredAmount > currentBalance) {
-            token2.mint(payer, requiredAmount - currentBalance);
+            T20(token).mint(payer, requiredAmount - currentBalance);
         }
     }
 }

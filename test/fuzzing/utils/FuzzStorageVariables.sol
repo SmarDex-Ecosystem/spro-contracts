@@ -34,6 +34,8 @@ contract FuzzStorageVariables is Test {
     ISproTypes.Proposal[] internal proposals;
     Spro.LoanWithId[] internal loans;
     mapping(uint256 => address) lastOwnerOfLoan;
+    address collateral;
+    address credit;
 
     // Repayable loans
     Spro.LoanWithId[] internal repayableLoans;
@@ -46,18 +48,17 @@ contract FuzzStorageVariables is Test {
     Spro.LoanWithId[] internal claimableLoans;
     uint256[] internal claimableLoanIds;
     uint256 collateralAmountSentByProtocol;
-    uint256 creditAmountSentByProtocol;
+    mapping(address => uint256) amountSentByProtocol;
 
     // Actors addresses
     Actors actors;
     // Credit in the protocol
-    uint256 creditFromLoansPaidBack;
+    mapping(address => uint256) creditFromLoansPaidBack;
     // Collateral in the protocol
-    uint256 collateralFromProposals;
+    mapping(address => uint256) collateralFromProposals;
     // Minted to the protocol
-    uint256 token1MintedToProtocol;
-    uint256 token2MintedToProtocol;
-    uint256 token2ReceivedByProtocol;
+    mapping(address => uint256) tokenMintedToProtocol;
+    mapping(address => uint256) tokenReceivedByProtocol;
 
     mapping(uint8 => State) state;
 
@@ -68,16 +69,10 @@ contract FuzzStorageVariables is Test {
     }
 
     struct State {
-        mapping(address => ActorStates) actorStates;
+        mapping(address => mapping(address => uint256)) actorStates;
         address borrower;
         address lender;
         mapping(uint256 => LoanStatus) loanStatus;
-    }
-
-    struct ActorStates {
-        uint256 collateralBalance;
-        uint256 creditBalance;
-        uint256 sdexBalance;
     }
 
     enum LoanStatus {
@@ -140,9 +135,9 @@ contract FuzzStorageVariables is Test {
     }
 
     function _setActorState(uint8 index, address actor) internal {
-        state[index].actorStates[actor].collateralBalance = token1.balanceOf(actor);
-        state[index].actorStates[actor].creditBalance = token2.balanceOf(actor);
-        state[index].actorStates[actor].sdexBalance = sdex.balanceOf(actor);
+        state[index].actorStates[actor][address(token1)] = token1.balanceOf(actor);
+        state[index].actorStates[actor][address(token2)] = token2.balanceOf(actor);
+        state[index].actorStates[actor][address(sdex)] = sdex.balanceOf(actor);
     }
 
     function _before(address[] memory users) internal {
@@ -165,6 +160,7 @@ contract FuzzStorageVariables is Test {
 
     function _clean() internal {
         token2.blockTransfers(false, address(0));
+        token1.blockTransfers(false, address(0));
         _removeLoansWithStatusNone();
         _fullReset();
     }
@@ -172,6 +168,9 @@ contract FuzzStorageVariables is Test {
     function _fullReset() internal {
         delete state[0];
         delete state[1];
+
+        delete collateral;
+        delete credit;
 
         // Reset repayable loans variables
         delete repayableLoans;
@@ -183,13 +182,14 @@ contract FuzzStorageVariables is Test {
         // Reset claimable loans variable
         delete claimableLoans;
         delete claimableLoanIds;
-        delete collateralAmountSentByProtocol;
-        delete creditAmountSentByProtocol;
+        delete amountSentByProtocol[address(token1)];
+        delete amountSentByProtocol[address(token2)];
 
         // Reset address variables
         delete actors;
         // Reset balance variables
-        delete creditFromLoansPaidBack;
+        delete creditFromLoansPaidBack[address(token1)];
+        delete creditFromLoansPaidBack[address(token2)];
     }
 
     function _removeLoansWithStatusNone() internal {
@@ -277,13 +277,14 @@ contract FuzzStorageVariables is Test {
                     state[0].loanStatus[loanWithId.loanId] == LoanStatus.NOT_REPAYABLE
                         && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
                 ) {
-                    collateralAmountSentByProtocol += loanWithId.loan.collateralAmount;
+                    amountSentByProtocol[loanWithId.loan.collateralAddress] += loanWithId.loan.collateralAmount;
                 }
                 if (
                     state[0].loanStatus[loanWithId.loanId] == LoanStatus.PAID_BACK
                         && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
                 ) {
-                    creditAmountSentByProtocol += loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
+                    amountSentByProtocol[loanWithId.loan.creditAddress] +=
+                        loanWithId.loan.principalAmount + loanWithId.loan.fixedInterestAmount;
                 }
             }
         }
@@ -293,7 +294,8 @@ contract FuzzStorageVariables is Test {
         for (uint256 i = 0; i < loans.length; i++) {
             LoanStatus status = state[1].loanStatus[loans[i].loanId];
             if (status == LoanStatus.PAID_BACK) {
-                creditFromLoansPaidBack += loans[i].loan.principalAmount + loans[i].loan.fixedInterestAmount;
+                creditFromLoansPaidBack[loans[i].loan.creditAddress] +=
+                    loans[i].loan.principalAmount + loans[i].loan.fixedInterestAmount;
             }
         }
     }

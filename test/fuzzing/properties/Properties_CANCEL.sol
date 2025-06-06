@@ -10,16 +10,16 @@ contract Properties_CANCEL is FuzzStorageVariables {
         uint256 withdrawableCollateralAmount = spro._withdrawableCollateral(proposalHash);
 
         assert(
-            state[1].actorStates[actors.borrower].collateralBalance
-                == state[0].actorStates[actors.borrower].collateralBalance + withdrawableCollateralAmount
+            state[1].actorStates[actors.borrower][collateral]
+                == state[0].actorStates[actors.borrower][collateral] + withdrawableCollateralAmount
         );
     }
 
     function invariant_CANCEL_02(bytes32 proposalHash) internal view {
         uint256 withdrawableCollateralAmount = spro._withdrawableCollateral(proposalHash);
         assert(
-            state[1].actorStates[address(spro)].collateralBalance
-                == state[0].actorStates[address(spro)].collateralBalance - withdrawableCollateralAmount
+            state[1].actorStates[address(spro)][collateral]
+                == state[0].actorStates[address(spro)][collateral] - withdrawableCollateralAmount
         );
     }
 }

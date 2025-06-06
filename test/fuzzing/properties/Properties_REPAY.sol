@@ -17,8 +17,8 @@ contract Properties_REPAY is FuzzStorageVariables {
         ) {
             if (actors.lender != address(spro)) {
                 assert(
-                    state[1].actorStates[address(spro)].creditBalance
-                        == state[0].actorStates[address(spro)].creditBalance + loanWithId.loan.principalAmount
+                    state[1].actorStates[address(spro)][credit]
+                        == state[0].actorStates[address(spro)][credit] + loanWithId.loan.principalAmount
                             + loanWithId.loan.fixedInterestAmount
                 );
             }
@@ -27,8 +27,7 @@ contract Properties_REPAY is FuzzStorageVariables {
 
     function invariant_REPAY_03(uint256 collateralAmount, address borrower) internal view {
         assert(
-            state[1].actorStates[borrower].collateralBalance
-                == state[0].actorStates[borrower].collateralBalance + collateralAmount
+            state[1].actorStates[borrower][collateral] == state[0].actorStates[borrower][collateral] + collateralAmount
         );
     }
 
@@ -39,8 +38,8 @@ contract Properties_REPAY is FuzzStorageVariables {
         ) {
             if (actors.payer != address(spro)) {
                 assert(
-                    state[1].actorStates[actors.payer].creditBalance
-                        == state[0].actorStates[actors.payer].creditBalance - loanWithId.loan.principalAmount
+                    state[1].actorStates[actors.payer][credit]
+                        == state[0].actorStates[actors.payer][credit] - loanWithId.loan.principalAmount
                             - loanWithId.loan.fixedInterestAmount
                 );
             }
@@ -49,7 +48,7 @@ contract Properties_REPAY is FuzzStorageVariables {
             actors.payer == actors.lender && state[0].loanStatus[loanWithId.loanId] == LoanStatus.REPAYABLE
                 && state[1].loanStatus[loanWithId.loanId] == LoanStatus.NONE
         ) {
-            assert(state[1].actorStates[actors.payer].creditBalance == state[0].actorStates[actors.payer].creditBalance);
+            assert(state[1].actorStates[actors.payer][credit] == state[0].actorStates[actors.payer][credit]);
         }
     }
 }

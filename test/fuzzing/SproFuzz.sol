@@ -29,6 +29,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         uint256 seed1,
         uint256 seed2,
         uint256 seed3,
+        bool tokenOne,
         uint40 startTimestamp,
         uint40 loanExpiration
     ) public {
@@ -36,7 +37,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         sdex.mint(actors.borrower, spro._fee());
 
         ISproTypes.Proposal memory proposal =
-            _createProposalPreconditions(seed1, seed2, seed3, actors.borrower, startTimestamp, loanExpiration);
+            _createProposalPreconditions(seed1, seed2, seed3, tokenOne, actors.borrower, startTimestamp, loanExpiration);
 
         _before(USERS);
 
@@ -61,6 +62,8 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         ISproTypes.Proposal memory proposal = getRandomProposal(seed);
         actors.borrower = proposal.proposer;
         uint256 withdrawableCollateralAmount = spro._withdrawableCollateral(keccak256(abi.encode(proposal)));
+        credit = proposal.creditAddress;
+        collateral = proposal.collateralAddress;
 
         _before(USERS);
 
@@ -145,6 +148,8 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         actors.lender = loanToken.ownerOf(loanWithId.loanId);
         actors.payer = actors.lender;
         actors.borrower = loanWithId.loan.borrower;
+        credit = loanWithId.loan.creditAddress;
+        collateral = loanWithId.loan.collateralAddress;
         if (expired) {
             vm.warp(loanWithId.loan.loanExpiration);
         }
@@ -196,10 +201,6 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         T20 token = tokenOne ? token1 : token2;
         seedAmount = bound(seedAmount, 0, 1e36);
         token.mint(address(spro), seedAmount);
-        if (tokenOne) {
-            token1MintedToProtocol += seedAmount;
-        } else {
-            token2MintedToProtocol += seedAmount;
-        }
+        tokenMintedToProtocol[address(token)] += seedAmount;
     }
 }
