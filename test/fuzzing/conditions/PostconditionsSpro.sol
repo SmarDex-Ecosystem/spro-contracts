@@ -187,6 +187,9 @@ contract PostconditionsSpro is Properties {
                 invariant_CLAIMMUL_02();
                 invariant_CLAIMMUL_03();
                 invariant_CLAIMMUL_04();
+            } else {
+                invariant_CLAIMMUL_05();
+                invariant_CLAIMMUL_06();
             }
         } else {
             invariant_ERR(returnData);
