@@ -85,6 +85,10 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         if (creditAmount == 0) {
             return;
         }
+        if (block.timestamp < proposal.startTimestamp) {
+            uint256 warp = bound(seed, block.timestamp, proposal.startTimestamp - 1);
+            vm.warp(warp);
+        }
 
         _before(USERS);
 
