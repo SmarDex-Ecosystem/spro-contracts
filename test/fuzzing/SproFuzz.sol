@@ -93,7 +93,7 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         _createLoanPostconditions(success, returnData, creditAmount, proposal, USERS);
     }
 
-    function fuzz_repayLoan(uint256 seedRandomLoan, uint256 seedPayer, bool blocked) public {
+    function fuzz_repayLoan(uint256 seedRandomLoan, uint256 seedPayer, bool blocked, bool expired) public {
         if (loans.length == 0) {
             return;
         }
@@ -102,6 +102,9 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         actors.lender = loanToken.ownerOf(loanWithId.loanId);
         actors.payer = getRandomUsers(seedPayer, 1)[0];
         actors.borrower = loanWithId.loan.borrower;
+        if (expired) {
+            vm.warp(loanWithId.loan.loanExpiration);
+        }
 
         _repayLoanPreconditions(loanWithId, blocked);
 
@@ -116,7 +119,8 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         uint256 seedNumLoansToRepay,
         uint256 seedUserBlocked,
         uint256 seedPayer,
-        bool blocked
+        bool blocked,
+        bool expired
     ) public {
         if (loans.length == 0) {
             return;
@@ -127,6 +131,9 @@ contract SproFuzz is FuzzSetup, PostconditionsSpro, PreconditionsSpro {
         // The first argument will be hashed, so it's not important to use a specific seed.
         Spro.LoanWithId[] memory loanWithIds = getRandomLoans(seedUserBlocked, seedNumLoansToRepay);
         address userBlocked = getRandomUsers(seedUserBlocked, 1)[0];
+        if (expired) {
+            vm.warp(loanWithIds[0].loan.loanExpiration);
+        }
         uint256 totalRepaymentAmount = _repayMultipleLoansPreconditions(loanWithIds, blocked, userBlocked);
         if (totalRepaymentAmount == 0) {
             return;
