@@ -9,6 +9,8 @@
     "targetContractsBalances": ["0xffffffffffffffffffffffffffffffff"],
     "deployerAddress": "0x30000",
     "senderAddresses": ["0x10000", "0x20000", "0x30000"],
+    "blockNumberDelayMax": 0,
+    "blockTimestampDelayMax": 0,
     "testing": {
       "stopOnFailedTest": true,
       "stopOnFailedContractMatching": false,
