@@ -38,6 +38,9 @@ contract PreconditionsSpro is Test, Properties {
         uint256 creditBalance = T20(credit).balanceOf(borrower);
         uint256 availableCreditLimit = bound(seed2, 1, creditBalance == 0 ? 1 : creditBalance);
         uint256 fixedInterestAmount = bound(seed3, 0, availableCreditLimit);
+        uint32 minLoanDuration = spro.MIN_LOAN_DURATION();
+        uint40 startTimestamp = uint40(bound(startTimestamp, block.timestamp, type(uint40).max - minLoanDuration));
+        uint40 loanExpiration = uint40(bound(loanExpiration, startTimestamp + minLoanDuration, type(uint40).max));
         proposal = ISproTypes.Proposal({
             collateralAddress: collateral,
             collateralAmount: collateralAmount,

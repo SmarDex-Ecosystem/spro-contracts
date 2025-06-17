@@ -16,24 +16,20 @@ contract Properties_ERR {
             returnedError := mload(add(returnData, 0x20))
         }
 
-        bytes4[] memory allowedErrors = new bytes4[](7);
+        bytes4[] memory allowedErrors = new bytes4[](5);
 
-        // Create proposal errors [0-1]
-        allowedErrors[0] = ISproErrors.InvalidDuration.selector;
-        allowedErrors[1] = ISproErrors.InvalidStartTime.selector;
+        // Create loan errors [0-1]
+        allowedErrors[0] = ISproErrors.Expired.selector;
+        allowedErrors[1] = ISproErrors.CreditAmountRemainingBelowMinimum.selector;
 
-        // Create loan errors [2-3]
-        allowedErrors[2] = ISproErrors.Expired.selector;
-        allowedErrors[3] = ISproErrors.CreditAmountRemainingBelowMinimum.selector;
+        // Create repay loan errors [2]
+        allowedErrors[2] = ISproErrors.LoanCannotBeRepaid.selector;
 
-        // Create repay loan errors [4]
-        allowedErrors[4] = ISproErrors.LoanCannotBeRepaid.selector;
-
-        // Claim loan errors [5]
-        allowedErrors[5] = ISproErrors.LoanRunning.selector;
+        // Claim loan errors [3]
+        allowedErrors[3] = ISproErrors.LoanRunning.selector;
 
         // EVM errors returns nothing
-        allowedErrors[6] = bytes4(abi.encode(""));
+        allowedErrors[4] = bytes4(abi.encode(""));
 
         errAllow(returnedError, allowedErrors, "ERR_01: Non-whitelisted error should never appear in a call");
     }
