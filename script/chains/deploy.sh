@@ -40,7 +40,3 @@ forge script ./script/chains/SproPolygon.s.sol:DeployPolygon -s "run()" -f "$URL
 echo ""
 echo "📡 Deploying on BSC..."
 forge script ./script/chains/SproBsc.s.sol:DeployBsc -s "run()" -f "$URL_BSC" --broadcast --verify --slow --private-key $deployerPrivateKey
-
-echo ""
-echo "✅ Deployment completed on all chains!"
-echo "======================================"
