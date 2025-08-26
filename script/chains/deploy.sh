@@ -10,38 +10,20 @@ blue='\033[0;34m'
 nc='\033[0m'
 
 # ---------------------------------------------------------------------------- #
-#                             Compilation Step                                 #
-# ---------------------------------------------------------------------------- #
-
-printf "${blue}Compiling contracts...${nc}\n"
-if forge build src; then
-    printf "${green}Contracts compiled successfully.${nc}\n"
-else
-    printf "${red}Error: Contract compilation failed.${nc}\n"
-fi
-
-# ---------------------------------------------------------------------------- #
 #                                  Deployment                                  #
 # ---------------------------------------------------------------------------- #
-
-set -e
 
 read -s -p $'\n'"Enter the private key : " privateKey
 deployerPrivateKey=$privateKey
 
 # RPC endpoint URLs
-URL_ETH_MAINNET="https://eth.drpc.org"
 URL_ARBITRUM="https://arbitrum.rpc.subquery.network/public"
 URL_BASE="https://base.llamarpc.com"
 URL_POLYGON="https://polygon.drpc.org"
-URL_BNB="https://bsc.blockrazor.xyz"
+URL_BSC="https://bsc.blockrazor.xyz"
 
 echo "🚀 Starting Spro deployment on all chains..."
 echo "=============================================="
-
-echo ""
-echo "📡 Deploying on Ethereum Mainnet..."
-forge script ./script/chains/SproMainnet.s.sol:Deploy -f "$URL_ETH_MAINNET" --broadcast --verify --slow --private-key $deployerPrivateKey
 
 echo ""
 echo "📡 Deploying on Arbitrum..."
@@ -57,7 +39,7 @@ forge script ./script/chains/SproPolygon.s.sol:Deploy -f "$URL_POLYGON" --broadc
 
 echo ""
 echo "📡 Deploying on BSC..."
-forge script ./script/chains/SproBsc.s.sol:Deploy -f "$URL_BNB" --broadcast --verify --slow --private-key $deployerPrivateKey
+forge script ./script/chains/SproBsc.s.sol:Deploy -f "$URL_BSC" --broadcast --verify --slow --private-key $deployerPrivateKey
 
 echo ""
 echo "✅ Deployment completed on all chains!"
