@@ -17,7 +17,7 @@ read -s -p $'\n'"Enter the private key : " privateKey
 deployerPrivateKey=$privateKey
 
 # RPC endpoint URLs
-URL_ARBITRUM="wss://arbitrum-one-rpc.publicnode.com"
+URL_ARBITRUM="https://arbitrum.gateway.tenderly.co"
 URL_BASE="https://base.llamarpc.com"
 URL_POLYGON="https://polygon.gateway.tenderly.co"
 URL_BSC="https://binance.llamarpc.com"
