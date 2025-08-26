@@ -17,29 +17,29 @@ read -s -p $'\n'"Enter the private key : " privateKey
 deployerPrivateKey=$privateKey
 
 # RPC endpoint URLs
-URL_ARBITRUM="https://arbitrum.rpc.subquery.network/public"
+URL_ARBITRUM="wss://arbitrum-one-rpc.publicnode.com"
 URL_BASE="https://base.llamarpc.com"
-URL_POLYGON="https://polygon.drpc.org"
-URL_BSC="https://bsc.blockrazor.xyz"
+URL_POLYGON="https://polygon.gateway.tenderly.co"
+URL_BSC="https://binance.llamarpc.com"
 
 echo "🚀 Starting Spro deployment on all chains..."
 echo "=============================================="
 
 echo ""
 echo "📡 Deploying on Arbitrum..."
-forge script ./script/chains/SproArbitrum.s.sol:DeployArbitrum -f "$URL_ARBITRUM" --broadcast --verify --slow --private-key $deployerPrivateKey
+forge script ./script/chains/SproArbitrum.s.sol:DeployArbitrum -s "run()" -f "$URL_ARBITRUM" --broadcast --verify --slow --private-key $deployerPrivateKey
 
 echo ""
 echo "📡 Deploying on Base..."
-forge script ./script/chains/SproBase.s.sol:DeployBase -f "$URL_BASE" --broadcast --verify --slow --private-key $deployerPrivateKey
+forge script ./script/chains/SproBase.s.sol:DeployBase -s "run()" -f "$URL_BASE" --broadcast --verify --slow --private-key $deployerPrivateKey
 
 echo ""
 echo "📡 Deploying on Polygon..."
-forge script ./script/chains/SproPolygon.s.sol:DeployPolygon -f "$URL_POLYGON" --broadcast --verify --slow --private-key $deployerPrivateKey
+forge script ./script/chains/SproPolygon.s.sol:DeployPolygon -s "run()" -f "$URL_POLYGON" --broadcast --verify --slow --private-key $deployerPrivateKey
 
 echo ""
 echo "📡 Deploying on BSC..."
-forge script ./script/chains/SproBsc.s.sol:DeployBsc -f "$URL_BSC" --broadcast --verify --slow --private-key $deployerPrivateKey
+forge script ./script/chains/SproBsc.s.sol:DeployBsc -s "run()" -f "$URL_BSC" --broadcast --verify --slow --private-key $deployerPrivateKey
 
 echo ""
 echo "✅ Deployment completed on all chains!"
