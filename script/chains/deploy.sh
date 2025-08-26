@@ -44,23 +44,23 @@ echo "=============================================="
 
 echo ""
 echo "📡 Deploying on Ethereum Mainnet..."
-forge script ./script/chains/SproMainnet.s.sol:Deploy -f "$URL_ETH_MAINNET" --broadcast --verify -vvvv --interactives 1
+forge script ./script/chains/SproMainnet.s.sol:Deploy -f "$URL_ETH_MAINNET" --broadcast --verify --interactives 1
 
 echo ""
 echo "📡 Deploying on Arbitrum..."
-forge script ./script/chains/SproArbitrum.s.sol:Deploy -f "$URL_ARBITRUM" --broadcast --verify -vvvv --interactives 1
+forge script ./script/chains/SproArbitrum.s.sol:Deploy -f "$URL_ARBITRUM" --broadcast --verify --interactives 1
 
 echo ""
 echo "📡 Deploying on Base..."
-forge script ./script/chains/SproBase.s.sol:Deploy -f "$URL_BASE" --broadcast --verify -vvvv --interactives 1
+forge script ./script/chains/SproBase.s.sol:Deploy -f "$URL_BASE" --broadcast --verify --interactives 1
 
 echo ""
 echo "📡 Deploying on Polygon..."
-forge script ./script/chains/SproPolygon.s.sol:Deploy -f "$URL_POLYGON" --broadcast --verify -vvvv --interactives 1
+forge script ./script/chains/SproPolygon.s.sol:Deploy -f "$URL_POLYGON" --broadcast --verify --interactives 1
 
 echo ""
 echo "📡 Deploying on BSC..."
-forge script ./script/chains/SproBnb.s.sol:Deploy -f "$URL_BNB" --broadcast --verify -vvvv --interactives 1
+forge script ./script/chains/SproBnb.s.sol:Deploy -f "$URL_BNB" --broadcast --verify --interactives 1
 
 echo ""
 echo "✅ Deployment completed on all chains!"
