@@ -9,12 +9,6 @@ green='\033[0;32m'
 blue='\033[0;34m'
 nc='\033[0m'
 
-# Function to display error message and exit
-errorAndExit() {
-    printf "${red}$1${nc}\n"
-    exit 1
-}
-
 # ---------------------------------------------------------------------------- #
 #                             Compilation Step                                 #
 # ---------------------------------------------------------------------------- #
@@ -23,7 +17,7 @@ printf "${blue}Compiling contracts...${nc}\n"
 if forge build src; then
     printf "${green}Contracts compiled successfully.${nc}\n"
 else
-    errorAndExit "Error: Contract compilation failed."
+    printf "${red}Error: Contract compilation failed.${nc}\n"
 fi
 
 # ---------------------------------------------------------------------------- #
@@ -31,6 +25,9 @@ fi
 # ---------------------------------------------------------------------------- #
 
 set -e
+
+read -s -p $'\n'"Enter the private key : " privateKey
+deployerPrivateKey=$privateKey
 
 # RPC endpoint URLs
 URL_ETH_MAINNET="https://eth.drpc.org"
@@ -44,23 +41,23 @@ echo "=============================================="
 
 echo ""
 echo "📡 Deploying on Ethereum Mainnet..."
-forge script ./script/chains/SproMainnet.s.sol:Deploy -f "$URL_ETH_MAINNET" --broadcast --verify --interactives 1
+forge script ./script/chains/SproMainnet.s.sol:Deploy -f "$URL_ETH_MAINNET" --broadcast --verify --private-key $deployerPrivateKey
 
 echo ""
 echo "📡 Deploying on Arbitrum..."
-forge script ./script/chains/SproArbitrum.s.sol:Deploy -f "$URL_ARBITRUM" --broadcast --verify --interactives 1
+forge script ./script/chains/SproArbitrum.s.sol:Deploy -f "$URL_ARBITRUM" --broadcast --verify --private-key $deployerPrivateKey
 
 echo ""
 echo "📡 Deploying on Base..."
-forge script ./script/chains/SproBase.s.sol:Deploy -f "$URL_BASE" --broadcast --verify --interactives 1
+forge script ./script/chains/SproBase.s.sol:Deploy -f "$URL_BASE" --broadcast --verify --private-key $deployerPrivateKey
 
 echo ""
 echo "📡 Deploying on Polygon..."
-forge script ./script/chains/SproPolygon.s.sol:Deploy -f "$URL_POLYGON" --broadcast --verify --interactives 1
+forge script ./script/chains/SproPolygon.s.sol:Deploy -f "$URL_POLYGON" --broadcast --verify --private-key $deployerPrivateKey
 
 echo ""
 echo "📡 Deploying on BSC..."
-forge script ./script/chains/SproBnb.s.sol:Deploy -f "$URL_BNB" --broadcast --verify --interactives 1
+forge script ./script/chains/SproBnb.s.sol:Deploy -f "$URL_BNB" --broadcast --verify --private-key $deployerPrivateKey
 
 echo ""
 echo "✅ Deployment completed on all chains!"
