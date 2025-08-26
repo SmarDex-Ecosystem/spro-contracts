@@ -5,7 +5,7 @@ import { Spro } from "src/spro/Spro.sol";
 import { SproLoan } from "src/spro/SproLoan.sol";
 import { DeploySpro } from "../Spro.s.sol";
 
-contract Deploy is DeploySpro {
+contract DeployArbitrum is DeploySpro {
     address constant SDEX = 0xabD587f2607542723b17f14d00d99b987C29b074;
     address constant OWNER_WALLET = 0x1F0214B6E2f7825C222B833dADD88B651628B085;
     uint256 constant ARBITRUM_CHAIN_ID = 42_161;

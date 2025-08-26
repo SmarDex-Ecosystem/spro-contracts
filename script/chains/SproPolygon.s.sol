@@ -5,7 +5,7 @@ import { Spro } from "src/spro/Spro.sol";
 import { SproLoan } from "src/spro/SproLoan.sol";
 import { DeploySpro } from "../Spro.s.sol";
 
-contract Deploy is DeploySpro {
+contract DeployPolygon is DeploySpro {
     address constant SDEX = 0x6899fAcE15c14348E1759371049ab64A3a06bFA6;
     address constant OWNER_WALLET = 0x1F0214B6E2f7825C222B833dADD88B651628B085;
     uint256 constant POLYGON_CHAIN_ID = 137;

@@ -27,19 +27,19 @@ echo "=============================================="
 
 echo ""
 echo "📡 Deploying on Arbitrum..."
-forge script ./script/chains/SproArbitrum.s.sol:Deploy -f "$URL_ARBITRUM" --broadcast --verify --slow --private-key $deployerPrivateKey
+forge script ./script/chains/SproArbitrum.s.sol:DeployArbitrum -f "$URL_ARBITRUM" --broadcast --verify --slow --private-key $deployerPrivateKey
 
 echo ""
 echo "📡 Deploying on Base..."
-forge script ./script/chains/SproBase.s.sol:Deploy -f "$URL_BASE" --broadcast --verify --slow --private-key $deployerPrivateKey
+forge script ./script/chains/SproBase.s.sol:DeployBase -f "$URL_BASE" --broadcast --verify --slow --private-key $deployerPrivateKey
 
 echo ""
 echo "📡 Deploying on Polygon..."
-forge script ./script/chains/SproPolygon.s.sol:Deploy -f "$URL_POLYGON" --broadcast --verify --slow --private-key $deployerPrivateKey
+forge script ./script/chains/SproPolygon.s.sol:DeployPolygon -f "$URL_POLYGON" --broadcast --verify --slow --private-key $deployerPrivateKey
 
 echo ""
 echo "📡 Deploying on BSC..."
-forge script ./script/chains/SproBsc.s.sol:Deploy -f "$URL_BSC" --broadcast --verify --slow --private-key $deployerPrivateKey
+forge script ./script/chains/SproBsc.s.sol:DeployBsc -f "$URL_BSC" --broadcast --verify --slow --private-key $deployerPrivateKey
 
 echo ""
 echo "✅ Deployment completed on all chains!"
