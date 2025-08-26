@@ -20,23 +20,55 @@ deployerPrivateKey=$privateKey
 URL_ARBITRUM="https://arbitrum.gateway.tenderly.co"
 URL_BASE="https://base.llamarpc.com"
 URL_POLYGON="https://polygon.gateway.tenderly.co"
-URL_BSC="https://binance.llamarpc.com"
+URL_BSC="https://bsc-rpc.publicnode.com"
 
-echo "🚀 Starting Spro deployment on all chains..."
-echo "=============================================="
+printf "🚀 Starting Spro deployment on all chains...\n"
+printf "==============================================\n"
 
-echo ""
-echo "📡 Deploying on Arbitrum..."
-forge script ./script/chains/SproArbitrum.s.sol:DeployArbitrum -s "run()" -f "$URL_ARBITRUM" --broadcast --verify --slow --private-key $deployerPrivateKey
+failed_chains=""
 
-echo ""
-echo "📡 Deploying on Base..."
-forge script ./script/chains/SproBase.s.sol:DeployBase -s "run()" -f "$URL_BASE" --broadcast --verify --slow --private-key $deployerPrivateKey
+printf "\n"
+printf "📡 Deploying on Arbitrum...\n"
+if forge script ./script/chains/SproArbitrum.s.sol:DeployArbitrum -s "run()" -f "$URL_ARBITRUM" --slow --private-key $deployerPrivateKey; then
+    printf "${green}✅ Arbitrum deployment successful!${nc}\n"
+else
+    printf "${red}❌ Arbitrum deployment failed!${nc}\n"
+    failed_chains="$failed_chains Arbitrum"
+fi
 
-echo ""
-echo "📡 Deploying on Polygon..."
-forge script ./script/chains/SproPolygon.s.sol:DeployPolygon -s "run()" -f "$URL_POLYGON" --broadcast --verify --slow --private-key $deployerPrivateKey
+printf "\n"
+printf "📡 Deploying on Base...\n"
+if forge script ./script/chains/SproBase.s.sol:DeployBase -s "run()" -f "$URL_BASE" --slow --private-key $deployerPrivateKey; then
+    printf "${green}✅ Base deployment successful!${nc}\n"
+else
+    printf "${red}❌ Base deployment failed!${nc}\n"
+    failed_chains="$failed_chains Base"
+fi
 
-echo ""
-echo "📡 Deploying on BSC..."
-forge script ./script/chains/SproBsc.s.sol:DeployBsc -s "run()" -f "$URL_BSC" --broadcast --verify --slow --private-key $deployerPrivateKey
+printf "\n"
+printf "📡 Deploying on Polygon...\n"
+if forge script ./script/chains/SproPolygon.s.sol:DeployPolygon -s "run()" -f "$URL_POLYGON" --slow --private-key $deployerPrivateKey; then
+    printf "${green}✅ Polygon deployment successful!${nc}\n"
+else
+    printf "${red}❌ Polygon deployment failed!${nc}\n"
+    failed_chains="$failed_chains Polygon"
+fi
+
+printf "\n"
+printf "📡 Deploying on BSC...\n"
+if forge script ./script/chains/SproBsc.s.sol:DeployBsc -s "run()" -f "$URL_BSC" --slow --private-key $deployerPrivateKey; then
+    printf "${green}✅ BSC deployment successful!${nc}\n"
+else
+    printf "${red}❌ BSC deployment failed!${nc}\n"
+    failed_chains="$failed_chains BSC"
+fi
+
+printf "\n"
+printf "==============================================\n"
+if [ "$failed_chains" = "" ]; then
+    printf "${green}✅ All deployments completed successfully!${nc}\n"
+else
+    printf "${red}❌ Deployment completed with errors!${nc}\n"
+    printf "${red}Failed chains:$failed_chains${nc}\n"
+    exit 1
+fi
