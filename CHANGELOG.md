@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0](https://github.com/SmarDex-Ecosystem/spro-contracts/compare/v1.0.0...v1.1.0) (2025-09-03)
+
+
+### Features
+
+* add deployment script for other chains ([#126](https://github.com/SmarDex-Ecosystem/spro-contracts/issues/126)) ([45658db](https://github.com/SmarDex-Ecosystem/spro-contracts/commit/45658dbc2fa538f9780543790a854e997f154e7e))
+* release 0.2.1 with fixed addresses ([#128](https://github.com/SmarDex-Ecosystem/spro-contracts/issues/128)) ([34ed25d](https://github.com/SmarDex-Ecosystem/spro-contracts/commit/34ed25d6a51d0edb7b7e67565d5748030db8a56c))
+
+
+### Bug Fixes
+
+* add package.json entrypoint ([#124](https://github.com/SmarDex-Ecosystem/spro-contracts/issues/124)) ([176243f](https://github.com/SmarDex-Ecosystem/spro-contracts/commit/176243fe104dd6427e97aabf6da546622d3a048b))
+
 ## [1.0.0](https://github.com/SmarDex-Ecosystem/spro-contracts/compare/v0.2.0...v1.0.0) (2025-05-22)
 
 
